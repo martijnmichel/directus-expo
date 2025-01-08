@@ -7,8 +7,15 @@ import {
   Text,
   Alert,
 } from "react-native";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, Form } from "react-hook-form";
 import { useAuth } from "../contexts/AuthContext";
+import { Input } from "./form/input";
+import { Button } from "./display/button";
+import { useStyles } from "react-native-unistyles";
+import { formStyles } from "./form/style";
+import { Layout } from "./layout/Layout";
+import { Container } from "./layout/Container";
+import { Center } from "./layout/Center";
 
 interface LoginForm {
   email: string;
@@ -17,11 +24,12 @@ interface LoginForm {
 }
 
 export const LoginForm = () => {
+  const { styles } = useStyles(formStyles);
   const { login } = useAuth();
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     defaultValues: {
       email: "",
@@ -40,97 +48,57 @@ export const LoginForm = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <Form control={control} style={{ ...styles.form, minWidth: 300 }}>
       <Controller
         control={control}
         rules={{ required: "Email is required" }}
         name="email"
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
+          <Input
             onChangeText={onChange}
             value={value}
             placeholder="Email"
+            label="Email"
+            error={errors.email?.message}
             autoCapitalize="none"
           />
         )}
       />
-      {errors.email && (
-        <Text style={styles.errorText}>{errors.email.message}</Text>
-      )}
-
       <Controller
         control={control}
         rules={{ required: "Password is required" }}
         name="password"
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
+          <Input
             onChangeText={onChange}
             value={value}
             placeholder="Password"
+            label="Password"
+            error={errors.password?.message}
             secureTextEntry
           />
         )}
       />
-      {errors.password && (
-        <Text style={styles.errorText}>{errors.password.message}</Text>
-      )}
 
       <Controller
         control={control}
         rules={{ required: "API URL is required" }}
         name="apiUrl"
         render={({ field: { onChange, value } }) => (
-          <TextInput
-            style={styles.input}
+          <Input
             onChangeText={onChange}
             value={value}
             placeholder="API URL"
+            label="API URL"
+            error={errors.apiUrl?.message}
             autoCapitalize="none"
           />
         )}
       />
-      {errors.apiUrl && (
-        <Text style={styles.errorText}>{errors.apiUrl.message}</Text>
-      )}
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
-    </View>
+      <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
+        Login
+      </Button>
+    </Form>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
-  },
-  input: {
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    marginVertical: 8,
-    paddingHorizontal: 10,
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  errorText: {
-    color: "red",
-    fontSize: 12,
-    marginBottom: 8,
-  },
-});

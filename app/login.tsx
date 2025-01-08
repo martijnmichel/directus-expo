@@ -1,17 +1,18 @@
 import { View, StyleSheet, Text } from "react-native";
 import { useRouter } from "expo-router";
 import { LoginForm } from "@/components/LoginForm";
+import { Center } from "@/components/layout/Center";
+import { Container } from "@/components/layout/Container";
+import { Layout } from "@/components/layout/Layout";
 
 export default function Login() {
   return (
-    <View style={styles.container}>
-      <LoginForm />
-    </View>
+    <Layout>
+      <Container>
+        <Center>
+          <LoginForm />
+        </Center>
+      </Container>
+    </Layout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
