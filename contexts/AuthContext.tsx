@@ -11,44 +11,51 @@ import {
   rest,
 } from "@directus/sdk";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   user: DirectusUser | null;
   directus: DirectusClient<Record<string, any>> | null;
   login: (email: string, password: string, apiUrl: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
-const directus = createDirectus("")
-  .with(
-    authentication("json", {
-      autoRefresh: true,
-      storage: {
-        get: async () => {
-          try {
-            return JSON.parse(
-              (await AsyncStorage.getItem("directus_session_token")) as string
-            ) as AuthenticationData;
-          } catch (e) {
-            console.error(e);
-            return null;
-          }
-        },
-        set: async (value) =>
-          await AsyncStorage.setItem(
-            "directus_session_token",
-            JSON.stringify(value)
-          ),
-      },
-    })
-  )
-  .with(rest());
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const initDirectus = (url?: string) => {
+    return createDirectus(url || "https://directus.example.com")
+      .with(
+        authentication("json", {
+          autoRefresh: true,
+          storage: {
+            get: async () => {
+              try {
+                return JSON.parse(
+                  (await AsyncStorage.getItem(
+                    "directus_session_token"
+                  )) as string
+                ) as AuthenticationData;
+              } catch (e) {
+                console.error(e);
+                return null;
+              }
+            },
+            set: async (value) =>
+              await AsyncStorage.setItem(
+                "directus_session_token",
+                JSON.stringify(value)
+              ),
+          },
+        })
+      )
+      .with(rest());
+  };
+  const [directus, setDirectus] = useState(initDirectus());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<DirectusUser | null>(null);
 
   useEffect(() => {
@@ -58,9 +65,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const initializeDirectus = async () => {
     try {
       const apiUrl = await AsyncStorage.getItem("apiUrl");
-      if (!apiUrl) return;
+      if (!apiUrl) {
+        setIsLoading(false);
+        return;
+      }
 
-      directus.url = new URL(apiUrl);
+      const directus = initDirectus(apiUrl);
+      setDirectus(directus);
 
       // Try to refresh the token
       try {
@@ -74,6 +85,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         await AsyncStorage.removeItem("authToken");
       }
+
+      setIsLoading(false);
     } catch (error) {
       console.error("Failed to initialize Directus:", error);
     }
@@ -81,6 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = async (email: string, password: string, apiUrl: string) => {
     try {
+      const directus = initDirectus(apiUrl);
+      setDirectus(directus);
       await directus.login(email, password);
       const token = await directus.getToken();
       const user = await directus.request(readMe());
@@ -108,7 +123,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, directus, login, logout, user }}
+      value={{
+        isAuthenticated,
+        isLoading,
+        directus,
+        login,
+        logout,
+        user,
+      }}
     >
       {children}
     </AuthContext.Provider>
