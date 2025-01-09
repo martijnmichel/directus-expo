@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
+import UserCollections from "@/components/content/UserCollections";
 
 export default function Home() {
   return (
@@ -10,6 +11,7 @@ export default function Home() {
       <Container>
         <Section>
           <H1>Home screen</H1>
+          <UserCollections />
         </Section>
       </Container>
     </Layout>

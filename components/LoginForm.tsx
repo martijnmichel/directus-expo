@@ -13,10 +13,8 @@ import { Input } from "./form/input";
 import { Button } from "./display/button";
 import { useStyles } from "react-native-unistyles";
 import { formStyles } from "./form/style";
-import { Layout } from "./layout/Layout";
-import { Container } from "./layout/Container";
-import { Center } from "./layout/Center";
 import { useTranslation } from "react-i18next";
+import { router } from "expo-router";
 
 interface LoginForm {
   email: string;
@@ -32,11 +30,17 @@ export const LoginForm = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
-    defaultValues: {
-      email: "",
-      password: "",
-      apiUrl: "https://api.example.com",
-    },
+    defaultValues: __DEV__
+      ? {
+          email: "demo@ecbase.nl",
+          password: "test123",
+          apiUrl: "https://cms-dev.ecbase.nl",
+        }
+      : {
+          email: "",
+          password: "",
+          apiUrl: "https://api.example.com",
+        },
   });
   const { t } = useTranslation();
 
@@ -44,6 +48,7 @@ export const LoginForm = () => {
     try {
       console.log({ data });
       await login(data.email, data.password, data.apiUrl);
+      router.push("/");
     } catch (error) {
       Alert.alert("Error", "Login failed. Please check your credentials.");
     }

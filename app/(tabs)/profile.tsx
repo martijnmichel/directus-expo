@@ -1,29 +1,15 @@
-import { View, Text, StyleSheet } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
-
-export default function Profile() {
-  const { logout, user } = useAuth();
-
+import { H1 } from "@/components/display/typography";
+import { Container } from "@/components/layout/Container";
+import { Layout } from "@/components/layout/Layout";
+import { Section } from "@/components/layout/Section";
+export default function TabTwoScreen() {
   return (
-    <View style={styles.container}>
-      <Text>Profile Screen</Text>
-      <Text>User: {user?.email}</Text>
-      <Text onPress={logout} style={styles.logoutButton}>
-        Logout
-      </Text>
-    </View>
+    <Layout>
+      <Container>
+        <Section>
+          <H1>Profile screen</H1>
+        </Section>
+      </Container>
+    </Layout>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-  },
-  logoutButton: {
-    color: "red",
-    marginTop: 20,
-  },
-});

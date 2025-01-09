@@ -1,5 +1,5 @@
 import React from "react";
-import { View, ViewProps, SafeAreaView } from "react-native";
+import { View, ViewProps, SafeAreaView, ScrollView } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface LayoutProps extends ViewProps {

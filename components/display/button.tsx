@@ -7,6 +7,7 @@ import {
   TouchableOpacityProps,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { useTranslation } from "react-i18next";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
@@ -37,6 +38,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
     const { styles, theme } = useStyles(stylesheet);
 
     const getContainerStyles = () => [
