@@ -1,5 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { CoreSchema, readCollection, readItem, readItems } from "@directus/sdk";
+import {
+  CoreSchema,
+  readCollection,
+  readFields,
+  readFieldsByCollection,
+  readItem,
+  readItems,
+} from "@directus/sdk";
 import { useQuery } from "@tanstack/react-query";
 
 export const useCollection = (id: string) => {
@@ -23,5 +30,13 @@ export const useDocument = (collection: keyof CoreSchema, id: number) => {
   return useQuery({
     queryKey: ["document", collection, id],
     queryFn: () => directus?.request(readItem(collection, id)),
+  });
+};
+
+export const useFields = (collection: keyof CoreSchema) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["fields", collection],
+    queryFn: () => directus?.request(readFieldsByCollection(collection)),
   });
 };

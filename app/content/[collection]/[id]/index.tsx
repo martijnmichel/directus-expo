@@ -5,13 +5,23 @@ import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
 import UserCollections from "@/components/content/UserCollections";
 import { useLocalSearchParams } from "expo-router";
-import { useCollection, useDocument } from "@/state/directus/collection";
+import {
+  useCollection,
+  useDocument,
+  useFields,
+} from "@/state/directus/collection";
 import { List, ListItem } from "@/components/display/list";
 import { map } from "lodash";
 export default function Collection() {
   const { collection, id } = useLocalSearchParams();
   const { data } = useCollection(collection as string);
-  const { data: document } = useDocument(collection, id);
+  const { data: document } = useDocument(collection as string, id);
+  const { data: fields } = useFields(collection as string);
+
+  const fieldValue = (field: string) => {
+    return document?.[field as keyof typeof document];
+  };
+
   return (
     <Layout>
       <Container>
@@ -19,7 +29,11 @@ export default function Collection() {
           <H1>{collection}</H1>
           <Text>{JSON.stringify(data)}</Text>
           <List>
-            <ListItem>{JSON.stringify(document)}</ListItem>
+            {map(fields, ({ field, collection }) => (
+              <ListItem>
+                {field}: {fieldValue(field)}
+              </ListItem>
+            ))}
           </List>
         </Section>
       </Container>
