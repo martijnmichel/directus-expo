@@ -16,6 +16,7 @@ import { formStyles } from "./form/style";
 import { Layout } from "./layout/Layout";
 import { Container } from "./layout/Container";
 import { Center } from "./layout/Center";
+import { useTranslation } from "react-i18next";
 
 interface LoginForm {
   email: string;
@@ -37,6 +38,7 @@ export const LoginForm = () => {
       apiUrl: "https://api.example.com",
     },
   });
+  const { t } = useTranslation();
 
   const onSubmit = async (data: LoginForm) => {
     try {
@@ -51,14 +53,14 @@ export const LoginForm = () => {
     <Form control={control} style={{ ...styles.form, minWidth: 300 }}>
       <Controller
         control={control}
-        rules={{ required: "Email is required" }}
+        rules={{ required: t("form.errors.emailRequired") }}
         name="email"
         render={({ field: { onChange, value } }) => (
           <Input
             onChangeText={onChange}
             value={value}
-            placeholder="Email"
-            label="Email"
+            placeholder={t("form.email")}
+            label={t("form.email")}
             error={errors.email?.message}
             autoCapitalize="none"
           />
@@ -66,14 +68,14 @@ export const LoginForm = () => {
       />
       <Controller
         control={control}
-        rules={{ required: "Password is required" }}
+        rules={{ required: t("form.errors.passwordRequired") }}
         name="password"
         render={({ field: { onChange, value } }) => (
           <Input
             onChangeText={onChange}
             value={value}
-            placeholder="Password"
-            label="Password"
+            placeholder={t("form.password")}
+            label={t("form.password")}
             error={errors.password?.message}
             secureTextEntry
           />
@@ -82,14 +84,14 @@ export const LoginForm = () => {
 
       <Controller
         control={control}
-        rules={{ required: "API URL is required" }}
+        rules={{ required: t("form.errors.apiUrlRequired") }}
         name="apiUrl"
         render={({ field: { onChange, value } }) => (
           <Input
             onChangeText={onChange}
             value={value}
-            placeholder="API URL"
-            label="API URL"
+            placeholder={t("form.apiUrl")}
+            label={t("form.apiUrl")}
             error={errors.apiUrl?.message}
             autoCapitalize="none"
           />
@@ -97,7 +99,7 @@ export const LoginForm = () => {
       />
 
       <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
-        Login
+        {t("form.login")}
       </Button>
     </Form>
   );

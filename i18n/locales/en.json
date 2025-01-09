@@ -1,0 +1,22 @@
+{
+    "form": {
+        "email": "Email",
+        "password": "Password",
+        "apiUrl": "API URL",
+        "login": "Login",
+        "errors": {
+            "emailRequired": "Email is required",
+            "passwordRequired": "Password is required",
+            "apiUrlRequired": "API URL is required",
+            "loginFailed": "Login failed. Please check your credentials."
+        }
+    },
+    "button": {
+        "getStarted": "Get Started Free",
+        "learnMore": "Learn More",
+        "viewGithub": "View on GitHub"
+    },
+    "common": {
+        "loading": "Loading..."
+    }
+}

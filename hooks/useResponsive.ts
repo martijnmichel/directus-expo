@@ -1,5 +1,5 @@
 import { useWindowDimensions } from "react-native";
-import { breakpoints } from "../theme";
+import { breakpoints } from "../unistyles/theme";
 
 export const useResponsive = () => {
   const { width } = useWindowDimensions();

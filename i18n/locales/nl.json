@@ -1,0 +1,22 @@
+{
+    "form": {
+        "email": "E-mail",
+        "password": "Wachtwoord",
+        "apiUrl": "API URL",
+        "login": "Inloggen",
+        "errors": {
+            "emailRequired": "E-mail is verplicht",
+            "passwordRequired": "Wachtwoord is verplicht",
+            "apiUrlRequired": "API URL is verplicht",
+            "loginFailed": "Inloggen mislukt. Controleer uw gegevens."
+        }
+    },
+    "button": {
+        "getStarted": "Gratis beginnen",
+        "learnMore": "Meer informatie",
+        "viewGithub": "Bekijk op GitHub"
+    },
+    "common": {
+        "loading": "Laden..."
+    }
+}

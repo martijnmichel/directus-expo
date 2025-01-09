@@ -1,8 +1,12 @@
-import { useEffect } from "react";
 import { Redirect, Slot, Stack } from "expo-router";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { UnistylesRegistry } from "react-native-unistyles";
 import { lightTheme, darkTheme } from "@/unistyles/theme";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import i18n from "@/i18n";
+
+const queryClient = new QueryClient();
 
 // Register your themes
 UnistylesRegistry.addThemes({
@@ -14,8 +18,12 @@ UnistylesRegistry.addThemes({
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Slot />
-    </AuthProvider>
+    <I18nextProvider i18n={i18n}>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <Slot />
+        </QueryClientProvider>
+      </AuthProvider>
+    </I18nextProvider>
   );
 }

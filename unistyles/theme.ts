@@ -90,6 +90,9 @@ export const darkTheme: AppTheme = {
     border: "#2F2F2F",
     borderLight: "#3F3F3F",
 
+    // Utility colors
+    white: "#000000" as string,
+    black: "#FFFFFF" as string,
     overlay: "rgba(0, 0, 0, 0.8)",
   },
 };

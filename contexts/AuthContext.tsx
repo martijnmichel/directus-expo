@@ -2,13 +2,16 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   auth,
   authentication,
+  AuthenticationClient,
   AuthenticationData,
+  CoreSchema,
   createDashboard,
   createDirectus,
   DirectusClient,
   DirectusUser,
   readMe,
   rest,
+  RestClient,
 } from "@directus/sdk";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -17,7 +20,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: DirectusUser | null;
-  directus: DirectusClient<Record<string, any>> | null;
+  directus:
+    | (DirectusClient<CoreSchema> &
+        AuthenticationClient<CoreSchema> &
+        RestClient<CoreSchema>)
+    | null;
   login: (email: string, password: string, apiUrl: string) => Promise<void>;
   logout: () => Promise<void>;
 }
