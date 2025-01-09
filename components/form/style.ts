@@ -44,4 +44,46 @@ export const formStyles = createStyleSheet((theme) => ({
   errorText: {
     color: theme.colors.error,
   },
+  // Rich text editor specific styles
+  richTextContainer: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden", // Ensures toolbar corners match container
+  },
+  richTextToolbar: {
+    backgroundColor: theme.colors.backgroundAlt,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    padding: theme.spacing.xs,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.xs,
+  },
+  richTextToolbarButton: {
+    padding: theme.spacing.xs,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: "transparent",
+  },
+  richTextToolbarButtonActive: {
+    backgroundColor: theme.colors.background,
+  },
+  richTextToolbarButtonIcon: {
+    color: theme.colors.textSecondary,
+  },
+  richTextToolbarButtonIconActive: {
+    color: theme.colors.primary,
+  },
+  richTextEditor: {
+    flex: 1,
+    minHeight: 300,
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.body.fontSize,
+    lineHeight: theme.typography.body.lineHeight,
+    backgroundColor: theme.colors.background,
+  },
 }));

@@ -4,6 +4,7 @@ import {
   readMe,
   readPermissions,
   readRelations,
+  readUserPermissions,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
 export const useUser = () => {
@@ -18,7 +19,7 @@ export const usePermissions = () => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["permissions"],
-    queryFn: () => directus?.request(readPermissions()),
+    queryFn: () => directus?.request(readUserPermissions()),
   });
 };
 

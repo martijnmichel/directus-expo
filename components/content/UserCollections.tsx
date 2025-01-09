@@ -1,5 +1,3 @@
-import { useCollections } from "@/state/directus/core";
-import { H1, Text } from "../display/typography";
 import { filter, map } from "lodash";
 import {
   Collapsible,
@@ -8,6 +6,7 @@ import {
 } from "../display/collapsible";
 import { List, ListItem } from "../display/list";
 import { Fragment } from "react";
+import { useCollections } from "@/state/queries/directus/core";
 
 export default function UserCollections() {
   const { data } = useCollections();

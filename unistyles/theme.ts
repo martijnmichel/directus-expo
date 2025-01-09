@@ -50,7 +50,7 @@ export const lightTheme = {
     },
     label: {
       fontSize: 14,
-      fontWeight: "500" as const,
+      fontWeight: "600" as const,
     },
     helper: {
       fontSize: 12,
