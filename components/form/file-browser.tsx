@@ -5,6 +5,9 @@ import { Image, Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { RadioButton } from "../form/radio-button";
+import { PortalOutlet } from "../layout/Portal";
+import { Button } from "../display/button";
+import { Check } from "../icons";
 
 interface FileBrowserProps {
   onSelect: (files: string | string[]) => void;
@@ -56,41 +59,57 @@ export const FileBrowser = ({
       : selectedFile?.id === file.id;
 
   return (
-    <Grid cols={{ xs: 1, sm: 2, md: 3, lg: 4 }} spacing="md">
-      {files.map((file) => {
-        const selected = isSelected(file);
-        return (
-          <Pressable
-            onPress={() => handleSelect(file)}
-            key={file.filename_disk}
-            style={styles.fileContainer}
-          >
-            <View style={styles.imageWrapper}>
-              <Image
-                width={500}
-                height={500}
-                style={[styles.image, selected && styles.selected]}
-                source={{ uri: `${directus?.url}/assets/${file.id}` }}
-              />
-              <View style={styles.radioWrapper}>
-                <RadioButton
-                  checked={selected}
-                  onPress={() => handleSelect(file)}
+    <>
+      <Grid cols={{ xs: 1, sm: 2, md: 3, lg: 4 }} spacing="md">
+        {files.map((file) => {
+          const selected = isSelected(file);
+          return (
+            <Pressable
+              onPress={() => handleSelect(file)}
+              key={file.filename_disk}
+              style={styles.fileContainer}
+            >
+              <View style={styles.imageWrapper}>
+                <Image
+                  width={500}
+                  height={500}
+                  style={[styles.image, selected && styles.selected]}
+                  source={{ uri: `${directus?.url}/assets/${file.id}` }}
                 />
+                <View style={styles.radioWrapper}>
+                  <RadioButton
+                    checked={selected}
+                    onPress={() => handleSelect(file)}
+                  />
+                </View>
               </View>
-            </View>
-            <View style={styles.metadata}>
-              <Text style={styles.filename} numberOfLines={1}>
-                {file.filename_download}
-              </Text>
-              <Text style={styles.fileInfo}>
-                {formatFileSize(file.filesize)} • {file.type}
-              </Text>
-            </View>
-          </Pressable>
-        );
-      })}
-    </Grid>
+              <View style={styles.metadata}>
+                <Text style={styles.filename} numberOfLines={1}>
+                  {file.filename_download}
+                </Text>
+                <Text style={styles.fileInfo}>
+                  {formatFileSize(file.filesize)} • {file.type}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </Grid>
+      <PortalOutlet name="modal-header">
+        <Button
+          rounded
+          disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
+          onPress={() => {
+            console.log({ selectedFile });
+            onSelect(
+              multiple ? selectedFiles.map((f) => f.id) : selectedFile?.id || ""
+            );
+          }}
+        >
+          <Check />
+        </Button>
+      </PortalOutlet>
+    </>
   );
 };
 

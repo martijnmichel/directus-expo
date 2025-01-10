@@ -52,12 +52,28 @@ export const Grid: React.FC<GridProps> = ({
 }) => {
   const { theme, breakpoint } = useStyles(stylesheet);
 
-  console.log("Current breakpoint:", breakpoint);
-  console.log("Columns config:", cols);
+  // Get the appropriate column count based on breakpoint
+  const getColumnCount = () => {
+    const breakpoints: Breakpoint[] = ["xs", "sm", "md", "lg", "xl"];
+    const currentBreakpointIndex = breakpoints.indexOf(
+      breakpoint as Breakpoint
+    );
 
-  const currentColumns = cols[breakpoint as keyof typeof cols] || cols.xs || 1;
-  console.log("Selected columns:", currentColumns);
+    // Find the largest defined column count for current or smaller breakpoints
+    let largestDefinedColumns = cols.xs || 1;
 
+    // Go from xs up to current breakpoint
+    for (let i = 0; i <= currentBreakpointIndex; i++) {
+      const bp = breakpoints[i];
+      if (cols[bp] !== undefined) {
+        largestDefinedColumns = cols[bp]!;
+      }
+    }
+
+    return largestDefinedColumns;
+  };
+
+  const currentColumns = getColumnCount();
   const spacingValue = theme.spacing[spacing];
 
   return (

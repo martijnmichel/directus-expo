@@ -27,6 +27,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { PortalHost } from "../layout/Portal";
 
 interface ModalContextType {
   isOpen: boolean;
@@ -51,6 +52,7 @@ interface ModalContentProps
   contentStyle?: ViewStyle;
   variant?: "default" | "bottomSheet";
   height?: number | `${number}%` | "auto";
+  actions?: React.ReactNode;
 }
 
 interface ModalTriggerProps {
@@ -74,8 +76,9 @@ const ModalContent = ({
   title,
   children,
   contentStyle,
+  actions,
   variant = "default",
-  height = "50%",
+  height = "90%",
   ...props
 }: ModalContentProps) => {
   const { styles } = useStyles(modalStyles);
@@ -134,7 +137,11 @@ const ModalContent = ({
           )}
           {title && (
             <View style={styles.header}>
-              <H2>{title}</H2>
+              <View style={styles.headerContent}>
+                {title && <H2>{title}</H2>}
+                {actions && <View style={styles.actions}>{actions}</View>}
+                <PortalHost name="modal-header" />
+              </View>
             </View>
           )}
           <ScrollView> {children}</ScrollView>
@@ -173,10 +180,16 @@ const modalStyles = createStyleSheet((theme) => ({
     padding: theme.spacing.lg,
   },
   header: {
+    paddingBottom: theme.spacing.md,
+  },
+  headerContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: theme.spacing.lg,
+  },
+  actions: {
+    flexDirection: "row",
+    gap: theme.spacing.sm,
   },
   bottomSheetOverlay: {
     justifyContent: "flex-end",

@@ -6,18 +6,18 @@ import { formStyles } from "./style";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { Button } from "../display/button";
 import { Input } from "./input";
-import { Download, Search, Edit, X, Link, Gallery } from "../icons";
+import { Download, Search, Edit, X, Link, Gallery, Check } from "../icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
 import { FileBrowser } from "./file-browser";
+import { uploadFiles } from "@directus/sdk";
 
 interface ImageInputProps {
   label?: string;
   error?: string;
   helper?: string;
   value?: string;
-  onChange?: (value: string | null) => void;
-  onUpload?: (file: ImagePicker.ImagePickerAsset) => Promise<void>;
+  onChange: (value: string | string[]) => void;
 }
 
 export const ImageInput = ({
@@ -26,7 +26,6 @@ export const ImageInput = ({
   helper,
   value,
   onChange,
-  onUpload,
 }: ImageInputProps) => {
   const { styles, theme } = useStyles(imageStyles);
   const { styles: formStyle } = useStyles(formStyles);
@@ -41,7 +40,21 @@ export const ImageInput = ({
     });
 
     if (!result.canceled && result.assets[0]) {
-      onUpload?.(result.assets[0]);
+      try {
+        const response = await fetch(result.assets[0].uri);
+        const blob = await response.blob();
+
+        const data = new FormData();
+        data.append("file", blob, "image.jpg");
+
+        const file = await directus?.request(uploadFiles(data));
+        console.log(file);
+        if (file) {
+          onChange(file?.id);
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
     }
   };
 
@@ -100,7 +113,7 @@ export const ImageInput = ({
                 </Button>
               </Modal.Trigger>
               <Modal.Content variant="bottomSheet" title="Import from URL">
-                <FileBrowser onSelect={handleUrlSubmit} />
+                <FileBrowser onSelect={onChange} />
               </Modal.Content>
             </Modal>
           </Horizontal>
@@ -140,7 +153,7 @@ const imageStyles = createStyleSheet((theme) => ({
   },
   imagePreview: {
     position: "relative",
-    aspectRatio: 16 / 9,
+    aspectRatio: 16 / 5,
     width: "100%",
   },
   image: {

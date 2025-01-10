@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
 import i18n from "@/i18n";
 import { breakpoints } from "@/unistyles/theme";
+import { PortalProvider } from "@/components/layout/Portal";
 
 const queryClient = new QueryClient();
 
@@ -24,7 +25,9 @@ export default function RootLayout() {
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <Slot />
+          <PortalProvider>
+            <Slot />
+          </PortalProvider>
         </QueryClientProvider>
       </AuthProvider>
     </I18nextProvider>
