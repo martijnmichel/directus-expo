@@ -13,6 +13,7 @@ export const lightTheme = {
     textPrimary: "#172940" as string, // Dark text
     textSecondary: "#4F5464" as string, // Secondary text
     textTertiary: "#8196AB" as string, // Lighter text
+    textMuted: "#C8D5E9" as string, // Muted text
 
     // Background colors
     background: "#FFFFFF" as string,

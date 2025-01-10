@@ -63,10 +63,11 @@ export const Button = React.forwardRef<any, ButtonProps>(
       styles.text,
       styles[`${variant}Text`],
       styles[`${size}Text`],
+      disabled && styles.mutedText,
     ];
 
     const getIconColor = () => {
-      if (disabled) return theme.colors.textSecondary;
+      if (disabled) return theme.colors.textMuted;
       switch (variant) {
         case "primary":
           return theme.colors.white;
@@ -204,6 +205,9 @@ const stylesheet = createStyleSheet((theme) => ({
   secondaryText: {
     color: theme.colors.textPrimary,
   },
+  mutedText: {
+    color: theme.colors.textMuted,
+  },
   outlineText: {
     color: theme.colors.textPrimary,
   },
@@ -223,7 +227,7 @@ const stylesheet = createStyleSheet((theme) => ({
   disabled: {
     backgroundColor: theme.colors.backgroundAlt,
     borderWidth: 0,
-    color: theme.colors.textPrimary,
+    color: theme.colors.textMuted,
   },
   // Layout
   fullWidth: {

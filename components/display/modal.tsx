@@ -45,14 +45,17 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
-interface ModalContentProps
-  extends Omit<RNModalProps, "transparent" | "animationType"> {
+interface ModalContentProps {
   title?: string;
-  children: React.ReactNode;
+  children:
+    | React.ReactNode
+    | ((props: { close: () => void }) => React.ReactNode);
   contentStyle?: ViewStyle;
   variant?: "default" | "bottomSheet";
   height?: number | `${number}%` | "auto";
   actions?: React.ReactNode;
+  visible?: boolean;
+  onRequestClose?: () => void;
 }
 
 interface ModalTriggerProps {
@@ -144,7 +147,9 @@ const ModalContent = ({
               </View>
             </View>
           )}
-          <ScrollView> {children}</ScrollView>
+          <ScrollView>
+            {typeof children === "function" ? children({ close }) : children}
+          </ScrollView>
         </Animated.View>
       </Animated.View>
     </RNModal>

@@ -103,15 +103,25 @@ export const ImageInput = ({
                 </Button>
               </Modal.Trigger>
               <Modal.Content title="Import from URL">
-                <Vertical>
-                  <Input
-                    placeholder="Enter URL"
-                    value={imageUrl}
-                    onChangeText={setImageUrl}
-                    style={{ flex: 1 }}
-                  />
-                  <Button onPress={handleUrlSubmit}>Upload</Button>
-                </Vertical>
+                {({ close }) => (
+                  <Vertical>
+                    <Input
+                      placeholder="Enter URL"
+                      value={imageUrl}
+                      onChangeText={setImageUrl}
+                      style={{ flex: 1 }}
+                    />
+                    <Button
+                      disabled={!imageUrl}
+                      onPress={() => {
+                        close();
+                        handleUrlSubmit();
+                      }}
+                    >
+                      Upload
+                    </Button>
+                  </Vertical>
+                )}
               </Modal.Content>
             </Modal>
             <Modal>
@@ -121,11 +131,14 @@ export const ImageInput = ({
                 </Button>
               </Modal.Trigger>
               <Modal.Content variant="bottomSheet" title="Import from URL">
-                <FileBrowser
-                  onSelect={(v) => {
-                    onChange(v);
-                  }}
-                />
+                {({ close }) => (
+                  <FileBrowser
+                    onSelect={(v) => {
+                      onChange(v);
+                      close();
+                    }}
+                  />
+                )}
               </Modal.Content>
             </Modal>
 
@@ -152,7 +165,7 @@ const imageStyles = createStyleSheet((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.backgroundAlt,
+    backgroundColor: theme.colors.background,
     overflow: "hidden",
     position: "relative",
   },
