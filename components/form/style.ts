@@ -78,7 +78,7 @@ export const formStyles = createStyleSheet((theme) => ({
   },
   richTextEditor: {
     flex: 1,
-    height: 300,
+    height: 600,
     color: theme.colors.textPrimary,
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,

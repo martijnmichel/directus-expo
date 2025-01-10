@@ -124,10 +124,10 @@ const ModalContent = ({
 
         <Animated.View
           entering={
-            variant === "bottomSheet" ? SlideInDown.springify() : FadeIn
+            variant === "bottomSheet" ? SlideInDown.duration(200) : FadeIn
           }
           exiting={
-            variant === "bottomSheet" ? SlideOutDown.springify() : FadeOut
+            variant === "bottomSheet" ? SlideOutDown.duration(200) : FadeOut
           }
           style={contentStyles}
           onStartShouldSetResponder={() => true}

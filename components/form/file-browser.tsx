@@ -10,7 +10,7 @@ import { Button } from "../display/button";
 import { Check } from "../icons";
 
 interface FileBrowserProps {
-  onSelect: (files: string | string[]) => void;
+  onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
 }
 
@@ -45,11 +45,9 @@ export const FileBrowser = ({
         ? selectedFiles.filter((f) => f.id !== file.id)
         : [...selectedFiles, file];
       setSelectedFiles(newSelection);
-      onSelect(newSelection.map((f) => f.id));
     } else {
       const newSelection = selectedFile?.id === file.id ? null : file;
       setSelectedFile(newSelection);
-      onSelect(newSelection?.id || "");
     }
   };
 
@@ -101,9 +99,12 @@ export const FileBrowser = ({
           disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
           onPress={() => {
             console.log({ selectedFile });
-            onSelect(
-              multiple ? selectedFiles.map((f) => f.id) : selectedFile?.id || ""
-            );
+            onSelect &&
+              onSelect(
+                multiple
+                  ? selectedFiles.map((f) => f.id)
+                  : selectedFile?.id || ""
+              );
           }}
         >
           <Check />

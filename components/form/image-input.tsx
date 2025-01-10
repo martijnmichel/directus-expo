@@ -162,7 +162,6 @@ const imageStyles = createStyleSheet((theme) => ({
     resizeMode: "cover",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "center",
     alignItems: "center",
