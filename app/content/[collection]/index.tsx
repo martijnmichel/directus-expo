@@ -4,7 +4,7 @@ import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
 import UserCollections from "@/components/content/UserCollections";
-import { useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { List, ListItem } from "@/components/display/list";
 import { map, some } from "lodash";
 import { useDocuments } from "@/state/queries/directus/collection";
@@ -13,6 +13,7 @@ import { CoreSchema } from "@directus/sdk";
 import { usePermissions } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { parseTemplate } from "@/helpers/document/template";
+import { useEffect } from "react";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -22,10 +23,11 @@ export default function Collection() {
 
   return (
     <Layout>
+      <Stack.Screen
+        options={{ headerTitle: getCollectionTranslation(data, "nl-NL") }}
+      />
       <Container>
         <Section>
-          <H1>{getCollectionTranslation(data, "nl-NL")}</H1>
-
           <List>
             {map(documents, (doc: { id: number }) => (
               <ListItem
