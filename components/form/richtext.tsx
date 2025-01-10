@@ -11,51 +11,6 @@ import {
   TenTapStartKit,
 } from "@10play/tentap-editor";
 
-const customEditorCSS = `
-.ProseMirror {
-  padding: 12px;
-  min-height: 150px;
-  color: inherit;
-  font-size: inherit;
-  line-height: inherit;
-}
-
-.ProseMirror p {
-  margin: 0;
-  line-height: 1.5;
-}
-
-.tiptap-toolbar {
-  background-color: #F0F4F9;
-  border-bottom: 1px solid #D3DAE4;
-  padding: 4px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.tiptap-toolbar button {
-  padding: 8px;
-  border-radius: 4px;
-  background: transparent;
-  border: none;
-  color: #4F5464;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tiptap-toolbar button.is-active {
-  background-color: #FFFFFF;
-  color: #6644FF;
-}
-
-.tiptap-toolbar button:hover {
-  background-color: rgba(255, 255, 255, 0.5);
-}
-`;
-
 interface RichTextProps {
   label?: string;
   error?: string;
@@ -75,6 +30,16 @@ export const RichText: React.FC<RichTextProps> = ({
   const editor = useEditorBridge({
     initialContent: value,
     avoidIosKeyboard: true,
+    bridgeExtensions: TenTapStartKit,
+    dynamicHeight: false,
+    theme: {
+      toolbar: {
+        toolbarBody: {
+          backgroundColor: "red",
+          height: 100,
+        },
+      },
+    },
     onChange: async () => {
       onChange?.(await editor.getHTML());
     },
@@ -88,15 +53,10 @@ export const RichText: React.FC<RichTextProps> = ({
     <View style={styles.formControl}>
       {label && <Text style={styles.label}>{label}</Text>}
 
-      <View style={styles.richTextContainer}>
-        <View style={styles.richTextToolbar}>
-          <Toolbar editor={editor} />
-        </View>
-        <BaseRichText
-          style={[styles.richTextEditor, error && styles.inputError]}
-          editor={editor}
-        />
-      </View>
+      <Toolbar editor={editor} hidden={false} />
+
+      <BaseRichText style={{ height: 500 }} editor={editor} />
+
       {(error || helper) && (
         <Text style={[styles.helperText, error && styles.errorText]}>
           {error || helper}

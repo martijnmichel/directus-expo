@@ -49,9 +49,9 @@ export const ListItem = ({
   if (href) {
     return (
       <Link href={href as RelativePathString}>
-        <Pressable style={[styles.item, style]} {...props}>
+        <View style={[styles.item, style]} {...props}>
           {renderContent()}
-        </Pressable>
+        </View>
       </Link>
     );
   }

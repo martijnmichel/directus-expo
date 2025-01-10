@@ -55,7 +55,7 @@ export const LoginForm = () => {
   };
 
   return (
-    <Form control={control} style={{ ...styles.form, minWidth: 300 }}>
+    <View style={{ ...styles.form, minWidth: 300 }}>
       <Controller
         control={control}
         rules={{ required: t("form.errors.emailRequired") }}
@@ -106,6 +106,6 @@ export const LoginForm = () => {
       <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
         {t("form.login")}
       </Button>
-    </Form>
+    </View>
   );
 };

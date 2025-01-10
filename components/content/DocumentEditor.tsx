@@ -22,6 +22,7 @@ import {
 import { Select } from "../form/select";
 import { TextArea } from "../form/textarea";
 import { RichText } from "../form/richtext";
+import { View } from "react-native";
 export const DocumentEditor = ({
   collection,
   id,
@@ -74,12 +75,9 @@ export const DocumentEditor = ({
         ) {
           return (
             <Collapsible key={item.field}>
-              <CollapsibleTrigger>
-                <ChevronRight />
-                {getLabel(item.field)}
-              </CollapsibleTrigger>
-              <CollapsibleContent style={{ padding: 8 }}>
-                {mapFields(item.meta.field)}
+              <CollapsibleTrigger>{getLabel(item.field)}</CollapsibleTrigger>
+              <CollapsibleContent>
+                <View style={styles.form}>{mapFields(item.meta.field)}</View>
               </CollapsibleContent>
             </Collapsible>
           );
@@ -87,6 +85,7 @@ export const DocumentEditor = ({
           if (item.type === "string") {
             return (
               <Controller
+                key={item.field}
                 control={control}
                 rules={{ required: item.meta.required }}
                 name={item.field as keyof CoreSchema[keyof CoreSchema]}
@@ -104,6 +103,7 @@ export const DocumentEditor = ({
           } else if (item.type === "number") {
             return (
               <Controller
+                key={item.field}
                 control={control}
                 rules={{ required: item.meta.required }}
                 name={item.field as keyof CoreSchema[keyof CoreSchema]}
@@ -123,6 +123,7 @@ export const DocumentEditor = ({
         } else if (item.meta.interface === "select-dropdown") {
           return (
             <Controller
+              key={item.field}
               control={control}
               rules={{ required: item.meta.required }}
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
@@ -140,6 +141,7 @@ export const DocumentEditor = ({
         } else if (item.meta.interface === "input-multiline") {
           return (
             <Controller
+              key={item.field}
               control={control}
               rules={{ required: item.meta.required }}
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
@@ -157,6 +159,7 @@ export const DocumentEditor = ({
         } else if (item.meta.interface === "input-rich-text-html") {
           return (
             <Controller
+              key={item.field}
               control={control}
               rules={{ required: item.meta.required }}
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
@@ -182,7 +185,7 @@ export const DocumentEditor = ({
 
   return (
     <FormProvider {...context}>
-      <Form style={styles.form}>
+      <View style={styles.form}>
         {mapFields()}
         <Button
           loading={context.formState.isSubmitting}
@@ -195,7 +198,7 @@ export const DocumentEditor = ({
         >
           Save
         </Button>
-      </Form>
+      </View>
     </FormProvider>
   );
 };

@@ -6,6 +6,7 @@ import {
   readFieldsByCollection,
   readItem,
   readItems,
+  readSingleton,
 } from "@directus/sdk";
 import { useQuery } from "@tanstack/react-query";
 
@@ -25,11 +26,17 @@ export const useDocuments = (collection: keyof CoreSchema) => {
   });
 };
 
-export const useDocument = (collection: keyof CoreSchema, id: number) => {
+export const useDocument = (
+  collection: keyof CoreSchema,
+  id: number | true
+) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["document", collection, id],
-    queryFn: () => directus?.request(readItem(collection, id)),
+    queryFn: () =>
+      id === true
+        ? directus?.request(readSingleton(collection))
+        : directus?.request(readItem(collection, id)),
   });
 };
 

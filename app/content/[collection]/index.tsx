@@ -27,8 +27,11 @@ export default function Collection() {
           <H1>{getCollectionTranslation(data, "nl-NL")}</H1>
 
           <List>
-            {map(documents, (doc) => (
-              <ListItem href={`/content/${collection}/${doc.id}`}>
+            {map(documents, (doc: { id: number }) => (
+              <ListItem
+                key={`document-${doc.id}--collection-${collection}`}
+                href={`/content/${collection}/${doc.id}`}
+              >
                 {parseTemplate(data?.meta.display_template || "", doc)}
               </ListItem>
             ))}
