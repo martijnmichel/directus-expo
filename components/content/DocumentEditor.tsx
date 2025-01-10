@@ -23,7 +23,7 @@ import { Select } from "../form/select";
 import { TextArea } from "../form/textarea";
 import { RichText } from "../form/richtext";
 import { View } from "react-native";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { Check } from "../icons";
 import { M2OInput } from "../form/m2o-input";
 import { ImageInput } from "../form/image-input";
@@ -223,6 +223,7 @@ export const DocumentEditor = ({
     await updateDoc(data, {
       onSuccess: (updatedDoc) => {
         context.reset(updatedDoc);
+        router.push("../");
       },
     });
   };

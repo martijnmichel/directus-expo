@@ -41,6 +41,13 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Cog size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="content"
+        options={{
+          headerShown: false,
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

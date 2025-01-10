@@ -81,9 +81,12 @@ export const Select = ({
             <FlatList
               data={options}
               keyExtractor={(item) => item.value.toString()}
-              renderItem={({ item }) => (
+              renderItem={({ item, index }) => (
                 <Pressable
-                  style={styles.option}
+                  style={[
+                    styles.option,
+                    index === options.length - 1 && styles.lastOption,
+                  ]}
                   onPress={() => {
                     onValueChange?.(item.value);
                     setModalVisible(false);
@@ -145,6 +148,9 @@ const selectStyles = createStyleSheet((theme) => ({
     padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
+  },
+  lastOption: {
+    borderBottomWidth: 0,
   },
   optionText: {
     ...theme.typography.body,

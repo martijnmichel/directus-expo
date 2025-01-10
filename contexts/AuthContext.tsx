@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .with(
         authentication("json", {
           autoRefresh: true,
+
           storage: {
             get: async () => {
               try {
@@ -58,7 +59,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           },
         })
       )
-      .with(rest());
+      .with(
+        rest({
+          onResponse: async (response) => {
+            if (response.status === 401) {
+              console.log(response);
+              await logout();
+              router.push("/login");
+            }
+            return response;
+          },
+        })
+      );
   };
   const [directus, setDirectus] = useState(initDirectus());
   const [isAuthenticated, setIsAuthenticated] = useState(false);
