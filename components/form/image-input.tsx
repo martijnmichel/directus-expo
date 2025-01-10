@@ -53,12 +53,11 @@ export const ImageInput = ({
         const data = new FormData();
         data.append("file", {
           uri: result.assets[0].uri,
-          type: "image/jpeg",
-          name: "image.jpg",
+          type: result.assets[0].mimeType || "image/jpeg",
+          name: result.assets[0].uri.split("/").pop() || "image.jpg",
         } as any);
 
         const file = await directus?.request(uploadFiles(data));
-        console.log({ file });
         if (file) {
           onChange(file?.id);
         }

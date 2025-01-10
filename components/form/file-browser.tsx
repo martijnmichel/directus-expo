@@ -86,7 +86,8 @@ export const FileBrowser = ({
                   {file.filename_download}
                 </Text>
                 <Text style={styles.fileInfo}>
-                  {formatFileSize(file.filesize)} • {file.type}
+                  {!!file.filesize && formatFileSize(Number(file.filesize))} •{" "}
+                  {file.type}
                 </Text>
               </View>
             </Pressable>
