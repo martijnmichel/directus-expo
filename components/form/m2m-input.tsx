@@ -14,8 +14,10 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { map } from "lodash";
+import { map, uniq } from "lodash";
 import { Link } from "expo-router";
+import { Horizontal } from "../layout/Stack";
+import { List } from "../display/list";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -38,6 +40,7 @@ export const M2MInput = ({
   const { styles } = useStyles(stylesheet);
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
+  const [value] = useState<number[]>(props.value);
   const [createItemOpen, setCreateItemOpen] = useState(false);
   const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
 
@@ -45,14 +48,14 @@ export const M2MInput = ({
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
 
-  const relation = relations?.find(
-    (r) => r.collection === item.collection && r.field === item.field
-  );
-
   const junction = relations?.find(
     (r) =>
-      r.collection === relation?.junction_collection &&
-      r.field === relation?.junction_field
+      r.related_collection === item.collection &&
+      r.meta.one_field === item.field
+  );
+
+  const relation = relations?.find(
+    (r) => r.field === junction?.meta.junction_field
   );
 
   const junctionPermissions =
@@ -67,21 +70,18 @@ export const M2MInput = ({
 
   const allowCreate = relationPermission?.create.access === "full";
 
-  const handleDelete = async (doc: CoreSchema[keyof CoreSchema]) => {
-    const newValue = props.value.filter((v) => v !== doc.id);
-    props.onChange(newValue);
-  };
+  console.log({ item, relation, junction, value, props });
 
   return (
     relation &&
     junction && (
       <View style={styles.container}>
         {label && <Text style={formControlStyles.label}>{label}</Text>}
-        <View style={styles.itemList}>
-          {map(props.value || [], (id) => {
-            const isNew = addedDocIds.includes(id);
-            const isDeselected = !props.value.includes(id);
-
+        <List>
+          {uniq([...(props.value || []), ...(value || [])]).map((id) => {
+            const isDeselected =
+              value?.includes(id) && !props.value.includes(id);
+            const isNew = !value?.includes(id);
             return (
               <DocListItem
                 key={id}
@@ -89,13 +89,23 @@ export const M2MInput = ({
                 junction={junction!}
                 relation={relation!}
                 template={item.meta.display_options?.template}
-                onDelete={handleDelete}
+                onDelete={(item) => {
+                  console.log({ item });
+                  setAddedDocIds(
+                    addedDocIds.filter(
+                      (v) =>
+                        v !==
+                        (item[relation.field as keyof typeof item] as number)
+                    )
+                  );
+                  props.onChange(props.value.filter((v) => v !== id));
+                }}
                 isNew={isNew}
                 isDeselected={isDeselected}
               />
             );
           })}
-        </View>
+        </List>
         {(error || helper) && (
           <Text
             style={[
@@ -107,11 +117,13 @@ export const M2MInput = ({
           </Text>
         )}
 
-        {allowCreate && (
-          <Link href={`/content/${relation.related_collection}/+`} asChild>
-            <Button variant="soft">Add new</Button>
-          </Link>
-        )}
+        <Horizontal>
+          {allowCreate && (
+            <Link href={`/content/${relation.related_collection}/+`} asChild>
+              <Button>Add new</Button>
+            </Link>
+          )}
+        </Horizontal>
       </View>
     )
   );
@@ -119,7 +131,7 @@ export const M2MInput = ({
 
 const stylesheet = createStyleSheet((theme) => ({
   container: {
-    gap: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   itemList: {
     gap: theme.spacing.sm,

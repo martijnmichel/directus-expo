@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CoreSchema,
+  Query,
   readCollection,
   readFields,
   readFieldsByCollection,
@@ -28,7 +29,8 @@ export const useDocuments = (collection: keyof CoreSchema) => {
 
 export const useDocument = (
   collection: keyof CoreSchema,
-  id: number | true
+  id: number | true,
+  query?: Query<CoreSchema, keyof CoreSchema>
 ) => {
   const { directus } = useAuth();
   return useQuery({
@@ -36,7 +38,7 @@ export const useDocument = (
     queryFn: () =>
       id === true
         ? directus?.request(readSingleton(collection))
-        : directus?.request(readItem(collection, id)),
+        : directus?.request(readItem(collection, id, query)),
   });
 };
 

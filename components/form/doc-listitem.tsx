@@ -35,7 +35,9 @@ export const DocListItem = <T extends keyof CoreSchema>({
     data: doc,
     isLoading,
     error,
-  } = useDocument(relation?.related_collection as keyof CoreSchema, docId);
+  } = useDocument(junction?.meta.many_collection as keyof CoreSchema, docId, {
+    fields: ["*.*"],
+  });
 
   if (error) {
     return (
@@ -46,7 +48,7 @@ export const DocListItem = <T extends keyof CoreSchema>({
           isNew && styles.listItemNew,
         ]}
       >
-        <Text>{error.toString()}</Text>
+        <Text>{JSON.stringify(error)}</Text>
       </View>
     );
   }
@@ -64,12 +66,14 @@ export const DocListItem = <T extends keyof CoreSchema>({
       </Pressable>
 
       <Link href={`/content/${relation.related_collection}/${docId}`} asChild>
-        <Button variant="soft">Edit</Button>
+        <Button variant="ghost" rounded>
+          <Edit />
+        </Button>
       </Link>
 
-      <Pressable onPress={() => onDelete?.(doc)} style={styles.deleteButton}>
-        <Trash size={20} />
-      </Pressable>
+      <Button variant="ghost" onPress={() => onDelete?.(doc)} rounded>
+        <Trash />
+      </Button>
     </View>
   ) : null;
 };
@@ -83,6 +87,7 @@ const stylesheet = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
+    height: 48,
   },
   listItemDeselected: {
     opacity: 0.5,
