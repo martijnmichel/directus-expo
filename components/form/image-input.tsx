@@ -74,13 +74,13 @@ export const ImageInput = ({
 
         <Vertical spacing="md" style={styles.uploadContainer}>
           <Horizontal spacing="md">
-            <Button variant="soft" onPress={pickImage}>
+            <Button variant="soft" rounded onPress={pickImage}>
               <Search />
             </Button>
 
             <Modal>
               <Modal.Trigger>
-                <Button variant="soft">
+                <Button rounded variant="soft">
                   <Link />
                 </Button>
               </Modal.Trigger>
@@ -95,7 +95,7 @@ export const ImageInput = ({
             </Modal>
             <Modal>
               <Modal.Trigger>
-                <Button variant="soft">
+                <Button rounded variant="soft">
                   <Gallery />
                 </Button>
               </Modal.Trigger>

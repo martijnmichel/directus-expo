@@ -11,6 +11,7 @@ import {
   ModalProps as RNModalProps,
   ViewStyle,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { X } from "../icons";
@@ -49,7 +50,7 @@ interface ModalContentProps
   children: React.ReactNode;
   contentStyle?: ViewStyle;
   variant?: "default" | "bottomSheet";
-  height?: number | string;
+  height?: number | `${number}%` | "auto";
 }
 
 interface ModalTriggerProps {
@@ -74,7 +75,7 @@ const ModalContent = ({
   children,
   contentStyle,
   variant = "default",
-  height = "70%",
+  height = "50%",
   ...props
 }: ModalContentProps) => {
   const { styles } = useStyles(modalStyles);
@@ -82,10 +83,10 @@ const ModalContent = ({
 
   const contentStyles = [
     styles.modalContent,
-    variant === "bottomSheet" && [
-      styles.bottomSheetContent,
-      { height: height },
-    ],
+    variant === "bottomSheet" && {
+      ...styles.bottomSheetContent,
+      height: typeof height === "number" ? height : height,
+    },
     contentStyle,
   ];
 
@@ -106,6 +107,18 @@ const ModalContent = ({
         ]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+
+        {variant === "bottomSheet" && (
+          <Button
+            onPress={close}
+            variant="soft"
+            rounded
+            style={styles.closeButton}
+          >
+            <X size={24} />
+          </Button>
+        )}
+
         <Animated.View
           entering={
             variant === "bottomSheet" ? SlideInDown.springify() : FadeIn
@@ -119,18 +132,12 @@ const ModalContent = ({
           {variant === "bottomSheet" && (
             <View style={styles.bottomSheetHandle} />
           )}
-          <View style={styles.header}>
-            {title && <H2>{title}</H2>}
-            <Button
-              variant="ghost"
-              rounded
-              onPress={close}
-              style={styles.closeButton}
-            >
-              <X />
-            </Button>
-          </View>
-          {children}
+          {title && (
+            <View style={styles.header}>
+              <H2>{title}</H2>
+            </View>
+          )}
+          <ScrollView> {children}</ScrollView>
         </Animated.View>
       </Animated.View>
     </RNModal>
@@ -171,9 +178,6 @@ const modalStyles = createStyleSheet((theme) => ({
     justifyContent: "space-between",
     paddingBottom: theme.spacing.lg,
   },
-  closeButton: {
-    marginLeft: "auto",
-  },
   bottomSheetOverlay: {
     justifyContent: "flex-end",
     padding: 0,
@@ -182,10 +186,12 @@ const modalStyles = createStyleSheet((theme) => ({
     width: "100%",
     maxWidth: "100%",
     marginHorizontal: 0,
-    borderRadius: theme.borderRadius.lg,
+    borderTopLeftRadius: theme.borderRadius.lg,
+    borderTopRightRadius: theme.borderRadius.lg,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     paddingTop: theme.spacing.sm,
+    backgroundColor: theme.colors.background,
   },
   bottomSheetHandle: {
     width: 36,
@@ -194,5 +200,21 @@ const modalStyles = createStyleSheet((theme) => ({
     borderRadius: 2.5,
     alignSelf: "center",
     marginBottom: theme.spacing.sm,
+  },
+  closeButtonWrapper: {
+    position: "absolute",
+    top: theme.spacing.xl,
+    right: theme.spacing.lg,
+    zIndex: 1,
+  },
+  closeButton: {
+    marginLeft: "auto",
+    marginRight: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    shadowColor: theme.colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 }));

@@ -1,6 +1,6 @@
 import { lightTheme } from "@/unistyles/theme";
 import React from "react";
-import { View } from "react-native";
+import { View, ViewStyle } from "react-native";
 import {
   createStyleSheet,
   UnistylesBreakpoints,
@@ -13,7 +13,7 @@ interface GridProps {
   children: React.ReactNode;
   spacing?: keyof typeof lightTheme.spacing;
   cols: Partial<Record<Breakpoint, number>>;
-  padding?: keyof typeof lightTheme.spacing;
+  style?: ViewStyle;
 }
 
 interface GridItemProps {
@@ -29,17 +29,15 @@ const GridItem: React.FC<GridItemProps> = ({
   spacing,
   totalColumns,
 }) => {
-  const { styles } = useStyles(stylesheet);
+  console.log("GridItem width calc:", `${(span / totalColumns) * 100}%`);
 
   return (
     <View
-      style={[
-        styles.gridItem,
-        {
-          width: `${(span / totalColumns) * 100}%`,
-          padding: spacing / 2,
-        },
-      ]}
+      style={{
+        width: `${(span / totalColumns) * 100}%`,
+        padding: spacing / 2,
+        flexDirection: "column",
+      }}
     >
       {children}
     </View>
@@ -50,22 +48,28 @@ export const Grid: React.FC<GridProps> = ({
   children,
   spacing = "md",
   cols = { xs: 1, sm: 2, md: 3, lg: 4, xl: 4 },
-  padding = "xs",
+  style,
 }) => {
-  const { styles, theme, breakpoint } = useStyles(stylesheet);
+  const { theme, breakpoint } = useStyles(stylesheet);
 
-  const currentColumns = cols[breakpoint] || 1;
+  console.log("Current breakpoint:", breakpoint);
+  console.log("Columns config:", cols);
+
+  const currentColumns = cols[breakpoint as keyof typeof cols] || cols.xs || 1;
+  console.log("Selected columns:", currentColumns);
+
   const spacingValue = theme.spacing[spacing];
-  const paddingValue = theme.spacing[padding];
 
   return (
     <View
       style={[
-        styles.container,
         {
-          padding: paddingValue,
+          flexDirection: "row",
+          flexWrap: "wrap",
           margin: -(spacingValue / 2),
+          width: "100%",
         },
+        style,
       ]}
     >
       {React.Children.map(children, (child) => {
@@ -73,6 +77,7 @@ export const Grid: React.FC<GridProps> = ({
 
         return (
           <GridItem
+            key={child.key}
             spacing={spacingValue}
             totalColumns={currentColumns}
             span={child.props.span || 1}
@@ -86,11 +91,5 @@ export const Grid: React.FC<GridProps> = ({
 };
 
 const stylesheet = createStyleSheet((theme) => ({
-  container: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  gridItem: {
-    flexDirection: "column",
-  },
+  // Moved styles inline for better control
 }));
