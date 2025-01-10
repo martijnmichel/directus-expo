@@ -10,7 +10,7 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
 import { cloneElement, isValidElement } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "soft";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface IconProps {
@@ -152,6 +152,12 @@ const stylesheet = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.primary,
     borderColor: theme.colors.primary,
   },
+
+  soft: {
+    backgroundColor: theme.colors.backgroundAlt,
+    borderColor: theme.colors.border,
+  },
+
   secondary: {
     backgroundColor: theme.colors.background,
     borderColor: theme.colors.border,
@@ -193,11 +199,14 @@ const stylesheet = createStyleSheet((theme) => ({
   primaryText: {
     color: theme.colors.white,
   },
+  softText: {
+    color: theme.colors.white,
+  },
   secondaryText: {
     color: theme.colors.textPrimary,
   },
   outlineText: {
-    color: theme.colors.primary,
+    color: theme.colors.textPrimary,
   },
   ghostText: {
     color: theme.colors.primary,

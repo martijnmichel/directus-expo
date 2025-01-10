@@ -1,0 +1,162 @@
+import React, { useState } from "react";
+import { View, Text, Image, Pressable } from "react-native";
+import { createStyleSheet, useStyles } from "react-native-unistyles";
+import * as ImagePicker from "expo-image-picker";
+import { formStyles } from "./style";
+import { Horizontal, Vertical } from "../layout/Stack";
+import { Button } from "../display/button";
+import { Input } from "./input";
+import { Download, Search, Edit, X, Link, Gallery } from "../icons";
+import { useAuth } from "@/contexts/AuthContext";
+import { Modal } from "../display/modal";
+import { FileBrowser } from "./file-browser";
+
+interface ImageInputProps {
+  label?: string;
+  error?: string;
+  helper?: string;
+  value?: string;
+  onChange?: (value: string | null) => void;
+  onUpload?: (file: ImagePicker.ImagePickerAsset) => Promise<void>;
+}
+
+export const ImageInput = ({
+  label,
+  error,
+  helper,
+  value,
+  onChange,
+  onUpload,
+}: ImageInputProps) => {
+  const { styles, theme } = useStyles(imageStyles);
+  const { styles: formStyle } = useStyles(formStyles);
+  const [imageUrl, setImageUrl] = useState("");
+  const { directus } = useAuth();
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      onUpload?.(result.assets[0]);
+    }
+  };
+
+  const handleUrlSubmit = () => {
+    onChange?.(imageUrl);
+    setImageUrl("");
+  };
+
+  return (
+    <View style={formStyle.formControl}>
+      {label && <Text style={formStyle.label}>{label}</Text>}
+
+      <View style={styles.container}>
+        <View style={styles.imagePreview}>
+          <Image
+            source={{ uri: `${directus?.url}/assets/${value}` }}
+            style={styles.image}
+          />
+          <View style={styles.overlay}>
+            <Horizontal spacing="sm">
+              <Button variant="ghost" rounded onPress={pickImage}>
+                <Edit />
+              </Button>
+              <Button variant="ghost" rounded onPress={() => onChange?.(null)}>
+                <X />
+              </Button>
+            </Horizontal>
+          </View>
+        </View>
+
+        <Vertical spacing="md" style={styles.uploadContainer}>
+          <Horizontal spacing="md">
+            <Button variant="soft" onPress={pickImage}>
+              <Search />
+            </Button>
+
+            <Modal>
+              <Modal.Trigger>
+                <Button variant="soft">
+                  <Link />
+                </Button>
+              </Modal.Trigger>
+              <Modal.Content title="Import from URL">
+                <Input
+                  placeholder="Enter URL"
+                  value={imageUrl}
+                  onChangeText={setImageUrl}
+                  style={{ flex: 1 }}
+                />
+              </Modal.Content>
+            </Modal>
+
+            <Button variant="soft">
+              <Gallery />
+            </Button>
+          </Horizontal>
+        </Vertical>
+      </View>
+
+      {(error || helper) && (
+        <Text style={[formStyle.helperText, error && formStyle.errorText]}>
+          {error || helper}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+const imageStyles = createStyleSheet((theme) => ({
+  container: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background,
+    overflow: "hidden",
+    position: "relative",
+  },
+  uploadContainer: {
+    padding: theme.spacing.xl,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    top: 0,
+    backgroundColor: "transparent",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imagePreview: {
+    position: "relative",
+    aspectRatio: 16 / 9,
+    width: "100%",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+    opacity: 0,
+  },
+  overlayVisible: {
+    opacity: 1,
+  },
+  orText: {
+    ...theme.typography.body,
+    color: theme.colors.textTertiary,
+  },
+  urlInput: {
+    width: "100%",
+  },
+}));

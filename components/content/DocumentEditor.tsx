@@ -26,6 +26,7 @@ import { View } from "react-native";
 import { Stack } from "expo-router";
 import { Check } from "../icons";
 import { M2OInput } from "../form/m2o-input";
+import { ImageInput } from "../form/image-input";
 export const DocumentEditor = ({
   collection,
   id,
@@ -194,6 +195,23 @@ export const DocumentEditor = ({
                   onValueChange={onChange}
                   label={getLabel(item.field)}
                   helper={item.meta.note || undefined}
+                />
+              )}
+            />
+          );
+        } else if (item.meta.interface === "file-image") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              rules={{ required: item.meta.required }}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value } }) => (
+                <ImageInput
+                  label={getLabel(item.field)}
+                  helper={item.meta.note || undefined}
+                  value={value as string}
+                  onChange={onChange}
                 />
               )}
             />
