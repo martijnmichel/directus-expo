@@ -4,11 +4,11 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface StackProps extends ViewProps {
   children: React.ReactNode;
-  spacing?: number;
+  spacing?: number | "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
   reverse?: boolean;
 }
 
-export const VStack = ({
+export const Vertical = ({
   children,
   spacing,
   reverse = false,
@@ -16,7 +16,8 @@ export const VStack = ({
   ...props
 }: StackProps) => {
   const { styles, theme } = useStyles(stylesheet);
-  const gap = spacing ?? theme.spacing.md;
+  const gap =
+    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "md"];
 
   return (
     <View
@@ -28,7 +29,7 @@ export const VStack = ({
   );
 };
 
-export const HStack = ({
+export const Horizontal = ({
   children,
   spacing,
   reverse = false,
@@ -36,7 +37,8 @@ export const HStack = ({
   ...props
 }: StackProps) => {
   const { styles, theme } = useStyles(stylesheet);
-  const gap = spacing ?? theme.spacing.md;
+  const gap =
+    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "md"];
 
   return (
     <View

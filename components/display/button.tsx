@@ -13,12 +13,17 @@ import { cloneElement, isValidElement } from "react";
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 
+interface IconProps {
+  color?: string;
+  size?: number;
+}
+
 interface ButtonProps extends TouchableOpacityProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  leftIcon?: React.ReactElement<IconProps>;
+  rightIcon?: React.ReactElement<IconProps>;
   fullWidth?: boolean;
   rounded?: boolean;
   children: React.ReactNode;
@@ -98,7 +103,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
           )}
           {typeof children === "string" ? (
             <Text style={getTextStyles()}>{children}</Text>
-          ) : isValidElement(children) ? (
+          ) : isValidElement<IconProps>(children) ? (
             cloneElement(children, { color: iconColor, size: iconSize })
           ) : (
             children
@@ -132,7 +137,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: theme.borderRadius.full,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: "transparent",
     height: 44,

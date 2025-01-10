@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Layout } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
@@ -8,11 +8,11 @@ import UserCollections from "@/components/content/UserCollections";
 export default function Home() {
   return (
     <Layout>
-      <Container>
-        <Section>
+      <ScrollView>
+        <Container>
           <UserCollections />
-        </Section>
-      </Container>
+        </Container>
+      </ScrollView>
     </Layout>
   );
 }

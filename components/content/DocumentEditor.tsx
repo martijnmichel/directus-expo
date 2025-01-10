@@ -25,6 +25,7 @@ import { RichText } from "../form/richtext";
 import { View } from "react-native";
 import { Stack } from "expo-router";
 import { Check } from "../icons";
+import { M2OInput } from "../form/m2o-input";
 export const DocumentEditor = ({
   collection,
   id,
@@ -95,6 +96,7 @@ export const DocumentEditor = ({
                   <Input
                     onChangeText={onChange}
                     value={value as string}
+                    helper={item.meta.note || undefined}
                     placeholder={item.meta.display_options?.placeholder}
                     label={getLabel(item.field)}
                     autoCapitalize="none"
@@ -113,6 +115,7 @@ export const DocumentEditor = ({
                   <Input
                     onChangeText={onChange}
                     value={value as string}
+                    helper={item.meta.note || undefined}
                     placeholder={item.meta.display_options?.placeholder}
                     label={getLabel(item.field)}
                     autoCapitalize="none"
@@ -134,6 +137,7 @@ export const DocumentEditor = ({
                   options={item.meta.display_options?.choices || []}
                   onValueChange={onChange}
                   value={value as string}
+                  helper={item.meta.note || undefined}
                   placeholder={item.meta.display_options?.placeholder}
                   label={getLabel(item.field)}
                 />
@@ -154,6 +158,7 @@ export const DocumentEditor = ({
                   placeholder={item.meta.display_options?.placeholder}
                   label={getLabel(item.field)}
                   autoCapitalize="none"
+                  helper={item.meta.note || undefined}
                 />
               )}
             />
@@ -170,6 +175,25 @@ export const DocumentEditor = ({
                   onChange={onChange}
                   value={value as string}
                   label={getLabel(item.field)}
+                  helper={item.meta.note || undefined}
+                />
+              )}
+            />
+          );
+        } else if (item.meta.interface === "select-dropdown-m2o") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              rules={{ required: item.meta.required }}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value } }) => (
+                <M2OInput
+                  item={item}
+                  value={value as string}
+                  onValueChange={onChange}
+                  label={getLabel(item.field)}
+                  helper={item.meta.note || undefined}
                 />
               )}
             />

@@ -54,7 +54,9 @@ export const Select = ({
         <Text
           style={[styles.selectText, !selectedOption && styles.placeholder]}
         >
-          {selectedOption ? selectedOption.value : placeholder}
+          {selectedOption
+            ? selectedOption.text || selectedOption.value
+            : placeholder}
         </Text>
         <ChevronDown />
       </Pressable>
@@ -135,6 +137,9 @@ const selectStyles = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.lg,
     maxHeight: "80%",
+    width: "90%",
+    maxWidth: 500,
+    marginHorizontal: "auto",
   },
   option: {
     padding: theme.spacing.lg,
