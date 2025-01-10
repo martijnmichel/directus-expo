@@ -42,7 +42,7 @@ export default function UserCollections() {
         ) {
           return (
             <ListItem
-              href={`/content/${collection.collection}`}
+              href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
             >
               {collection.collection}
