@@ -10,3 +10,4 @@ export * from "./Link";
 export * from "./Gallery";
 export * from "./Upload";
 export * from "./ArrowBack";
+export * from "./Trash";

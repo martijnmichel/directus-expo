@@ -27,12 +27,15 @@ import { router, Stack } from "expo-router";
 import { Check } from "../icons";
 import { M2OInput } from "../form/m2o-input";
 import { ImageInput } from "../form/image-input";
+import { M2MInput } from "../form/m2m-input";
 export const DocumentEditor = ({
   collection,
   id,
+  onSave,
 }: {
   collection: keyof CoreSchema;
   id: number;
+  onSave?: (doc: CoreSchema<keyof CoreSchema>) => void;
 }) => {
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
@@ -216,6 +219,23 @@ export const DocumentEditor = ({
               )}
             />
           );
+        } else if (item.meta.interface === "list-m2m") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value } }) => (
+                <M2MInput
+                  value={value as number[]}
+                  onChange={onChange}
+                  item={item}
+                  label={getLabel(item.field)}
+                  helper={item.meta.note || undefined}
+                />
+              )}
+            />
+          );
         }
       });
 
@@ -224,6 +244,7 @@ export const DocumentEditor = ({
       onSuccess: (updatedDoc) => {
         context.reset(updatedDoc);
         router.push("../");
+        onSave?.(updatedDoc);
       },
     });
   };

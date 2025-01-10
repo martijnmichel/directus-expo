@@ -1,0 +1,20 @@
+version: "3"
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - 8056:8055
+    volumes:
+      - ./uploads:/directus/uploads
+    environment:
+      SECRET: 'a1df62aa-dda7-49f4-9871sdf#@#ff876-9618ff875'
+      ADMIN_EMAIL: 'martijn.michel@gmail.com'
+      ADMIN_PASSWORD: 'CB4i79%jcfCF2q'
+      DB_CLIENT: 'mysql2'
+      MAX_PAYLOAD_SIZE: '100mb'
+      DB_HOST: '85.214.16.248'
+      DB_PORT: '3306'
+      DB_DATABASE: 'directus_expo'
+      DB_USER: 'directus-expo'
+      DB_PASSWORD: 'Yhz5_764x'
+      PUBLIC_URL: 'https://directus-expo-test.martijnvde.nl'
