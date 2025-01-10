@@ -6,11 +6,20 @@ import { formStyles } from "./style";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { Button } from "../display/button";
 import { Input } from "./input";
-import { Download, Search, Edit, X, Link, Gallery, Check } from "../icons";
+import {
+  Download,
+  Search,
+  Edit,
+  X,
+  Link,
+  Gallery,
+  Check,
+  Upload,
+} from "../icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
 import { FileBrowser } from "./file-browser";
-import { uploadFiles } from "@directus/sdk";
+import { importFile, uploadFiles } from "@directus/sdk";
 
 interface ImageInputProps {
   label?: string;
@@ -49,6 +58,7 @@ export const ImageInput = ({
         } as any);
 
         const file = await directus?.request(uploadFiles(data));
+        console.log({ file });
         if (file) {
           onChange(file?.id);
         }
@@ -58,11 +68,17 @@ export const ImageInput = ({
     }
   };
 
-  const handleUrlSubmit = () => {
-    onChange?.(imageUrl);
-    setImageUrl("");
+  const handleUrlSubmit = async () => {
+    try {
+      const file = await directus?.request(importFile(imageUrl));
+      if (file) {
+        onChange(file.id);
+      }
+      setImageUrl("");
+    } catch (error) {
+      console.error("Error importing image from URL:", error);
+    }
   };
-
   return (
     <View style={formStyle.formControl}>
       {label && <Text style={formStyle.label}>{label}</Text>}
@@ -73,22 +89,12 @@ export const ImageInput = ({
             source={{ uri: `${directus?.url}/assets/${value}` }}
             style={styles.image}
           />
-          <View style={styles.overlay}>
-            <Horizontal spacing="sm">
-              <Button variant="ghost" rounded onPress={pickImage}>
-                <Edit />
-              </Button>
-              <Button variant="ghost" rounded onPress={() => onChange?.(null)}>
-                <X />
-              </Button>
-            </Horizontal>
-          </View>
         </View>
 
         <Vertical spacing="md" style={styles.uploadContainer}>
           <Horizontal spacing="md">
             <Button variant="soft" rounded onPress={pickImage}>
-              <Search />
+              <Upload />
             </Button>
 
             <Modal>
@@ -98,12 +104,15 @@ export const ImageInput = ({
                 </Button>
               </Modal.Trigger>
               <Modal.Content title="Import from URL">
-                <Input
-                  placeholder="Enter URL"
-                  value={imageUrl}
-                  onChangeText={setImageUrl}
-                  style={{ flex: 1 }}
-                />
+                <Vertical>
+                  <Input
+                    placeholder="Enter URL"
+                    value={imageUrl}
+                    onChangeText={setImageUrl}
+                    style={{ flex: 1 }}
+                  />
+                  <Button onPress={handleUrlSubmit}>Upload</Button>
+                </Vertical>
               </Modal.Content>
             </Modal>
             <Modal>
@@ -113,9 +122,19 @@ export const ImageInput = ({
                 </Button>
               </Modal.Trigger>
               <Modal.Content variant="bottomSheet" title="Import from URL">
-                <FileBrowser onSelect={onChange} />
+                <FileBrowser
+                  onSelect={(v) => {
+                    onChange(v);
+                  }}
+                />
               </Modal.Content>
             </Modal>
+
+            {value && (
+              <Button variant="soft" rounded onPress={() => onChange?.("")}>
+                <X />
+              </Button>
+            )}
           </Horizontal>
         </Vertical>
       </View>
@@ -134,7 +153,7 @@ const imageStyles = createStyleSheet((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.backgroundAlt,
     overflow: "hidden",
     position: "relative",
   },

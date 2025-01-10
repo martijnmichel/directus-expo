@@ -155,7 +155,6 @@ const stylesheet = createStyleSheet((theme) => ({
 
   soft: {
     backgroundColor: theme.colors.backgroundAlt,
-    borderColor: theme.colors.border,
   },
 
   secondary: {

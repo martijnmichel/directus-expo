@@ -8,3 +8,4 @@ export * from "./X";
 export * from "./types";
 export * from "./Link";
 export * from "./Gallery";
+export * from "./Upload";
