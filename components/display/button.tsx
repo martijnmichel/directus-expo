@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
+import { cloneElement, isValidElement } from "react";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
@@ -54,17 +55,61 @@ export const Button = React.forwardRef<any, ButtonProps>(
       styles.text,
       styles[`${variant}Text`],
       styles[`${size}Text`],
-      disabled && styles.disabledText,
     ];
 
-    const LoadingSpinner = () => (
-      <ActivityIndicator
-        color={
-          variant === "primary" ? theme.colors.white : theme.colors.primary
-        }
-        style={styles.spinner}
-      />
-    );
+    const getIconColor = () => {
+      if (disabled) return theme.colors.textSecondary;
+      switch (variant) {
+        case "primary":
+          return theme.colors.white;
+        case "secondary":
+          return theme.colors.textPrimary;
+        default:
+          return theme.colors.primary;
+      }
+    };
+
+    const renderContent = () => {
+      if (loading) {
+        return (
+          <ActivityIndicator
+            color={
+              variant === "primary" ? theme.colors.white : theme.colors.primary
+            }
+            style={styles.spinner}
+          />
+        );
+      }
+
+      const iconColor = getIconColor();
+      const iconSize = size === "sm" ? 16 : size === "lg" ? 24 : 20;
+
+      return (
+        <View style={styles.content}>
+          {leftIcon && (
+            <View style={styles.leftIcon}>
+              {isValidElement(leftIcon)
+                ? cloneElement(leftIcon, { color: iconColor, size: iconSize })
+                : leftIcon}
+            </View>
+          )}
+          {typeof children === "string" ? (
+            <Text style={getTextStyles()}>{children}</Text>
+          ) : isValidElement(children) ? (
+            cloneElement(children, { color: iconColor, size: iconSize })
+          ) : (
+            children
+          )}
+          {rightIcon && (
+            <View style={styles.rightIcon}>
+              {isValidElement(rightIcon)
+                ? cloneElement(rightIcon, { color: iconColor, size: iconSize })
+                : rightIcon}
+            </View>
+          )}
+        </View>
+      );
+    };
 
     return (
       <TouchableOpacity
@@ -73,15 +118,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading ? (
-          <LoadingSpinner />
-        ) : (
-          <View style={styles.content}>
-            {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
-            <Text style={getTextStyles()}>{children}</Text>
-            {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
-          </View>
-        )}
+        {renderContent()}
       </TouchableOpacity>
     );
   }
@@ -92,7 +129,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.full,
     borderWidth: 1,
     borderColor: "transparent",
     height: 44,
@@ -135,10 +172,12 @@ const stylesheet = createStyleSheet((theme) => ({
     paddingHorizontal: theme.spacing.xl,
     minHeight: 48,
   },
+
   // Text styles
   text: {
     fontWeight: "500",
     textAlign: "center",
+    color: "white",
   },
   primaryText: {
     color: theme.colors.white,
@@ -163,10 +202,9 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   // States
   disabled: {
-    opacity: 0.5,
-  },
-  disabledText: {
-    color: theme.colors.textSecondary,
+    backgroundColor: theme.colors.backgroundAlt,
+    borderWidth: 0,
+    color: theme.colors.textPrimary,
   },
   // Layout
   fullWidth: {

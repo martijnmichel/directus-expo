@@ -23,6 +23,8 @@ import { Select } from "../form/select";
 import { TextArea } from "../form/textarea";
 import { RichText } from "../form/richtext";
 import { View } from "react-native";
+import { Stack } from "expo-router";
+import { Check } from "../icons";
 export const DocumentEditor = ({
   collection,
   id,
@@ -185,20 +187,24 @@ export const DocumentEditor = ({
 
   return (
     <FormProvider {...context}>
-      <View style={styles.form}>
-        {mapFields()}
-        <Button
-          loading={context.formState.isSubmitting}
-          disabled={
-            !context.formState.isDirty ||
-            !context.formState.isValid ||
-            context.formState.isSubmitting
-          }
-          onPress={context.handleSubmit(handleSubmit)}
-        >
-          Save
-        </Button>
-      </View>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Button
+              loading={context.formState.isSubmitting}
+              disabled={
+                !context.formState.isDirty ||
+                !context.formState.isValid ||
+                context.formState.isSubmitting
+              }
+              onPress={context.handleSubmit(handleSubmit)}
+            >
+              <Check />
+            </Button>
+          ),
+        }}
+      />
+      <View style={styles.form}>{mapFields()}</View>
     </FormProvider>
   );
 };
