@@ -58,7 +58,7 @@ export const FileBrowser = ({
 
   return (
     <>
-      <Grid cols={{ xs: 1, sm: 2, md: 3, lg: 4 }} spacing="md">
+      <Grid cols={{ xs: 2, sm: 3, md: 4, lg: 5 }} spacing="md">
         {files.map((file) => {
           const selected = isSelected(file);
           return (

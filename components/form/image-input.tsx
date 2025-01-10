@@ -41,14 +41,14 @@ export const ImageInput = ({
 
     if (!result.canceled && result.assets[0]) {
       try {
-        const response = await fetch(result.assets[0].uri);
-        const blob = await response.blob();
-
         const data = new FormData();
-        data.append("file", blob, "image.jpg");
+        data.append("file", {
+          uri: result.assets[0].uri,
+          type: "image/jpeg",
+          name: "image.jpg",
+        } as any);
 
         const file = await directus?.request(uploadFiles(data));
-        console.log(file);
         if (file) {
           onChange(file?.id);
         }
