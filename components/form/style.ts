@@ -51,8 +51,6 @@ export const formStyles = createStyleSheet((theme) => ({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,
-    display: "flex",
-    flexDirection: "column",
     overflow: "hidden", // Ensures toolbar corners match container
   },
   richTextToolbar: {
@@ -85,5 +83,7 @@ export const formStyles = createStyleSheet((theme) => ({
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,
     backgroundColor: theme.colors.background,
+    paddingLeft: theme.spacing.md,
+    paddingRight: theme.spacing.sm,
   },
 }));

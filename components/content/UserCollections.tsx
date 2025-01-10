@@ -25,7 +25,10 @@ export default function UserCollections() {
           (!collection.schema && parent === collection.meta.group)
         ) {
           return (
-            <Collapsible key={`collection-${collection.collection}`}>
+            <Collapsible
+              defaultOpen={collection.meta.collapse === "open"}
+              key={`collection-${collection.collection}`}
+            >
               <CollapsibleTrigger>{collection.collection}</CollapsibleTrigger>
               <CollapsibleContent style={{ paddingLeft: 20 }}>
                 <List>{renderCollections(collection.collection)}</List>

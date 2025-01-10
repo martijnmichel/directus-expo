@@ -11,12 +11,28 @@
             "loginFailed": "Inloggen mislukt. Controleer uw gegevens."
         }
     },
+    "navigation": {
+        "content": "Inhoud",
+        "users": "Gebruikers",
+        "settings": "Instellingen"
+    },
     "button": {
         "getStarted": "Gratis beginnen",
         "learnMore": "Meer informatie",
-        "viewGithub": "Bekijk op GitHub"
+        "viewGithub": "Bekijk op GitHub",
+        "save": "Opslaan",
+        "cancel": "Annuleren",
+        "close": "Sluiten"
     },
     "common": {
-        "loading": "Laden..."
+        "loading": "Laden...",
+        "error": "Fout",
+        "success": "Succes",
+        "warning": "Waarschuwing"
+    },
+    "layout": {
+        "noData": "Geen gegevens beschikbaar",
+        "loadingMore": "Meer laden...",
+        "showMore": "Toon meer"
     }
 }

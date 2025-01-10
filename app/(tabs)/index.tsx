@@ -10,7 +10,6 @@ export default function Home() {
     <Layout>
       <Container>
         <Section>
-          <H1>Home screen</H1>
           <UserCollections />
         </Section>
       </Container>

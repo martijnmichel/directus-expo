@@ -11,12 +11,28 @@
             "loginFailed": "Login failed. Please check your credentials."
         }
     },
+    "navigation": {
+        "content": "Content",
+        "users": "Users",
+        "settings": "Settings"
+    },
     "button": {
         "getStarted": "Get Started Free",
         "learnMore": "Learn More",
-        "viewGithub": "View on GitHub"
+        "viewGithub": "View on GitHub",
+        "save": "Save",
+        "cancel": "Cancel",
+        "close": "Close"
     },
     "common": {
-        "loading": "Loading..."
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "warning": "Warning"
+    },
+    "layout": {
+        "noData": "No data available",
+        "loadingMore": "Loading more...",
+        "showMore": "Show more"
     }
 }
