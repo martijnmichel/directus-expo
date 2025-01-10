@@ -20,6 +20,7 @@ interface ButtonProps extends TouchableOpacityProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   fullWidth?: boolean;
+  rounded?: boolean;
   children: React.ReactNode;
 }
 
@@ -32,6 +33,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
       leftIcon,
       rightIcon,
       fullWidth = false,
+      rounded = false,
       disabled,
       style,
       children,
@@ -46,6 +48,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
       styles.base,
       styles[variant],
       styles[size],
+      rounded && styles.rounded,
       fullWidth && styles.fullWidth,
       disabled && styles.disabled,
       style,
@@ -161,16 +164,19 @@ const stylesheet = createStyleSheet((theme) => ({
     paddingVertical: theme.spacing.xs,
     paddingHorizontal: theme.spacing.md,
     minHeight: 32,
+    minWidth: 32,
   },
   md: {
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     minHeight: 40,
+    minWidth: 40,
   },
   lg: {
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.xl,
     minHeight: 48,
+    minWidth: 48,
   },
 
   // Text styles
@@ -219,5 +225,13 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   spinner: {
     marginHorizontal: theme.spacing.xs,
+  },
+  // New rounded style
+  rounded: {
+    borderRadius: 9999,
+    paddingHorizontal: 0,
+    aspectRatio: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 }));

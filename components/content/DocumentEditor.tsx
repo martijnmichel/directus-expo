@@ -191,6 +191,7 @@ export const DocumentEditor = ({
         options={{
           headerRight: () => (
             <Button
+              rounded
               loading={context.formState.isSubmitting}
               disabled={
                 !context.formState.isDirty ||
