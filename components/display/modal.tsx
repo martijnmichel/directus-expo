@@ -10,11 +10,22 @@ import {
   Pressable,
   ModalProps as RNModalProps,
   ViewStyle,
+  StyleSheet,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { X } from "../icons";
 import { H2 } from "./typography";
 import { Button } from "./button";
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+  SlideOutDown,
+  withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 interface ModalContextType {
   isOpen: boolean;
@@ -37,6 +48,8 @@ interface ModalContentProps
   title?: string;
   children: React.ReactNode;
   contentStyle?: ViewStyle;
+  variant?: "default" | "bottomSheet";
+  height?: number | string;
 }
 
 interface ModalTriggerProps {
@@ -60,24 +73,52 @@ const ModalContent = ({
   title,
   children,
   contentStyle,
+  variant = "default",
+  height = "70%",
   ...props
 }: ModalContentProps) => {
   const { styles } = useStyles(modalStyles);
   const { isOpen, close } = useContext(ModalContext);
 
+  const contentStyles = [
+    styles.modalContent,
+    variant === "bottomSheet" && [
+      styles.bottomSheetContent,
+      { height: height },
+    ],
+    contentStyle,
+  ];
+
   return (
     <RNModal
       visible={isOpen}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={close}
       {...props}
     >
-      <Pressable style={styles.modalOverlay} onPress={close}>
-        <View
-          style={[styles.modalContent, contentStyle]}
+      <Animated.View
+        entering={FadeIn.duration(200)}
+        exiting={FadeOut.duration(200)}
+        style={[
+          styles.modalOverlay,
+          variant === "bottomSheet" && styles.bottomSheetOverlay,
+        ]}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+        <Animated.View
+          entering={
+            variant === "bottomSheet" ? SlideInDown.springify() : FadeIn
+          }
+          exiting={
+            variant === "bottomSheet" ? SlideOutDown.springify() : FadeOut
+          }
+          style={contentStyles}
           onStartShouldSetResponder={() => true}
         >
+          {variant === "bottomSheet" && (
+            <View style={styles.bottomSheetHandle} />
+          )}
           <View style={styles.header}>
             {title && <H2>{title}</H2>}
             <Button
@@ -90,8 +131,8 @@ const ModalContent = ({
             </Button>
           </View>
           {children}
-        </View>
-      </Pressable>
+        </Animated.View>
+      </Animated.View>
     </RNModal>
   );
 };
@@ -132,5 +173,26 @@ const modalStyles = createStyleSheet((theme) => ({
   },
   closeButton: {
     marginLeft: "auto",
+  },
+  bottomSheetOverlay: {
+    justifyContent: "flex-end",
+    padding: 0,
+  },
+  bottomSheetContent: {
+    width: "100%",
+    maxWidth: "100%",
+    marginHorizontal: 0,
+    borderRadius: theme.borderRadius.lg,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingTop: theme.spacing.sm,
+  },
+  bottomSheetHandle: {
+    width: 36,
+    height: 5,
+    backgroundColor: theme.colors.border,
+    borderRadius: 2.5,
+    alignSelf: "center",
+    marginBottom: theme.spacing.sm,
   },
 }));

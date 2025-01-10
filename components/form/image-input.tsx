@@ -93,10 +93,16 @@ export const ImageInput = ({
                 />
               </Modal.Content>
             </Modal>
-
-            <Button variant="soft">
-              <Gallery />
-            </Button>
+            <Modal>
+              <Modal.Trigger>
+                <Button variant="soft">
+                  <Gallery />
+                </Button>
+              </Modal.Trigger>
+              <Modal.Content variant="bottomSheet" title="Import from URL">
+                <FileBrowser onSelect={handleUrlSubmit} />
+              </Modal.Content>
+            </Modal>
           </Horizontal>
         </Vertical>
       </View>

@@ -39,6 +39,8 @@ export const FileBrowser = ({
           >
             <Image
               role="button"
+              width={500}
+              height={500}
               src={`${directus?.url}/assets/${file.filename_disk}`}
             />
           </Pressable>
