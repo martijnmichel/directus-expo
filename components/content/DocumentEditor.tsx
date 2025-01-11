@@ -66,6 +66,35 @@ export const DocumentEditor = ({
     id as number
   );
 
+  const getDocumentFieldValues = (doc?: CoreSchema<keyof CoreSchema>) => {
+    return fields?.reduce((acc, field) => {
+      acc[field.field as keyof CoreSchema] =
+        doc?.[field.field as keyof CoreSchema];
+      return acc;
+    }, {} as CoreSchema<keyof CoreSchema>);
+  };
+
+  useEffect(() => {
+    if (isError) {
+      console.log({ error });
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
+    /** reset the form with only fields that exist */
+    context.reset(
+      getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
+    );
+    /** if a document is fetched, reset the form with the document */
+    if (document) {
+      context.reset(
+        getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
+      );
+      console.log("reset", document);
+      setRevision((state) => state + 1);
+    }
+  }, [document]);
+
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)
