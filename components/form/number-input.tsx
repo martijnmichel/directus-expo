@@ -116,15 +116,19 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
       const normalizedValue = text.replace(",", ".");
 
       if (decimal || float) {
-        // Always send the normalized value (with dot) to onChange
-        onChangeText?.(normalizedValue);
+        if (float) {
+          // For float, always use the normalized value (with dot)
+          onChangeText?.(normalizedValue);
+        } else {
+          // For decimal display mode, keep the comma display
+          onChangeText?.(displayValue);
 
-        // But display the value with comma
-        if (text !== value) {
-          // Update the TextInput display with comma
-          setTimeout(() => {
-            onChangeText?.(displayValue);
-          }, 0);
+          // Update display if needed
+          if (text !== value) {
+            setTimeout(() => {
+              onChangeText?.(displayValue);
+            }, 0);
+          }
         }
       } else {
         // For integers, just pass the value

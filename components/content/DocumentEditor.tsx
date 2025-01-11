@@ -38,6 +38,7 @@ import { InputHash } from "../form/input-hash";
 import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { NumberInput } from "../form/number-input";
+import { JsonInput } from "../form/json";
 export const DocumentEditor = ({
   collection,
   id,
@@ -194,6 +195,27 @@ export const DocumentEditor = ({
               )}
             />
           );
+        } else if (item.meta.interface === "input-code") {
+          if (item.type === "json") {
+            return (
+              <Controller
+                key={item.field}
+                control={control}
+                rules={{ required: item.meta.required }}
+                name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                render={({ field: { onChange, value } }) => (
+                  <JsonInput
+                    onChange={onChange}
+                    value={value as string}
+                    helper={item.meta.note || undefined}
+                    placeholder={item.meta.display_options?.placeholder}
+                    label={getLabel(item.field)}
+                    autoCapitalize="none"
+                  />
+                )}
+              />
+            );
+          }
         } else if (item.meta.interface === "select-dropdown") {
           return (
             <Controller

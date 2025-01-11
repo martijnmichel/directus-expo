@@ -19,7 +19,7 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
     const [errorLine, setErrorLine] = useState<number | null>(null);
 
     useEffect(() => {
-      const lineCount = (value.match(/\n/g)?.length || 0) + 1;
+      const lineCount = (value?.match(/\n/g)?.length || 0) + 1;
       setLines(Array.from({ length: lineCount }, (_, i) => i + 1));
     }, [value]);
 
@@ -109,12 +109,13 @@ const jsonStyles = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.backgroundAlt,
     borderRightWidth: 1,
     borderRightColor: theme.colors.border,
-    minWidth: 45,
+    width: 44,
   },
   lineNumberContainer: {
     paddingHorizontal: theme.spacing.sm,
     height: theme.typography.body.lineHeight,
     justifyContent: "center",
+    width: 44,
   },
   lineNumber: {
     color: theme.colors.textTertiary,
@@ -128,10 +129,14 @@ const jsonStyles = createStyleSheet((theme) => ({
   },
   input: {
     flex: 1,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: "auto",
     padding: theme.spacing.md,
     color: theme.colors.textPrimary,
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,
     fontFamily: "monospace",
+    width: "100%",
   },
 }));
