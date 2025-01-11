@@ -18,7 +18,7 @@ interface InputProps extends TextInputProps {
   max?: number;
   step?: number;
   float?: boolean;
-  decimal?: number;
+  decimal?: boolean;
 }
 
 export const NumberInput = React.forwardRef<TextInput, InputProps>(
@@ -32,7 +32,7 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
       max,
       step = 1,
       float = false,
-      decimal = 0,
+      decimal = false,
       onChangeText,
       value = "",
       ...props
@@ -41,17 +41,41 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
   ) => {
     const { styles } = useStyles(formStyles);
 
+    console.log({ float, decimal, label });
+
+    const formatNumber = (num: number) => {
+      // Use toLocaleString for display, but keep precision
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 20, // High max to preserve precision
+        useGrouping: false, // No thousand separators
+      });
+    };
+
+    const parseLocaleNumber = (text: string) => {
+      // Accept both . and , as decimal separators
+      const normalized = text.replace(",", ".");
+      return parseFloat(normalized);
+    };
+
     const updateValue = (newValue: number) => {
       // Apply min/max constraints
       if (min !== undefined && newValue < min) newValue = min;
       if (max !== undefined && newValue > max) newValue = max;
 
-      // Apply decimal precision
-      if (float && decimal !== undefined) {
-        newValue = parseFloat(newValue.toFixed(decimal));
+      if (float || decimal) {
+        const formatted = formatNumber(newValue);
+        if (decimal) {
+          // For decimal type, return as string
+          onChangeText?.(formatted);
+        } else {
+          // For float type, return as number
+          onChangeText?.(newValue.toString());
+        }
+      } else {
+        // Integer
+        onChangeText?.(Math.round(newValue).toString());
       }
-
-      onChangeText?.(newValue.toString());
     };
 
     const handleIncrement = () => {
@@ -69,20 +93,54 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
     };
 
     const handleChangeText = (text: string) => {
-      // Remove non-numeric characters except decimal point if float is enabled
-      let filtered = float
-        ? text.replace(/[^\d.]/g, "")
-        : text.replace(/\D/g, "");
-
-      // Ensure only one decimal point
-      if (float) {
-        const parts = filtered.split(".");
-        filtered = parts[0] + (parts.length > 1 ? "." + parts[1] : "");
+      // Allow empty input and minus sign
+      if (text === "" || text === "-") {
+        onChangeText?.(text);
+        return;
       }
 
-      // Convert to number for validation
-      let num = float ? parseFloat(filtered || "0") : parseInt(filtered || "0");
-      updateValue(num);
+      // Allow numbers, one decimal separator (. or ,) and minus sign at start
+      if (!/^-?\d*[.,]?\d*$/.test(text)) {
+        return;
+      }
+
+      // For non-decimal/float, don't allow decimal separators
+      if (!float && !decimal && text.match(/[.,]/)) {
+        return;
+      }
+
+      // For display, keep the comma
+      const displayValue = text;
+
+      // For onChange, convert comma to dot
+      const normalizedValue = text.replace(",", ".");
+
+      if (decimal || float) {
+        // Always send the normalized value (with dot) to onChange
+        onChangeText?.(normalizedValue);
+
+        // But display the value with comma
+        if (text !== value) {
+          // Update the TextInput display with comma
+          setTimeout(() => {
+            onChangeText?.(displayValue);
+          }, 0);
+        }
+      } else {
+        // For integers, just pass the value
+        onChangeText?.(text);
+      }
+
+      // Validate step if needed
+      if (step && step !== 1) {
+        const num = parseFloat(normalizedValue);
+        if (!isNaN(num)) {
+          const remainder = (num - (min || 0)) % step;
+          if (Math.abs(remainder) < 0.00001) {
+            updateValue(num);
+          }
+        }
+      }
     };
 
     return (
@@ -104,6 +162,8 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
             keyboardType={float ? "decimal-pad" : "number-pad"}
             onChangeText={handleChangeText}
             value={value}
+            selectTextOnFocus
+            returnKeyType="done"
             {...props}
           />
 

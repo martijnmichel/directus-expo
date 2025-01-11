@@ -109,7 +109,8 @@ export const DocumentEditor = ({
       .map((item) => {
         if (
           (parent && item.meta.group !== parent) ||
-          (!!item.meta.group && !parent)
+          (!!item.meta.group && !parent) ||
+          item.meta.hidden
         ) {
           return null;
         } else if (item.meta.interface === "group-accordion") {
@@ -167,8 +168,8 @@ export const DocumentEditor = ({
                     min={item.meta.options?.min}
                     max={item.meta.options?.max}
                     step={item.meta.options?.step}
-                    float={item.meta.display_options?.float}
-                    decimal={item.meta.display_options?.decimal}
+                    float={item.type === "float"}
+                    decimal={item.type === "decimal"}
                   />
                 )}
               />
