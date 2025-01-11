@@ -80,7 +80,7 @@ export const Select = ({
           <View style={styles.modalContent}>
             <FlatList
               data={options}
-              keyExtractor={(item) => item.value.toString()}
+              keyExtractor={(item) => item.value?.toString() || "null"}
               renderItem={({ item, index }) => (
                 <Pressable
                   style={[

@@ -10,6 +10,7 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { coreCollections } from "@/state/queries/directus/core";
+import { useDocuments } from "@/state/queries/directus/collection";
 
 interface Schema {
   [key: string]: any;
@@ -32,37 +33,16 @@ export const M2OInput = ({
   error,
   helper,
 }: M2OInputProps) => {
-  const [options, setOptions] = useState<Array<any>>([]);
-  const { directus } = useAuth();
-  const { styles } = useStyles(formStyles);
+  const { data: options } = useDocuments(item.schema.foreign_key_table as any);
 
-  useEffect(() => {
-    const getOptions = async () => {
-      if (!item.schema.foreign_key_table) return;
-
-      const coreCollection = coreCollections[item.schema.foreign_key_table];
-      if (item.schema.foreign_key_table.startsWith("directus_")) {
-        return;
-      }
-      try {
-        const response = await directus?.request(
-          readItems(item.schema.foreign_key_table as any)
-        );
-        setOptions(response || []);
-      } catch (error) {
-        console.error("Failed to fetch options:", error);
-      }
-    };
-
-    getOptions();
-  }, [item.schema.foreign_key_table]);
-
-  const selectOptions = options.map((opt) => {
+  const selectOptions = options?.map((opt) => {
     return {
-      value: opt[item.schema.foreign_key_column!] || opt.id,
+      value: opt[item.schema.foreign_key_column!] || opt.id || "",
       text: parseTemplate(item.meta.options?.template || "", opt),
     };
   });
+
+  if (!options) return null;
 
   return (
     <Vertical spacing="xs">
@@ -70,7 +50,7 @@ export const M2OInput = ({
         label={label}
         error={error}
         helper={helper}
-        options={selectOptions}
+        options={selectOptions || []}
         value={value}
         onValueChange={onValueChange}
       />

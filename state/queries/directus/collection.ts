@@ -23,45 +23,36 @@ export const useCollection = (id: string) => {
   });
 };
 
-export const useDocuments = (collection: keyof CoreSchema) => {
+export const useDocuments = (
+  collection: keyof CoreSchema,
+  query?: Query<CoreSchema, any>
+) => {
   const { directus } = useAuth();
-  return useQuery({
-    queryKey: ["documents", collection],
-    queryFn: () => async () => {
-      const coreCollection = coreCollections[collection];
-      if (coreCollection?.readItem) {
-        // Use the core collection hook
-        const result = await directus?.request(coreCollection.readItems(id));
-        console.log({ result });
-        return result;
-      }
-      // Fallback to standard readItem
-      return directus?.request(readItems(collection, id));
-    },
-  });
+  const coreCollection = coreCollections[collection];
+
+  return coreCollection.readItems
+    ? coreCollection.readItems(query)
+    : useQuery({
+        queryKey: ["documents", collection],
+        queryFn: () => directus?.request(readItems(collection, query)),
+      });
 };
 
 export const useDocument = (
   collection: keyof CoreSchema,
   id: number | string | true,
-  query?: Query<CoreSchema, keyof CoreSchema>
+  query?: Query<CoreSchema, any>
 ) => {
   const { directus } = useAuth();
-  return useQuery({
-    queryKey: ["document", collection, id],
-    queryFn: async () => {
-      const coreCollection = coreCollections[collection];
-      if (coreCollection?.readItem) {
-        // Use the core collection hook
-        console.log({ coreCollection, id });
-        const result = await directus?.request(coreCollection.readItem(id));
-        console.log({ result });
-        return result;
-      }
-      // Fallback to standard readItem
-      return directus?.request(readItem(collection, id, query));
-    },
-  });
+
+  const coreCollection = coreCollections[collection];
+
+  return coreCollection.readItem
+    ? coreCollection.readItem(id as string)
+    : useQuery({
+        queryKey: ["document", collection, id],
+        queryFn: async () => directus?.request(readItem(collection, id, query)),
+      });
 };
 
 export const useFields = (collection: keyof CoreSchema) => {

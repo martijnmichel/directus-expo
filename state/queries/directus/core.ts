@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  CoreSchema,
+  Query,
   readCollections,
   readMe,
   readPermissions,
@@ -68,11 +70,11 @@ export const useUser = (id: string) => {
   });
 };
 
-export const useUsers = () => {
+export const useUsers = (query?: Query<CoreSchema, any>) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["users"],
-    queryFn: () => directus?.request(readUsers()),
+    queryFn: () => directus?.request(readUsers(query)),
   });
 };
 
@@ -84,11 +86,11 @@ export const useRole = (id: string) => {
   });
 };
 
-export const useRoles = () => {
+export const useRoles = (query?: Query<CoreSchema, any>) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["roles"],
-    queryFn: () => directus?.request(readRoles()),
+    queryFn: () => directus?.request(readRoles(query)),
   });
 };
 
@@ -104,14 +106,7 @@ const prefix = "directus_";
 
 export const coreCollections = {
   [prefix + "users"]: {
-    readItem: (id: string) => {
-      const { directus } = useAuth();
-      console.log({ id });
-      return useQuery({
-        queryKey: ["user", id],
-        queryFn: () => directus?.request(readUser(id)),
-      });
-    },
+    readItem: (id: string) => useUser(id),
     readItems: useUsers,
   },
   [prefix + "roles"]: {
@@ -122,6 +117,6 @@ export const coreCollections = {
     readItems: useProviders,
   },
   [prefix + "settings"]: {
-    readItems: useSettings,
+    readItem: useSettings,
   },
 };

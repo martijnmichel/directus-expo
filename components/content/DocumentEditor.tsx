@@ -140,7 +140,11 @@ export const DocumentEditor = ({
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
               render={({ field: { onChange, value } }) => (
                 <Select
-                  options={item.meta.display_options?.choices || []}
+                  options={
+                    item.meta.display_options?.choices ||
+                    item.meta.options?.choices ||
+                    []
+                  }
                   onValueChange={onChange}
                   value={value as string}
                   helper={item.meta.note || undefined}
