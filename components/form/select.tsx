@@ -121,7 +121,7 @@ const selectStyles = createStyleSheet((theme) => ({
     borderWidth: 1,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    minHeight: 48,
+    height: 44,
   },
   selectText: {
     ...theme.typography.body,

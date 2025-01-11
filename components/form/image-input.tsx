@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Image, Pressable } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
 import { formStyles } from "./style";
@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
 import { FileBrowser } from "./file-browser";
 import { importFile, uploadFiles } from "@directus/sdk";
+import { Image } from "expo-image";
 
 interface ImageInputProps {
   label?: string;

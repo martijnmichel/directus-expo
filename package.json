@@ -48,7 +48,8 @@
     "react-native-unistyles": "^2.20.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "expo-image-picker": "~16.0.3"
+    "expo-image-picker": "~16.0.3",
+    "expo-image": "~2.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

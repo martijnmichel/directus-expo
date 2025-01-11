@@ -147,9 +147,11 @@ const ModalContent = ({
             </View>
           </View>
 
-          <ScrollView>
-            {typeof children === "function" ? children({ close }) : children}
-          </ScrollView>
+          {isOpen && (
+            <ScrollView>
+              {typeof children === "function" ? children({ close }) : children}
+            </ScrollView>
+          )}
         </Animated.View>
       </Animated.View>
     </RNModal>

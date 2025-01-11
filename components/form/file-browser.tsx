@@ -1,14 +1,14 @@
 import { DirectusFile, readFiles } from "@directus/sdk";
 import { useEffect, useState } from "react";
 import { Grid } from "../display/grid";
-import { Image, Pressable, View, Text } from "react-native";
+import { Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { RadioButton } from "../form/radio-button";
 import { PortalOutlet } from "../layout/Portal";
 import { Button } from "../display/button";
 import { Check } from "../icons";
-
+import { Image } from "expo-image";
 interface FileBrowserProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
@@ -69,8 +69,6 @@ export const FileBrowser = ({
             >
               <View style={styles.imageWrapper}>
                 <Image
-                  width={500}
-                  height={500}
                   style={[styles.image, selected && styles.selected]}
                   source={{ uri: `${directus?.url}/assets/${file.id}` }}
                 />
