@@ -1,3 +1,4 @@
+import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { H1 } from "@/components/display/typography";
 import { Container } from "@/components/layout/Container";
 import { Layout } from "@/components/layout/Layout";
@@ -7,7 +8,11 @@ export default function TabTwoScreen() {
     <Layout>
       <Container>
         <Section>
-          <H1>Profile screen</H1>
+          <DocumentEditor
+            collection="directus_users"
+            id={1}
+            onSave={(doc) => console.log({ doc })}
+          />
         </Section>
       </Container>
     </Layout>

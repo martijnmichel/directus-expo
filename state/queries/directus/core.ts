@@ -3,8 +3,13 @@ import {
   readCollections,
   readMe,
   readPermissions,
+  readProviders,
   readRelations,
+  readRoles,
+  readSettings,
+  readSingleton,
   readUserPermissions,
+  readUsers,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
 export const useUser = () => {
@@ -36,5 +41,53 @@ export const useRelations = () => {
   return useQuery({
     queryKey: ["relations"],
     queryFn: () => directus?.request(readRelations()),
+  });
+};
+
+export const useSettings = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["settings"],
+    queryFn: () => directus?.request(readSettings()),
+  });
+};
+
+export const useUsers = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => directus?.request(readUsers()),
+  });
+};
+
+export const useRoles = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: () => directus?.request(readRoles()),
+  });
+};
+
+export const useProviders = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["providers"],
+    queryFn: () => directus?.request(readProviders()),
+  });
+};
+
+const prefix = "directus_";
+export const coreCollections = {
+  [prefix + "users"]: useUsers,
+  [prefix + "roles"]: useRoles,
+  [prefix + "providers"]: useProviders,
+  [prefix + "settings"]: useSettings,
+};
+
+export const useCoreCollection = (collection: keyof typeof coreCollections) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["coreCollection", collection],
+    queryFn: () => directus?.request(coreCollections[collection]()),
   });
 };

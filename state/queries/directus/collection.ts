@@ -7,6 +7,8 @@ import {
   readFieldsByCollection,
   readItem,
   readItems,
+  readMe,
+  readPermissions,
   readSingleton,
 } from "@directus/sdk";
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +17,7 @@ export const useCollection = (id: string) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["collection", id],
-    queryFn: () => directus?.request(readCollection(id)),
+    queryFn: () => directus?.request(readCollection(id as keyof CoreSchema)),
   });
 };
 
