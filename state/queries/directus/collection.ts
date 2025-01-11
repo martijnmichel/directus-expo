@@ -52,6 +52,7 @@ export const useDocument = (
     : useQuery({
         queryKey: ["document", collection, id],
         queryFn: async () => directus?.request(readItem(collection, id, query)),
+        retry: false,
       });
 };
 

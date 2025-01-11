@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import {
   CoreSchema,
   ReadFieldOutput,
   ReadRelationOutput,
   createItem,
+  readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
 import { DocListItem } from "./doc-listitem";
@@ -15,9 +16,16 @@ import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { map, uniq } from "lodash";
-import { Link } from "expo-router";
+import {
+  Link,
+  RelativePathString,
+  router,
+  useLocalSearchParams,
+} from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
-import { List } from "../display/list";
+import { List, ListItem } from "../display/list";
+import { useQuery } from "@tanstack/react-query";
+import { DocumentEditor } from "../content/DocumentEditor";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -37,11 +45,24 @@ export const M2MInput = ({
   helper,
   ...props
 }: M2MInputProps) => {
+  const { id: originId, newDocIds } = useLocalSearchParams();
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
   const [value] = useState<number[]>(props.value);
   const [createItemOpen, setCreateItemOpen] = useState(false);
   const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    console.log({ newDocIds });
+    if (!!newDocIds) {
+      props.onChange([
+        ...props.value,
+        ...(typeof newDocIds === "string"
+          ? [Number(newDocIds)]
+          : newDocIds?.map((v) => Number(v))),
+      ]);
+    }
+  }, [newDocIds, props.onChange]);
 
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
@@ -68,6 +89,39 @@ export const M2MInput = ({
       junctionPermissions?.create.fields?.includes(junction?.meta.one_field));
 
   const allowCreate = relationPermission?.create.access === "full";
+
+  const { data: options } = useQuery({
+    queryKey: ["options", item.collection, item.field],
+    enabled: !!junction && !!relation && !!item.collection,
+    queryFn: () =>
+      directus!.request(
+        readItems(relation?.related_collection as any, {
+          fields: [`*`],
+          filter: {
+            _and: [
+              ...(addedDocIds?.length > 0
+                ? [
+                    {
+                      id: {
+                        _nin: addedDocIds,
+                      },
+                    },
+                  ]
+                : []),
+              {
+                [`$FOLLOW(${junction?.collection},${relation?.field})`]: {
+                  _none: {
+                    [junction?.field as any]: {
+                      _eq: docId,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        })
+      ),
+  });
 
   console.log({ item, relation, junction, value, props });
 
@@ -121,10 +175,90 @@ export const M2MInput = ({
 
         <Horizontal>
           {allowCreate && (
-            <Link href={`/content/${relation.related_collection}/+`} asChild>
-              <Button>Add new</Button>
-            </Link>
+            <Modal>
+              <Modal.Trigger>
+                <Button>Add new</Button>
+              </Modal.Trigger>
+              <Modal.Content variant="bottomSheet" title="Add new">
+                {({ close }) => (
+                  <DocumentEditor
+                    collection={relation.related_collection as any}
+                    id={"+"}
+                    onSave={async (newItem) => {
+                      close();
+                      try {
+                        const doc = (await directus!.request(
+                          createItem(junction?.collection as keyof CoreSchema, {
+                            [relation.field]: newItem.id,
+                          })
+                        )) as { id: number } & Record<string, unknown>;
+                        setAddedDocIds([
+                          ...addedDocIds,
+                          doc[relation.field] as number,
+                        ]);
+                        props.onChange([...props.value, doc.id]);
+                        setCreateItemOpen(false);
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }}
+                  />
+                )}
+              </Modal.Content>
+            </Modal>
           )}
+          <Modal>
+            <Modal.Trigger>
+              <Button>Add existing</Button>
+            </Modal.Trigger>
+            <Modal.Content variant="bottomSheet" title="Import from URL">
+              {({ close }) => (
+                <List>
+                  {options?.map((opt) => (
+                    <Pressable
+                      key={opt.id}
+                      onPress={async () => {
+                        close();
+                        console.log(opt);
+
+                        console.log(
+                          opt[
+                            relation?.schema
+                              .foreign_key_column as keyof typeof opt
+                          ]
+                        );
+
+                        try {
+                          const doc = (await directus!.request(
+                            createItem(
+                              junction?.collection as keyof CoreSchema,
+                              {
+                                [relation.field]:
+                                  opt[
+                                    relation?.schema
+                                      .foreign_key_column as keyof typeof opt
+                                  ],
+                              }
+                            )
+                          )) as { id: number } & Record<string, unknown>;
+                          console.log({ doc, docDoc: doc[relation.field] });
+                          setAddedDocIds([
+                            ...addedDocIds,
+                            doc[relation.field] as number,
+                          ]);
+                          props.onChange([...props.value, doc.id]);
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      }}
+                    >
+                      <ListItem>{JSON.stringify(opt)}</ListItem>
+                    </Pressable>
+                  ))}
+                </List>
+              )}
+            </Modal.Content>
+          </Modal>
         </Horizontal>
       </Vertical>
     )

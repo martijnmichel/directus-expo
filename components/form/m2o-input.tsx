@@ -11,6 +11,8 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { coreCollections } from "@/state/queries/directus/core";
 import { useDocuments } from "@/state/queries/directus/collection";
+import { Modal } from "../display/modal";
+import { DocumentEditor } from "../content/DocumentEditor";
 
 interface Schema {
   [key: string]: any;
@@ -33,7 +35,9 @@ export const M2OInput = ({
   error,
   helper,
 }: M2OInputProps) => {
-  const { data: options } = useDocuments(item.schema.foreign_key_table as any);
+  const { data: options, refetch } = useDocuments(
+    item.schema.foreign_key_table as any
+  );
 
   const selectOptions = options?.map((opt) => {
     return {
@@ -56,15 +60,18 @@ export const M2OInput = ({
       />
 
       {item.meta.options?.enableCreate && (
-        <Horizontal>
-          <Button
-            onPress={() => {
-              router.push(`/content/${item.schema.foreign_key_table}/+`);
-            }}
-          >
-            Add
-          </Button>
-        </Horizontal>
+        <Modal>
+          <Modal.Trigger>
+            <Button>Add new</Button>
+          </Modal.Trigger>
+          <Modal.Content variant="bottomSheet" title="Add new">
+            <DocumentEditor
+              collection={item.schema.foreign_key_table as any}
+              id={"+"}
+              onSave={() => refetch()}
+            />
+          </Modal.Content>
+        </Modal>
       )}
     </Vertical>
   );

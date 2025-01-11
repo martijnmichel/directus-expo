@@ -3,7 +3,7 @@ import { Controller, Form, FormProvider, useForm } from "react-hook-form";
 import { useStyles } from "react-native-unistyles";
 import { formStyles } from "../form/style";
 import { Button } from "../display/button";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,7 +22,12 @@ import { Select } from "../form/select";
 import { TextArea } from "../form/textarea";
 import { RichText } from "../form/richtext";
 import { View } from "react-native";
-import { router, Stack } from "expo-router";
+import {
+  RelativePathString,
+  router,
+  Stack,
+  useLocalSearchParams,
+} from "expo-router";
 import { Check } from "../icons";
 import { M2OInput } from "../form/m2o-input";
 import { ImageInput } from "../form/image-input";
@@ -30,6 +35,8 @@ import { M2MInput } from "../form/m2m-input";
 import { coreCollections } from "@/state/queries/directus/core";
 import { mutateDocument } from "@/state/actions/mutateItem";
 import { InputHash } from "../form/input-hash";
+import { ModalContext } from "../display/modal";
+import { PortalOutlet } from "../layout/Portal";
 export const DocumentEditor = ({
   collection,
   id,
@@ -40,6 +47,7 @@ export const DocumentEditor = ({
   onSave?: (doc: CoreSchema<keyof CoreSchema>) => void;
 }) => {
   const [revision, setRevision] = useState<number>(0);
+  const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
   const context = useForm<CoreSchema<keyof CoreSchema>>({ defaultValues: {} });
@@ -67,13 +75,21 @@ export const DocumentEditor = ({
   };
 
   useEffect(() => {
+    if (isError) {
+      console.log({ error });
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
     /** reset the form with only fields that exist */
     context.reset(
       getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
     );
     /** if a document is fetched, reset the form with the document */
     if (document) {
-      context.reset(document);
+      context.reset(
+        getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
+      );
       console.log("reset", document);
       setRevision((state) => state + 1);
     }
@@ -289,34 +305,40 @@ export const DocumentEditor = ({
     await updateDoc(body, {
       onSuccess: (updatedDoc) => {
         context.reset(updatedDoc as CoreSchema<keyof CoreSchema>);
-        if (router.canGoBack()) {
-          router.back();
-        } else router.push("../");
+
         onSave?.(updatedDoc as CoreSchema<keyof CoreSchema>);
       },
     });
   };
 
+  const SubmitButton = () => (
+    <Button
+      rounded
+      loading={context.formState.isSubmitting}
+      disabled={
+        !context.formState.isDirty ||
+        !context.formState.isValid ||
+        context.formState.isSubmitting
+      }
+      onPress={context.handleSubmit(handleSubmit)}
+    >
+      <Check />
+    </Button>
+  );
+
+  if (isFetching) {
+    return null;
+  }
   return (
     <FormProvider key={revision + collection + id} {...context}>
       <Stack.Screen
         options={{
-          headerRight: () => (
-            <Button
-              rounded
-              loading={context.formState.isSubmitting}
-              disabled={
-                !context.formState.isDirty ||
-                !context.formState.isValid ||
-                context.formState.isSubmitting
-              }
-              onPress={context.handleSubmit(handleSubmit)}
-            >
-              <Check />
-            </Button>
-          ),
+          headerRight: SubmitButton,
         }}
       />
+      <PortalOutlet name="modal-header">
+        <SubmitButton />
+      </PortalOutlet>
       <View style={styles.form}>{mapFields()}</View>
     </FormProvider>
   );

@@ -35,7 +35,7 @@ interface ModalContextType {
   close: () => void;
 }
 
-const ModalContext = createContext<ModalContextType>({
+export const ModalContext = createContext<ModalContextType>({
   isOpen: false,
   open: () => {},
   close: () => {},
@@ -138,15 +138,15 @@ const ModalContent = ({
           {variant === "bottomSheet" && (
             <View style={styles.bottomSheetHandle} />
           )}
-          {title && (
-            <View style={styles.header}>
-              <View style={styles.headerContent}>
-                {title && <H2>{title}</H2>}
-                {actions && <View style={styles.actions}>{actions}</View>}
-                <PortalHost name="modal-header" />
-              </View>
+
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              {title && <H2>{title}</H2>}
+              {actions && <View style={styles.actions}>{actions}</View>}
+              <PortalHost name="modal-header" />
             </View>
-          )}
+          </View>
+
           <ScrollView>
             {typeof children === "function" ? children({ close }) : children}
           </ScrollView>
