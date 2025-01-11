@@ -10,7 +10,7 @@ export default function Layout() {
       />
       <Stack.Screen
         name="[collection]/[id]/index"
-        options={{ presentation: "modal" }}
+        options={{ presentation: "fullScreenModal" }}
       />
     </Stack>
   );

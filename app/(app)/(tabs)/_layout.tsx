@@ -48,6 +48,19 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+
+      <Tabs.Screen
+        name="content/[collection]/index"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="content/[collection]/[id]/index"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
