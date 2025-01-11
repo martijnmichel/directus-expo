@@ -32,9 +32,9 @@ export const LoginForm = () => {
   } = useForm<LoginForm>({
     defaultValues: __DEV__
       ? {
-          email: "demo@ecbase.nl",
-          password: "test123",
-          apiUrl: "https://cms-dev.ecbase.nl",
+          email: "martijn.michel@gmail.com",
+          password: "CB4i79%jcfCF2q",
+          apiUrl: "https://directus-expo-test.martijnvde.nl",
         }
       : {
           email: "",

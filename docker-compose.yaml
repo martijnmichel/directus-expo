@@ -3,7 +3,7 @@ services:
   directus:
     image: directus/directus:latest
     ports:
-      - 8056:8055
+      - 8055:8055
     volumes:
       - ./uploads:/directus/uploads
     environment:
@@ -17,4 +17,4 @@ services:
       DB_DATABASE: 'directus_expo'
       DB_USER: 'directus-expo'
       DB_PASSWORD: 'Yhz5_764x'
-      PUBLIC_URL: 'https://directus-expo-test.martijnvde.nl'
+      PUBLIC_URL: 'https://0ef6-2a0d-3344-2703-710-789c-dce2-3877-c22.ngrok-free.app/'

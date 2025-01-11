@@ -31,10 +31,10 @@ export const formStyles = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
   },
   prepend: {
-    paddingLeft: theme.spacing.md,
+    padding: theme.spacing.md,
   },
   append: {
-    paddingRight: theme.spacing.md,
+    padding: theme.spacing.md,
   },
   helperText: {
     fontSize: theme.typography.helper.fontSize,

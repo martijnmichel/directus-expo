@@ -4,7 +4,7 @@ import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
 import UserCollections from "@/components/content/UserCollections";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { List, ListItem } from "@/components/display/list";
 import { map, some } from "lodash";
 import { useDocuments } from "@/state/queries/directus/collection";
@@ -14,6 +14,8 @@ import { usePermissions } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { parseTemplate } from "@/helpers/document/template";
 import { useEffect } from "react";
+import { Plus } from "@/components/icons";
+import { Button } from "@/components/display/button";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -24,7 +26,16 @@ export default function Collection() {
   return (
     <Layout>
       <Stack.Screen
-        options={{ headerTitle: getCollectionTranslation(data, "nl-NL") }}
+        options={{
+          headerTitle: getCollectionTranslation(data, "nl-NL"),
+          headerRight: () => (
+            <Link href={`/content/${collection}/+`} asChild>
+              <Button rounded>
+                <Plus />
+              </Button>
+            </Link>
+          ),
+        }}
       />
       <Container>
         <Section>

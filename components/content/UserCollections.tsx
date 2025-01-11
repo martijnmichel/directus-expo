@@ -11,6 +11,8 @@ import { useCollections } from "@/state/queries/directus/core";
 export default function UserCollections() {
   const { data } = useCollections();
 
+  console.log({ data });
+
   const renderCollections = (parent?: string) => {
     return map(
       filter(
@@ -36,9 +38,10 @@ export default function UserCollections() {
             </Collapsible>
           );
         } else if (
-          parent &&
-          parent === collection.meta?.group &&
-          !!collection.schema
+          (parent &&
+            parent === collection.meta?.group &&
+            !!collection.schema) ||
+          (!parent && !collection.meta.group)
         ) {
           return (
             <ListItem

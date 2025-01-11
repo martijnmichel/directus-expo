@@ -14,3 +14,5 @@ export * from "./Trash";
 export * from "./Eye";
 export * from "./EyeOff";
 export * from "./Redo";
+export * from "./Plus";
+export * from "./Minus";

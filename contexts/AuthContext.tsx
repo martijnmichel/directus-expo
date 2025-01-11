@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .with(
         authentication("json", {
           autoRefresh: true,
-
+          credentials: "include",
           storage: {
             get: async () => {
               try {

@@ -37,6 +37,7 @@ import { mutateDocument } from "@/state/actions/mutateItem";
 import { InputHash } from "../form/input-hash";
 import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
+import { NumberInput } from "../form/number-input";
 export const DocumentEditor = ({
   collection,
   id,
@@ -147,7 +148,7 @@ export const DocumentEditor = ({
                 )}
               />
             );
-          } else if (item.type === "number") {
+          } else if (["integer", "float", "decimal"].includes(item.type)) {
             return (
               <Controller
                 key={item.field}
@@ -155,7 +156,7 @@ export const DocumentEditor = ({
                 rules={{ required: item.meta.required }}
                 name={item.field as keyof CoreSchema[keyof CoreSchema]}
                 render={({ field: { onChange, value } }) => (
-                  <Input
+                  <NumberInput
                     onChangeText={onChange}
                     value={value as string}
                     helper={item.meta.note || undefined}
@@ -163,6 +164,11 @@ export const DocumentEditor = ({
                     label={getLabel(item.field)}
                     autoCapitalize="none"
                     keyboardType="numeric"
+                    min={item.meta.options?.min}
+                    max={item.meta.options?.max}
+                    step={item.meta.options?.step}
+                    float={item.meta.display_options?.float}
+                    decimal={item.meta.display_options?.decimal}
                   />
                 )}
               />
