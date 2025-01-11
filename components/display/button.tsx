@@ -212,7 +212,7 @@ const stylesheet = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
   },
   ghostText: {
-    color: theme.colors.primary,
+    color: theme.colors.textSecondary,
   },
   smText: {
     fontSize: 14,

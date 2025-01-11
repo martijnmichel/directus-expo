@@ -12,7 +12,7 @@ import {
   readSingleton,
   RequestOptions,
 } from "@directus/sdk";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { coreCollections } from "./core";
 
 export const useCollection = (id: string) => {
@@ -30,7 +30,7 @@ export const useDocuments = (
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
 
-  return coreCollection.readItems
+  return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
         queryKey: ["documents", collection],
@@ -42,12 +42,12 @@ export const useDocument = (
   collection: keyof CoreSchema,
   id: number | string | true,
   query?: Query<CoreSchema, any>
-) => {
+): UseQueryResult<{ [x: string]: any } | undefined, Error> => {
   const { directus } = useAuth();
 
   const coreCollection = coreCollections[collection];
 
-  return coreCollection.readItem
+  return coreCollection?.readItem
     ? coreCollection.readItem(id as string)
     : useQuery({
         queryKey: ["document", collection, id],

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import {
   CoreSchema,
@@ -16,7 +16,7 @@ import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { map, uniq } from "lodash";
 import { Link } from "expo-router";
-import { Horizontal } from "../layout/Stack";
+import { Horizontal, Vertical } from "../layout/Stack";
 import { List } from "../display/list";
 
 interface M2MInputProps {
@@ -37,7 +37,6 @@ export const M2MInput = ({
   helper,
   ...props
 }: M2MInputProps) => {
-  const { styles } = useStyles(stylesheet);
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
   const [value] = useState<number[]>(props.value);
@@ -75,7 +74,7 @@ export const M2MInput = ({
   return (
     relation &&
     junction && (
-      <View style={styles.container}>
+      <Vertical spacing="xs">
         {label && <Text style={formControlStyles.label}>{label}</Text>}
         <List>
           {uniq([...(props.value || []), ...(value || [])]).map((id) => {
@@ -89,13 +88,16 @@ export const M2MInput = ({
                 junction={junction!}
                 relation={relation!}
                 template={item.meta.display_options?.template}
+                onAdd={(item) => {
+                  setAddedDocIds([...addedDocIds, item.id]);
+                  props.onChange([...props.value, item.id]);
+                }}
                 onDelete={(item) => {
                   console.log({ item });
                   setAddedDocIds(
                     addedDocIds.filter(
                       (v) =>
-                        v !==
-                        (item[relation.field as keyof typeof item] as number)
+                        v !== (item[relation.field as keyof typeof item] as any)
                     )
                   );
                   props.onChange(props.value.filter((v) => v !== id));
@@ -124,16 +126,7 @@ export const M2MInput = ({
             </Link>
           )}
         </Horizontal>
-      </View>
+      </Vertical>
     )
   );
 };
-
-const stylesheet = createStyleSheet((theme) => ({
-  container: {
-    gap: theme.spacing.sm,
-  },
-  itemList: {
-    gap: theme.spacing.sm,
-  },
-}));

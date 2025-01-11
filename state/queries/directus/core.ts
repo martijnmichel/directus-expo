@@ -16,6 +16,8 @@ import {
   readUsers,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
+import { mutateUser } from "@/state/actions/updateUser";
+import { mutateMe } from "@/state/actions/updateMe";
 export const useMe = () => {
   const { directus } = useAuth();
   return useQuery({
@@ -106,8 +108,11 @@ const prefix = "directus_";
 
 export const coreCollections = {
   [prefix + "users"]: {
-    readItem: (id: string) => useUser(id),
+    me: useMe,
+    readItem: useUser,
     readItems: useUsers,
+    updateItem: mutateUser,
+    updateMe: mutateMe,
   },
   [prefix + "roles"]: {
     readItem: useRole,

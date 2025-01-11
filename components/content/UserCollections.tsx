@@ -15,14 +15,14 @@ export default function UserCollections() {
     return map(
       filter(
         data,
-        (c) => !c.collection.startsWith("directus_") && !c.meta.hidden
+        (c) => !c.collection.startsWith("directus_") && !c.meta?.hidden
       ),
       (collection) => {
-        if (parent && parent !== collection.meta.group && collection.schema) {
+        if (parent && parent !== collection.meta?.group && collection.schema) {
           return null;
         } else if (
-          (!collection.schema && !parent && !collection.meta.group) ||
-          (!collection.schema && parent === collection.meta.group)
+          (!collection.schema && !parent && !collection.meta?.group) ||
+          (!collection.schema && parent === collection.meta?.group)
         ) {
           return (
             <Collapsible
@@ -37,7 +37,7 @@ export default function UserCollections() {
           );
         } else if (
           parent &&
-          parent === collection.meta.group &&
+          parent === collection.meta?.group &&
           !!collection.schema
         ) {
           return (

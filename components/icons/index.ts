@@ -11,3 +11,6 @@ export * from "./Gallery";
 export * from "./Upload";
 export * from "./ArrowBack";
 export * from "./Trash";
+export * from "./Eye";
+export * from "./EyeOff";
+export * from "./Redo";

@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { updateItem } from "@directus/sdk";
 import { useMutation } from "@tanstack/react-query";
 
-export const mutateDoc = (collection: keyof CoreSchema, id: number) => {
+export const mutateItem = (collection: keyof CoreSchema, id: number) => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: (data: CoreSchema<keyof CoreSchema>) =>

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { View, Pressable } from "react-native";
 import { CoreSchema, ReadRelationOutput } from "@directus/sdk";
-import { Trash, Edit } from "../icons";
+import { Trash, Edit, Redo } from "../icons";
 import { Modal } from "../display/modal";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Text } from "../display/typography";
@@ -16,6 +16,7 @@ export const DocListItem = <T extends keyof CoreSchema>({
   relation,
   template,
   onDelete,
+  onAdd,
   isNew,
   isDeselected,
   ...props
@@ -25,6 +26,7 @@ export const DocListItem = <T extends keyof CoreSchema>({
   relation: ReadRelationOutput<CoreSchema>;
   template?: string;
   onDelete?: (doc: CoreSchema<keyof CoreSchema>) => void;
+  onAdd?: (doc: CoreSchema<keyof CoreSchema>) => void;
   isNew?: boolean;
   isDeselected?: boolean;
 }) => {
@@ -61,18 +63,33 @@ export const DocListItem = <T extends keyof CoreSchema>({
         isNew && styles.listItemNew,
       ]}
     >
-      <Pressable onPress={() => setAddOpen(true)} style={styles.content}>
-        <Text>{template ? parseTemplate(template, doc) : doc.id}</Text>
-      </Pressable>
+      <Text
+        style={[styles.content, isDeselected && styles.listItemDeselectedText]}
+      >
+        {template ? parseTemplate(template, doc) : doc.id}
+      </Text>
 
-      <Link href={`/content/${relation.related_collection}/${docId}`} asChild>
+      <Link
+        href={`/content/${relation.related_collection}/${
+          doc[junction.meta.junction_field as keyof typeof doc]?.id
+        }`}
+        asChild
+      >
         <Button variant="ghost" rounded>
           <Edit />
         </Button>
       </Link>
 
-      <Button variant="ghost" onPress={() => onDelete?.(doc)} rounded>
-        <Trash />
+      <Button
+        variant="ghost"
+        onPress={() =>
+          isDeselected
+            ? onAdd?.(doc as CoreSchema<keyof CoreSchema<any>>)
+            : onDelete?.(doc as CoreSchema<keyof CoreSchema<any>>)
+        }
+        rounded
+      >
+        {isDeselected ? <Redo /> : <Trash />}
       </Button>
     </View>
   ) : null;
@@ -90,7 +107,11 @@ const stylesheet = createStyleSheet((theme) => ({
     height: 48,
   },
   listItemDeselected: {
-    opacity: 0.5,
+    borderColor: theme.colors.error,
+  },
+  listItemDeselectedText: {
+    color: theme.colors.error,
+    textDecorationLine: "line-through",
   },
   listItemNew: {
     borderColor: theme.colors.primary,

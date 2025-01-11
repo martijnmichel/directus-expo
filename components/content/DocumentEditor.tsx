@@ -1,9 +1,9 @@
-import { CoreSchema, updateItem } from "@directus/sdk";
+import { CoreSchema, ReadFieldOutput, updateItem } from "@directus/sdk";
 import { Controller, Form, FormProvider, useForm } from "react-hook-form";
 import { useStyles } from "react-native-unistyles";
 import { formStyles } from "../form/style";
 import { Button } from "../display/button";
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,7 +13,6 @@ import { ReactNode } from "react";
 import { ChevronRight } from "../icons/Chevron";
 import { Input } from "../form/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { mutateDoc } from "@/state/actions/updateDoc";
 import {
   useCollection,
   useDocument,
@@ -28,6 +27,9 @@ import { Check } from "../icons";
 import { M2OInput } from "../form/m2o-input";
 import { ImageInput } from "../form/image-input";
 import { M2MInput } from "../form/m2m-input";
+import { coreCollections } from "@/state/queries/directus/core";
+import { mutateDocument } from "@/state/actions/mutateItem";
+import { InputHash } from "../form/input-hash";
 export const DocumentEditor = ({
   collection,
   id,
@@ -37,24 +39,43 @@ export const DocumentEditor = ({
   id: number | string;
   onSave?: (doc: CoreSchema<keyof CoreSchema>) => void;
 }) => {
+  const [revision, setRevision] = useState<number>(0);
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
   const context = useForm<CoreSchema<keyof CoreSchema>>({ defaultValues: {} });
   const { control } = context;
 
   const { data } = useCollection(collection as keyof CoreSchema);
-  const { data: document } = useDocument(collection as keyof CoreSchema, id);
+  const {
+    data: document,
+    error,
+    isFetching,
+    isError,
+  } = useDocument(collection as keyof CoreSchema, id);
   const { data: fields } = useFields(collection as keyof CoreSchema);
-  const { mutateAsync: updateDoc } = mutateDoc(
+  const { mutateAsync: updateDoc } = mutateDocument(
     collection as keyof CoreSchema,
-    id
+    id as number
   );
 
-  console.log({ document });
+  const getDocumentFieldValues = (doc?: CoreSchema<keyof CoreSchema>) => {
+    return fields?.reduce((acc, field) => {
+      acc[field.field as keyof CoreSchema] =
+        doc?.[field.field as keyof CoreSchema];
+      return acc;
+    }, {} as CoreSchema<keyof CoreSchema>);
+  };
 
   useEffect(() => {
+    /** reset the form with only fields that exist */
+    context.reset(
+      getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
+    );
+    /** if a document is fetched, reset the form with the document */
     if (document) {
       context.reset(document);
+      console.log("reset", document);
+      setRevision((state) => state + 1);
     }
   }, [document]);
 
@@ -131,6 +152,25 @@ export const DocumentEditor = ({
               />
             );
           }
+        } else if (item.meta.interface === "input-hash") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              rules={{ required: item.meta.required }}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value } }) => (
+                <InputHash
+                  onChangeText={onChange}
+                  value={value as string}
+                  helper={item.meta.note || undefined}
+                  placeholder={item.meta.display_options?.placeholder}
+                  label={getLabel(item.field)}
+                  autoCapitalize="none"
+                />
+              )}
+            />
+          );
         } else if (item.meta.interface === "select-dropdown") {
           return (
             <Controller
@@ -228,7 +268,7 @@ export const DocumentEditor = ({
         } else if (item.meta.interface === "list-m2m") {
           return (
             <Controller
-              key={item.field}
+              key={item.field + revision}
               control={control}
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
               render={({ field: { onChange, value } }) => (
@@ -245,18 +285,20 @@ export const DocumentEditor = ({
         }
       });
 
-  const handleSubmit = async (data: CoreSchema<keyof CoreSchema>) => {
-    await updateDoc(data, {
+  const handleSubmit = async (body: CoreSchema<keyof CoreSchema>) => {
+    await updateDoc(body, {
       onSuccess: (updatedDoc) => {
-        context.reset(updatedDoc);
-        router.push("../");
-        onSave?.(updatedDoc);
+        context.reset(updatedDoc as CoreSchema<keyof CoreSchema>);
+        if (router.canGoBack()) {
+          router.back();
+        } else router.push("../");
+        onSave?.(updatedDoc as CoreSchema<keyof CoreSchema>);
       },
     });
   };
 
   return (
-    <FormProvider {...context}>
+    <FormProvider key={revision + collection + id} {...context}>
       <Stack.Screen
         options={{
           headerRight: () => (
