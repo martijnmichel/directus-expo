@@ -10,8 +10,10 @@ import {
   readMe,
   readPermissions,
   readSingleton,
+  RequestOptions,
 } from "@directus/sdk";
 import { useQuery } from "@tanstack/react-query";
+import { coreCollections } from "./core";
 
 export const useCollection = (id: string) => {
   const { directus } = useAuth();
@@ -25,22 +27,40 @@ export const useDocuments = (collection: keyof CoreSchema) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["documents", collection],
-    queryFn: () => directus?.request(readItems(collection)),
+    queryFn: () => async () => {
+      const coreCollection = coreCollections[collection];
+      if (coreCollection?.readItem) {
+        // Use the core collection hook
+        const result = await directus?.request(coreCollection.readItems(id));
+        console.log({ result });
+        return result;
+      }
+      // Fallback to standard readItem
+      return directus?.request(readItems(collection, id));
+    },
   });
 };
 
 export const useDocument = (
   collection: keyof CoreSchema,
-  id: number | true,
+  id: number | string | true,
   query?: Query<CoreSchema, keyof CoreSchema>
 ) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["document", collection, id],
-    queryFn: () =>
-      id === true
-        ? directus?.request(readSingleton(collection))
-        : directus?.request(readItem(collection, id, query)),
+    queryFn: async () => {
+      const coreCollection = coreCollections[collection];
+      if (coreCollection?.readItem) {
+        // Use the core collection hook
+        console.log({ coreCollection, id });
+        const result = await directus?.request(coreCollection.readItem(id));
+        console.log({ result });
+        return result;
+      }
+      // Fallback to standard readItem
+      return directus?.request(readItem(collection, id, query));
+    },
   });
 };
 

@@ -34,7 +34,7 @@ export const DocumentEditor = ({
   onSave,
 }: {
   collection: keyof CoreSchema;
-  id: number;
+  id: number | string;
   onSave?: (doc: CoreSchema<keyof CoreSchema>) => void;
 }) => {
   const { styles } = useStyles(formStyles);
@@ -49,6 +49,8 @@ export const DocumentEditor = ({
     collection as keyof CoreSchema,
     id
   );
+
+  console.log({ document });
 
   useEffect(() => {
     if (document) {

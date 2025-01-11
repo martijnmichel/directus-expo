@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
+import { coreCollections } from "@/state/queries/directus/core";
 
 interface Schema {
   [key: string]: any;
@@ -39,6 +40,10 @@ export const M2OInput = ({
     const getOptions = async () => {
       if (!item.schema.foreign_key_table) return;
 
+      const coreCollection = coreCollections[item.schema.foreign_key_table];
+      if (item.schema.foreign_key_table.startsWith("directus_")) {
+        return;
+      }
       try {
         const response = await directus?.request(
           readItems(item.schema.foreign_key_table as any)

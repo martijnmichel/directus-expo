@@ -5,17 +5,19 @@ import {
   readPermissions,
   readProviders,
   readRelations,
+  readRole,
   readRoles,
   readSettings,
   readSingleton,
+  readUser,
   readUserPermissions,
   readUsers,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
-export const useUser = () => {
+export const useMe = () => {
   const { directus } = useAuth();
   return useQuery({
-    queryKey: ["user"],
+    queryKey: ["me"],
     queryFn: () => directus?.request(readMe()),
   });
 };
@@ -52,11 +54,33 @@ export const useSettings = () => {
   });
 };
 
+/**
+ *
+ * CORE COLLECTIONS
+ *
+ */
+
+export const useUser = (id: string) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["user", id],
+    queryFn: () => directus?.request(readUser(id)),
+  });
+};
+
 export const useUsers = () => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["users"],
     queryFn: () => directus?.request(readUsers()),
+  });
+};
+
+export const useRole = (id: string) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["role", id],
+    queryFn: () => directus?.request(readRole(id)),
   });
 };
 
@@ -77,17 +101,27 @@ export const useProviders = () => {
 };
 
 const prefix = "directus_";
-export const coreCollections = {
-  [prefix + "users"]: useUsers,
-  [prefix + "roles"]: useRoles,
-  [prefix + "providers"]: useProviders,
-  [prefix + "settings"]: useSettings,
-};
 
-export const useCoreCollection = (collection: keyof typeof coreCollections) => {
-  const { directus } = useAuth();
-  return useQuery({
-    queryKey: ["coreCollection", collection],
-    queryFn: () => directus?.request(coreCollections[collection]()),
-  });
+export const coreCollections = {
+  [prefix + "users"]: {
+    readItem: (id: string) => {
+      const { directus } = useAuth();
+      console.log({ id });
+      return useQuery({
+        queryKey: ["user", id],
+        queryFn: () => directus?.request(readUser(id)),
+      });
+    },
+    readItems: useUsers,
+  },
+  [prefix + "roles"]: {
+    readItem: useRole,
+    readItems: useRoles,
+  },
+  [prefix + "providers"]: {
+    readItems: useProviders,
+  },
+  [prefix + "settings"]: {
+    readItems: useSettings,
+  },
 };
