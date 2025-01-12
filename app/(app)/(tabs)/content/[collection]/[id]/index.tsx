@@ -16,7 +16,7 @@ export default function Collection() {
 
   const headerTitle = useDocumentDisplayTemplate({
     collection: collection as keyof CoreSchema,
-    docId: Number(id),
+    docId: id as string,
     template: data?.meta.display_template || "",
   });
 
@@ -33,7 +33,7 @@ export default function Collection() {
           <Section>
             <DocumentEditor
               collection={collection as keyof CoreSchema}
-              id={Number(id)}
+              id={id as string}
             />
           </Section>
         </Container>

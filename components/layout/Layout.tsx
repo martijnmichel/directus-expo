@@ -27,5 +27,6 @@ const stylesheet = createStyleSheet((theme) => ({
   layout: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    fontFamily: theme.typography.body.fontFamily,
   },
 }));

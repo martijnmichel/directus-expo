@@ -52,7 +52,8 @@ export const useDocument = (
     ? coreCollection.readItem(id as string)
     : useQuery({
         queryKey: ["document", collection, id],
-        queryFn: async () => directus?.request(readItem(collection, id, query)),
+        queryFn: async () =>
+          id === "+" ? {} : directus?.request(readItem(collection, id, query)),
         retry: false,
       });
 };

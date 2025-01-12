@@ -7,11 +7,17 @@ import {
 import { List, ListItem } from "../display/list";
 import { Fragment } from "react";
 import { useCollections } from "@/state/queries/directus/core";
+import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
+import { useTranslation } from "react-i18next";
 
 export default function UserCollections() {
   const { data } = useCollections();
 
   console.log({ data });
+
+  const {
+    i18n: { language },
+  } = useTranslation();
 
   const renderCollections = (parent?: string) => {
     return map(
@@ -31,7 +37,9 @@ export default function UserCollections() {
               defaultOpen={collection.meta.collapse === "open"}
               key={`collection-${collection.collection}`}
             >
-              <CollapsibleTrigger>{collection.collection}</CollapsibleTrigger>
+              <CollapsibleTrigger>
+                {getCollectionTranslation(collection, language)}
+              </CollapsibleTrigger>
               <CollapsibleContent style={{ paddingLeft: 20 }}>
                 <List>{renderCollections(collection.collection)}</List>
               </CollapsibleContent>
@@ -48,7 +56,7 @@ export default function UserCollections() {
               href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
             >
-              {collection.collection}
+              {getCollectionTranslation(collection, language)}
             </ListItem>
           );
         }

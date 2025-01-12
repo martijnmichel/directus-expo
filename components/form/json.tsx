@@ -109,7 +109,7 @@ const jsonStyles = createStyleSheet((theme) => ({
   ...formStyles(theme),
   container: {
     flexDirection: "row",
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,

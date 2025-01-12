@@ -25,8 +25,8 @@ export const DocListItem = <T extends keyof CoreSchema>({
   junction: ReadRelationOutput<CoreSchema>;
   relation: ReadRelationOutput<CoreSchema>;
   template?: string;
-  onDelete?: (doc: CoreSchema<keyof CoreSchema>) => void;
-  onAdd?: (doc: CoreSchema<keyof CoreSchema>) => void;
+  onDelete?: (doc: Record<string, unknown>) => void;
+  onAdd?: (doc: Record<string, unknown>) => void;
   isNew?: boolean;
   isDeselected?: boolean;
 }) => {
@@ -84,8 +84,8 @@ export const DocListItem = <T extends keyof CoreSchema>({
         variant="ghost"
         onPress={() =>
           isDeselected
-            ? onAdd?.(doc as CoreSchema<keyof CoreSchema<any>>)
-            : onDelete?.(doc as CoreSchema<keyof CoreSchema<any>>)
+            ? onAdd?.(doc as Record<string, unknown>)
+            : onDelete?.(doc as Record<string, unknown>)
         }
         rounded
       >
@@ -102,7 +102,7 @@ const stylesheet = createStyleSheet((theme) => ({
     padding: theme.spacing.md,
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     height: 44,
     maxWidth: 500,

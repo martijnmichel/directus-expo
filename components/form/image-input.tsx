@@ -163,7 +163,7 @@ export const ImageInput = ({
 
 const imageStyles = createStyleSheet((theme) => ({
   container: {
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,

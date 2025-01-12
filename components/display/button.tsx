@@ -139,7 +139,7 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: "transparent",
     height: 44,
   },

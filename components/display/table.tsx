@@ -186,7 +186,8 @@ const stylesheet = createStyleSheet((theme) => ({
     borderBottomColor: theme.colors.border,
   },
   headerCell: {
-    padding: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
     justifyContent: "center",
     minWidth: 0,
     borderRightWidth: theme.borderWidth.md,
@@ -194,8 +195,8 @@ const stylesheet = createStyleSheet((theme) => ({
     marginBottom: theme.spacing.sm,
   },
   headerText: {
-    fontWeight: "bold",
-    fontFamily: theme.typography.body.fontFamily,
+    ...theme.typography.label,
+    fontSize: 15,
     color: theme.colors.textSecondary,
     textTransform: "capitalize",
     flexShrink: 1,
@@ -207,6 +208,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     borderBottomWidth: theme.borderWidth.md,
     borderBottomColor: theme.colors.border,
+    fontFamily: theme.typography.body.fontFamily,
     flex: 1,
   },
   cell: {

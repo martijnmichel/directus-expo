@@ -52,7 +52,7 @@ export const TextArea = React.forwardRef<TextInput, TextAreaProps>(
 const textAreaStyles = createStyleSheet((theme) => ({
   textareaContainer: {
     backgroundColor: theme.colors.background,
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
   },

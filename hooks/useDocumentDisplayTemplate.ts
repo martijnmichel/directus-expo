@@ -11,7 +11,7 @@ export const useDocumentDisplayTemplate = ({
   template,
 }: {
   collection: keyof CoreSchema;
-  docId: number;
+  docId: number | string;
   template?: string;
 }) => {
   const [data, setData] = useState<Record<string, unknown>>();

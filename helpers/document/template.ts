@@ -1,4 +1,7 @@
-export const parseTemplate = <T>(template: string, data: T): string => {
+export const parseTemplate = <T>(
+  template: string,
+  data: T & { id?: string }
+): string => {
   return template.replace(/\{\{(.*?)\}\}/g, (_, path) => {
     return (
       path
@@ -9,7 +12,7 @@ export const parseTemplate = <T>(template: string, data: T): string => {
             (obj as Record<string, unknown>)?.[key],
           data as unknown
         ) ||
-      data.id ||
+      data?.id ||
       ""
     );
   });

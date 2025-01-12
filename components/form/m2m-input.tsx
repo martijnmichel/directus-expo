@@ -43,12 +43,13 @@ export const M2MInput = ({
   label,
   error,
   helper,
+  value: valueProp = [],
   ...props
 }: M2MInputProps) => {
   const { id: originId, newDocIds } = useLocalSearchParams();
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
-  const [value] = useState<number[]>(props.value);
+  const [value] = useState<number[]>(valueProp);
   const [createItemOpen, setCreateItemOpen] = useState(false);
   const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
 
@@ -56,7 +57,7 @@ export const M2MInput = ({
     console.log({ newDocIds });
     if (!!newDocIds) {
       props.onChange([
-        ...props.value,
+        ...valueProp,
         ...(typeof newDocIds === "string"
           ? [Number(newDocIds)]
           : newDocIds?.map((v) => Number(v))),
@@ -90,7 +91,7 @@ export const M2MInput = ({
 
   const allowCreate = relationPermission?.create.access === "full";
 
-  const { data: options } = useQuery({
+  const { data: options, refetch } = useQuery({
     queryKey: ["options", item.collection, item.field],
     enabled: !!junction && !!relation && !!item.collection,
     queryFn: () =>
@@ -123,7 +124,10 @@ export const M2MInput = ({
       ),
   });
 
-  console.log({ item, relation, junction, value, props });
+  useEffect(() => {
+    refetch();
+  }, [valueProp]);
+  console.log({ item, relation, junction, value, valueProp });
 
   return (
     relation &&
@@ -131,9 +135,8 @@ export const M2MInput = ({
       <Vertical spacing="xs">
         {label && <Text style={formControlStyles.label}>{label}</Text>}
         <List>
-          {uniq([...(props.value || []), ...(value || [])]).map((id) => {
-            const isDeselected =
-              value?.includes(id) && !props.value.includes(id);
+          {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+            const isDeselected = value?.includes(id) && !valueProp.includes(id);
             const isNew = !value?.includes(id);
             return (
               <DocListItem
@@ -141,10 +144,10 @@ export const M2MInput = ({
                 docId={id}
                 junction={junction!}
                 relation={relation!}
-                template={item.meta.display_options?.template}
-                onAdd={(item) => {
-                  setAddedDocIds([...addedDocIds, item.id]);
-                  props.onChange([...props.value, item.id]);
+                template={item.meta.options?.template}
+                onAdd={(item: Record<string, unknown>) => {
+                  setAddedDocIds([...addedDocIds, item.id as number]);
+                  props.onChange([...valueProp, item.id as number]);
                 }}
                 onDelete={(item) => {
                   console.log({ item });
@@ -154,7 +157,7 @@ export const M2MInput = ({
                         v !== (item[relation.field as keyof typeof item] as any)
                     )
                   );
-                  props.onChange(props.value.filter((v) => v !== id));
+                  props.onChange(valueProp.filter((v) => v !== id));
                 }}
                 isNew={isNew}
                 isDeselected={isDeselected}
@@ -184,19 +187,19 @@ export const M2MInput = ({
                   <DocumentEditor
                     collection={relation.related_collection as any}
                     id={"+"}
-                    onSave={async (newItem) => {
+                    onSave={async (newItem: Record<string, unknown>) => {
                       close();
                       try {
                         const doc = (await directus!.request(
-                          createItem(junction?.collection as keyof CoreSchema, {
-                            [relation.field]: newItem.id,
+                          createItem(junction?.collection as any, {
+                            [relation.field]: newItem.id as number,
                           })
                         )) as { id: number } & Record<string, unknown>;
                         setAddedDocIds([
                           ...addedDocIds,
                           doc[relation.field] as number,
                         ]);
-                        props.onChange([...props.value, doc.id]);
+                        props.onChange([...valueProp, doc.id]);
                         setCreateItemOpen(false);
                       } catch (e) {
                         console.error(e);
@@ -246,7 +249,7 @@ export const M2MInput = ({
                             ...addedDocIds,
                             doc[relation.field] as number,
                           ]);
-                          props.onChange([...props.value, doc.id]);
+                          props.onChange([...valueProp, doc.id]);
                         } catch (e) {
                           console.error(e);
                         }

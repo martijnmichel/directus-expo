@@ -50,14 +50,17 @@ export const DocumentEditor = ({
 }: {
   collection: keyof CoreSchema;
   id: number | string;
-  onSave?: (doc: CoreSchema<keyof CoreSchema>) => void;
+  onSave?: (doc: Record<string, unknown>) => void;
 }) => {
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
   const context = useForm<CoreSchema<keyof CoreSchema>>();
-  const { control } = context;
+  const {
+    control,
+    formState: { isDirty, isValid, isSubmitting },
+  } = context;
 
   const { data } = useCollection(collection as keyof CoreSchema);
   const {
@@ -71,6 +74,8 @@ export const DocumentEditor = ({
     collection as keyof CoreSchema,
     id as number
   );
+
+  console.log({ isDirty, isValid, isSubmitting });
 
   const getDocumentFieldValues = (doc?: CoreSchema<keyof CoreSchema>) => {
     return fields?.reduce((acc, field) => {
@@ -87,10 +92,6 @@ export const DocumentEditor = ({
   }, [isError, error]);
 
   useEffect(() => {
-    /** reset the form with only fields that exist */
-    context.reset(
-      getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
-    );
     /** if a document is fetched, reset the form with the document */
     if (document) {
       context.reset(
@@ -360,7 +361,7 @@ export const DocumentEditor = ({
       onSuccess: (updatedDoc) => {
         context.reset(updatedDoc as CoreSchema<keyof CoreSchema>);
 
-        onSave?.(updatedDoc as CoreSchema<keyof CoreSchema>);
+        onSave?.(updatedDoc as Record<string, unknown>);
       },
     });
   };

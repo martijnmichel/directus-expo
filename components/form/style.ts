@@ -31,9 +31,11 @@ export const formStyles = createStyleSheet((theme) => ({
   },
   input: {
     flex: 1,
+    height: "100%",
     color: theme.colors.textPrimary,
     fontFamily: theme.typography.body.fontFamily,
     fontSize: theme.typography.body.fontSize,
+    paddingHorizontal: theme.spacing.md,
   },
   prepend: {
     padding: theme.spacing.md,
@@ -53,7 +55,7 @@ export const formStyles = createStyleSheet((theme) => ({
   // Rich text editor specific styles
   richTextContainer: {
     flex: 1,
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,
