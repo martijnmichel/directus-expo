@@ -1,8 +1,9 @@
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import React, { useState } from "react";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { Dictionary } from "lodash";
 
-interface TableProps<T> {
+interface TableProps<T extends Record<string, unknown>> {
   headers?: { [key: string]: string };
   fields: string[];
   items: T[];
@@ -37,7 +38,7 @@ function compareValues(a: any, b: any, direction: "asc" | "desc"): number {
     : bStr.localeCompare(aStr);
 }
 
-export function Table<T>({
+export function Table<T extends Record<string, unknown>>({
   headers,
   fields,
   items,

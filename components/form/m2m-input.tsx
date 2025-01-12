@@ -46,24 +46,11 @@ export const M2MInput = ({
   value: valueProp = [],
   ...props
 }: M2MInputProps) => {
-  const { id: originId, newDocIds } = useLocalSearchParams();
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
   const [value] = useState<number[]>(valueProp);
   const [createItemOpen, setCreateItemOpen] = useState(false);
   const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
-
-  useEffect(() => {
-    console.log({ newDocIds });
-    if (!!newDocIds) {
-      props.onChange([
-        ...valueProp,
-        ...(typeof newDocIds === "string"
-          ? [Number(newDocIds)]
-          : newDocIds?.map((v) => Number(v))),
-      ]);
-    }
-  }, [newDocIds, props.onChange]);
 
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
@@ -100,11 +87,11 @@ export const M2MInput = ({
           fields: [`*`],
           filter: {
             _and: [
-              ...(addedDocIds?.length > 0
+              ...(valueProp?.length > 0
                 ? [
                     {
                       id: {
-                        _nin: addedDocIds,
+                        _nin: valueProp,
                       },
                     },
                   ]
@@ -127,7 +114,7 @@ export const M2MInput = ({
   useEffect(() => {
     refetch();
   }, [valueProp]);
-  console.log({ item, relation, junction, value, valueProp });
+  console.log({ item, relation, junction, value, valueProp, options });
 
   return (
     relation &&
@@ -176,7 +163,7 @@ export const M2MInput = ({
           </Text>
         )}
 
-        <Horizontal>
+        <Horizontal spacing="xs">
           {allowCreate && (
             <Modal>
               <Modal.Trigger>

@@ -37,9 +37,9 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         {}
       )}
       fields={tableFields}
-      items={documents || []}
+      items={(documents as Record<string, unknown>[]) || []}
       widths={preset?.layout_options?.tabular.widths}
-      renderRow={(doc) => map(tableFields, (f) => doc[f])}
+      renderRow={(doc) => map(tableFields, (f) => doc[f] as string)}
       onRowPress={(doc) => {
         console.log(doc);
         router.push(`/content/${collection}/${doc.id}`);

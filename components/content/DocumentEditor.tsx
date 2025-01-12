@@ -77,12 +77,12 @@ export const DocumentEditor = ({
 
   console.log({ isDirty, isValid, isSubmitting });
 
-  const getDocumentFieldValues = (doc?: CoreSchema<keyof CoreSchema>) => {
+  const getDocumentFieldValues = (doc?: Record<string, unknown>) => {
     return fields?.reduce((acc, field) => {
       acc[field.field as keyof CoreSchema] =
         doc?.[field.field as keyof CoreSchema];
       return acc;
-    }, {} as CoreSchema<keyof CoreSchema>);
+    }, {} as Record<string, unknown>);
   };
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export const DocumentEditor = ({
     /** if a document is fetched, reset the form with the document */
     if (document) {
       context.reset(
-        getDocumentFieldValues(document as CoreSchema<keyof CoreSchema>)
+        getDocumentFieldValues(document as Record<string, unknown>)
       );
       console.log("reset", document);
       setRevision((state) => state + 1);
@@ -128,7 +128,7 @@ export const DocumentEditor = ({
           ["group-raw", "group-detail"].includes(item.meta.interface)
         ) {
           return (
-            <Collapsible key={item.field} variant={item.meta.interface}>
+            <Collapsible key={item.field}>
               <CollapsibleTrigger
                 color={item?.meta.options?.headerColor}
                 prepend={<DirectusIcon name={item?.meta.options?.headerIcon} />}
