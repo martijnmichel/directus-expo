@@ -49,7 +49,7 @@ export const DocumentEditor = ({
   onSave,
 }: {
   collection: keyof CoreSchema;
-  id: number | string;
+  id?: number | string;
   onSave?: (doc: Record<string, unknown>) => void;
 }) => {
   const [revision, setRevision] = useState<number>(0);

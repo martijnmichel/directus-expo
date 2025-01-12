@@ -22,12 +22,16 @@ export const List = ({ children, style, ...props }: ListProps) => {
 interface ListItemProps extends ViewProps {
   children: React.ReactNode;
   href?: string;
+  prepend?: React.ReactNode;
+  prependSize?: number;
 }
 
 export const ListItem = ({
   children,
   href,
   style,
+  prepend,
+  prependSize = 20,
   ...props
 }: ListItemProps) => {
   const { styles, theme } = useStyles(stylesheet);
@@ -39,10 +43,22 @@ export const ListItem = ({
       children
     );
 
+  const clonedPrepend = prepend
+    ? React.cloneElement(prepend as React.ReactElement, {
+        color: theme.colors.primary,
+        size: prependSize,
+      })
+    : null;
+
   const renderContent = () => (
     <>
+      {clonedPrepend}
       {content}
-      {href && <ChevronRight color={theme.colors.primary} size={20} />}
+      {href && (
+        <View style={{ marginLeft: "auto" }}>
+          <ChevronRight color={theme.colors.primary} size={20} />
+        </View>
+      )}
     </>
   );
 
@@ -75,8 +91,9 @@ const stylesheet = createStyleSheet((theme) => ({
     width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     paddingVertical: theme.spacing.md,
+    gap: theme.spacing.md,
   },
   text: {
     fontSize: theme.typography.body.fontSize,

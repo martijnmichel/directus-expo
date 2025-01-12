@@ -9,6 +9,7 @@ import { Fragment } from "react";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { useTranslation } from "react-i18next";
+import { DirectusIcon } from "../display/directus-icon";
 
 export default function UserCollections() {
   const { data } = useCollections();
@@ -37,7 +38,14 @@ export default function UserCollections() {
               defaultOpen={collection.meta.collapse === "open"}
               key={`collection-${collection.collection}`}
             >
-              <CollapsibleTrigger>
+              <CollapsibleTrigger
+                color={collection.meta.color || ""}
+                prepend={
+                  collection.meta.icon && (
+                    <DirectusIcon name={collection.meta.icon} />
+                  )
+                }
+              >
                 {getCollectionTranslation(collection, language)}
               </CollapsibleTrigger>
               <CollapsibleContent style={{ paddingLeft: 20 }}>
@@ -55,6 +63,11 @@ export default function UserCollections() {
             <ListItem
               href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
+              prepend={
+                collection.meta.icon && (
+                  <DirectusIcon name={collection.meta.icon} />
+                )
+              }
             >
               {getCollectionTranslation(collection, language)}
             </ListItem>

@@ -16,6 +16,7 @@ import { Button } from "@/components/display/button";
 import { Table } from "@/components/display/table";
 import { CollectionDataTable } from "@/components/content/CollectionDataTable";
 import { useCollectionMeta } from "@/helpers/collections/getCollectionTranslation";
+import { DocumentEditor } from "@/components/content/DocumentEditor";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -36,7 +37,11 @@ export default function Collection() {
       />
       <Container>
         <Section>
-          <CollectionDataTable collection={collection as keyof CoreSchema} />
+          {data?.meta.singleton ? (
+            <DocumentEditor collection={collection as keyof CoreSchema} />
+          ) : (
+            <CollectionDataTable collection={collection as keyof CoreSchema} />
+          )}
         </Section>
       </Container>
     </Layout>

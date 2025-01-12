@@ -41,21 +41,34 @@ export const useDocuments = (
 
 export const useDocument = (
   collection: keyof CoreSchema,
-  id: number | string | true,
+  id?: number | string,
   query?: Query<CoreSchema, any>
 ): UseQueryResult<{ [x: string]: any } | undefined, Error> => {
   const { directus } = useAuth();
+  const { data: collectionData } = useCollection(
+    collection as keyof CoreSchema
+  );
 
   const coreCollection = coreCollections[collection];
 
-  return coreCollection?.readItem
-    ? coreCollection.readItem(id as string)
-    : useQuery({
-        queryKey: ["document", collection, id],
-        queryFn: async () =>
-          id === "+" ? {} : directus?.request(readItem(collection, id, query)),
-        retry: false,
-      });
+  if (collectionData?.meta.singleton) {
+    return useQuery({
+      queryKey: ["document", collection, id],
+      queryFn: async () =>
+        directus?.request(readSingleton(collection as any, query)),
+      retry: false,
+    });
+  } else
+    return coreCollection?.readItem
+      ? coreCollection.readItem(id as string)
+      : useQuery({
+          queryKey: ["document", collection, id],
+          queryFn: async () =>
+            id === "+"
+              ? {}
+              : directus?.request(readItem(collection as any, id, query)),
+          retry: false,
+        });
 };
 
 export const useFields = (collection: keyof CoreSchema) => {
