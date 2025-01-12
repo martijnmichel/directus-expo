@@ -1,7 +1,7 @@
 import { createStyleSheet } from "react-native-unistyles";
 
 export const formStyles = createStyleSheet((theme) => ({
-  form: { display: "flex", flexDirection: "column", gap: theme.spacing.md },
+  form: { display: "flex", flexDirection: "column", gap: theme.spacing.xl },
   formControl: {
     display: "flex",
     flexDirection: "column",

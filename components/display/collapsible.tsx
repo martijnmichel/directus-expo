@@ -32,11 +32,13 @@ const useCollapsible = () => {
 interface CollapsibleProps extends ViewProps {
   children: React.ReactNode;
   defaultOpen?: boolean;
+  variant?: "default" | "group-detail";
 }
 
 export const Collapsible = ({
   children,
   defaultOpen = false,
+  variant = "default",
   style,
   ...props
 }: CollapsibleProps) => {
@@ -50,7 +52,14 @@ export const Collapsible = ({
 
   return (
     <CollapsibleContext.Provider value={{ isOpen, toggle }}>
-      <View style={[styles.container, style]} {...props}>
+      <View
+        style={[
+          styles.container,
+          ["group-detail", "group-raw"].includes(variant) && styles.groupDetail,
+          style,
+        ]}
+        {...props}
+      >
         {children}
       </View>
     </CollapsibleContext.Provider>
@@ -60,11 +69,17 @@ export const Collapsible = ({
 // Trigger component
 interface CollapsibleTriggerProps extends ViewProps {
   children: React.ReactNode;
+  color?: string;
+  prepend?: React.ReactNode;
+  prependSize?: number;
 }
 
 export const CollapsibleTrigger = ({
   children,
   style,
+  color,
+  prepend,
+  prependSize = 20,
   ...props
 }: CollapsibleTriggerProps) => {
   const { isOpen, toggle } = useCollapsible();
@@ -86,16 +101,29 @@ export const CollapsibleTrigger = ({
 
   const triggerContent =
     typeof children === "string" ? (
-      <Text style={{ fontWeight: "500" }}>{children}</Text>
+      <Text style={{ fontWeight: "700", color: color, fontSize: 18 }}>
+        {children}
+      </Text>
     ) : (
       children
     );
 
+  const clonedPrepend = prepend
+    ? React.cloneElement(prepend as React.ReactElement, {
+        color: color || theme.colors.primary,
+        size: prependSize,
+      })
+    : null;
+
   return (
     <Pressable onPress={toggle} style={[styles.trigger, style]} {...props}>
+      {clonedPrepend}
       {triggerContent}
-      <Animated.View style={{ transform: [{ rotate }] }}>
-        <ChevronRight color={theme.colors.primary} size={20} />
+      <Animated.View
+        style={{ transform: [{ rotate }], marginLeft: "auto" }}
+        pointerEvents="none"
+      >
+        <ChevronRight color={color || theme.colors.primary} size={20} />
       </Animated.View>
     </Pressable>
   );
@@ -131,12 +159,18 @@ const stylesheet = createStyleSheet((theme) => ({
   trigger: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
+    gap: theme.spacing.md,
     paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.background,
   },
   content: {
     paddingTop: theme.spacing.sm,
     paddingBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+  },
+  groupDetail: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
 }));

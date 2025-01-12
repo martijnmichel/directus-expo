@@ -17,7 +17,7 @@ export const Vertical = ({
 }: StackProps) => {
   const { styles, theme } = useStyles(stylesheet);
   const gap =
-    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "md"];
+    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "sm"];
 
   return (
     <View
@@ -38,7 +38,7 @@ export const Horizontal = ({
 }: StackProps) => {
   const { styles, theme } = useStyles(stylesheet);
   const gap =
-    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "md"];
+    typeof spacing === "number" ? spacing : theme.spacing[spacing ?? "sm"];
 
   return (
     <View

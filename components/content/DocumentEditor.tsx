@@ -28,7 +28,7 @@ import {
   Stack,
   useLocalSearchParams,
 } from "expo-router";
-import { Check } from "../icons";
+import { Check, Trash } from "../icons";
 import { M2OInput } from "../form/m2o-input";
 import { ImageInput } from "../form/image-input";
 import { M2MInput } from "../form/m2m-input";
@@ -39,6 +39,10 @@ import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { NumberInput } from "../form/number-input";
 import { JsonInput } from "../form/json";
+import { DirectusIcon } from "../display/directus-icon";
+import { Horizontal } from "../layout/Stack";
+import { Accordion } from "../display/accordion";
+import { find } from "lodash";
 export const DocumentEditor = ({
   collection,
   id,
@@ -116,15 +120,20 @@ export const DocumentEditor = ({
           return null;
         } else if (item.meta.interface === "group-accordion") {
           return (
-            <Fragment key={item.field}>{mapFields(item.meta.field)}</Fragment>
+            <Accordion key={item.field}>{mapFields(item.meta.field)}</Accordion>
           );
         } else if (
           item.meta.interface &&
           ["group-raw", "group-detail"].includes(item.meta.interface)
         ) {
           return (
-            <Collapsible key={item.field}>
-              <CollapsibleTrigger>{getLabel(item.field)}</CollapsibleTrigger>
+            <Collapsible key={item.field} variant={item.meta.interface}>
+              <CollapsibleTrigger
+                color={item?.meta.options?.headerColor}
+                prepend={<DirectusIcon name={item?.meta.options?.headerIcon} />}
+              >
+                {getLabel(item.field)}
+              </CollapsibleTrigger>
               <CollapsibleContent>
                 <View style={styles.form}>{mapFields(item.meta.field)}</View>
               </CollapsibleContent>
@@ -143,7 +152,17 @@ export const DocumentEditor = ({
                     onChangeText={onChange}
                     value={value as string}
                     helper={item.meta.note || undefined}
-                    placeholder={item.meta.display_options?.placeholder}
+                    placeholder={item.meta.options?.placeholder}
+                    prepend={
+                      item.meta.options?.iconLeft && (
+                        <DirectusIcon name={item.meta.options.iconLeft} />
+                      )
+                    }
+                    append={
+                      item.meta.options?.iconRight && (
+                        <DirectusIcon name={item.meta.options.iconRight} />
+                      )
+                    }
                     label={getLabel(item.field)}
                     autoCapitalize="none"
                   />
@@ -162,7 +181,7 @@ export const DocumentEditor = ({
                     onChangeText={onChange}
                     value={value as string}
                     helper={item.meta.note || undefined}
-                    placeholder={item.meta.display_options?.placeholder}
+                    placeholder={item.meta.options?.placeholder}
                     label={getLabel(item.field)}
                     autoCapitalize="none"
                     keyboardType="numeric"
@@ -188,7 +207,7 @@ export const DocumentEditor = ({
                   onChangeText={onChange}
                   value={value as string}
                   helper={item.meta.note || undefined}
-                  placeholder={item.meta.display_options?.placeholder}
+                  placeholder={item.meta.options?.placeholder}
                   label={getLabel(item.field)}
                   autoCapitalize="none"
                 />
@@ -208,7 +227,6 @@ export const DocumentEditor = ({
                     onChange={onChange}
                     value={value as string}
                     helper={item.meta.note || undefined}
-                    placeholder={item.meta.display_options?.placeholder}
                     label={getLabel(item.field)}
                     autoCapitalize="none"
                   />
@@ -362,7 +380,14 @@ export const DocumentEditor = ({
     <FormProvider key={revision + collection + id} {...context}>
       <Stack.Screen
         options={{
-          headerRight: SubmitButton,
+          headerRight: () => (
+            <Horizontal>
+              <Button rounded variant="soft">
+                <Trash />
+              </Button>
+              <SubmitButton />
+            </Horizontal>
+          ),
         }}
       />
       <PortalOutlet name="modal-header">
