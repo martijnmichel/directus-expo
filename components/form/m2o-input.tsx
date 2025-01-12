@@ -48,10 +48,10 @@ export const M2OInput = ({
     item.schema.foreign_key_table as any
   );
 
-  const selectOptions = options?.map((opt) => {
+  const selectOptions = options?.map((opt: any) => {
     return {
-      value: opt[item.schema.foreign_key_column!] || opt.id || "",
-      text: parseTemplate(item.meta.options?.template || "", opt),
+      value: opt[item.schema?.foreign_key_column!] || opt.id || "",
+      text: parseTemplate(item.meta?.options?.template || "", opt),
     };
   });
 
@@ -75,7 +75,7 @@ export const M2OInput = ({
           </Modal.Trigger>
           <Modal.Content variant="bottomSheet" title="Add new">
             <DocumentEditor
-              collection={item.schema.foreign_key_table as any}
+              collection={item.schema?.foreign_key_table as any}
               id={"+"}
               onSave={() => refetch()}
             />
