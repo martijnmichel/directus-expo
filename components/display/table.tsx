@@ -195,6 +195,7 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   headerText: {
     fontWeight: "bold",
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textSecondary,
     textTransform: "capitalize",
     flexShrink: 1,
@@ -215,6 +216,7 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   cellText: {
     color: theme.colors.textPrimary,
+    fontFamily: theme.typography.body.fontFamily,
     flexShrink: 1,
   },
   truncate: {

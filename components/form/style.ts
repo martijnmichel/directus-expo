@@ -10,7 +10,9 @@ export const formStyles = createStyleSheet((theme) => ({
   label: {
     fontSize: theme.typography.label.fontSize,
     fontWeight: theme.typography.label.fontWeight,
+    fontFamily: theme.typography.label.fontFamily,
     color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
   },
   inputContainer: {
     flexDirection: "row",
@@ -29,9 +31,9 @@ export const formStyles = createStyleSheet((theme) => ({
   },
   input: {
     flex: 1,
-    padding: theme.spacing.md,
-    fontSize: theme.typography.body.fontSize,
     color: theme.colors.textPrimary,
+    fontFamily: theme.typography.body.fontFamily,
+    fontSize: theme.typography.body.fontSize,
   },
   prepend: {
     padding: theme.spacing.md,
@@ -41,6 +43,7 @@ export const formStyles = createStyleSheet((theme) => ({
   },
   helperText: {
     fontSize: theme.typography.helper.fontSize,
+    fontFamily: theme.typography.helper.fontFamily,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.xs,
   },

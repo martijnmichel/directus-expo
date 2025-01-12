@@ -13,6 +13,7 @@ import { coreCollections } from "@/state/queries/directus/core";
 import { useDocuments } from "@/state/queries/directus/collection";
 import { Modal } from "../display/modal";
 import { DocumentEditor } from "../content/DocumentEditor";
+import { createStyleSheet } from "react-native-unistyles";
 
 interface Schema {
   [key: string]: any;
@@ -26,6 +27,14 @@ interface M2OInputProps {
   error?: string;
   helper?: string;
 }
+
+const stylesheet = createStyleSheet((theme) => ({
+  text: {
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.textPrimary,
+  },
+}));
 
 export const M2OInput = ({
   item,

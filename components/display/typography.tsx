@@ -108,33 +108,39 @@ const stylesheet = createStyleSheet((theme) => ({
     fontSize: theme.typography.heading1.fontSize,
     lineHeight: theme.typography.heading1.lineHeight,
     fontWeight: theme.typography.heading1.fontWeight,
+    fontFamily: theme.typography.heading1.fontFamily,
     color: theme.colors.textPrimary,
   },
   h2: {
     fontSize: theme.typography.heading2.fontSize,
     lineHeight: theme.typography.heading2.lineHeight,
     fontWeight: theme.typography.heading2.fontWeight,
+    fontFamily: theme.typography.heading2.fontFamily,
     color: theme.colors.textPrimary,
   },
   text: {
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textPrimary,
   },
   subtitle: {
-    fontSize: theme.typography.body.fontSize + 2, // 16px
+    fontSize: theme.typography.body.fontSize + 2,
     lineHeight: theme.typography.body.lineHeight + 4,
     color: theme.colors.textSecondary,
     fontWeight: "500",
+    fontFamily: theme.typography.body.fontFamily,
   },
   description: {
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textSecondary,
   },
   muted: {
     fontSize: theme.typography.helper.fontSize,
     lineHeight: theme.typography.helper.lineHeight,
+    fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textTertiary,
   },
   centered: {

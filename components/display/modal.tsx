@@ -237,4 +237,9 @@ const modalStyles = createStyleSheet((theme) => ({
     shadowRadius: 4,
     elevation: 3,
   },
+  title: {
+    fontSize: theme.typography.heading2.fontSize,
+    fontFamily: theme.typography.heading2.fontFamily,
+    color: theme.colors.textPrimary,
+  },
 }));

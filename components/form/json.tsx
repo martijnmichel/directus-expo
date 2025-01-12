@@ -131,6 +131,7 @@ const jsonStyles = createStyleSheet((theme) => ({
   lineNumber: {
     color: theme.colors.textTertiary,
     fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     textAlign: "right",
   },
   errorLineIndicator: {

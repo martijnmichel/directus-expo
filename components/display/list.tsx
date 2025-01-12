@@ -80,6 +80,7 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   text: {
     fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
     fontWeight: "500",
     color: theme.colors.textPrimary,
   },

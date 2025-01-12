@@ -122,6 +122,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.sm,
+    fontFamily: theme.typography.body.fontFamily,
   },
   deleteButton: {
     marginLeft: theme.spacing.sm,

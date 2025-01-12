@@ -101,7 +101,14 @@ export const CollapsibleTrigger = ({
 
   const triggerContent =
     typeof children === "string" ? (
-      <Text style={{ fontWeight: "700", color: color, fontSize: 18 }}>
+      <Text
+        style={{
+          fontWeight: "700",
+          fontFamily: theme.typography.heading2.fontFamily,
+          color: color,
+          fontSize: 18,
+        }}
+      >
         {children}
       </Text>
     ) : (
@@ -163,6 +170,7 @@ const stylesheet = createStyleSheet((theme) => ({
     gap: theme.spacing.md,
     paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.background,
+    fontFamily: theme.typography.body.fontFamily,
   },
   content: {
     paddingTop: theme.spacing.sm,

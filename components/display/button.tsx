@@ -192,9 +192,9 @@ const stylesheet = createStyleSheet((theme) => ({
 
   // Text styles
   text: {
-    fontWeight: "500",
-    textAlign: "center",
-    color: "white",
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.textPrimary,
   },
   primaryText: {
     color: theme.colors.white,
