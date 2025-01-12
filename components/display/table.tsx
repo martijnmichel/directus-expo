@@ -171,7 +171,7 @@ const stylesheet = StyleSheet.create({
   headerText: {
     fontWeight: "bold",
     color: "#6b7280",
-    textTransform: "uppercase",
+    textTransform: "capitalize",
     flexShrink: 1,
   },
   bodyContainer: {
