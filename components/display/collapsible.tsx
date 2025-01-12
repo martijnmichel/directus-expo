@@ -170,7 +170,7 @@ const stylesheet = createStyleSheet((theme) => ({
     paddingHorizontal: theme.spacing.md,
   },
   groupDetail: {
-    borderBottomWidth: 1,
+    borderBottomWidth: theme.borderWidth.md,
     borderBottomColor: theme.colors.border,
   },
 }));

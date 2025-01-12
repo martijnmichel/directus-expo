@@ -34,7 +34,9 @@ export default function Collection() {
         }}
       />
       <Container>
-        <CollectionDataTable collection={collection as keyof CoreSchema} />
+        <Section>
+          <CollectionDataTable collection={collection as keyof CoreSchema} />
+        </Section>
       </Container>
     </Layout>
   );

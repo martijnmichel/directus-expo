@@ -15,7 +15,7 @@ export const formStyles = createStyleSheet((theme) => ({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,

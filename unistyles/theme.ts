@@ -18,11 +18,10 @@ export const lightTheme = {
     // Background colors
     background: "#FFFFFF" as string,
     backgroundAlt: "#F0F4F9" as string, // Light gray background
-    backgroundDark: "#1A1A1A" as string,
+    backgroundDark: "#e4eaf1" as string,
 
     // Border colors
-    border: "#D3DAE4" as string,
-    borderLight: "#E4E9F0" as string,
+    border: "#e4eaf1" as string,
 
     // Utility colors
     white: "#FFFFFF" as string,
@@ -37,6 +36,10 @@ export const lightTheme = {
     xl: 24,
     xxl: 32,
   },
+  borderWidth: {
+    sm: 1,
+    md: 2,
+  },
   borderRadius: {
     sm: 4,
     md: 8,
@@ -48,24 +51,29 @@ export const lightTheme = {
     body: {
       fontSize: 14,
       lineHeight: 20,
+      fontFamily: "Inter_400Regular",
     },
     label: {
       fontSize: 14,
       fontWeight: "600" as const,
+      fontFamily: "Inter_600SemiBold",
     },
     helper: {
       fontSize: 12,
       lineHeight: 16,
+      fontFamily: "Inter_400Regular",
     },
     heading1: {
       fontSize: 32,
       lineHeight: 40,
       fontWeight: "700" as const,
+      fontFamily: "Inter_700Bold",
     },
     heading2: {
       fontSize: 24,
       lineHeight: 32,
       fontWeight: "600" as const,
+      fontFamily: "Inter_600SemiBold",
     },
   },
 } as const;

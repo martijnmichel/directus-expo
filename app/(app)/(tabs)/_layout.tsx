@@ -4,13 +4,35 @@ import { Users } from "@/components/icons/Users";
 import { useAuth } from "@/contexts/AuthContext";
 import { Redirect, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
-
+import {
+  useFonts,
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
+  let [fontsLoaded] = useFonts({
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
 
   // Add loading check
-  if (isLoading) {
+  if (isLoading || !fontsLoaded) {
     return null; // or return a loading spinner
   }
 

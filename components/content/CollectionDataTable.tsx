@@ -7,6 +7,7 @@ import { useDocuments } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
+import { router } from "expo-router";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -39,6 +40,10 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       items={documents || []}
       widths={preset?.layout_options?.tabular.widths}
       renderRow={(doc) => map(tableFields, (f) => doc[f])}
+      onRowPress={(doc) => {
+        console.log(doc);
+        router.push(`/content/${collection}/${doc.id}`);
+      }}
     />
   );
 }

@@ -201,7 +201,7 @@ const selectStyles = createStyleSheet((theme) => ({
     gap: theme.spacing.md,
     padding: theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderLight,
+    borderBottomColor: theme.colors.border,
   },
   lastOption: {
     borderBottomWidth: 0,

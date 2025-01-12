@@ -1,6 +1,6 @@
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import React, { useState } from "react";
-import { useStyles } from "react-native-unistyles";
+import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface TableProps<T> {
   headers?: { [key: string]: string };
@@ -9,6 +9,7 @@ interface TableProps<T> {
   renderRow: (item: T) => React.ReactNode[];
   maxHeight?: number;
   widths?: { [key: string]: number };
+  onRowPress?: (item: T) => void;
 }
 
 type SortConfig = {
@@ -43,6 +44,7 @@ export function Table<T>({
   renderRow,
   maxHeight = 500,
   widths,
+  onRowPress,
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
   const [sort, setSort] = useState<SortConfig | null>(null);
@@ -96,59 +98,70 @@ export function Table<T>({
     >
       <View style={styles.tableContainer}>
         <View style={styles.headerRow}>
-          {fields.map((field, index) => (
-            <View
-              key={index}
-              style={[
-                styles.headerCell,
-                widths?.[field] === undefined
-                  ? { flex: 1 }
-                  : { width: widths[field] },
-              ]}
-            >
-              <Text
+          {fields.map((field, index) => {
+            const hasDefinedWidth = widths?.[field] !== undefined;
+            console.log(
+              `Field ${field}: hasDefinedWidth=${hasDefinedWidth}, width=${widths?.[field]}`
+            );
+
+            return (
+              <View
+                key={index}
                 style={[
-                  styles.headerText,
-                  widths?.[field] !== undefined && styles.truncate,
+                  styles.headerCell,
+                  hasDefinedWidth ? { width: widths[field] } : { flex: 1 },
                 ]}
-                numberOfLines={1}
               >
-                {headers ? headers[field] : field}
-              </Text>
-            </View>
-          ))}
+                <Text
+                  style={[
+                    styles.headerText,
+                    hasDefinedWidth && styles.truncate,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {headers ? headers[field] : field}
+                </Text>
+              </View>
+            );
+          })}
         </View>
 
         <ScrollView style={[styles.bodyContainer, { maxHeight }]}>
           {sortedItems.map((item, rowIndex) => (
-            <View key={rowIndex} style={styles.row}>
-              {renderRow(item).map((cell, cellIndex) => (
-                <View
-                  key={cellIndex}
-                  style={[
-                    styles.cell,
-                    widths?.[fields[cellIndex]] === undefined
-                      ? { flex: 1 }
-                      : { width: widths[fields[cellIndex]] },
-                  ]}
-                >
-                  {typeof cell === "string" ? (
-                    <Text
-                      style={[
-                        styles.cellText,
-                        widths?.[fields[cellIndex]] !== undefined &&
-                          styles.truncate,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {cell}
-                    </Text>
-                  ) : (
-                    cell
-                  )}
-                </View>
-              ))}
-            </View>
+            <Pressable
+              onPress={() => onRowPress?.(item)}
+              key={rowIndex}
+              style={styles.row}
+            >
+              {renderRow(item).map((cell, cellIndex) => {
+                const field = fields[cellIndex];
+                const hasDefinedWidth = widths?.[field] !== undefined;
+
+                return (
+                  <View
+                    key={cellIndex}
+                    style={[
+                      styles.cell,
+                      hasDefinedWidth ? { width: widths[field] } : { flex: 1 },
+                    ]}
+                  >
+                    {typeof cell === "string" ? (
+                      <Text
+                        style={[
+                          styles.cellText,
+                          hasDefinedWidth && styles.truncate,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {cell}
+                      </Text>
+                    ) : (
+                      cell
+                    )}
+                  </View>
+                );
+              })}
+            </Pressable>
           ))}
         </ScrollView>
       </View>
@@ -156,31 +169,33 @@ export function Table<T>({
   );
 }
 
-const stylesheet = StyleSheet.create({
+const stylesheet = createStyleSheet((theme) => ({
   container: {
     width: "100%",
   },
   scrollContent: {
     flexGrow: 1,
-    width: "100%",
   },
   tableContainer: {
-    width: "100%",
+    flex: 1,
     minWidth: "100%",
   },
   headerRow: {
     flexDirection: "row",
-    backgroundColor: "#f3f4f6",
-    width: "100%",
+    borderBottomWidth: theme.borderWidth.md,
+    borderBottomColor: theme.colors.border,
   },
   headerCell: {
-    padding: 12,
+    padding: theme.spacing.sm,
     justifyContent: "center",
     minWidth: 0,
+    borderRightWidth: theme.borderWidth.md,
+    borderRightColor: theme.colors.border,
+    marginBottom: theme.spacing.sm,
   },
   headerText: {
     fontWeight: "bold",
-    color: "#6b7280",
+    color: theme.colors.textSecondary,
     textTransform: "capitalize",
     flexShrink: 1,
   },
@@ -189,20 +204,21 @@ const stylesheet = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
+    borderBottomWidth: theme.borderWidth.md,
+    borderBottomColor: theme.colors.border,
+    flex: 1,
   },
   cell: {
-    padding: 12,
+    padding: theme.spacing.lg,
     justifyContent: "center",
     minWidth: 0,
   },
   cellText: {
-    color: "#374151",
+    color: theme.colors.textPrimary,
     flexShrink: 1,
   },
   truncate: {
     overflow: "hidden",
     flexShrink: 1,
   },
-});
+}));
