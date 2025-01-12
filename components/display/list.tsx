@@ -24,6 +24,7 @@ interface ListItemProps extends ViewProps {
   href?: string;
   prepend?: React.ReactNode;
   prependSize?: number;
+  color?: string;
 }
 
 export const ListItem = ({
@@ -32,20 +33,21 @@ export const ListItem = ({
   style,
   prepend,
   prependSize = 20,
+  color,
   ...props
 }: ListItemProps) => {
   const { styles, theme } = useStyles(stylesheet);
 
   const content =
     typeof children === "string" ? (
-      <Text style={styles.text}>{children}</Text>
+      <Text style={[styles.text, color && { color }]}>{children}</Text>
     ) : (
       children
     );
 
   const clonedPrepend = prepend
     ? React.cloneElement(prepend as React.ReactElement, {
-        color: theme.colors.primary,
+        color: color || theme.colors.primary,
         size: prependSize,
       })
     : null;
@@ -56,7 +58,7 @@ export const ListItem = ({
       {content}
       {href && (
         <View style={{ marginLeft: "auto" }}>
-          <ChevronRight color={theme.colors.primary} size={20} />
+          <ChevronRight color={color || theme.colors.primary} size={20} />
         </View>
       )}
     </>
