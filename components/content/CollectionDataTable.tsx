@@ -1,5 +1,5 @@
 import { useCollection, usePresets } from "@/state/queries/directus/collection";
-import { map } from "lodash";
+import { map, reduce } from "lodash";
 import { Table } from "../display/table";
 import { Container } from "../layout/Container";
 import { useFields } from "@/state/queries/directus/collection";
@@ -21,6 +21,8 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   const preset = presets?.find((p) => p.collection === collection);
 
+  console.log({ preset });
+
   const tableFields =
     (preset && preset.layout_query?.tabular.fields) ||
     fields?.map((f) => f.field) ||
@@ -28,7 +30,12 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   return (
     <Table
-      headers={tableFields.map((f) => label(f))}
+      headers={reduce(
+        tableFields,
+        (prev, curr) => ({ ...prev, [curr]: label(curr) }),
+        {}
+      )}
+      fields={tableFields}
       items={documents || []}
       widths={preset?.layout_options?.tabular.widths}
       renderRow={(doc) => map(tableFields, (f) => doc[f])}

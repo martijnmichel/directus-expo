@@ -3,11 +3,12 @@ import React, { useState } from "react";
 import { useStyles } from "react-native-unistyles";
 
 interface TableProps<T> {
-  headers: string[];
+  headers?: { [key: string]: string };
+  fields: string[];
   items: T[];
   renderRow: (item: T) => React.ReactNode[];
   maxHeight?: number;
-  widths?: number[];
+  widths?: { [key: string]: number };
 }
 
 type SortConfig = {
@@ -37,6 +38,7 @@ function compareValues(a: any, b: any, direction: "asc" | "desc"): number {
 
 export function Table<T>({
   headers,
+  fields,
   items,
   renderRow,
   maxHeight = 500,
@@ -44,6 +46,8 @@ export function Table<T>({
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
   const [sort, setSort] = useState<SortConfig | null>(null);
+
+  console.log({ widths, headers, fields });
 
   const handleSort = (columnIndex: number) => {
     setSort((prev) => ({
@@ -92,19 +96,24 @@ export function Table<T>({
     >
       <View style={styles.tableContainer}>
         <View style={styles.headerRow}>
-          {headers.map((header, index) => (
+          {fields.map((field, index) => (
             <View
               key={index}
               style={[
                 styles.headerCell,
-                widths?.[index] ? { width: widths[index] } : { flex: 1 },
+                widths?.[field] === undefined
+                  ? { flex: 1 }
+                  : { width: widths[field] },
               ]}
             >
               <Text
-                style={[styles.headerText, widths?.[index] && styles.truncate]}
+                style={[
+                  styles.headerText,
+                  widths?.[field] !== undefined && styles.truncate,
+                ]}
                 numberOfLines={1}
               >
-                {header}
+                {headers ? headers[field] : field}
               </Text>
             </View>
           ))}
@@ -118,16 +127,17 @@ export function Table<T>({
                   key={cellIndex}
                   style={[
                     styles.cell,
-                    widths?.[cellIndex]
-                      ? { width: widths[cellIndex] }
-                      : { flex: 1 },
+                    widths?.[fields[cellIndex]] === undefined
+                      ? { flex: 1 }
+                      : { width: widths[fields[cellIndex]] },
                   ]}
                 >
                   {typeof cell === "string" ? (
                     <Text
                       style={[
                         styles.cellText,
-                        widths?.[cellIndex] && styles.truncate,
+                        widths?.[fields[cellIndex]] !== undefined &&
+                          styles.truncate,
                       ]}
                       numberOfLines={1}
                     >
