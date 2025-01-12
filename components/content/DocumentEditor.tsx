@@ -43,6 +43,7 @@ import { DirectusIcon } from "../display/directus-icon";
 import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
 import { find } from "lodash";
+import { DateTime } from "../form/datetime";
 export const DocumentEditor = ({
   collection,
   id,
@@ -213,6 +214,25 @@ export const DocumentEditor = ({
                   placeholder={item.meta.options?.placeholder}
                   label={getLabel(item.field)}
                   autoCapitalize="none"
+                />
+              )}
+            />
+          );
+        } else if (item.meta.interface === "datetime") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              rules={{ required: item.meta.required }}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value } }) => (
+                <DateTime
+                  onValueChange={onChange}
+                  value={value as string}
+                  helper={item.meta.note || undefined}
+                  placeholder={item.meta.options?.placeholder}
+                  label={getLabel(item.field)}
+                  
                 />
               )}
             />

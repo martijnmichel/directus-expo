@@ -16,3 +16,4 @@ export * from "./EyeOff";
 export * from "./Redo";
 export * from "./Plus";
 export * from "./Minus";
+export * from "./Calendar";
