@@ -7,22 +7,18 @@ import UserCollections from "@/components/content/UserCollections";
 import { Link, router, Stack, useLocalSearchParams } from "expo-router";
 import { List, ListItem } from "@/components/display/list";
 import { map, some } from "lodash";
-import { useDocuments } from "@/state/queries/directus/collection";
+import { useDocuments, useFields } from "@/state/queries/directus/collection";
 import { useCollection } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { usePermissions } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
-import { parseTemplate } from "@/helpers/document/template";
-import { useEffect } from "react";
 import { Plus } from "@/components/icons";
 import { Button } from "@/components/display/button";
+import { Table } from "@/components/display/table";
+import { CollectionDataTable } from "@/components/content/CollectionDataTable";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
-  const { data: documents } = useDocuments(
-    collection as keyof CoreSchema[keyof CoreSchema]
-  );
-
   return (
     <Layout>
       <Stack.Screen
@@ -38,18 +34,7 @@ export default function Collection() {
         }}
       />
       <Container>
-        <Section>
-          <List>
-            {map(documents, (doc: { id: number }) => (
-              <ListItem
-                key={`document-${doc.id}--collection-${collection}`}
-                href={`/content/${collection}/${doc.id}`}
-              >
-                {parseTemplate(data?.meta.display_template || "", doc)}
-              </ListItem>
-            ))}
-          </List>
-        </Section>
+        <CollectionDataTable collection={collection as keyof CoreSchema} />
       </Container>
     </Layout>
   );

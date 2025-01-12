@@ -8,10 +8,11 @@ interface TextAreaProps extends TextInputProps {
   error?: string;
   helper?: string;
   rows?: number;
+  disabled?: boolean;
 }
 
 export const TextArea = React.forwardRef<TextInput, TextAreaProps>(
-  ({ label, error, helper, style, rows = 4, ...props }, ref) => {
+  ({ label, error, helper, style, rows = 4, disabled, ...props }, ref) => {
     const { styles, theme } = useStyles(textAreaStyles);
     const { styles: formStyle } = useStyles(formStyles);
 
@@ -21,13 +22,20 @@ export const TextArea = React.forwardRef<TextInput, TextAreaProps>(
     return (
       <View style={formStyle.formControl}>
         {label && <Text style={formStyle.label}>{label}</Text>}
-        <View style={[styles.textareaContainer, error && formStyle.inputError]}>
+        <View
+          style={[
+            styles.textareaContainer,
+            error && formStyle.inputError,
+            disabled && formStyle.inputDisabled,
+          ]}
+        >
           <TextInput
             ref={ref}
             style={[styles.textarea, { minHeight }, style]}
             multiline
             textAlignVertical="top"
             placeholderTextColor={theme.colors.textTertiary}
+            editable={!disabled}
             {...props}
           />
         </View>

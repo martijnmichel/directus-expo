@@ -8,7 +8,9 @@ export const parseTemplate = <T>(template: string, data: T): string => {
           (obj: unknown, key: string) =>
             (obj as Record<string, unknown>)?.[key],
           data as unknown
-        ) || ""
+        ) ||
+      data.id ||
+      ""
     );
   });
 };

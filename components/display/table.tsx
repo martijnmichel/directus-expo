@@ -7,6 +7,7 @@ interface TableProps<T> {
   items: T[];
   renderRow: (item: T) => React.ReactNode[];
   maxHeight?: number;
+  widths?: number[];
 }
 
 type SortConfig = {
@@ -39,6 +40,7 @@ export function Table<T>({
   items,
   renderRow,
   maxHeight = 500,
+  widths,
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
   const [sort, setSort] = useState<SortConfig | null>(null);
@@ -83,12 +85,27 @@ export function Table<T>({
   });
 
   return (
-    <ScrollView horizontal style={styles.container}>
-      <View>
+    <ScrollView
+      horizontal
+      style={styles.container}
+      contentContainerStyle={styles.scrollContent}
+    >
+      <View style={styles.tableContainer}>
         <View style={styles.headerRow}>
           {headers.map((header, index) => (
-            <View key={index} style={styles.headerCell}>
-              <Text style={styles.headerText}>{header}</Text>
+            <View
+              key={index}
+              style={[
+                styles.headerCell,
+                widths?.[index] ? { width: widths[index] } : { flex: 1 },
+              ]}
+            >
+              <Text
+                style={[styles.headerText, widths?.[index] && styles.truncate]}
+                numberOfLines={1}
+              >
+                {header}
+              </Text>
             </View>
           ))}
         </View>
@@ -97,9 +114,25 @@ export function Table<T>({
           {sortedItems.map((item, rowIndex) => (
             <View key={rowIndex} style={styles.row}>
               {renderRow(item).map((cell, cellIndex) => (
-                <View key={cellIndex} style={styles.cell}>
+                <View
+                  key={cellIndex}
+                  style={[
+                    styles.cell,
+                    widths?.[cellIndex]
+                      ? { width: widths[cellIndex] }
+                      : { flex: 1 },
+                  ]}
+                >
                   {typeof cell === "string" ? (
-                    <Text style={styles.cellText}>{cell}</Text>
+                    <Text
+                      style={[
+                        styles.cellText,
+                        widths?.[cellIndex] && styles.truncate,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {cell}
+                    </Text>
                   ) : (
                     cell
                   )}
@@ -115,21 +148,31 @@ export function Table<T>({
 
 const stylesheet = StyleSheet.create({
   container: {
-    flex: 1,
+    width: "100%",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    width: "100%",
+  },
+  tableContainer: {
+    width: "100%",
+    minWidth: "100%",
   },
   headerRow: {
     flexDirection: "row",
     backgroundColor: "#f3f4f6",
+    width: "100%",
   },
   headerCell: {
     padding: 12,
-    minWidth: 100, // Minimum width for each column
     justifyContent: "center",
+    minWidth: 0,
   },
   headerText: {
     fontWeight: "bold",
     color: "#6b7280",
     textTransform: "uppercase",
+    flexShrink: 1,
   },
   bodyContainer: {
     flexGrow: 1,
@@ -141,10 +184,15 @@ const stylesheet = StyleSheet.create({
   },
   cell: {
     padding: 12,
-    minWidth: 100, // Matching header width
     justifyContent: "center",
+    minWidth: 0,
   },
   cellText: {
     color: "#374151",
+    flexShrink: 1,
+  },
+  truncate: {
+    overflow: "hidden",
+    flexShrink: 1,
   },
 });

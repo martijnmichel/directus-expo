@@ -153,6 +153,7 @@ export const DocumentEditor = ({
                     value={value as string}
                     helper={item.meta.note || undefined}
                     placeholder={item.meta.options?.placeholder}
+                    disabled={item.meta.readonly}
                     prepend={
                       item.meta.options?.iconLeft && (
                         <DirectusIcon name={item.meta.options.iconLeft} />
@@ -185,6 +186,7 @@ export const DocumentEditor = ({
                     label={getLabel(item.field)}
                     autoCapitalize="none"
                     keyboardType="numeric"
+                    disabled={item.meta.readonly}
                     min={item.meta.options?.min}
                     max={item.meta.options?.max}
                     step={item.meta.options?.step}
@@ -228,7 +230,6 @@ export const DocumentEditor = ({
                     value={value as string}
                     helper={item.meta.note || undefined}
                     label={getLabel(item.field)}
-                    autoCapitalize="none"
                   />
                 )}
               />
@@ -249,9 +250,15 @@ export const DocumentEditor = ({
                     []
                   }
                   onValueChange={onChange}
-                  value={value as string}
+                  value={(value as string) || item.meta.options?.default}
                   helper={item.meta.note || undefined}
-                  placeholder={item.meta.display_options?.placeholder}
+                  placeholder={item.meta.options?.placeholder}
+                  disabled={item.meta.readonly}
+                  prepend={
+                    item.meta.options?.icon && (
+                      <DirectusIcon name={item.meta.options.icon} />
+                    )
+                  }
                   label={getLabel(item.field)}
                 />
               )}
@@ -268,7 +275,7 @@ export const DocumentEditor = ({
                 <TextArea
                   onChangeText={onChange}
                   value={value as string}
-                  placeholder={item.meta.display_options?.placeholder}
+                  placeholder={item.meta.options?.placeholder}
                   label={getLabel(item.field)}
                   autoCapitalize="none"
                   helper={item.meta.note || undefined}

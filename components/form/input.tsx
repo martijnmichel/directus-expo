@@ -11,6 +11,7 @@ interface InputProps extends TextInputProps {
   helper?: string;
   iconColor?: string;
   iconSize?: number;
+  disabled?: boolean;
 }
 
 export const Input = React.forwardRef<TextInput, InputProps>(
@@ -24,6 +25,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
       style,
       iconColor,
       iconSize = 20,
+      disabled,
       ...props
     },
     ref
@@ -54,12 +56,19 @@ export const Input = React.forwardRef<TextInput, InputProps>(
     return (
       <View style={styles.formControl}>
         {label && <Text style={styles.label}>{label}</Text>}
-        <View style={[styles.inputContainer, error && styles.inputError]}>
+        <View
+          style={[
+            styles.inputContainer,
+            error && styles.inputError,
+            disabled && styles.inputDisabled,
+          ]}
+        >
           {prepend && <View style={styles.prepend}>{clonedPrepend}</View>}
           <TextInput
             ref={ref}
             style={[styles.input, style]}
             placeholderTextColor="#A0A0A0"
+            editable={!disabled}
             {...props}
           />
           {append && <View style={styles.append}>{clonedAppend}</View>}

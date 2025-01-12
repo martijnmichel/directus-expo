@@ -9,6 +9,7 @@ import {
   readItems,
   readMe,
   readPermissions,
+  readPresets,
   readSingleton,
   RequestOptions,
 } from "@directus/sdk";
@@ -61,5 +62,13 @@ export const useFields = (collection: keyof CoreSchema) => {
   return useQuery({
     queryKey: ["fields", collection],
     queryFn: () => directus?.request(readFieldsByCollection(collection)),
+  });
+};
+
+export const usePresets = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["presets"],
+    queryFn: () => directus?.request(readPresets()),
   });
 };

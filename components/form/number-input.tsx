@@ -19,6 +19,7 @@ interface InputProps extends TextInputProps {
   step?: number;
   float?: boolean;
   decimal?: boolean;
+  disabled?: boolean;
 }
 
 export const NumberInput = React.forwardRef<TextInput, InputProps>(
@@ -35,6 +36,7 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
       decimal = false,
       onChangeText,
       value = "",
+      disabled,
       ...props
     },
     ref
@@ -150,7 +152,13 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
     return (
       <View style={styles.formControl}>
         {label && <Text style={styles.label}>{label}</Text>}
-        <View style={[styles.inputContainer, error && styles.inputError]}>
+        <View
+          style={[
+            styles.inputContainer,
+            error && styles.inputError,
+            disabled && styles.inputDisabled,
+          ]}
+        >
           <TouchableOpacity
             style={styles.prepend}
             onPress={handleDecrement}
@@ -168,6 +176,7 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
             value={value}
             selectTextOnFocus
             returnKeyType="done"
+            editable={!disabled}
             {...props}
           />
 

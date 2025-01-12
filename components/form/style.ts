@@ -24,6 +24,9 @@ export const formStyles = createStyleSheet((theme) => ({
   inputError: {
     borderColor: theme.colors.error,
   },
+  inputDisabled: {
+    backgroundColor: theme.colors.backgroundAlt,
+  },
   input: {
     flex: 1,
     padding: theme.spacing.md,

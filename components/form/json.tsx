@@ -10,10 +10,14 @@ interface JsonInputProps {
   value: string;
   onChange: (value: string) => void;
   style?: any;
+  disabled?: boolean;
 }
 
 export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
-  ({ label, error, helper, value, onChange, style, ...props }, ref) => {
+  (
+    { label, error, helper, value, onChange, style, disabled, ...props },
+    ref
+  ) => {
     const { styles, theme } = useStyles(jsonStyles);
     const [lines, setLines] = useState<number[]>([1]);
     const [errorLine, setErrorLine] = useState<number | null>(null);
@@ -66,7 +70,13 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
     return (
       <View style={styles.formControl}>
         {label && <Text style={styles.label}>{label}</Text>}
-        <View style={[styles.container, error && styles.inputError]}>
+        <View
+          style={[
+            styles.container,
+            error && styles.inputError,
+            disabled && styles.inputDisabled,
+          ]}
+        >
           <ScrollView
             style={styles.lineNumbers}
             showsVerticalScrollIndicator={false}
@@ -81,6 +91,7 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
             onBlur={handleBlur}
             style={[styles.input, style]}
             placeholderTextColor={theme.colors.textTertiary}
+            editable={!disabled}
             {...props}
           />
         </View>
