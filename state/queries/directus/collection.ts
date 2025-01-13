@@ -78,7 +78,6 @@ export const useDocument = ({
             id === "+"
               ? {}
               : directus?.request(readItem(collection as any, id!, options)),
-          retry: false,
           ...queryOptions,
         });
 };

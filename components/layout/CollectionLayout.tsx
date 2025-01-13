@@ -20,7 +20,13 @@ import { useCollection } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { CollectionDataTable } from "@/components/content/CollectionDataTable";
-import { Link, router, Stack, useLocalSearchParams } from "expo-router";
+import {
+  Link,
+  router,
+  Stack,
+  useLocalSearchParams,
+  usePathname,
+} from "expo-router";
 import { Section } from "@/components/layout/Section";
 import {
   getCollectionTranslation,
@@ -36,9 +42,9 @@ export default function CollectionLayout() {
   const { collection } = useLocalSearchParams();
   const { data, isLoading } = useCollection(collection as keyof CoreSchema);
   const slideAnim = useRef(new Animated.Value(0)).current;
-
+  const pathname = usePathname();
   const { styles } = useStyles(stylesheet);
-  const closeMenu = (cb?: () => void) => {
+  const closeMenu = () => {
     Animated.timing(slideAnim, {
       toValue: 0,
       useNativeDriver: true,
@@ -62,6 +68,10 @@ export default function CollectionLayout() {
       openMenu();
     }
   };
+
+  useEffect(() => {
+    closeMenu();
+  }, [pathname]);
 
   const panResponder = useRef(
     PanResponder.create({
