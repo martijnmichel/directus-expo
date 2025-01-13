@@ -25,11 +25,13 @@ interface ListItemProps extends ViewProps {
   prepend?: React.ReactNode;
   prependSize?: number;
   color?: string;
+  onPress?: () => void;
 }
 
 export const ListItem = ({
   children,
   href,
+  onPress,
   style,
   prepend,
   prependSize = 20,
@@ -75,9 +77,9 @@ export const ListItem = ({
   }
 
   return (
-    <View style={[styles.item, style]} {...props}>
+    <Pressable style={[styles.item, style]} {...props} onPress={onPress}>
       {renderContent()}
-    </View>
+    </Pressable>
   );
 };
 

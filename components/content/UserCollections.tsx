@@ -11,7 +11,11 @@ import { getCollectionTranslation } from "@/helpers/collections/getCollectionTra
 import { useTranslation } from "react-i18next";
 import { DirectusIcon } from "../display/directus-icon";
 
-export default function UserCollections() {
+export default function UserCollections({
+  onItemPress,
+}: {
+  onItemPress: (item: string) => void;
+}) {
   const { data } = useCollections();
 
   console.log({ data });
@@ -61,7 +65,12 @@ export default function UserCollections() {
         ) {
           return (
             <ListItem
-              href={`/(app)/(tabs)/content/${collection.collection}`}
+              href={
+                !onItemPress
+                  ? `/(app)/(tabs)/content/${collection.collection}`
+                  : undefined
+              }
+              onPress={() => onItemPress(collection.collection)}
               key={`collection-${collection.collection}`}
               color={collection.meta.color || ""}
               prepend={

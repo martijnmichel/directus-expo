@@ -169,7 +169,6 @@ const stylesheet = createStyleSheet((theme) => ({
     justifyContent: "flex-start",
     gap: theme.spacing.md,
     paddingVertical: theme.spacing.md,
-    backgroundColor: theme.colors.background,
     fontFamily: theme.typography.body.fontFamily,
   },
   content: {
