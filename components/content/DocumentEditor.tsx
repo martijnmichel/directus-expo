@@ -120,6 +120,13 @@ export const DocumentEditor = ({
 
       ?.sort((a, b) => ((a.meta.sort || 0) < (b.meta.sort || 0) ? -1 : 1))
       .map((item) => {
+        const defaultProps = {
+          key: item.field,
+          label: getLabel(item.field),
+          helper: item.meta.note || undefined,
+          disabled: item.meta.readonly,
+          placeholder: item.meta.options?.placeholder,
+        };
         if (
           (parent && item.meta.group !== parent) ||
           (!!item.meta.group && !parent) ||
@@ -157,11 +164,10 @@ export const DocumentEditor = ({
                 name={item.field as keyof CoreSchema[keyof CoreSchema]}
                 render={({ field: { onChange, value } }) => (
                   <Input
+                    {...defaultProps}
                     onChangeText={onChange}
                     value={value as string}
-                    helper={item.meta.note || undefined}
-                    placeholder={item.meta.options?.placeholder}
-                    disabled={item.meta.readonly}
+                    autoCapitalize="none"
                     prepend={
                       item.meta.options?.iconLeft && (
                         <DirectusIcon name={item.meta.options.iconLeft} />
@@ -172,8 +178,6 @@ export const DocumentEditor = ({
                         <DirectusIcon name={item.meta.options.iconRight} />
                       )
                     }
-                    label={getLabel(item.field)}
-                    autoCapitalize="none"
                   />
                 )}
               />
@@ -189,17 +193,14 @@ export const DocumentEditor = ({
                   <NumberInput
                     onChangeText={onChange}
                     value={value as string}
-                    helper={item.meta.note || undefined}
-                    placeholder={item.meta.options?.placeholder}
-                    label={getLabel(item.field)}
                     autoCapitalize="none"
                     keyboardType="numeric"
-                    disabled={item.meta.readonly}
                     min={item.meta.options?.min}
                     max={item.meta.options?.max}
                     step={item.meta.options?.step}
                     float={item.type === "float"}
                     decimal={item.type === "decimal"}
+                    {...defaultProps}
                   />
                 )}
               />
@@ -215,10 +216,7 @@ export const DocumentEditor = ({
               render={({ field: { onChange, value } }) => (
                 <InputHash
                   onChangeText={onChange}
-                  value={value as string}
-                  helper={item.meta.note || undefined}
-                  placeholder={item.meta.options?.placeholder}
-                  label={getLabel(item.field)}
+                  {...defaultProps}
                   autoCapitalize="none"
                 />
               )}
@@ -235,9 +233,7 @@ export const DocumentEditor = ({
                 <DateTime
                   onValueChange={onChange}
                   value={value as string}
-                  helper={item.meta.note || undefined}
-                  placeholder={item.meta.options?.placeholder}
-                  label={getLabel(item.field)}
+                  {...defaultProps}
                 />
               )}
             />
@@ -254,8 +250,7 @@ export const DocumentEditor = ({
                   <JsonInput
                     onChange={onChange}
                     value={value as string}
-                    helper={item.meta.note || undefined}
-                    label={getLabel(item.field)}
+                    {...defaultProps}
                   />
                 )}
               />
@@ -277,15 +272,12 @@ export const DocumentEditor = ({
                   }
                   onValueChange={onChange}
                   value={(value as string) || item.meta.options?.default}
-                  helper={item.meta.note || undefined}
-                  placeholder={item.meta.options?.placeholder}
-                  disabled={item.meta.readonly}
+                  {...defaultProps}
                   prepend={
                     item.meta.options?.icon && (
                       <DirectusIcon name={item.meta.options.icon} />
                     )
                   }
-                  label={getLabel(item.field)}
                 />
               )}
             />
@@ -320,8 +312,7 @@ export const DocumentEditor = ({
                 <RichText
                   onChange={onChange}
                   value={value as string}
-                  label={getLabel(item.field)}
-                  helper={item.meta.note || undefined}
+                  {...defaultProps}
                 />
               )}
             />
@@ -338,8 +329,7 @@ export const DocumentEditor = ({
                   item={item}
                   value={value as string}
                   onValueChange={onChange}
-                  label={getLabel(item.field)}
-                  helper={item.meta.note || undefined}
+                  {...defaultProps}
                 />
               )}
             />
@@ -353,8 +343,7 @@ export const DocumentEditor = ({
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
               render={({ field: { onChange, value } }) => (
                 <ImageInput
-                  label={getLabel(item.field)}
-                  helper={item.meta.note || undefined}
+                  {...defaultProps}
                   value={value as string}
                   onChange={onChange}
                 />
@@ -372,8 +361,7 @@ export const DocumentEditor = ({
                   value={value as number[]}
                   onChange={onChange}
                   item={item}
-                  label={getLabel(item.field)}
-                  helper={item.meta.note || undefined}
+                  {...defaultProps}
                 />
               )}
             />
