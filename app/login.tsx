@@ -3,16 +3,16 @@ import { useRouter } from "expo-router";
 import { LoginForm } from "@/components/LoginForm";
 import { Center } from "@/components/layout/Center";
 import { Container } from "@/components/layout/Container";
-import { Layout } from "@/components/layout/Layout";
+import { KeyboardAwareLayout, Layout } from "@/components/layout/Layout";
 
 export default function Login() {
   return (
-    <Layout>
+    <KeyboardAwareLayout>
       <Container>
         <Center>
           <LoginForm />
         </Center>
       </Container>
-    </Layout>
+    </KeyboardAwareLayout>
   );
 }

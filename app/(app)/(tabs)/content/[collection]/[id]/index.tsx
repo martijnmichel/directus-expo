@@ -1,5 +1,9 @@
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { Layout } from "@/components/layout/Layout";
+import {
+  KeyboardAwareLayout,
+  KeyboardAwareScrollView,
+  Layout,
+} from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
@@ -21,14 +25,14 @@ export default function Collection() {
   });
 
   return (
-    <Layout>
+    <KeyboardAwareLayout>
       <Stack.Screen
         options={{
           headerTitle,
           presentation: "modal",
         }}
       />
-      <ScrollView>
+      <KeyboardAwareScrollView>
         <Container>
           <Section>
             <DocumentEditor
@@ -37,7 +41,7 @@ export default function Collection() {
             />
           </Section>
         </Container>
-      </ScrollView>
-    </Layout>
+      </KeyboardAwareScrollView>
+    </KeyboardAwareLayout>
   );
 }

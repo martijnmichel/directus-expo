@@ -1,5 +1,14 @@
 import React from "react";
-import { View, ViewProps, SafeAreaView, ScrollView } from "react-native";
+import {
+  View,
+  ViewProps,
+  SafeAreaView,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ViewStyle,
+  ScrollViewProps,
+} from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface LayoutProps extends ViewProps {
@@ -30,3 +39,37 @@ const stylesheet = createStyleSheet((theme) => ({
     fontFamily: theme.typography.body.fontFamily,
   },
 }));
+
+interface KeyboardAwareLayoutProps {
+  children: React.ReactNode;
+  style?: ViewStyle;
+  behavior?: "padding" | "height" | "position";
+}
+
+export function KeyboardAwareLayout({
+  children,
+  style,
+  behavior = Platform.OS === "ios" ? "padding" : "height",
+}: KeyboardAwareLayoutProps) {
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={[{ flex: 1 }, style]}
+      enabled
+    >
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
+export const KeyboardAwareScrollView = (props: ScrollViewProps) => (
+  <ScrollView
+    contentContainerStyle={{
+      flexGrow: 1,
+    }}
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator={true}
+    automaticallyAdjustKeyboardInsets={true}
+    {...props}
+  />
+);
