@@ -19,7 +19,7 @@ export const mutateDocument = (
 
   if ((id === "+" || !id) && !data?.meta.singleton) {
     return useMutation({
-      mutationFn: (data: CoreSchema<keyof CoreSchema>) => {
+      mutationFn: (data: Record<string, unknown>) => {
         console.log("createItem", collection, id);
         return directus!.request(createItem(collection, data as any));
       },
@@ -29,7 +29,7 @@ export const mutateDocument = (
   if (data?.meta.singleton) {
     console.log("updateSingleton", collection, data);
     return useMutation({
-      mutationFn: (data: CoreSchema<keyof CoreSchema>) =>
+      mutationFn: (data: Record<string, unknown>) =>
         directus!.request(updateSingleton(collection as any, data)),
     });
   }
@@ -40,7 +40,7 @@ export const mutateDocument = (
   return updateCoreItem
     ? updateCoreItem(id as string)
     : useMutation({
-        mutationFn: (data: CoreSchema<keyof CoreSchema>) =>
+        mutationFn: (data: Record<string, unknown>) =>
           directus!.request(
             updateItem(collection as keyof CoreSchema, id, data)
           ),

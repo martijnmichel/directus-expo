@@ -44,7 +44,7 @@ export function Table<T extends Record<string, unknown>>({
   items = [],
   renderRow,
   maxHeight = 500,
-  widths,
+  widths = {},
   onRowPress,
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
@@ -91,6 +91,12 @@ export function Table<T extends Record<string, unknown>>({
     return compareValues(aContent, bContent, sort.direction);
   });
 
+  // Calculate default width if not specified
+  const defaultColumnWidth = 150; // Or any other reasonable default
+  const getColumnWidth = (field: string) => {
+    return widths[field] || defaultColumnWidth;
+  };
+
   return (
     <ScrollView
       horizontal
@@ -99,32 +105,19 @@ export function Table<T extends Record<string, unknown>>({
     >
       <View style={styles.tableContainer}>
         <View style={styles.headerRow}>
-          {fields.map((field, index) => {
-            const hasDefinedWidth = widths?.[field] !== undefined;
-            console.log(
-              `Field ${field}: hasDefinedWidth=${hasDefinedWidth}, width=${widths?.[field]}`
-            );
-
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.headerCell,
-                  hasDefinedWidth ? { width: widths[field] } : { flex: 1 },
-                ]}
+          {fields.map((field, index) => (
+            <View
+              key={index}
+              style={[styles.headerCell, { width: getColumnWidth(field) }]}
+            >
+              <Text
+                style={[styles.headerText, styles.truncate]}
+                numberOfLines={1}
               >
-                <Text
-                  style={[
-                    styles.headerText,
-                    hasDefinedWidth && styles.truncate,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {headers ? headers[field] : field}
-                </Text>
-              </View>
-            );
-          })}
+                {headers ? headers[field] : field}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <ScrollView style={[styles.bodyContainer, { maxHeight }]}>
@@ -136,22 +129,14 @@ export function Table<T extends Record<string, unknown>>({
             >
               {renderRow(item).map((cell, cellIndex) => {
                 const field = fields[cellIndex];
-                const hasDefinedWidth = widths?.[field] !== undefined;
-
                 return (
                   <View
                     key={cellIndex}
-                    style={[
-                      styles.cell,
-                      hasDefinedWidth ? { width: widths[field] } : { flex: 1 },
-                    ]}
+                    style={[styles.cell, { width: getColumnWidth(field) }]}
                   >
                     {typeof cell === "string" ? (
                       <Text
-                        style={[
-                          styles.cellText,
-                          hasDefinedWidth && styles.truncate,
-                        ]}
+                        style={[styles.cellText, styles.truncate]}
                         numberOfLines={1}
                       >
                         {cell}
@@ -190,7 +175,6 @@ const stylesheet = createStyleSheet((theme) => ({
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
     justifyContent: "center",
-    minWidth: 0,
     borderRightWidth: theme.borderWidth.md,
     borderRightColor: theme.colors.border,
     marginBottom: theme.spacing.sm,
@@ -215,7 +199,6 @@ const stylesheet = createStyleSheet((theme) => ({
   cell: {
     padding: theme.spacing.lg,
     justifyContent: "center",
-    minWidth: 0,
   },
   cellText: {
     color: theme.colors.textPrimary,

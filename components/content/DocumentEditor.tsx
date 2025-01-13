@@ -60,7 +60,7 @@ export const DocumentEditor = ({
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
-  const context = useForm<CoreSchema<keyof CoreSchema>>();
+  const context = useForm<Record<string, unknown>>();
   const {
     control,
     formState: { isDirty, isValid, isSubmitting, dirtyFields },
@@ -425,26 +425,27 @@ export const DocumentEditor = ({
 
   function dirtyValues(
     dirtyFields: object | boolean,
-    allValues: object
-  ): object {
-    // If *any* item in an array was modified, the entire array must be submitted, because there's no way to indicate
-    // "placeholders" for unchanged elements. `dirtyFields` is `true` for leaves.
+    allValues: Record<string, unknown>
+  ): Record<string, unknown> {
     if (dirtyFields === true || Array.isArray(dirtyFields)) return allValues;
-    // Here, we have an object
+
     return Object.fromEntries(
-      Object.keys(dirtyFields).map((key) => [
+      Object.keys(dirtyFields as object).map((key) => [
         key,
-        dirtyValues(dirtyFields[key], allValues[key]),
+        dirtyValues(
+          (dirtyFields as Record<string, unknown>)[key] as object | boolean,
+          allValues[key] as Record<string, unknown>
+        ),
       ])
     );
   }
 
-  const handleSubmit = async (body: CoreSchema<keyof CoreSchema>) => {
+  const handleSubmit = async (body: Record<string, unknown>) => {
     const data = dirtyValues(dirtyFields, body);
 
     await updateDoc(data, {
       onSuccess: (updatedDoc) => {
-        context.reset(updatedDoc as CoreSchema<keyof CoreSchema>);
+        context.reset(updatedDoc);
 
         onSave?.(updatedDoc as Record<string, unknown>);
       },

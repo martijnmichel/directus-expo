@@ -53,7 +53,7 @@ export const useDocument = ({
   id?: number | string;
   options?: Query<CoreSchema, any>;
   query?: Omit<UseQueryOptions, "queryKey" | "queryFn">;
-}): UseQueryResult<{ [x: string]: any } | undefined, Error> => {
+}): UseQueryResult<Record<string, unknown> | undefined, Error> => {
   const { directus } = useAuth();
   const { data: collectionData } = useCollection(
     collection as keyof CoreSchema
