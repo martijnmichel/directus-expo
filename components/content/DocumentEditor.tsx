@@ -42,16 +42,19 @@ import { JsonInput } from "../form/json";
 import { DirectusIcon } from "../display/directus-icon";
 import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
-import { find } from "lodash";
+import { find, isEmpty } from "lodash";
 import { DateTime } from "../form/datetime";
 export const DocumentEditor = ({
   collection,
   id,
+  defaultValues = {},
   onSave,
 }: {
   collection: keyof CoreSchema;
   id?: number | string;
+  defaultValues?: Record<string, unknown>;
   onSave?: (doc: Record<string, unknown>) => void;
+  onDelete?: () => void;
 }) => {
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
@@ -69,7 +72,10 @@ export const DocumentEditor = ({
     error,
     isFetching,
     isError,
-  } = useDocument(collection as keyof CoreSchema, id);
+  } = useDocument({
+    collection: collection as keyof CoreSchema,
+    id,
+  });
   const { data: fields } = useFields(collection as keyof CoreSchema);
   const { mutateAsync: updateDoc } = mutateDocument(
     collection as keyof CoreSchema,
@@ -232,7 +238,6 @@ export const DocumentEditor = ({
                   helper={item.meta.note || undefined}
                   placeholder={item.meta.options?.placeholder}
                   label={getLabel(item.field)}
-                  
                 />
               )}
             />

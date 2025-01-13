@@ -3,18 +3,24 @@ import { H1 } from "@/components/display/typography";
 import { Container } from "@/components/layout/Container";
 import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
+import { useAuth } from "@/contexts/AuthContext";
+import { useMe } from "@/state/queries/directus/core";
+import { ScrollView } from "react-native";
 export default function TabTwoScreen() {
+  const { user } = useAuth();
   return (
     <Layout>
-      <Container>
-        <Section>
-          <DocumentEditor
-            collection="directus_users"
-            id="cc6e51b1-bbdf-4e45-95f6-6a5f448f3fdd"
-            onSave={(doc) => console.log({ doc })}
-          />
-        </Section>
-      </Container>
+      <ScrollView>
+        <Container>
+          <Section>
+            <DocumentEditor
+              collection="directus_users"
+              id={user?.id}
+              onSave={(doc) => console.log({ doc })}
+            />
+          </Section>
+        </Container>
+      </ScrollView>
     </Layout>
   );
 }

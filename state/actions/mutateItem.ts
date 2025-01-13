@@ -15,7 +15,9 @@ export const mutateDocument = (
   const { updateItem: updateCoreItem, updateMe } =
     coreCollections[collection] || {};
 
-  if ((id === "+" || isNaN(Number(id))) && !data?.meta.singleton) {
+  console.log({ data, id });
+
+  if ((id === "+" || !id) && !data?.meta.singleton) {
     return useMutation({
       mutationFn: (data: CoreSchema<keyof CoreSchema>) => {
         console.log("createItem", collection, id);
