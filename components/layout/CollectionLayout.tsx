@@ -35,6 +35,7 @@ import {
 import { FadeIn, FadeOut } from "react-native-reanimated";
 import { Plus } from "../icons";
 import { Button } from "../display/button";
+import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 
 export default function CollectionLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -94,11 +95,14 @@ export default function CollectionLayout() {
 
   const { label } = useCollectionMeta(data);
 
+  const headerStyles = useHeaderStyles();
+
   return (
     <Layout>
       <Stack.Screen
         options={{
           headerTitle: label,
+          ...headerStyles,
           headerRight: () => (
             <Link href={`/content/${collection}/+`} asChild>
               <Button rounded>

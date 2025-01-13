@@ -16,6 +16,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
+import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
@@ -30,6 +31,8 @@ export default function TabsLayout() {
     Inter_800ExtraBold,
     Inter_900Black,
   });
+
+  const headerStyles = useHeaderStyles();
 
   // Add loading check
   if (isLoading || !fontsLoaded) {
@@ -46,6 +49,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: t("navigation.content"),
+          ...headerStyles,
           tabBarIcon: ({ color, size }) => <Cube size={size} color={color} />,
         }}
       />
@@ -54,6 +58,7 @@ export default function TabsLayout() {
         options={{
           title: t("navigation.users"),
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+          ...headerStyles,
         }}
       />
       <Tabs.Screen
@@ -61,6 +66,7 @@ export default function TabsLayout() {
         options={{
           title: t("navigation.settings"),
           tabBarIcon: ({ color, size }) => <Cog size={size} color={color} />,
+          ...headerStyles,
         }}
       />
       <Tabs.Screen
@@ -68,6 +74,7 @@ export default function TabsLayout() {
         options={{
           headerShown: false,
           href: null,
+          ...headerStyles,
         }}
       />
 
@@ -75,12 +82,14 @@ export default function TabsLayout() {
         name="content/[collection]/index"
         options={{
           href: null,
+          ...headerStyles,
         }}
       />
       <Tabs.Screen
         name="content/[collection]/[id]/index"
         options={{
           href: null,
+          ...headerStyles,
         }}
       />
     </Tabs>
