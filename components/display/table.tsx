@@ -6,7 +6,7 @@ import { Dictionary } from "lodash";
 interface TableProps<T extends Record<string, unknown>> {
   headers?: { [key: string]: string };
   fields: string[];
-  items: T[];
+  items?: T[];
   renderRow: (item: T) => React.ReactNode[];
   maxHeight?: number;
   widths?: { [key: string]: number };
@@ -41,7 +41,7 @@ function compareValues(a: any, b: any, direction: "asc" | "desc"): number {
 export function Table<T extends Record<string, unknown>>({
   headers,
   fields,
-  items,
+  items = [],
   renderRow,
   maxHeight = 500,
   widths,
@@ -62,7 +62,7 @@ export function Table<T extends Record<string, unknown>>({
     }));
   };
 
-  const sortedItems = [...items].sort((a, b) => {
+  const sortedItems = [...(items || [])].sort((a, b) => {
     if (!sort) return 0;
 
     const aValue = renderRow(a)[sort.column];

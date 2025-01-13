@@ -13,6 +13,7 @@ import { Table } from "@/components/display/table";
 import { CollectionDataTable } from "@/components/content/CollectionDataTable";
 import { useCollectionMeta } from "@/helpers/collections/getCollectionTranslation";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
+import CollectionLayout from "@/components/layout/CollectionLayout";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
   const { data, isLoading } = useCollection(collection as keyof CoreSchema);
@@ -22,29 +23,5 @@ export default function Collection() {
     return null;
   }
 
-  return (
-    <Layout>
-      <Stack.Screen
-        options={{
-          headerTitle: label,
-          headerRight: () => (
-            <Link href={`/content/${collection}/+`} asChild>
-              <Button rounded>
-                <Plus />
-              </Button>
-            </Link>
-          ),
-        }}
-      />
-      <Container>
-        <Section>
-          {data?.meta.singleton ? (
-            <DocumentEditor collection={collection as keyof CoreSchema} />
-          ) : (
-            <CollectionDataTable collection={collection as keyof CoreSchema} />
-          )}
-        </Section>
-      </Container>
-    </Layout>
-  );
+  return <CollectionLayout />;
 }
