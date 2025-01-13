@@ -126,6 +126,12 @@ export const DocumentEditor = ({
           helper: item.meta.note || undefined,
           disabled: item.meta.readonly,
           placeholder: item.meta.options?.placeholder,
+          prepend: item.meta.options?.iconLeft && (
+            <DirectusIcon name={item.meta.options.iconLeft} />
+          ),
+          append: item.meta.options?.iconRight && (
+            <DirectusIcon name={item.meta.options.iconRight} />
+          ),
         };
         if (
           (parent && item.meta.group !== parent) ||
@@ -154,218 +160,266 @@ export const DocumentEditor = ({
               </CollapsibleContent>
             </Collapsible>
           );
-        } else if (item.meta.interface === "input") {
-          if (item.type === "string") {
-            return (
-              <Controller
-                key={item.field}
-                control={control}
-                rules={{ required: item.meta.required }}
-                name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                render={({ field: { onChange, value } }) => (
-                  <Input
-                    {...defaultProps}
-                    onChangeText={onChange}
-                    value={value as string}
-                    autoCapitalize="none"
-                    prepend={
-                      item.meta.options?.iconLeft && (
-                        <DirectusIcon name={item.meta.options.iconLeft} />
-                      )
-                    }
-                    append={
-                      item.meta.options?.iconRight && (
-                        <DirectusIcon name={item.meta.options.iconRight} />
-                      )
-                    }
-                  />
-                )}
-              />
-            );
-          } else if (["integer", "float", "decimal"].includes(item.type)) {
-            return (
-              <Controller
-                key={item.field}
-                control={control}
-                rules={{ required: item.meta.required }}
-                name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                render={({ field: { onChange, value } }) => (
-                  <NumberInput
-                    onChangeText={onChange}
-                    value={value as string}
-                    autoCapitalize="none"
-                    keyboardType="numeric"
-                    min={item.meta.options?.min}
-                    max={item.meta.options?.max}
-                    step={item.meta.options?.step}
-                    float={item.type === "float"}
-                    decimal={item.type === "decimal"}
-                    {...defaultProps}
-                  />
-                )}
-              />
-            );
+        } else {
+          // Type-based switch statement from previous code
+          switch (item.type) {
+            case "string":
+              switch (item.meta.interface) {
+                case "input":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                          autoCapitalize="none"
+                        />
+                      )}
+                    />
+                  );
+                case "input-multiline":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <TextArea
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                        />
+                      )}
+                    />
+                  );
+                case "input-rich-text-html":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <RichText
+                          {...defaultProps}
+                          onChange={onChange}
+                          value={value as string}
+                        />
+                      )}
+                    />
+                  );
+                case "system-token":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={"**********"}
+                          autoCapitalize="none"
+                          disabled
+                        />
+                      )}
+                    />
+                  );
+                default:
+                  // Fallback for string type
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                          autoCapitalize="none"
+                          disabled
+                          helper="Fallback"
+                        />
+                      )}
+                    />
+                  );
+              }
+
+            case "integer":
+            case "float":
+            case "decimal":
+              return (
+                <Controller
+                  key={item.field}
+                  control={control}
+                  rules={{ required: item.meta.required }}
+                  name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                  render={({ field: { onChange, value } }) => (
+                    <NumberInput
+                      {...defaultProps}
+                      onChangeText={onChange}
+                      value={value as string}
+                      autoCapitalize="none"
+                      keyboardType="numeric"
+                      min={item.meta.options?.min}
+                      max={item.meta.options?.max}
+                      step={item.meta.options?.step}
+                      float={item.type === "float"}
+                      decimal={item.type === "decimal"}
+                    />
+                  )}
+                />
+              );
+
+            case "uuid":
+              switch (item.meta.interface) {
+                case "file-image":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <ImageInput
+                          {...defaultProps}
+                          onChange={onChange}
+                          value={value as string}
+                        />
+                      )}
+                    />
+                  );
+                default:
+                  return <Input {...defaultProps} />;
+              }
+
+            case "alias":
+              switch (item.meta.interface) {
+                case "list-m2o":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <M2OInput
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as string}
+                          item={item}
+                        />
+                      )}
+                    />
+                  );
+                case "list-m2m":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <M2MInput
+                          {...defaultProps}
+                          onChange={onChange}
+                          value={value as number[]}
+                          item={item}
+                          docId={id}
+                        />
+                      )}
+                    />
+                  );
+              }
+
+            case "dateTime":
+              switch (item.meta.interface) {
+                case "datetime":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <DateTime
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={String(value)}
+                        />
+                      )}
+                    />
+                  );
+                default:
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={String(value)}
+                          autoCapitalize="none"
+                          disabled
+                          helper="Fallback"
+                        />
+                      )}
+                    />
+                  );
+              }
+            case "json":
+              return (
+                <Controller
+                  key={item.field}
+                  control={control}
+                  rules={{ required: item.meta.required }}
+                  name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                  render={({ field: { onChange, value } }) => (
+                    <JsonInput
+                      {...defaultProps}
+                      onChange={onChange}
+                      value={value as string}
+                    />
+                  )}
+                />
+              );
+
+            default:
+              // Final fallback for unknown types
+              console.warn(
+                `Unhandled field type: ${item.type} with interface: ${item.meta.interface}`
+              );
+              return (
+                <Controller
+                  key={item.field}
+                  control={control}
+                  rules={{ required: item.meta.required }}
+                  name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                  render={({ field: { onChange, value } }) => (
+                    <Input
+                      {...defaultProps}
+                      onChangeText={onChange}
+                      value={String(value)}
+                      autoCapitalize="none"
+                      disabled
+                      helper="Fallback"
+                    />
+                  )}
+                />
+              );
           }
-        } else if (item.meta.interface === "input-hash") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <InputHash
-                  onChangeText={onChange}
-                  {...defaultProps}
-                  autoCapitalize="none"
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "datetime") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <DateTime
-                  onValueChange={onChange}
-                  value={value as string}
-                  {...defaultProps}
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "input-code") {
-          if (item.type === "json") {
-            return (
-              <Controller
-                key={item.field}
-                control={control}
-                rules={{ required: item.meta.required }}
-                name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                render={({ field: { onChange, value } }) => (
-                  <JsonInput
-                    onChange={onChange}
-                    value={value as string}
-                    {...defaultProps}
-                  />
-                )}
-              />
-            );
-          }
-        } else if (item.meta.interface === "select-dropdown") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <Select
-                  options={
-                    item.meta.display_options?.choices ||
-                    item.meta.options?.choices ||
-                    []
-                  }
-                  onValueChange={onChange}
-                  value={(value as string) || item.meta.options?.default}
-                  {...defaultProps}
-                  prepend={
-                    item.meta.options?.icon && (
-                      <DirectusIcon name={item.meta.options.icon} />
-                    )
-                  }
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "input-multiline") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <TextArea
-                  onChangeText={onChange}
-                  value={value as string}
-                  placeholder={item.meta.options?.placeholder}
-                  label={getLabel(item.field)}
-                  autoCapitalize="none"
-                  helper={item.meta.note || undefined}
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "input-rich-text-html") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <RichText
-                  onChange={onChange}
-                  value={value as string}
-                  {...defaultProps}
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "select-dropdown-m2o") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <M2OInput
-                  item={item}
-                  value={value as string}
-                  onValueChange={onChange}
-                  {...defaultProps}
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "file-image") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              rules={{ required: item.meta.required }}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <ImageInput
-                  {...defaultProps}
-                  value={value as string}
-                  onChange={onChange}
-                />
-              )}
-            />
-          );
-        } else if (item.meta.interface === "list-m2m") {
-          return (
-            <Controller
-              key={item.field}
-              control={control}
-              name={item.field as keyof CoreSchema[keyof CoreSchema]}
-              render={({ field: { onChange, value } }) => (
-                <M2MInput
-                  value={value as number[]}
-                  onChange={onChange}
-                  item={item}
-                  {...defaultProps}
-                />
-              )}
-            />
-          );
         }
       });
 

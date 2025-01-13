@@ -11,7 +11,6 @@ export default function TabTwoScreen() {
     <Layout>
       <Container>
         <Section>
-          <H1>Settings</H1>
           <Button
             onPress={async () => {
               await logout();
