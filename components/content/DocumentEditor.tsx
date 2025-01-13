@@ -42,7 +42,7 @@ import { JsonInput } from "../form/json";
 import { DirectusIcon } from "../display/directus-icon";
 import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
-import { find, isEmpty } from "lodash";
+import { each, filter, find, isEmpty, map } from "lodash";
 import { DateTime } from "../form/datetime";
 export const DocumentEditor = ({
   collection,
@@ -63,7 +63,7 @@ export const DocumentEditor = ({
   const context = useForm<CoreSchema<keyof CoreSchema>>();
   const {
     control,
-    formState: { isDirty, isValid, isSubmitting },
+    formState: { isDirty, isValid, isSubmitting, dirtyFields },
   } = context;
 
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -423,8 +423,26 @@ export const DocumentEditor = ({
         }
       });
 
+  function dirtyValues(
+    dirtyFields: object | boolean,
+    allValues: object
+  ): object {
+    // If *any* item in an array was modified, the entire array must be submitted, because there's no way to indicate
+    // "placeholders" for unchanged elements. `dirtyFields` is `true` for leaves.
+    if (dirtyFields === true || Array.isArray(dirtyFields)) return allValues;
+    // Here, we have an object
+    return Object.fromEntries(
+      Object.keys(dirtyFields).map((key) => [
+        key,
+        dirtyValues(dirtyFields[key], allValues[key]),
+      ])
+    );
+  }
+
   const handleSubmit = async (body: CoreSchema<keyof CoreSchema>) => {
-    await updateDoc(body, {
+    const data = dirtyValues(dirtyFields, body);
+
+    await updateDoc(data, {
       onSuccess: (updatedDoc) => {
         context.reset(updatedDoc as CoreSchema<keyof CoreSchema>);
 
