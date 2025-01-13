@@ -17,3 +17,7 @@ export * from "./Redo";
 export * from "./Plus";
 export * from "./Minus";
 export * from "./Calendar";
+export * from "./Bell";
+export * from "./Info";
+export * from "./Alert";
+export * from "./Home";

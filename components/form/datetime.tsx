@@ -6,7 +6,9 @@ import dayjs from "dayjs";
 // Add required dayjs plugins
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { Calendar } from "../icons";
+import { Calendar, Check, X } from "../icons";
+import { Horizontal, Vertical } from "../layout/Stack";
+import { Button } from "../display/button";
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 
@@ -32,30 +34,42 @@ export const DateTime = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [selectedTime, setSelectedTime] = useState(() => {
-    const initialHours = value ? dayjs(value).format('HH') : "12";
-    const initialMinutes = value ? dayjs(value).format('mm') : "00";
-    console.log('Initial time:', initialHours, initialMinutes);
+    const initialHours = value ? dayjs(value).format("HH") : "12";
+    const initialMinutes = value ? dayjs(value).format("mm") : "00";
+    console.log("Initial time:", initialHours, initialMinutes);
     return { hours: initialHours, minutes: initialMinutes };
   });
   const { styles, theme } = useStyles(dateTimeStyles);
   const { styles: formStyle } = useStyles(formStyles);
+  const [draftValue, setDraftValue] = useState<string | undefined>(value);
 
   // Get days in current month
-  const daysInMonth = Array.from({ length: currentMonth.daysInMonth() }, (_, i) => 
-    currentMonth.date(i + 1)
-  );
+  const daysInMonth = () => {
+    const firstDayOfMonth = currentMonth.startOf("month");
+    // Adjust for Monday start (Sunday is 0, we want Monday to be 0)
+    const daysBeforeMonth = (firstDayOfMonth.day() + 6) % 7;
 
-  const previousMonth = () => setCurrentMonth(curr => curr.subtract(1, 'month'));
-  const nextMonth = () => setCurrentMonth(curr => curr.add(1, 'month'));
+    // Create array of empty slots for days before the 1st
+    const emptyDays = Array(daysBeforeMonth).fill(null);
+
+    // Create array of actual days in the month
+    const days = Array.from({ length: currentMonth.daysInMonth() }, (_, i) =>
+      currentMonth.date(i + 1)
+    );
+
+    return [...emptyDays, ...days];
+  };
+
+  const previousMonth = () =>
+    setCurrentMonth((curr) => curr.subtract(1, "month"));
+  const nextMonth = () => setCurrentMonth((curr) => curr.add(1, "month"));
 
   const renderCalendarHeader = () => (
     <View style={styles.calendarHeader}>
       <Pressable onPress={previousMonth}>
         <Text style={styles.navigationButton}>{"<"}</Text>
       </Pressable>
-      <Text style={styles.monthText}>
-        {currentMonth.format("MMMM YYYY")}
-      </Text>
+      <Text style={styles.monthText}>{currentMonth.format("MMMM YYYY")}</Text>
       <Pressable onPress={nextMonth}>
         <Text style={styles.navigationButton}>{">"}</Text>
       </Pressable>
@@ -64,7 +78,7 @@ export const DateTime = ({
 
   const renderWeekDays = () => (
     <View style={styles.weekDaysContainer}>
-      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
         <Text key={day} style={styles.weekDayText}>
           {day}
         </Text>
@@ -76,48 +90,66 @@ export const DateTime = ({
     const newDate = date
       .hour(parseInt(selectedTime.hours))
       .minute(parseInt(selectedTime.minutes));
-    onValueChange?.(newDate.format('YYYY-MM-DD HH:mm:ss'));
+    setDraftValue(newDate.format("YYYY-MM-DD HH:mm:ss"));
   };
 
-  const handleTimeChange = (type: 'hours' | 'minutes', value: string) => {
+  const handleTimeChange = (type: "hours" | "minutes", value: string) => {
     // Only allow numeric input
-    const numericValue = value.replace(/[^0-9]/g, '');
-    
-    if (type === 'hours') {
-      const newHours = numericValue === '' ? '' : 
-                      parseInt(numericValue) > 23 ? '23' : numericValue;
-      setSelectedTime(prev => {
+    const numericValue = value.replace(/[^0-9]/g, "");
+
+    if (type === "hours") {
+      const newHours =
+        numericValue === ""
+          ? ""
+          : parseInt(numericValue) > 23
+          ? "23"
+          : numericValue;
+      setSelectedTime((prev) => {
         const newTime = { ...prev, hours: newHours };
-        // If we have a valid date and time, trigger the change
-        if (value && newHours.length === 2) {
-          const newDate = dayjs(value || new Date())
+        // Update draft instead of sending directly
+        if (draftValue && newHours.length === 2) {
+          const newDate = dayjs(draftValue)
             .hour(parseInt(newHours))
             .minute(parseInt(newTime.minutes));
-          onValueChange?.(newDate.format('YYYY-MM-DD HH:mm:ss'));
+          setDraftValue(newDate.format("YYYY-MM-DD HH:mm:ss"));
         }
         return newTime;
       });
     } else {
-      const newMinutes = numericValue === '' ? '' : 
-                        parseInt(numericValue) > 59 ? '59' : numericValue;
-      setSelectedTime(prev => {
+      const newMinutes =
+        numericValue === ""
+          ? ""
+          : parseInt(numericValue) > 59
+          ? "59"
+          : numericValue;
+      setSelectedTime((prev) => {
         const newTime = { ...prev, minutes: newMinutes };
-        // If we have a valid date and time, trigger the change
-        if (value && newMinutes.length === 2) {
-          const newDate = dayjs(value || new Date())
+        // Update draft instead of sending directly
+        if (draftValue && newMinutes.length === 2) {
+          const newDate = dayjs(draftValue)
             .hour(parseInt(newTime.hours))
             .minute(parseInt(newMinutes));
-          onValueChange?.(newDate.format('YYYY-MM-DD HH:mm:ss'));
+          setDraftValue(newDate.format("YYYY-MM-DD HH:mm:ss"));
         }
         return newTime;
       });
     }
   };
 
+  const handleConfirm = () => {
+    onValueChange?.(draftValue!);
+    setModalVisible(false);
+  };
+
   return (
     <View style={formStyle.formControl}>
       {label && (
-        <Text style={[formStyle.label, disabled && { color: theme.colors.textTertiary }]}>
+        <Text
+          style={[
+            formStyle.label,
+            disabled && { color: theme.colors.textTertiary },
+          ]}
+        >
           {label}
           {label.endsWith("*") ? "" : " *"}
         </Text>
@@ -143,7 +175,12 @@ export const DateTime = ({
           {value ? dayjs(value).format("lll") : placeholder}
         </Text>
         <View style={{ marginLeft: "auto" }}>
-          <Calendar size={20} color={disabled ? theme.colors.textTertiary : theme.colors.textSecondary} />
+          <Calendar
+            size={20}
+            color={
+              disabled ? theme.colors.textTertiary : theme.colors.textSecondary
+            }
+          />
         </View>
       </Pressable>
 
@@ -159,37 +196,43 @@ export const DateTime = ({
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <Pressable 
-          style={styles.modalOverlay} 
+        <Pressable
+          style={styles.modalOverlay}
           onPress={() => setModalVisible(false)}
         >
-          <Pressable 
-            style={styles.modalContent} 
+          <Pressable
+            style={styles.modalContent}
             onPress={(e) => e.stopPropagation()}
           >
             {renderCalendarHeader()}
             {renderWeekDays()}
             <View style={styles.daysGrid}>
-              {daysInMonth.map((date) => (
+              {daysInMonth().map((date, index) => (
                 <Pressable
-                  key={date.toString()}
+                  key={date?.toString() || `empty-${index}`}
                   style={[
                     styles.dayButton,
-                    value && dayjs(value).format("YYYY-MM-DD") === date.format("YYYY-MM-DD")
+                    draftValue &&
+                    date &&
+                    dayjs(draftValue).format("YYYY-MM-DD") ===
+                      date.format("YYYY-MM-DD")
                       ? styles.selectedDay
                       : null,
                   ]}
-                  onPress={() => handleDateSelect(date)}
+                  onPress={() => date && handleDateSelect(date)}
                 >
                   <Text
                     style={[
                       styles.dayText,
-                      value && dayjs(value).format("YYYY-MM-DD") === date.format("YYYY-MM-DD")
+                      draftValue &&
+                      date &&
+                      dayjs(draftValue).format("YYYY-MM-DD") ===
+                        date.format("YYYY-MM-DD")
                         ? styles.selectedDayText
                         : null,
                     ]}
                   >
-                    {date.format("D")}
+                    {date?.format("D") || ""}
                   </Text>
                 </Pressable>
               ))}
@@ -198,26 +241,52 @@ export const DateTime = ({
               <TextInput
                 style={styles.timeInput}
                 value={selectedTime.hours}
-                onChangeText={(value) => handleTimeChange('hours', value)}
+                onChangeText={(value) => handleTimeChange("hours", value)}
                 keyboardType="numeric"
                 maxLength={2}
                 editable={true}
                 selectTextOnFocus={true}
+                onBlur={(e) => {
+                  if (!e.nativeEvent.text) {
+                    handleTimeChange("hours", "12");
+                  }
+                }}
               />
               <Text style={styles.timeText}>:</Text>
               <TextInput
                 style={styles.timeInput}
                 value={selectedTime.minutes}
-                onChangeText={(value) => handleTimeChange('minutes', value)}
+                onChangeText={(value) => handleTimeChange("minutes", value)}
                 keyboardType="numeric"
                 maxLength={2}
                 editable={true}
                 selectTextOnFocus={true}
+                onBlur={(e) => {
+                  if (!e.nativeEvent.text) {
+                    handleTimeChange("minutes", "00");
+                  }
+                }}
               />
             </View>
-            <Pressable style={styles.setNowButton} onPress={() => handleDateSelect(dayjs())}>
+            <Pressable
+              style={styles.setNowButton}
+              onPress={() => handleDateSelect(dayjs())}
+            >
               <Text style={styles.setNowText}>Set to Now</Text>
             </Pressable>
+
+            <Horizontal style={{ justifyContent: "flex-end" }}>
+              <Button
+                rounded
+                variant="soft"
+                onPress={() => setModalVisible(false)}
+              >
+                <X />
+              </Button>
+              <Button rounded onPress={handleConfirm} disabled={!draftValue}>
+                <Check />
+              </Button>
+            </Horizontal>
           </Pressable>
         </Pressable>
       </Modal>
@@ -289,14 +358,14 @@ const dateTimeStyles = createStyleSheet((theme) => ({
   daysGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-around",
+    justifyContent: "flex-start",
+    width: "100%",
   },
   dayButton: {
-    width: 40,
-    height: 40,
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
-    margin: 2,
     borderRadius: theme.borderRadius.full,
   },
   selectedDay: {
@@ -310,9 +379,9 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     color: theme.colors.background,
   },
   timeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
@@ -325,7 +394,7 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     width: 45,
-    textAlign: 'center',
+    textAlign: "center",
   },
   timeText: {
     ...theme.typography.label,
@@ -340,4 +409,4 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     ...theme.typography.body,
     color: theme.colors.primary,
   },
-})); 
+}));

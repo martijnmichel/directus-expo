@@ -19,8 +19,13 @@ import { useCollectionMeta } from "@/helpers/collections/getCollectionTranslatio
 import { DocumentEditor } from "@/components/content/DocumentEditor";
 export default function Collection() {
   const { collection } = useLocalSearchParams();
-  const { data } = useCollection(collection as keyof CoreSchema);
+  const { data, isLoading } = useCollection(collection as keyof CoreSchema);
   const { label } = useCollectionMeta(data);
+
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <Layout>
       <Stack.Screen
