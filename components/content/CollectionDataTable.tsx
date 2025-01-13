@@ -8,11 +8,12 @@ import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router } from "expo-router";
+import { useEffect } from "react";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
-  const { data: documents } = useDocuments(
+  const { data: documents, refetch } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema]
   );
 
@@ -28,6 +29,10 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     (preset && preset.layout_query?.tabular.fields) ||
     fields?.map((f) => f.field) ||
     [];
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   return (
     <Table

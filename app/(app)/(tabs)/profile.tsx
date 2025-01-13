@@ -1,3 +1,4 @@
+import { CollectionDataTable } from "@/components/content/CollectionDataTable";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { H1 } from "@/components/display/typography";
 import { Container } from "@/components/layout/Container";
@@ -13,11 +14,7 @@ export default function TabTwoScreen() {
       <ScrollView>
         <Container>
           <Section>
-            <DocumentEditor
-              collection="directus_users"
-              id={user?.id}
-              onSave={(doc) => console.log({ doc })}
-            />
+            <CollectionDataTable collection="directus_users" />
           </Section>
         </Container>
       </ScrollView>
