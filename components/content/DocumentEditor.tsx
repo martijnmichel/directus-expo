@@ -423,25 +423,36 @@ export const DocumentEditor = ({
         }
       });
 
-  function dirtyValues(
-    dirtyFields: object | boolean,
-    allValues: Record<string, unknown>
-  ): Record<string, unknown> {
-    if (dirtyFields === true || Array.isArray(dirtyFields)) return allValues;
+  type DirtyFieldsType =
+    | boolean
+    | null
+    | {
+        [key: string]: DirtyFieldsType;
+      }
+    | DirtyFieldsType[];
 
-    return Object.fromEntries(
-      Object.keys(dirtyFields as object).map((key) => [
-        key,
-        dirtyValues(
-          (dirtyFields as Record<string, unknown>)[key] as object | boolean,
-          allValues[key] as Record<string, unknown>
-        ),
-      ])
-    );
+  function getDirtyValues<T extends Record<string, any>>(
+    dirtyFields: Partial<Record<keyof T, DirtyFieldsType>>,
+    values: T
+  ): Partial<T> {
+    const dirtyValues = Object.keys(dirtyFields).reduce((prev, key) => {
+      const value = dirtyFields[key];
+      if (!value) {
+        return prev;
+      }
+      const isObject = typeof value === "object";
+      const isArray = Array.isArray(value);
+      const nestedValue =
+        isObject && !isArray
+          ? getDirtyValues(value as Record<string, any>, values[key])
+          : values[key];
+      return { ...prev, [key]: isArray ? values[key] : nestedValue };
+    }, {} as Partial<T>);
+    return dirtyValues;
   }
 
   const handleSubmit = async (body: Record<string, unknown>) => {
-    const data = dirtyValues(dirtyFields, body);
+    const data = getDirtyValues(dirtyFields, body);
 
     await updateDoc(data, {
       onSuccess: (updatedDoc) => {

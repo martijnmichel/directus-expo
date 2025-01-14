@@ -69,12 +69,8 @@ export const Button = React.forwardRef<any, ButtonProps>(
     const getIconColor = () => {
       if (disabled) return theme.colors.textMuted;
       switch (variant) {
-        case "primary":
-          return theme.colors.white;
-        case "secondary":
-          return theme.colors.textPrimary;
         default:
-          return theme.colors.primary;
+          return "white";
       }
     };
 
@@ -197,7 +193,7 @@ const stylesheet = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
   },
   primaryText: {
-    color: theme.colors.textPrimary,
+    color: "white",
   },
   softText: {
     color: theme.colors.textSecondary,

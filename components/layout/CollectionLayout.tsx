@@ -12,7 +12,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import UserCollections from "@/components/content/UserCollections";
 import { FloatingActionButton } from "@/components/display/FloatingActionButton";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { H1 } from "@/components/display/typography";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useCollections } from "@/state/queries/directus/core";
@@ -48,22 +48,28 @@ export default function CollectionLayout() {
   const { label } = useCollectionMeta(data);
 
   const headerStyles = useHeaderStyles();
-  const closeMenu = () => {
+  const closeMenu = useCallback(() => {
+    console.log("Closing menu");
     Animated.timing(slideAnim, {
       toValue: 0,
+      duration: 300,
       useNativeDriver: true,
-    }).start(() => {
-      setIsMenuOpen(false);
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsMenuOpen(false);
+      }
     });
-  };
+  }, [slideAnim]);
 
-  const openMenu = () => {
-    setIsMenuOpen(true);
+  const openMenu = useCallback(() => {
+    console.log("Opening menu");
+    setIsMenuOpen(true); // Set this immediately for open
     Animated.timing(slideAnim, {
       toValue: 1,
+      duration: 300,
       useNativeDriver: true,
     }).start();
-  };
+  }, [slideAnim]);
 
   const toggleMenu = () => {
     if (isMenuOpen) {
@@ -79,18 +85,34 @@ export default function CollectionLayout() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => isMenuOpen,
-      onMoveShouldSetPanResponder: () => isMenuOpen,
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        const isHorizontalSwipe =
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        return isHorizontalSwipe;
+      },
       onPanResponderMove: (_, gestureState) => {
-        if (!isMenuOpen) return;
-        const newValue = Math.max(0, Math.min(1, 1 + gestureState.dx / 300));
-        slideAnim.setValue(newValue);
+        if (isMenuOpen) {
+          const newValue = Math.max(0, Math.min(1, 1 + gestureState.dx / 300));
+          slideAnim.setValue(newValue);
+        } else {
+          const newValue = Math.max(0, Math.min(1, gestureState.dx / 300));
+          slideAnim.setValue(newValue);
+        }
       },
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -50) {
-          closeMenu();
+        if (isMenuOpen) {
+          if (gestureState.dx < -20) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
         } else {
-          openMenu();
+          if (gestureState.dx > 50) {
+            openMenu();
+          } else {
+            closeMenu();
+          }
         }
       },
     })
@@ -111,11 +133,11 @@ export default function CollectionLayout() {
           ),
         }}
       />
-      <View style={styles.container}>
-        {isMenuOpen && <Pressable style={styles.overlay} onPress={closeMenu} />}
-
+      <View
+        style={[styles.container, { position: "relative" }]}
+        {...panResponder.panHandlers}
+      >
         <Animated.View
-          {...panResponder.panHandlers}
           style={[
             styles.sideMenu,
             {
@@ -147,7 +169,6 @@ export default function CollectionLayout() {
               ],
             },
           ]}
-          pointerEvents={isMenuOpen ? "none" : "auto"}
         >
           <ScrollView>
             <Container>
@@ -160,14 +181,11 @@ export default function CollectionLayout() {
               )}
             </Container>
           </ScrollView>
-        </Animated.View>
-
-        {!isMenuOpen && !data?.meta.singleton && (
           <FloatingActionButton
             icon={isMenuOpen ? "close" : "menu"}
             onPress={toggleMenu}
           />
-        )}
+        </Animated.View>
       </View>
     </Layout>
   );
@@ -193,12 +211,13 @@ const stylesheet = createStyleSheet((theme) => ({
     top: 0,
     bottom: 0,
     width: 300,
-    backgroundColor: theme.colors.backgroundDark,
-    zIndex: 2, // Increased zIndex to be above overlay
+    backgroundColor: theme.colors.backgroundAlt,
+    zIndex: 1,
     padding: theme.spacing.md,
   },
   mainContent: {
     flex: 1,
     backgroundColor: theme.colors.background,
+    zIndex: 0,
   },
 }));
