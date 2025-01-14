@@ -92,12 +92,11 @@ export const darkTheme: AppTheme = {
     textSecondary: "#C8D5E9",
     textTertiary: "#8196AB",
 
-    background: "#1A1A1A", // Dark background
+    background: "#000000", // Dark background
     backgroundAlt: "#2A2A2A", // Slightly lighter dark
     backgroundDark: "#141414", // Darker shade
 
     border: "#2F2F2F",
-    borderLight: "#3F3F3F",
 
     // Utility colors
     white: "#000000" as string,

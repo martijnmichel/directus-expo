@@ -105,7 +105,7 @@ export const CollapsibleTrigger = ({
         style={{
           fontWeight: "700",
           fontFamily: theme.typography.heading2.fontFamily,
-          color: color,
+          color: color || theme.colors.textPrimary,
           fontSize: 18,
         }}
       >

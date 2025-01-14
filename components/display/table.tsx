@@ -104,21 +104,24 @@ export function Table<T extends Record<string, unknown>>({
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.tableContainer}>
-        <View style={styles.headerRow}>
-          {fields.map((field, index) => (
-            <View
-              key={index}
-              style={[styles.headerCell, { width: getColumnWidth(field) }]}
-            >
-              <Text
-                style={[styles.headerText, styles.truncate]}
-                numberOfLines={1}
+        {fields.length && (
+          <View style={styles.headerRow}>
+            {fields.map((field, index) => (
+              <Pressable
+                key={index}
+                onPress={() => handleSort(index)}
+                style={[styles.headerCell, { width: getColumnWidth(field) }]}
               >
-                {headers ? headers[field] : field}
-              </Text>
-            </View>
-          ))}
-        </View>
+                <Text
+                  style={[styles.headerText, styles.truncate]}
+                  numberOfLines={1}
+                >
+                  {headers ? headers[field] : field}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
 
         <ScrollView style={[styles.bodyContainer, { maxHeight }]}>
           {sortedItems.map((item, rowIndex) => (
@@ -134,15 +137,22 @@ export function Table<T extends Record<string, unknown>>({
                     key={cellIndex}
                     style={[styles.cell, { width: getColumnWidth(field) }]}
                   >
-                    {typeof cell === "string" ? (
+                    {typeof cell === "string" || typeof cell === "number" ? (
                       <Text
                         style={[styles.cellText, styles.truncate]}
                         numberOfLines={1}
                       >
-                        {cell}
+                        {String(cell)}
                       </Text>
-                    ) : (
+                    ) : React.isValidElement(cell) ? (
                       cell
+                    ) : (
+                      <Text
+                        style={[styles.cellText, styles.truncate]}
+                        numberOfLines={1}
+                      >
+                        {String(cell)}
+                      </Text>
                     )}
                   </View>
                 );

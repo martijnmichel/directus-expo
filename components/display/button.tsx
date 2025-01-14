@@ -197,10 +197,10 @@ const stylesheet = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
   },
   primaryText: {
-    color: theme.colors.white,
+    color: theme.colors.textPrimary,
   },
   softText: {
-    color: theme.colors.white,
+    color: theme.colors.textSecondary,
   },
   secondaryText: {
     color: theme.colors.textPrimary,

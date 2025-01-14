@@ -45,6 +45,9 @@ export default function CollectionLayout() {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const pathname = usePathname();
   const { styles } = useStyles(stylesheet);
+  const { label } = useCollectionMeta(data);
+
+  const headerStyles = useHeaderStyles();
   const closeMenu = () => {
     Animated.timing(slideAnim, {
       toValue: 0,
@@ -92,10 +95,6 @@ export default function CollectionLayout() {
       },
     })
   ).current;
-
-  const { label } = useCollectionMeta(data);
-
-  const headerStyles = useHeaderStyles();
 
   return (
     <Layout>
@@ -152,15 +151,13 @@ export default function CollectionLayout() {
         >
           <ScrollView>
             <Container>
-              <Section>
-                {data?.meta.singleton ? (
-                  <DocumentEditor collection={collection as keyof CoreSchema} />
-                ) : (
-                  <CollectionDataTable
-                    collection={collection as keyof CoreSchema}
-                  />
-                )}
-              </Section>
+              {data?.meta.singleton ? (
+                <DocumentEditor collection={collection as keyof CoreSchema} />
+              ) : (
+                <CollectionDataTable
+                  collection={collection as keyof CoreSchema}
+                />
+              )}
             </Container>
           </ScrollView>
         </Animated.View>
@@ -202,6 +199,6 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   mainContent: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: theme.colors.background,
   },
 }));

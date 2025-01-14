@@ -14,6 +14,7 @@ import { map } from "lodash";
 import { CoreSchema, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import { useCollection } from "@/state/queries/directus/collection";
+import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 export default function Collection() {
   const { collection, id } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -24,12 +25,14 @@ export default function Collection() {
     template: data?.meta.display_template || "",
   });
 
+  const headerStyles = useHeaderStyles();
+
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
         options={{
           headerTitle,
-          presentation: "modal",
+          ...headerStyles,
         }}
       />
       <KeyboardAwareScrollView>

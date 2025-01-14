@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router } from "expo-router";
 import { useEffect } from "react";
+import { Text } from "react-native";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -44,7 +45,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       fields={tableFields}
       items={(documents as Record<string, unknown>[]) || []}
       widths={preset?.layout_options?.tabular.widths}
-      renderRow={(doc) => map(tableFields, (f) => doc[f] as string)}
+      renderRow={(doc) => map(tableFields, (f) => String(doc[f]))}
       onRowPress={(doc) => {
         console.log(doc);
         router.push(`/content/${collection}/${doc.id}`);

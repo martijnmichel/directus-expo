@@ -10,6 +10,7 @@ import {
   ScrollViewProps,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { H1 } from "../display/typography";
 
 interface LayoutProps extends ViewProps {
   children: React.ReactNode;
@@ -51,10 +52,11 @@ export function KeyboardAwareLayout({
   style,
   behavior = Platform.OS === "ios" ? "padding" : "height",
 }: KeyboardAwareLayoutProps) {
+  const { styles } = useStyles(stylesheet);
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[{ flex: 1 }, style]}
+      style={[styles.layout, style]}
       enabled
     >
       {children}

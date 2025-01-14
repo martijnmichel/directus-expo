@@ -17,7 +17,7 @@ UnistylesRegistry.addBreakpoints(breakpoints)
     dark: darkTheme,
   })
   .addConfig({
-    initialTheme: "light",
+    initialTheme: "dark",
   });
 
 export default function RootLayout() {
