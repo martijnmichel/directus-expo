@@ -100,11 +100,12 @@ export const ColorPicker = ({
     h = h / 6;
     if (h < 0) h += 1;
 
-    // Normal position for hue handle
-    setHuePosition(h * spectrumWidth);
+    // Invert the hue for position setting
+    const invertedH = (1 - h) % 1;
 
-    // Use the same hue for spectrum
-    setHue(h);
+    // Set positions using inverted hue
+    setHuePosition(invertedH * spectrumWidth);
+    setHue(invertedH);
 
     setPosition({
       x: s * spectrumWidth,
