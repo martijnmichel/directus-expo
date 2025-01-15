@@ -60,13 +60,13 @@ export default function TabsLayout() {
         <TabTrigger
           style={[styles.item, { display: "none" }]}
           name="collection"
-          href="/content/[collection]/index"
+          href="./content/[collection]/index"
         />
 
         <TabTrigger
           style={[styles.item, { display: "none" }]}
           name="document"
-          href="/content/[collection]/[id]/index"
+          href="./content/[collection]/[id]/index"
         />
       </TabList>
     </Tabs>

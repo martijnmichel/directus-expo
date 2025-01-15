@@ -39,13 +39,15 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     <Table
       headers={reduce(
         tableFields,
-        (prev, curr) => ({ ...prev, [curr]: label(curr) }),
+        (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
         {}
       )}
       fields={tableFields}
       items={(documents as Record<string, unknown>[]) || []}
       widths={preset?.layout_options?.tabular.widths}
-      renderRow={(doc) => map(tableFields, (f) => doc[f]?.toString())}
+      renderRow={(doc) =>
+        map(tableFields, (f) => doc[f] as number | string | null)
+      }
       onRowPress={(doc) => {
         console.log(doc);
         router.push(`/content/${collection}/${doc.id}`);

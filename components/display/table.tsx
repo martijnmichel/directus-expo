@@ -7,7 +7,7 @@ interface TableProps<T extends Record<string, unknown>> {
   headers?: { [key: string]: string };
   fields: string[];
   items?: T[];
-  renderRow: (item: T) => React.ReactNode[];
+  renderRow: (item: T) => (React.ReactNode | null)[];
   maxHeight?: number;
   widths?: { [key: string]: number };
   onRowPress?: (item: T) => void;
@@ -97,6 +97,52 @@ export function Table<T extends Record<string, unknown>>({
     return widths[field] || defaultColumnWidth;
   };
 
+  const renderCell = (cell: React.ReactNode): React.ReactElement => {
+    // Ensure we always return a React element wrapped in Text
+    if (cell == null || cell === "") {
+      return (
+        <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
+          -
+        </Text>
+      );
+    }
+
+    // If it's already a React element, return it
+    if (React.isValidElement(cell)) {
+      if (cell.type === Text) {
+        return React.cloneElement(cell, {
+          numberOfLines: 1,
+          style: [styles.cellText, styles.truncate, cell.props.style],
+        });
+      }
+      return (
+        <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
+          {cell}
+        </Text>
+      );
+    }
+
+    // For primitive types
+    if (
+      typeof cell === "string" ||
+      typeof cell === "number" ||
+      typeof cell === "boolean"
+    ) {
+      return (
+        <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
+          {String(cell)}
+        </Text>
+      );
+    }
+
+    // For arrays or objects
+    return (
+      <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
+        {JSON.stringify(cell)}
+      </Text>
+    );
+  };
+
   return (
     <ScrollView
       horizontal
@@ -104,11 +150,11 @@ export function Table<T extends Record<string, unknown>>({
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.tableContainer}>
-        {fields.length && (
+        {fields.length > 0 && (
           <View style={styles.headerRow}>
             {fields.map((field, index) => (
               <Pressable
-                key={index}
+                key={field}
                 onPress={() => handleSort(index)}
                 style={[styles.headerCell, { width: getColumnWidth(field) }]}
               >
@@ -116,7 +162,7 @@ export function Table<T extends Record<string, unknown>>({
                   style={[styles.headerText, styles.truncate]}
                   numberOfLines={1}
                 >
-                  {headers ? headers[field] : field}
+                  {headers ? String(headers[field]) : String(field)}
                 </Text>
               </Pressable>
             ))}
@@ -137,23 +183,7 @@ export function Table<T extends Record<string, unknown>>({
                     key={cellIndex}
                     style={[styles.cell, { width: getColumnWidth(field) }]}
                   >
-                    {typeof cell === "string" || typeof cell === "number" ? (
-                      <Text
-                        style={[styles.cellText, styles.truncate]}
-                        numberOfLines={1}
-                      >
-                        {cell}
-                      </Text>
-                    ) : React.isValidElement(cell) ? (
-                      cell
-                    ) : (
-                      <Text
-                        style={[styles.cellText, styles.truncate]}
-                        numberOfLines={1}
-                      >
-                        {cell}
-                      </Text>
-                    )}
+                    {renderCell(cell)}
                   </View>
                 );
               })}
@@ -209,6 +239,7 @@ const stylesheet = createStyleSheet((theme) => ({
   cell: {
     padding: theme.spacing.lg,
     justifyContent: "center",
+    flex: 1,
   },
   cellText: {
     color: theme.colors.textPrimary,
@@ -217,6 +248,5 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   truncate: {
     overflow: "hidden",
-    flexShrink: 1,
   },
 }));
