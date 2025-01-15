@@ -44,6 +44,7 @@ import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
 import { each, filter, find, isEmpty, map } from "lodash";
 import { DateTime } from "../form/datetime";
+import { ColorPicker } from "../form/color";
 export const DocumentEditor = ({
   collection,
   id,
@@ -228,6 +229,22 @@ export const DocumentEditor = ({
                           value={"**********"}
                           autoCapitalize="none"
                           disabled
+                        />
+                      )}
+                    />
+                  );
+                case "select-color":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({ field: { onChange, value } }) => (
+                        <ColorPicker
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as string}
                         />
                       )}
                     />

@@ -110,7 +110,7 @@ export function Table<T extends Record<string, unknown>>({
     // If it's already a React element, return it
     if (React.isValidElement(cell)) {
       if (cell.type === Text) {
-        return React.cloneElement(cell, {
+        return React.cloneElement(cell as React.ReactElement, {
           numberOfLines: 1,
           style: [styles.cellText, styles.truncate, cell.props.style],
         });

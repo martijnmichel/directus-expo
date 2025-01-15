@@ -1,45 +1,33 @@
 import { usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  mutateLocalStorage,
+  useLocalStorage,
+} from "@/state/local/useLocalStorage";
+import { LocalStorageKeys } from "@/state/local/useLocalStorage";
+import { queryClient } from "@/app/_layout";
 
 export function useTrackPath() {
   const pathname = usePathname();
+  const { data } = useLocalStorage<string>(LocalStorageKeys.CONTENT_PATH);
+  const { mutate: setContentPath } = mutateLocalStorage(
+    LocalStorageKeys.CONTENT_PATH
+  );
 
   useEffect(() => {
-    // Save to AsyncStorage
-    const savePath = async () => {
-      try {
-        await AsyncStorage.setItem("last_path", pathname);
-      } catch (error) {
-        console.error("Error saving path:", error);
-      }
-    };
-
-    savePath();
+    if (pathname.startsWith("/content/")) {
+      setContentPath(pathname, {
+        onSuccess: () =>
+          queryClient.invalidateQueries({
+            queryKey: ["local-storage", LocalStorageKeys.CONTENT_PATH],
+          }),
+      });
+    }
   }, [pathname]);
 
   return { pathname };
 }
 
-export function useTrackedPath() {
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState<string>("");
-
-  useEffect(() => {
-    const loadInitialPath = async () => {
-      try {
-        const savedPath = await AsyncStorage.getItem("last_path");
-        if (savedPath) {
-          setPage(savedPath);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error loading initial path:", error);
-      }
-    };
-
-    loadInitialPath();
-  }, []);
-
-  return { page, loading };
-}
+export const useTrackedPath = () =>
+  useLocalStorage(LocalStorageKeys.CONTENT_PATH);

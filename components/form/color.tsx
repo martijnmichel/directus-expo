@@ -1,10 +1,19 @@
-import React, { useState } from "react";
-import { View, Text, Pressable, Modal } from "react-native";
+import React, { useState, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  TextInput,
+  StyleSheet,
+} from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Check, X, Palette } from "../icons";
 import { Horizontal } from "../layout/Stack";
 import { Button } from "../display/button";
+import { GestureResponderEvent } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface ColorPickerProps {
   label?: string;
@@ -14,21 +23,23 @@ interface ColorPickerProps {
   onValueChange?: (color: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  presets?: Array<{ name: string; color: string }>;
+  opacity?: boolean;
 }
 
 const DEFAULT_COLORS = [
-  "#6644FF", // Primary
-  "#172940", // Secondary
-  "#E35169", // Error
-  "#2ECDA7", // Success
-  "#FFB224", // Warning
-  "#4F5464", // Text Secondary
-  "#8196AB", // Text Tertiary
-  "#F0F4F9", // Background Alt
-  "#FFFFFF", // White
-  "#000000", // Black
-  "#C8D5E9", // Text Muted
-  "#e4eaf1", // Border
+  { name: "Primary", color: "#6644FF" },
+  { name: "Secondary", color: "#172940" },
+  { name: "Error", color: "#E35169" },
+  { name: "Success", color: "#2ECDA7" },
+  { name: "Warning", color: "#FFB224" },
+  { name: "Text Secondary", color: "#4F5464" },
+  { name: "Text Tertiary", color: "#8196AB" },
+  { name: "Background Alt", color: "#F0F4F9" },
+  { name: "White", color: "#FFFFFF" },
+  { name: "Black", color: "#000000" },
+  { name: "Text Muted", color: "#C8D5E9" },
+  { name: "Border", color: "#e4eaf1" },
 ];
 
 export const ColorPicker = ({
@@ -39,20 +50,224 @@ export const ColorPicker = ({
   onValueChange,
   placeholder = "Select a color",
   disabled = false,
+  presets = DEFAULT_COLORS,
+  opacity = false,
 }: ColorPickerProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(colorPickerStyles);
   const { styles: formStyle } = useStyles(formStyles);
   const [draftValue, setDraftValue] = useState<string | undefined>(value);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [spectrumWidth, setSpectrumWidth] = useState(0);
+  const [spectrumHeight, setSpectrumHeight] = useState(0);
+  const [hue, setHue] = useState(0);
+  const [huePosition, setHuePosition] = useState(0);
+
+  const spectrumRef = useRef<View>(null);
+  const hueRef = useRef<View>(null);
+
+  const hexToHsv = (hex: string) => {
+    // Remove the hash if present
+    hex = hex.replace(/^#/, "");
+
+    // Parse the RGB values
+    const r = parseInt(hex.slice(0, 2), 16) / 255;
+    const g = parseInt(hex.slice(2, 4), 16) / 255;
+    const b = parseInt(hex.slice(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
+    // Calculate HSV values
+    const v = max;
+    const s = max === 0 ? 0 : delta / max;
+
+    let h;
+    if (delta === 0) {
+      h = 0;
+    } else {
+      if (max === r) {
+        h = ((g - b) / delta) % 6;
+      } else if (max === g) {
+        h = (b - r) / delta + 2;
+      } else {
+        h = (r - g) / delta + 4;
+      }
+
+      h = h / 6;
+      if (h < 0) h += 1;
+    }
+
+    // Expected output:
+    // Primary (#6644FF) -> h ≈ 0.67 (purple)
+    // Secondary (#172940) -> h ≈ 0.61 (blue)
+    // Error (#E35169) -> h ≈ 0.97 (red)
+    // Success (#2ECDA7) -> h ≈ 0.45 (green)
+    // Warning (#FFB224) -> h ≈ 0.11 (orange)
+
+    console.log("RGB values:", { r, g, b });
+    console.log("Raw HSV:", { h, s, v });
+
+    return { h, s, v };
+  };
 
   const handleColorSelect = (color: string) => {
     setDraftValue(color);
+
+    // Convert the selected color to HSV
+    const { h, s, v } = hexToHsv(color);
+
+    // Adjust the hue mapping with a slight offset
+    let mappedHue = (1 - h + 0.15) % 1;
+    const huePosition = mappedHue * spectrumWidth;
+
+    setHuePosition(huePosition);
+    setHue(mappedHue);
+
+    const newX = s * spectrumWidth;
+    const newY = (1 - v) * spectrumHeight;
+    setPosition({ x: newX, y: newY });
+
+    console.log("Color:", color);
+    console.log("HSV:", { h, s, v });
+    console.log("Mapped Hue:", mappedHue);
   };
 
   const handleConfirm = () => {
     onValueChange?.(draftValue!);
     setModalVisible(false);
   };
+
+  const hsvToRgb = (h: number, s: number, v: number) => {
+    let r, g, b;
+    const i = Math.floor(h * 6);
+    const f = h * 6 - i;
+    const p = v * (1 - s);
+    const q = v * (1 - f * s);
+    const t = v * (1 - (1 - f) * s);
+
+    switch (i % 6) {
+      case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+      case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
+      default:
+        r = 0;
+        g = 0;
+        b = 0;
+    }
+
+    return {
+      r: Math.round(r * 255),
+      g: Math.round(g * 255),
+      b: Math.round(b * 255),
+    };
+  };
+
+  const rgbToHex = (r: number, g: number, b: number) => {
+    return (
+      "#" +
+      [r, g, b]
+        .map((x) => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? "0" + hex : hex;
+        })
+        .join("")
+    );
+  };
+
+  const handleSpectrumLayout = useCallback((event: any) => {
+    const { width, height } = event.nativeEvent.layout;
+    setSpectrumWidth(width);
+    setSpectrumHeight(height);
+  }, []);
+
+  const handleColorSelection = useCallback(
+    (event: MouseEvent | GestureResponderEvent | any) => {
+      if (!spectrumRef.current) return;
+
+      // @ts-ignore - getBoundingClientRect is available on web
+      const rect = spectrumRef.current.getBoundingClientRect?.() || {
+        left: 0,
+        top: 0,
+      };
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+      const x = Math.max(0, Math.min(clientX - rect.left, spectrumWidth));
+      const y = Math.max(0, Math.min(clientY - rect.top, spectrumHeight));
+
+      setPosition({ x, y });
+
+      const saturation = x / spectrumWidth;
+      const value = 1 - y / spectrumHeight;
+
+      const rgb = hsvToRgb(hue, saturation, value);
+      const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+      setDraftValue(hexColor);
+    },
+    [spectrumWidth, spectrumHeight, hue]
+  );
+
+  const handleHueSelection = useCallback(
+    (event: MouseEvent | GestureResponderEvent | any) => {
+      if (!hueRef.current) return;
+
+      // @ts-ignore - getBoundingClientRect is available on web
+      const rect = hueRef.current.getBoundingClientRect?.() || {
+        left: 0,
+        top: 0,
+      };
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+
+      const x = Math.max(0, Math.min(clientX - rect.left, spectrumWidth));
+      setHuePosition(x);
+      const newHue = x / spectrumWidth;
+      setHue(newHue);
+
+      const saturation = position.x / spectrumWidth;
+      const value = 1 - position.y / spectrumHeight;
+      const rgb = hsvToRgb(newHue, saturation, value);
+      const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+      setDraftValue(hexColor);
+    },
+    [spectrumWidth, position.x, position.y, spectrumHeight]
+  );
+
+  const [r, g, b] = draftValue
+    ? [
+        parseInt(draftValue.slice(1, 3), 16),
+        parseInt(draftValue.slice(3, 5), 16),
+        parseInt(draftValue.slice(5, 7), 16),
+      ]
+    : [0, 0, 0];
 
   return (
     <View style={formStyle.formControl}>
@@ -123,8 +338,173 @@ export const ColorPicker = ({
             onPress={(e) => e.stopPropagation()}
           >
             <Text style={styles.modalTitle}>Select Color</Text>
+
+            {/* Color Spectrum */}
+            <View style={styles.previewSection}>
+              <View
+                style={[
+                  styles.previewCircle,
+                  { backgroundColor: draftValue || "#000" },
+                ]}
+              />
+              <View
+                ref={hueRef}
+                style={styles.hueBarContainer}
+                onLayout={handleSpectrumLayout}
+              >
+                <LinearGradient
+                  style={styles.hueBar}
+                  colors={[
+                    "#FF0000", // Red
+                    "#FF00FF", // Pink/Magenta
+                    "#0000FF", // Blue
+                    "#00FFFF", // Cyan
+                    "#00FF00", // Green
+                    "#FFFF00", // Yellow
+                    "#FF8800", // Orange
+                    "#FF0000", // Red (complete the circle)
+                  ]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                />
+                <Pressable
+                  style={StyleSheet.absoluteFill}
+                  onTouchStart={handleHueSelection}
+                  onTouchMove={handleHueSelection}
+                  onMouseDown={(e: any) => {
+                    handleHueSelection(e);
+                    const handleMouseMove = (e: MouseEvent) => {
+                      e.preventDefault();
+                      handleHueSelection(e);
+                    };
+                    const handleMouseUp = () => {
+                      window.removeEventListener("mousemove", handleMouseMove);
+                      window.removeEventListener("mouseup", handleMouseUp);
+                    };
+                    window.addEventListener("mousemove", handleMouseMove);
+                    window.addEventListener("mouseup", handleMouseUp);
+                  }}
+                />
+                <View
+                  style={[styles.hueSelector, { left: huePosition - 10 }]}
+                />
+              </View>
+            </View>
+
+            <View
+              ref={spectrumRef}
+              style={styles.spectrumContainer}
+              onLayout={handleSpectrumLayout}
+            >
+              <LinearGradient
+                style={StyleSheet.absoluteFill}
+                colors={[
+                  "#FFF",
+                  `hsl(${Math.round((1 - hue) * 360)}, 100%, 50%)`,
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <LinearGradient
+                  style={StyleSheet.absoluteFill}
+                  colors={["rgba(0,0,0,0)", "#000"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                />
+              </LinearGradient>
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                onTouchStart={handleColorSelection}
+                onTouchMove={handleColorSelection}
+                onMouseDown={(e: any) => {
+                  handleColorSelection(e);
+                  const handleMouseMove = (e: MouseEvent) => {
+                    e.preventDefault();
+                    handleColorSelection(e);
+                  };
+                  const handleMouseUp = () => {
+                    window.removeEventListener("mousemove", handleMouseMove);
+                    window.removeEventListener("mouseup", handleMouseUp);
+                  };
+                  window.addEventListener("mousemove", handleMouseMove);
+                  window.addEventListener("mouseup", handleMouseUp);
+                }}
+              />
+              <View
+                style={[
+                  styles.spectrumSelector,
+                  {
+                    left: position.x - 10,
+                    top: position.y - 10,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* RGB Inputs */}
+            <View style={styles.rgbContainer}>
+              <View style={styles.rgbInputGroup}>
+                <Text style={styles.rgbLabel}>R</Text>
+                <TextInput
+                  style={styles.rgbInput}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  value={String(r)}
+                  onChangeText={(text) => {
+                    const value = Math.min(255, parseInt(text) || 0);
+                    const newColor = rgbToHex(value, g, b);
+                    setDraftValue(newColor);
+                  }}
+                />
+              </View>
+              <View style={styles.rgbInputGroup}>
+                <Text style={styles.rgbLabel}>G</Text>
+                <TextInput
+                  style={styles.rgbInput}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  value={String(g)}
+                  onChangeText={(text) => {
+                    const value = Math.min(255, parseInt(text) || 0);
+                    const newColor = rgbToHex(r, value, b);
+                    setDraftValue(newColor);
+                  }}
+                />
+              </View>
+              <View style={styles.rgbInputGroup}>
+                <Text style={styles.rgbLabel}>B</Text>
+                <TextInput
+                  style={styles.rgbInput}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  value={String(b)}
+                  onChangeText={(text) => {
+                    const value = Math.min(255, parseInt(text) || 0);
+                    const newColor = rgbToHex(r, g, value);
+                    setDraftValue(newColor);
+                  }}
+                />
+              </View>
+              {opacity && (
+                <View style={styles.rgbInputGroup}>
+                  <Text style={styles.rgbLabel}>A</Text>
+                  <TextInput
+                    style={styles.rgbInput}
+                    keyboardType="numeric"
+                    maxLength={3}
+                    value="100"
+                    onChangeText={(text) => {
+                      const value = Math.min(100, parseInt(text) || 0);
+                      // Handle alpha value
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+
+            {/* Preset Colors Grid */}
             <View style={styles.colorsGrid}>
-              {DEFAULT_COLORS.map((color) => (
+              {presets.map(({ name, color }) => (
                 <Pressable
                   key={color}
                   style={[
@@ -133,7 +513,11 @@ export const ColorPicker = ({
                     draftValue === color && styles.selectedColor,
                   ]}
                   onPress={() => handleColorSelect(color)}
-                />
+                >
+                  <View style={styles.colorButtonContent}>
+                    <View style={styles.colorSwatch} />
+                  </View>
+                </Pressable>
               ))}
             </View>
 
@@ -225,5 +609,88 @@ const colorPickerStyles = createStyleSheet((theme) => ({
   selectedColor: {
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.primary,
+  },
+  previewSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+  },
+  previewCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: theme.borderWidth.md,
+    borderColor: theme.colors.border,
+  },
+  hueBarContainer: {
+    flex: 1,
+    height: 20,
+    borderRadius: theme.borderRadius.sm,
+    overflow: "hidden",
+    position: "relative",
+  },
+  hueBar: {
+    height: "100%",
+    width: "100%",
+  },
+  hueSelector: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "white",
+    backgroundColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    top: 0,
+    marginTop: -10,
+  },
+  rgbContainer: {
+    flexDirection: "row",
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  rgbInputGroup: {
+    flex: 1,
+  },
+  rgbLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  rgbInput: {
+    ...theme.typography.body,
+    borderWidth: theme.borderWidth.sm,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    textAlign: "center",
+  },
+  spectrumContainer: {
+    height: 200,
+    marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    overflow: "hidden",
+    position: "relative",
+  },
+  spectrumSelector: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "white",
+    backgroundColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
 }));

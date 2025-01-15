@@ -15,13 +15,14 @@ import { useStyles } from "react-native-unistyles";
 import { formStyles } from "./form/style";
 import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
-import { API, APISelect } from "./APISelect";
+import { APISelect } from "./APISelect";
 import {
   mutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { ErrorList } from "./form/ErrorList";
+import { API } from "./APIForm";
 
 interface LoginForm {
   email: string;

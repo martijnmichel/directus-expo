@@ -22,3 +22,4 @@ export * from "./Info";
 export * from "./Alert";
 export * from "./Home";
 export * from "./Database";
+export * from "./Palette";

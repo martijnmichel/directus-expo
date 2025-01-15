@@ -2,7 +2,7 @@ import { Cube, Home } from "@/components/icons";
 import { Cog } from "@/components/icons/Cog";
 import { Users } from "@/components/icons/Users";
 import { useAuth } from "@/contexts/AuthContext";
-import { Redirect } from "expo-router";
+import { Link, Redirect, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Tabs, TabList, TabTrigger, TabSlot } from "expo-router/ui";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
@@ -12,13 +12,16 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import { useTrackedPath } from "@/hooks/useTrackPath";
+import { Pressable } from "react-native";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
   const { isAuthenticated, isLoading, user } = useAuth();
-  const headerStyles = useHeaderStyles();
   const { theme } = useStyles();
   const { bottom } = useSafeAreaInsets();
+  const { data } = useTrackedPath();
+  const router = useRouter();
   // Add loading check
   if (isLoading) {
     return null; // or return a loading spinner
@@ -32,14 +35,15 @@ export default function TabsLayout() {
     <Tabs>
       <TabSlot />
       <TabList style={styles.tabBar}>
-        <TabTrigger
+        <Pressable
           style={[styles.item, { paddingBottom: bottom }]}
-          name="content"
-          href="/"
+          onPress={() => {
+            router.push(data || "/");
+          }}
         >
           <Home size={24} color={theme.colors.textPrimary} />
           <Text>Content</Text>
-        </TabTrigger>
+        </Pressable>
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
           name="profile"
@@ -59,14 +63,14 @@ export default function TabsLayout() {
 
         <TabTrigger
           style={[styles.item, { display: "none" }]}
-          name="collection"
-          href="./content/[collection]/index"
+          name="content"
+          href="/"
         />
 
         <TabTrigger
           style={[styles.item, { display: "none" }]}
-          name="document"
-          href="./content/[collection]/[id]/index"
+          name="collection"
+          href="/content/[collection]"
         />
       </TabList>
     </Tabs>

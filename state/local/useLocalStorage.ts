@@ -6,6 +6,7 @@ export enum LocalStorageKeys {
   APP_SETTINGS = "@app-settings",
   DIRECTUS_APIS = "@directus-apis",
   DIRECTUS_API_ACTIVE = "@directus-api-active",
+  CONTENT_PATH = "@content-path",
 }
 
 export const useLocalStorage = <T extends any = undefined>(
