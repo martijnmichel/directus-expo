@@ -231,19 +231,24 @@ export const ColorPicker = ({
       };
       const clientX = event.touches ? event.touches[0].clientX : event.clientX;
 
-      const x = Math.max(0, Math.min(clientX - rect.left, spectrumWidth));
+      // Calculate bounds relative to the gradient bar
+      const handleWidth = 20; // Width of the handle
+      const maxX = rect.width - handleWidth; // Maximum position accounting for handle width
+
+      // Constrain x to the actual gradient bounds
+      const x = Math.max(0, Math.min(clientX - rect.left, maxX));
+      const hueValue = x / maxX; // Calculate hue based on the constrained width
+
       setHuePosition(x);
-      const newHue = x / spectrumWidth;
-      setHue(newHue);
+      setHue(hueValue);
 
       const saturation = position.x / spectrumWidth;
       const value = 1 - position.y / spectrumHeight;
-      const finalHue = (1 - newHue) % 1;
-      const rgb = hsvToRgb(finalHue, saturation, value);
+      const rgb = hsvToRgb(1 - hueValue, saturation, value);
       const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
       setDraftValue(hexColor);
     },
-    [spectrumWidth, position.x, position.y, spectrumHeight]
+    [spectrumWidth, position]
   );
 
   const [r, g, b] = draftValue
@@ -373,9 +378,7 @@ export const ColorPicker = ({
                     window.addEventListener("mouseup", handleMouseUp);
                   }}
                 />
-                <View
-                  style={[styles.hueSelector, { left: huePosition - 10 }]}
-                />
+                <View style={[styles.hueSelector, { left: huePosition }]} />
               </View>
             </View>
 
@@ -617,10 +620,13 @@ const colorPickerStyles = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.sm,
     overflow: "hidden",
     position: "relative",
+    marginHorizontal: 10,
   },
   hueBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     height: "100%",
-    width: "100%",
   },
   hueSelector: {
     position: "absolute",
