@@ -4,6 +4,8 @@ import { Link, RelativePathString } from "expo-router";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { ChevronRight } from "@/components/icons/Chevron";
 import { Text } from "./typography";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Database } from "../icons";
 
 interface ListProps extends ViewProps {
   children: React.ReactNode;
@@ -47,22 +49,19 @@ export const ListItem = ({
       children
     );
 
-  const clonedPrepend = prepend
-    ? React.cloneElement(prepend as React.ReactElement, {
-        color: color || theme.colors.primary,
-        size: prependSize,
-      })
-    : null;
+  const clonedPrepend = prepend ? (
+    React.cloneElement(prepend as React.ReactElement, {
+      color: color || theme.colors.primary,
+      size: prependSize,
+    })
+  ) : (
+    <Database size={20} color={color || theme.colors.primary} />
+  );
 
   const renderContent = () => (
     <>
       {clonedPrepend}
       {content}
-      {href && (
-        <View style={{ marginLeft: "auto" }}>
-          <ChevronRight color={color || theme.colors.primary} size={20} />
-        </View>
-      )}
     </>
   );
 
@@ -96,7 +95,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     gap: theme.spacing.md,
   },
   text: {

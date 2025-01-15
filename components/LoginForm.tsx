@@ -46,10 +46,7 @@ export const LoginForm = () => {
       ? {
           email: "martijn.michel@gmail.com",
           password: "CB4i79%jcfCF2q",
-          api: {
-            name: "Directus Expo Test",
-            url: "https://directus-expo-test.martijnvde.nl",
-          },
+          api: undefined,
         }
       : {
           email: "",
@@ -73,7 +70,9 @@ export const LoginForm = () => {
         data.api.url
       )
     ) {
-      setError("api.url", { message: "Invalid API URL" });
+      setError("api", { message: "Invalid API URL" });
+      console.log(data);
+      Alert.alert("Error", "Invalid API URL");
       return;
     }
     try {
@@ -100,6 +99,8 @@ export const LoginForm = () => {
             label={t("form.email")}
             error={errors.email?.message}
             autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
           />
         )}
       />
@@ -114,6 +115,7 @@ export const LoginForm = () => {
             placeholder={t("form.password")}
             label={t("form.password")}
             error={errors.password?.message}
+            autoComplete="password"
             secureTextEntry
           />
         )}

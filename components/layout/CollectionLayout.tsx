@@ -181,19 +181,15 @@ export default function CollectionLayout() {
               )}
             </Container>
           </ScrollView>
-          <FloatingActionButton>
-            <Button rounded>
-              <Plus />
-            </Button>
-          </FloatingActionButton>
+          <FloatingActionButton
+            position="bottomLeft"
+            icon="search"
+            onPress={toggleMenu}
+          />
 
           <Modal>
             <Modal.Trigger>
-              <FloatingActionButton
-                variant="soft"
-                position="bottomRight"
-                icon="search"
-              />
+              <FloatingActionButton position="bottomRight" icon="search" />
             </Modal.Trigger>
             <Modal.Content>
               <Input

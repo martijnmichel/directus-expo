@@ -13,6 +13,18 @@ import {
 } from "@/state/local/useLocalStorage";
 import { AppSettings } from "@/hooks/useAppSettings";
 import { ConfirmDialogProvider } from "@/hooks/useConfirmDialog";
+import {
+  useFonts,
+  Inter_100Thin,
+  Inter_200ExtraLight,
+  Inter_300Light,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  Inter_900Black,
+} from "@expo-google-fonts/inter";
 
 export const queryClient = new QueryClient();
 
@@ -44,6 +56,22 @@ const Preload = ({ children }: { children: React.ReactNode }) => {
   const { data, isLoading } = useLocalStorage<AppSettings>(
     LocalStorageKeys.APP_SETTINGS
   );
+
+  let [fontsLoaded] = useFonts({
+    Inter_100Thin,
+    Inter_200ExtraLight,
+    Inter_300Light,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    Inter_900Black,
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   UnistylesRegistry.addConfig({
     initialTheme: data?.theme ?? "light",

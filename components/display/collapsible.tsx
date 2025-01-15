@@ -5,10 +5,10 @@ import {
   ViewProps,
   Animated,
   LayoutAnimation,
-  Text,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { ChevronRight } from "@/components/icons/Chevron";
+import { Text } from "./typography";
 
 // Context
 interface CollapsibleContextType {
@@ -100,20 +100,7 @@ export const CollapsibleTrigger = ({
   });
 
   const triggerContent =
-    typeof children === "string" ? (
-      <Text
-        style={{
-          fontWeight: "700",
-          fontFamily: theme.typography.heading2.fontFamily,
-          color: color || theme.colors.textPrimary,
-          fontSize: 18,
-        }}
-      >
-        {children}
-      </Text>
-    ) : (
-      children
-    );
+    typeof children === "string" ? <Text>{children}</Text> : children;
 
   const clonedPrepend = prepend
     ? React.cloneElement(prepend as React.ReactElement, {

@@ -51,7 +51,8 @@ export const lightTheme = {
     body: {
       fontSize: 14,
       lineHeight: 20,
-      fontFamily: "Inter_400Regular",
+      fontWeight: "500" as const,
+      fontFamily: "Inter_500Medium",
     },
     label: {
       fontSize: 14,

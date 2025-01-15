@@ -45,6 +45,7 @@
     "react-i18next": "^15.4.0",
     "react-native": "0.76.5",
     "react-native-edge-to-edge": "^1.2.0",
+    "react-native-get-random-values": "^1.11.0",
     "react-native-mask-input": "^1.2.3",
     "react-native-nitro-modules": "^0.20.1",
     "react-native-reanimated": "~3.16.1",
@@ -54,7 +55,9 @@
     "react-native-toast-message": "^2.2.1",
     "react-native-unistyles": "^2.20.0",
     "react-native-web": "~0.19.13",
-    "react-native-webview": "13.12.5"
+    "react-native-webview": "13.12.5",
+    "uuid": "^11.0.5",
+    "expo-crypto": "~14.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

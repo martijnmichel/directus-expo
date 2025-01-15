@@ -15,21 +15,26 @@ import { Modal } from "./display/modal";
 import { Button } from "./display/button";
 import { Alert } from "react-native";
 import { Check, Edit } from "./icons";
-import { useEffect } from "react";
-
+import "react-native-get-random-values";
+import { v4 as uuidv4 } from "uuid";
 export type API = {
   name: string;
   url: string;
+  id?: string;
 };
-export const APIForm = ({ defaultValues }: { defaultValues?: API }) => {
+export const APIForm = ({
+  defaultValues,
+  id,
+  onSuccess,
+}: {
+  defaultValues?: API;
+  id?: string;
+  onSuccess?: () => void;
+}) => {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
     []
   );
-
-  const { styles } = useStyles(formStyles);
-
-  const { t } = useTranslation();
 
   const form = useForm<API>({ defaultValues });
 
@@ -44,9 +49,17 @@ export const APIForm = ({ defaultValues }: { defaultValues?: API }) => {
       if (!test.ok) {
         throw new Error("API is not working");
       }
-      mutateApis([...(data ?? []), newApi]);
+      if (!newApi.id) {
+        mutateApis([...(data ?? []), { ...newApi, id: uuidv4() }]);
+      } else {
+        mutateApis([
+          ...(data ?? []).filter((api) => api.id !== newApi.id),
+          newApi,
+        ]);
+      }
       form.reset();
       refetch();
+      onSuccess?.();
     } catch (error) {
       form.setError(
         "url",
@@ -78,12 +91,18 @@ export const APIForm = ({ defaultValues }: { defaultValues?: API }) => {
             onChangeText={onChange}
             value={value}
             error={fieldState?.error?.message}
+            autoComplete="url"
+            autoCapitalize="none"
           />
         )}
       />
       <Horizontal style={{ justifyContent: "flex-end" }}>
         <Button
-          disabled={!form.formState.isValid || !form.formState.isDirty}
+          disabled={
+            !form.formState.isValid ||
+            !form.formState.isDirty ||
+            form.formState.isSubmitting
+          }
           loading={form.formState.isSubmitting}
           rounded
           onPress={form.handleSubmit(onSubmit)}

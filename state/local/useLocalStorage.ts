@@ -14,6 +14,7 @@ export const useLocalStorage = <T extends any = undefined>(
 ): UseQueryResult<T, Error> => {
   return useQuery({
     queryKey: ["local-storage", key],
+    staleTime: 1,
     queryFn: async () => {
       try {
         const value = await AsyncStorage.getItem(key);

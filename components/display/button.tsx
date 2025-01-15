@@ -69,6 +69,10 @@ export const Button = React.forwardRef<any, ButtonProps>(
     const getIconColor = () => {
       if (disabled) return theme.colors.textMuted;
       switch (variant) {
+        case "soft":
+          return theme.colors.textSecondary;
+        case "ghost":
+          return theme.colors.textPrimary;
         default:
           return "white";
       }

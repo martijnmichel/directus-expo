@@ -16,14 +16,10 @@ import { Button } from "./display/button";
 import { Alert } from "react-native";
 import { Check, Edit, Plus, Trash } from "./icons";
 import { useEffect } from "react";
-import { APIForm } from "./APIForm";
+import { API, APIForm } from "./APIForm";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { ConfirmDialog } from "./display/confirm-dialog";
-
-export type API = {
-  name: string;
-  url: string;
-};
+import { Text } from "./display/typography";
 export function APISelect({
   value,
   onChange,
@@ -64,7 +60,7 @@ export function APISelect({
             </Button>
           </Modal.Trigger>
           <Modal.Content title="Add API">
-            <APIForm />
+            {({ close }) => <APIForm onSuccess={() => close()} />}
           </Modal.Content>
         </Modal>
 
@@ -77,7 +73,9 @@ export function APISelect({
                 </Button>
               </Modal.Trigger>
               <Modal.Content title="Edit API">
-                <APIForm defaultValues={value} />
+                {({ close }) => (
+                  <APIForm defaultValues={value} onSuccess={() => close()} />
+                )}
               </Modal.Content>
             </Modal>
 
@@ -95,13 +93,12 @@ export function APISelect({
                 cancelLabel="Cancel"
                 variant="danger"
                 onConfirm={async () => {
-                  const isActive = data?.find((api) => api.url === value.url);
+                  const isActive = data?.find((api) => api.id === value.id);
                   if (isActive) {
                     mutateApi.mutate(undefined);
+                    onChange?.(undefined);
                   }
-                  mutateApis.mutate(
-                    data?.filter((api) => api.url !== value.url)
-                  );
+                  mutateApis.mutate(data?.filter((api) => api.id !== value.id));
                 }}
               />
             </ConfirmDialog>
