@@ -444,7 +444,7 @@ export const ColorPicker = ({
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
                     const newColor = rgbToHex(value, g, b);
-                    setDraftValue(newColor);
+                    handleColorSelect(newColor);
                   }}
                 />
               </View>
@@ -458,7 +458,7 @@ export const ColorPicker = ({
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
                     const newColor = rgbToHex(r, value, b);
-                    setDraftValue(newColor);
+                    handleColorSelect(newColor);
                   }}
                 />
               </View>
@@ -472,7 +472,7 @@ export const ColorPicker = ({
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
                     const newColor = rgbToHex(r, g, value);
-                    setDraftValue(newColor);
+                    handleColorSelect(newColor);
                   }}
                 />
               </View>
