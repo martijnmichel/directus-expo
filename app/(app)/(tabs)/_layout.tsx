@@ -15,7 +15,7 @@ import {
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const headerStyles = useHeaderStyles();
   const { theme } = useStyles();
   const { bottom } = useSafeAreaInsets();
@@ -56,6 +56,18 @@ export default function TabsLayout() {
           <Cog size={24} color={theme.colors.textPrimary} />
           <Text>Settings</Text>
         </TabTrigger>
+
+        <TabTrigger
+          style={[styles.item, { display: "none" }]}
+          name="collection"
+          href="/content/[collection]/index"
+        />
+
+        <TabTrigger
+          style={[styles.item, { display: "none" }]}
+          name="document"
+          href="/content/[collection]/[id]/index"
+        />
       </TabList>
     </Tabs>
   );
