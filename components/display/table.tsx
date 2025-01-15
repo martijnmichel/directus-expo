@@ -142,7 +142,7 @@ export function Table<T extends Record<string, unknown>>({
                         style={[styles.cellText, styles.truncate]}
                         numberOfLines={1}
                       >
-                        {String(cell)}
+                        {cell}
                       </Text>
                     ) : React.isValidElement(cell) ? (
                       cell
@@ -151,7 +151,7 @@ export function Table<T extends Record<string, unknown>>({
                         style={[styles.cellText, styles.truncate]}
                         numberOfLines={1}
                       >
-                        {String(cell)}
+                        {cell}
                       </Text>
                     )}
                   </View>

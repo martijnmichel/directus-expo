@@ -35,6 +35,20 @@ export const H2 = ({
   );
 };
 
+export const H3 = ({
+  children,
+  centered,
+  style,
+  ...props
+}: TypographyProps) => {
+  const { styles } = useStyles(stylesheet);
+  return (
+    <RNText style={[styles.h3, centered && styles.centered, style]} {...props}>
+      {children}
+    </RNText>
+  );
+};
+
 export const Text = ({
   children,
   centered,
@@ -116,6 +130,13 @@ const stylesheet = createStyleSheet((theme) => ({
     lineHeight: theme.typography.heading2.lineHeight,
     fontWeight: theme.typography.heading2.fontWeight,
     fontFamily: theme.typography.heading2.fontFamily,
+    color: theme.colors.textPrimary,
+  },
+  h3: {
+    fontSize: theme.typography.heading3.fontSize,
+    lineHeight: theme.typography.heading3.lineHeight,
+    fontWeight: theme.typography.heading3.fontWeight,
+    fontFamily: theme.typography.heading3.fontFamily,
     color: theme.colors.textPrimary,
   },
   text: {

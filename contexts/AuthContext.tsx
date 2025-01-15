@@ -15,6 +15,10 @@ import {
 } from "@directus/sdk";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import {
+  LocalStorageKeys,
+  useLocalStorage,
+} from "@/state/local/useLocalStorage";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -83,17 +87,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const initializeDirectus = async () => {
     try {
-      const apiUrl = await AsyncStorage.getItem("apiUrl");
-      if (!apiUrl) {
+      const re = await AsyncStorage.getItem(
+        LocalStorageKeys.DIRECTUS_API_ACTIVE
+      );
+      if (!re) {
         setIsLoading(false);
         return;
       }
 
-      const directus = initDirectus(apiUrl);
-      setDirectus(directus);
-
       // Try to refresh the token
       try {
+        const api = JSON.parse(re);
+
+        console.log({ api });
+
+        const directus = initDirectus(api.url);
+        setDirectus(directus);
+
         const token = await AsyncStorage.getItem("authToken");
         if (token) {
           await directus.refresh();
@@ -120,7 +130,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const user = await directus.request(readMe());
       setUser(user as DirectusUser);
       await AsyncStorage.setItem("authToken", token || "");
-      await AsyncStorage.setItem("apiUrl", apiUrl);
 
       setIsAuthenticated(true);
     } catch (error) {
@@ -132,7 +141,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await directus?.logout();
       await AsyncStorage.removeItem("authToken");
-      await AsyncStorage.removeItem("apiUrl");
       directus.url = new URL("");
       setIsAuthenticated(false);
     } catch (error) {

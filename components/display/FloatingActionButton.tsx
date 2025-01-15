@@ -8,6 +8,7 @@ interface FABProps {
   onPress?: () => void;
   icon: keyof typeof MaterialIcons.glyphMap;
   position?: "bottomLeft" | "bottomRight";
+  children?: React.ReactNode;
   items?: Array<{
     icon: keyof typeof MaterialIcons.glyphMap;
     onPress: () => void;
@@ -19,6 +20,7 @@ export function FloatingActionButton({
   icon,
   position = "bottomLeft",
   items,
+  children,
 }: FABProps) {
   const { styles } = useStyles(stylesheet);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -56,13 +58,7 @@ export function FloatingActionButton({
                   { transform: [{ translateY }], opacity: animation },
                 ]}
               >
-                <Button
-                  rounded
-                  style={styles.menuButton}
-                  onPress={item.onPress}
-                >
-                  <MaterialIcons name={item.icon} size={24} color="white" />
-                </Button>
+                {children}
               </Animated.View>
             );
           })}

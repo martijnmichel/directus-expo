@@ -7,9 +7,14 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "@/i18n";
 import { breakpoints } from "@/unistyles/theme";
 import { PortalProvider } from "@/components/layout/Portal";
-import { useLocalStorage } from "@/state/local/useLocalStorage";
+import {
+  LocalStorageKeys,
+  useLocalStorage,
+} from "@/state/local/useLocalStorage";
+import { AppSettings } from "@/hooks/useAppSettings";
+import { ConfirmDialogProvider } from "@/hooks/useConfirmDialog";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
@@ -22,11 +27,13 @@ export default function RootLayout() {
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
         <Preload>
-          <AuthProvider>
-            <PortalProvider>
-              <Slot />
-            </PortalProvider>
-          </AuthProvider>
+          <ConfirmDialogProvider>
+            <AuthProvider>
+              <PortalProvider>
+                <Slot />
+              </PortalProvider>
+            </AuthProvider>
+          </ConfirmDialogProvider>
         </Preload>
       </QueryClientProvider>
     </I18nextProvider>
@@ -34,9 +41,10 @@ export default function RootLayout() {
 }
 
 const Preload = ({ children }: { children: React.ReactNode }) => {
-  const { data, isLoading } = useLocalStorage("@app-settings");
+  const { data, isLoading } = useLocalStorage<AppSettings>(
+    LocalStorageKeys.APP_SETTINGS
+  );
 
-  console.log("theme", data?.theme);
   UnistylesRegistry.addConfig({
     initialTheme: data?.theme ?? "light",
   });

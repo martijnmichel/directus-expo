@@ -75,6 +75,12 @@ export const lightTheme = {
       fontWeight: "600" as const,
       fontFamily: "Inter_600SemiBold",
     },
+    heading3: {
+      fontSize: 18,
+      lineHeight: 24,
+      fontWeight: "600" as const,
+      fontFamily: "Inter_600SemiBold",
+    },
   },
 } as const;
 

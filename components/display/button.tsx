@@ -18,7 +18,7 @@ interface IconProps {
   size?: number;
 }
 
-interface ButtonProps extends TouchableOpacityProps {
+export interface ButtonProps extends TouchableOpacityProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
@@ -196,7 +196,7 @@ const stylesheet = createStyleSheet((theme) => ({
     color: "white",
   },
   softText: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.textPrimary,
   },
   secondaryText: {
     color: theme.colors.textPrimary,

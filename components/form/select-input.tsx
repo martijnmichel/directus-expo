@@ -28,8 +28,7 @@ interface SelectProps {
   options: SelectOption[];
   value?: string | number;
   prepend?: ReactNode;
-  append?: ReactNode;
-  onValueChange?: (value: string | number, index: number) => void;
+  onValueChange?: (value: string | number) => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -40,7 +39,6 @@ export const Select = ({
   helper,
   options,
   prepend,
-  append,
   value,
   onValueChange,
   placeholder = "Select an option",
@@ -55,13 +53,6 @@ export const Select = ({
   const clonedPrepend = prepend
     ? React.cloneElement(prepend as React.ReactElement, {
         size: 20,
-      })
-    : null;
-
-  const clonedAppend = append
-    ? React.cloneElement(append as React.ReactElement, {
-        size: 20,
-        marginLeft: "auto",
       })
     : null;
 
@@ -86,7 +77,7 @@ export const Select = ({
           disabled && formStyle.inputDisabled,
         ]}
         onPress={() => !disabled && setModalVisible(true)}
-        disabled={disabled || !options.length}
+        disabled={disabled}
       >
         {clonedPrepend}
         <Text
@@ -100,7 +91,6 @@ export const Select = ({
             ? selectedOption.text || selectedOption.value
             : placeholder}
         </Text>
-        {clonedAppend}
         <View style={{ marginLeft: "auto" }}>
           <ChevronDown
             size={20}
@@ -138,7 +128,7 @@ export const Select = ({
                     index === options.length - 1 && styles.lastOption,
                   ]}
                   onPress={() => {
-                    onValueChange?.(item.value, index);
+                    onValueChange?.(item.value);
                     setModalVisible(false);
                   }}
                 >

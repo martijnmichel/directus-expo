@@ -36,6 +36,8 @@ import { FadeIn, FadeOut } from "react-native-reanimated";
 import { Plus } from "../icons";
 import { Button } from "../display/button";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
+import { Modal } from "../display/modal";
+import { Input } from "../form/input";
 
 export default function CollectionLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -133,11 +135,9 @@ export default function CollectionLayout() {
           ),
         }}
       />
-      <View
-        style={[styles.container, { position: "relative" }]}
-        {...panResponder.panHandlers}
-      >
+      <View style={[styles.container, { position: "relative" }]}>
         <Animated.View
+          {...panResponder.panHandlers}
           style={[
             styles.sideMenu,
             {
@@ -181,10 +181,30 @@ export default function CollectionLayout() {
               )}
             </Container>
           </ScrollView>
-          <FloatingActionButton
-            icon={isMenuOpen ? "close" : "menu"}
-            onPress={toggleMenu}
-          />
+          <FloatingActionButton>
+            <Button rounded>
+              <Plus />
+            </Button>
+          </FloatingActionButton>
+
+          <Modal>
+            <Modal.Trigger>
+              <FloatingActionButton
+                variant="soft"
+                position="bottomRight"
+                icon="search"
+              />
+            </Modal.Trigger>
+            <Modal.Content>
+              <Input
+                autoFocus
+                placeholder="Search"
+                onChangeText={(text) => {
+                  console.log(text);
+                }}
+              />
+            </Modal.Content>
+          </Modal>
         </Animated.View>
       </View>
     </Layout>

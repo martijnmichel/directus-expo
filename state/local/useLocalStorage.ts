@@ -1,24 +1,57 @@
+import { queryClient } from "@/app/_layout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 
-export const useLocalStorage = (key: string) => {
+export enum LocalStorageKeys {
+  APP_SETTINGS = "@app-settings",
+  DIRECTUS_APIS = "@directus-apis",
+  DIRECTUS_API_ACTIVE = "@directus-api-active",
+}
+
+export const useLocalStorage = <T extends any = undefined>(
+  key: LocalStorageKeys,
+  fallbackValue?: any
+): UseQueryResult<T, Error> => {
   return useQuery({
     queryKey: ["local-storage", key],
     queryFn: async () => {
       try {
         const value = await AsyncStorage.getItem(key);
-        return value ? JSON.parse(value) : null;
+        if (value === null) return fallbackValue;
+        if (value === "undefined") return undefined;
+
+        try {
+          return JSON.parse(value) as T;
+        } catch {
+          // If JSON parsing fails, return the raw value
+          return value as T;
+        }
       } catch (error) {
-        console.error("Error reading theme from storage:", error);
-        return null;
+        console.error("Error reading from storage:", error);
+        return fallbackValue;
       }
     },
   });
 };
 
-export const mutateLocalStorage = (key: string) => {
+export const mutateLocalStorage = (key: LocalStorageKeys) => {
   return useMutation({
-    mutationFn: (value: any) =>
-      AsyncStorage.setItem(key, JSON.stringify(value)),
+    mutationFn: (value: any) => {
+      // If value is undefined, remove the item from storage
+      if (value === undefined) {
+        return AsyncStorage.removeItem(key);
+      }
+
+      const stringValue =
+        typeof value === "string" ||
+        typeof value === "number" ||
+        typeof value === "boolean"
+          ? String(value)
+          : JSON.stringify(value);
+      return AsyncStorage.setItem(key, stringValue);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["local-storage", key] });
+    },
   });
 };
