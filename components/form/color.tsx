@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -66,72 +66,54 @@ export const ColorPicker = ({
   const spectrumRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
 
-  const hexToHsv = (hex: string) => {
-    // Remove the hash if present
-    hex = hex.replace(/^#/, "");
+  const handleColorSelect = (color: string) => {
+    setDraftValue(color);
 
-    // Parse the RGB values
-    const r = parseInt(hex.slice(0, 2), 16) / 255;
-    const g = parseInt(hex.slice(2, 4), 16) / 255;
-    const b = parseInt(hex.slice(4, 6), 16) / 255;
+    // RGB to HSV conversion stays the same
+    const r = parseInt(color.slice(1, 3), 16) / 255;
+    const g = parseInt(color.slice(3, 5), 16) / 255;
+    const b = parseInt(color.slice(5, 7), 16) / 255;
 
+    // Convert RGB to HSV
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     const delta = max - min;
 
-    // Calculate HSV values
+    // Calculate Value
     const v = max;
+
+    // Calculate Saturation
     const s = max === 0 ? 0 : delta / max;
 
+    // Calculate Hue
     let h;
     if (delta === 0) {
       h = 0;
+    } else if (max === r) {
+      h = ((g - b) / delta) % 6;
+    } else if (max === g) {
+      h = (b - r) / delta + 2;
     } else {
-      if (max === r) {
-        h = ((g - b) / delta) % 6;
-      } else if (max === g) {
-        h = (b - r) / delta + 2;
-      } else {
-        h = (r - g) / delta + 4;
-      }
-
-      h = h / 6;
-      if (h < 0) h += 1;
+      h = (r - g) / delta + 4;
     }
 
-    // Expected output:
-    // Primary (#6644FF) -> h ≈ 0.67 (purple)
-    // Secondary (#172940) -> h ≈ 0.61 (blue)
-    // Error (#E35169) -> h ≈ 0.97 (red)
-    // Success (#2ECDA7) -> h ≈ 0.45 (green)
-    // Warning (#FFB224) -> h ≈ 0.11 (orange)
+    h = h / 6;
+    if (h < 0) h += 1;
 
-    console.log("RGB values:", { r, g, b });
-    console.log("Raw HSV:", { h, s, v });
+    // Normal position for hue handle
+    setHuePosition(h * spectrumWidth);
 
-    return { h, s, v };
-  };
+    // Use the same hue for spectrum
+    setHue(h);
 
-  const handleColorSelect = (color: string) => {
-    setDraftValue(color);
-
-    // Convert the selected color to HSV
-    const { h, s, v } = hexToHsv(color);
-
-    // Adjust the hue mapping with a slight offset
-    let mappedHue = (1 - h + 0.15) % 1;
-    const huePosition = mappedHue * spectrumWidth;
-
-    setHuePosition(huePosition);
-    setHue(mappedHue);
-
-    const newX = s * spectrumWidth;
-    const newY = (1 - v) * spectrumHeight;
-    setPosition({ x: newX, y: newY });
+    setPosition({
+      x: s * spectrumWidth,
+      y: (1 - v) * spectrumHeight,
+    });
 
     console.log("Color:", color);
     console.log("HSV:", { h, s, v });
-    console.log("Mapped Hue:", mappedHue);
+    console.log("Mapped Hue:", h);
   };
 
   const handleConfirm = () => {
@@ -229,7 +211,8 @@ export const ColorPicker = ({
       const saturation = x / spectrumWidth;
       const value = 1 - y / spectrumHeight;
 
-      const rgb = hsvToRgb(hue, saturation, value);
+      const finalHue = (1 - hue) % 1;
+      const rgb = hsvToRgb(finalHue, saturation, value);
       const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
       setDraftValue(hexColor);
     },
@@ -254,7 +237,8 @@ export const ColorPicker = ({
 
       const saturation = position.x / spectrumWidth;
       const value = 1 - position.y / spectrumHeight;
-      const rgb = hsvToRgb(newHue, saturation, value);
+      const finalHue = (1 - newHue) % 1;
+      const rgb = hsvToRgb(finalHue, saturation, value);
       const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
       setDraftValue(hexColor);
     },
@@ -290,7 +274,10 @@ export const ColorPicker = ({
           error && formStyle.inputError,
           disabled && formStyle.inputDisabled,
         ]}
-        onPress={() => !disabled && setModalVisible(true)}
+        onPress={() => {
+          !disabled && setModalVisible(true);
+          if (value) handleColorSelect(value);
+        }}
         disabled={disabled}
       >
         <View style={styles.colorPreviewContainer}>
