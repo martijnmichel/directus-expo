@@ -245,7 +245,8 @@ export const DocumentEditor = ({
                           {...defaultProps}
                           onValueChange={onChange}
                           value={value as string}
-                          presets={item.meta.options?.preset}
+                          presets={item.meta.options?.presets}
+                          opacity={item.meta.options?.opacity}
                         />
                       )}
                     />
