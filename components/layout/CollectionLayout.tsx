@@ -183,7 +183,7 @@ export default function CollectionLayout() {
           </ScrollView>
           <FloatingActionButton
             position="bottomLeft"
-            icon="search"
+            icon={isMenuOpen ? "close" : "menu"}
             onPress={toggleMenu}
           />
 

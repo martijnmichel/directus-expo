@@ -19,9 +19,5 @@ export default function Collection() {
   const { data, isLoading } = useCollection(collection as keyof CoreSchema);
   const { label } = useCollectionMeta(data);
 
-  if (isLoading) {
-    return null;
-  }
-
   return <CollectionLayout />;
 }

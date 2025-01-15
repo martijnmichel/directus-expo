@@ -1,16 +1,24 @@
-import { Cube } from "@/components/icons";
+import { Cube, Home } from "@/components/icons";
 import { Cog } from "@/components/icons/Cog";
 import { Users } from "@/components/icons/Users";
 import { useAuth } from "@/contexts/AuthContext";
-import { Redirect, Tabs } from "expo-router";
+import { Redirect } from "expo-router";
 import { useTranslation } from "react-i18next";
-
+import { Tabs, TabList, TabTrigger, TabSlot } from "expo-router/ui";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
+import { Text } from "@/components/display/typography";
+import { createStyleSheet, useStyles } from "react-native-unistyles";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const { styles } = useStyles(stylesheet);
   const { isAuthenticated, isLoading } = useAuth();
   const headerStyles = useHeaderStyles();
-
+  const { theme } = useStyles();
+  const { bottom } = useSafeAreaInsets();
   // Add loading check
   if (isLoading) {
     return null; // or return a loading spinner
@@ -21,54 +29,53 @@ export default function TabsLayout() {
   }
 
   return (
-    <Tabs screenOptions={{}}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t("navigation.content"),
-          ...headerStyles,
-          tabBarIcon: ({ color, size }) => <Cube size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t("navigation.users"),
-          tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
-          ...headerStyles,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: t("navigation.settings"),
-          tabBarIcon: ({ color, size }) => <Cog size={size} color={color} />,
-          ...headerStyles,
-        }}
-      />
-      <Tabs.Screen
-        name="content"
-        options={{
-          headerShown: false,
-          href: null,
-          ...headerStyles,
-        }}
-      />
-
-      <Tabs.Screen
-        name="content/[collection]/index"
-        options={{
-          href: null,
-          ...headerStyles,
-        }}
-      />
-      <Tabs.Screen
-        name="content/[collection]/[id]/index"
-        options={{
-          href: null,
-          ...headerStyles,
-        }}
-      />
+    <Tabs>
+      <TabSlot />
+      <TabList style={styles.tabBar}>
+        <TabTrigger
+          style={[styles.item, { paddingBottom: bottom }]}
+          name="content"
+          href="/"
+        >
+          <Home size={24} color={theme.colors.textPrimary} />
+          <Text>Content</Text>
+        </TabTrigger>
+        <TabTrigger
+          style={[styles.item, { paddingBottom: bottom }]}
+          name="profile"
+          href="/profile"
+        >
+          <Users size={24} color={theme.colors.textPrimary} />
+          <Text>Profile</Text>
+        </TabTrigger>
+        <TabTrigger
+          style={[styles.item, { paddingBottom: bottom }]}
+          name="settings"
+          href="/settings"
+        >
+          <Cog size={24} color={theme.colors.textPrimary} />
+          <Text>Settings</Text>
+        </TabTrigger>
+      </TabList>
     </Tabs>
   );
 }
+
+const stylesheet = createStyleSheet((theme) => ({
+  tabBar: {
+    backgroundColor: theme.colors.background,
+  },
+  item: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 12,
+  },
+  icon: {
+    width: 24,
+    height: 24,
+  },
+}));

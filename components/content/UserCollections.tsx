@@ -63,7 +63,6 @@ export default function UserCollections() {
             <ListItem
               href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
-              color={collection.meta.color || ""}
               prepend={
                 collection.meta.icon && (
                   <DirectusIcon name={collection.meta.icon} />
