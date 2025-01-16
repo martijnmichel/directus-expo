@@ -11,6 +11,10 @@ import EventBus, { MittEvents } from "@/utils/mitt";
 import { Trash } from "../icons";
 import { Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
+import {
+  parseRepeaterTemplate,
+  parseTemplate,
+} from "@/helpers/document/template";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -45,17 +49,38 @@ export const RepeaterInput = ({
     };
   }, [valueProp, props.onChange]);
 
+  const getDisplayValue = (repeatItem: any) => {
+    const fields = item.meta?.options?.fields || [];
+    const format = item.meta?.display_options?.format;
+
+    console.log({ fields, format, repeatItem });
+
+    return parseRepeaterTemplate(format, repeatItem);
+  };
+
   return (
     <Vertical spacing="xs">
       {label && <Text style={formControlStyles.label}>{label}</Text>}
       <List>
-        {valueProp.map((item, index) => (
+        {valueProp.map((repeaterItem, index) => (
           <View key={index} style={styles.listItem}>
-            <Text style={styles.content}>{JSON.stringify(item)}</Text>
+            <Text style={styles.content}>{getDisplayValue(repeaterItem)}</Text>
 
-            <Button variant="ghost" rounded>
-              <Edit />
-            </Button>
+            <Link
+              href={{
+                pathname: `/modals/repeater/edit`,
+                params: {
+                  data: objectToBase64(item),
+                  fields: objectToBase64(item.meta?.options?.fields || []),
+                  item_field: item.field,
+                },
+              }}
+              asChild
+            >
+              <Button variant="ghost" rounded>
+                <Edit />
+              </Button>
+            </Link>
 
             <Button
               variant="ghost"

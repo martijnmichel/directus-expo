@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack } from "expo-router";
 
 import { Section } from "@/components/layout/Section";
 import { KeyboardAwareScrollView } from "@/components/layout/Layout";
@@ -8,11 +8,11 @@ import { Container } from "@/components/layout/Container";
 import { useLocalSearchParams } from "expo-router";
 import { RepeaterDocument } from "@/components/content/RepeaterDocument";
 import { base64ToObject } from "@/helpers/document/docToBase64";
-import { EventBus } from "@/utils/mitt";
 
 const RepeaterModal = () => {
-  const { fields, item_field } = useLocalSearchParams();
-  const router = useRouter();
+  const { fields, data } = useLocalSearchParams();
+
+  const defaultValues = base64ToObject(data as string);
   return (
     <KeyboardAwareLayout>
       <Stack.Screen options={{ headerTitle: "Repeater" }} />
@@ -21,14 +21,7 @@ const RepeaterModal = () => {
           <Section>
             <RepeaterDocument
               fields={base64ToObject(fields as string)}
-              onSave={(doc) => {
-                console.log("doc", doc);
-                router.dismiss();
-                EventBus.emit("repeater:add", {
-                  field: item_field as string,
-                  data: doc,
-                });
-              }}
+              defaultValues={defaultValues}
             />
           </Section>
         </Container>

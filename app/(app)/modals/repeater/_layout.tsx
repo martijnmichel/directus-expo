@@ -19,6 +19,16 @@ export default function Layout() {
           animation: "slide_from_bottom",
         }}
       />
+
+      <Stack.Screen
+        name="/edit"
+        options={{
+          headerTitle: "",
+          presentation: "modal",
+          // Optional: add iOS-style modal presentation
+          animation: "slide_from_bottom",
+        }}
+      />
     </Stack>
   );
 }
