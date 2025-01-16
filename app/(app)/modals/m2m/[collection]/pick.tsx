@@ -7,6 +7,7 @@ import {
 import {
   router,
   Stack,
+  useFocusEffect,
   useLocalSearchParams,
   useNavigation,
 } from "expo-router";
@@ -83,6 +84,10 @@ export default function Collection() {
           },
         })
       ),
+  });
+
+  useFocusEffect(() => {
+    refetch();
   });
 
   const headerStyles = useHeaderStyles();

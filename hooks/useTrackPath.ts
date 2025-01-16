@@ -6,7 +6,7 @@ import {
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import { queryClient } from "@/app/_layout";
+import { queryClient } from "@/utils/react-query";
 import { useRouter } from "expo-router";
 
 export type History = {

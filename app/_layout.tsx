@@ -25,8 +25,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from "@expo-google-fonts/inter";
-
-export const queryClient = new QueryClient();
+import { queryClient } from "@/utils/react-query";
 
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({

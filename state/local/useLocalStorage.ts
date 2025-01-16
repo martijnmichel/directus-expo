@@ -1,4 +1,4 @@
-import { queryClient } from "@/app/_layout";
+import { queryClient } from "@/utils/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 

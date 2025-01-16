@@ -47,7 +47,7 @@ import { each, filter, find, isEmpty, map } from "lodash";
 import { DateTime } from "../form/datetime";
 import { ColorPicker } from "../form/color";
 import EventBus from "@/utils/mitt";
-import { queryClient } from "@/app/_layout";
+import { queryClient } from "@/utils/react-query";
 export const DocumentEditor = ({
   collection,
   id,
