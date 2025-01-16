@@ -27,6 +27,7 @@ import {
   router,
   Stack,
   useLocalSearchParams,
+  useNavigation,
 } from "expo-router";
 import { Check, Trash } from "../icons";
 import { M2OInput } from "../form/m2o-input";
@@ -45,6 +46,7 @@ import { Accordion } from "../display/accordion";
 import { each, filter, find, isEmpty, map } from "lodash";
 import { DateTime } from "../form/datetime";
 import { ColorPicker } from "../form/color";
+import EventBus from "@/utils/mitt";
 export const DocumentEditor = ({
   collection,
   id,
@@ -109,6 +111,18 @@ export const DocumentEditor = ({
       setRevision((state) => state + 1);
     }
   }, [document]);
+
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const update = (event: any) => {
+      console.log("m2m:update", event);
+    };
+    EventBus.on("m2m:update", update);
+    return () => {
+      EventBus.off("m2m:update", update);
+    };
+  }, [navigation]);
 
   const getLabel = (field: string) =>
     fields

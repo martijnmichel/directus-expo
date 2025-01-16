@@ -39,7 +39,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Modal } from "../display/modal";
 import { Input } from "../form/input";
 
-export default function CollectionLayout() {
+export default function CollectionLayout({ children }: { children: React.ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: collections } = useCollections();
   const { collection } = useLocalSearchParams();
@@ -171,15 +171,7 @@ export default function CollectionLayout() {
           ]}
         >
           <ScrollView>
-            <Container>
-              {data?.meta.singleton ? (
-                <DocumentEditor collection={collection as keyof CoreSchema} />
-              ) : (
-                <CollectionDataTable
-                  collection={collection as keyof CoreSchema}
-                />
-              )}
-            </Container>
+            <Container>{children}</Container>
           </ScrollView>
           <FloatingActionButton
             position="bottomLeft"

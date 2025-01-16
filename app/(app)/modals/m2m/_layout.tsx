@@ -4,12 +4,19 @@ import { Stack } from "expo-router";
 
 export default function Layout() {
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        presentation: "modal",
+        headerShown: true,
+      }}
+    >
       <Stack.Screen
-        name="add.tsx"
+        name="[collection]/[id]/index"
         options={{
           headerTitle: "",
           presentation: "modal",
+          // Optional: add iOS-style modal presentation
+          animation: "slide_from_bottom",
         }}
       />
     </Stack>

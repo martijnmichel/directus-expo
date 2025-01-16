@@ -165,37 +165,20 @@ export const M2MInput = ({
 
         <Horizontal spacing="xs">
           {allowCreate && (
-            <Modal>
-              <Modal.Trigger>
-                <Button>Add new</Button>
-              </Modal.Trigger>
-              <Modal.Content variant="bottomSheet" title="Add new">
-                {({ close }) => (
-                  <DocumentEditor
-                    collection={relation.related_collection as any}
-                    id={"+"}
-                    onSave={async (newItem: Record<string, unknown>) => {
-                      close();
-                      try {
-                        const doc = (await directus!.request(
-                          createItem(junction?.collection as any, {
-                            [relation.field]: newItem.id as number,
-                          })
-                        )) as { id: number } & Record<string, unknown>;
-                        setAddedDocIds([
-                          ...addedDocIds,
-                          doc[relation.field] as number,
-                        ]);
-                        props.onChange([...valueProp, doc.id]);
-                        setCreateItemOpen(false);
-                      } catch (e) {
-                        console.error(e);
-                      }
-                    }}
-                  />
-                )}
-              </Modal.Content>
-            </Modal>
+            <Link
+              href={{
+                pathname: `/modals/m2m/[collection]/[id]`,
+                params: {
+                  collection: relation.related_collection,
+                  id: "+",
+                  junction_collection: junction.collection,
+                  related_field: relation.field,
+                },
+              }}
+              asChild
+            >
+              <Button>Add new</Button>
+            </Link>
           )}
           <Modal>
             <Modal.Trigger>

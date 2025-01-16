@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { Redirect, Slot, Tabs } from "expo-router";
+import { Redirect, Slot, Stack, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 export default function TabsLayout() {
@@ -15,5 +15,13 @@ export default function TabsLayout() {
     return <Redirect href="/login" />;
   }
 
-  return <Slot />;
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="modals/m2m"
+        options={{ presentation: "modal", headerShown: false }}
+      />
+    </Stack>
+  );
 }
