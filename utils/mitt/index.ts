@@ -7,6 +7,7 @@ export type MittEvents = {
   "m2m:add": { data: CoreSchemaDocument; field: string };
   "m2m:remove": { data: CoreSchemaDocument; field: string };
   "m2m:update": { collection: keyof CoreSchema; docId: string | number };
+  "repeater:add": { data: Record<string, any>; field: string };
   error: Error;
 };
 

@@ -14,6 +14,7 @@ import { M2MInput } from "@/components/interfaces/m2m-input";
 import { M2OInput } from "@/components/interfaces/m2o-input";
 import { NumberInput } from "@/components/interfaces/number-input";
 import { RadioButtonGroup } from "@/components/interfaces/radio-button-group";
+import { RepeaterInput } from "@/components/interfaces/repeater";
 import { RichText } from "@/components/interfaces/richtext";
 import { Select } from "@/components/interfaces/select";
 import { SelectMulti } from "@/components/interfaces/select-multi";
@@ -532,6 +533,28 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as (string | number)[]}
                         options={item.meta.options?.choices || []}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "list":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <RepeaterInput
+                        {...defaultProps}
+                        onChange={onChange}
+                        value={value as (string | number)[]}
+                        item={item}
                         error={error?.message}
                       />
                     )}
