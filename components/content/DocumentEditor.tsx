@@ -48,6 +48,11 @@ import { DateTime } from "../form/datetime";
 import { ColorPicker } from "../form/color";
 import EventBus from "@/utils/mitt";
 import { queryClient } from "@/utils/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { directusToZod } from "@/utils/zod/directusToZod";
+import { z } from "zod";
+import { generateZodSchema } from "@/utils/zod/generateZodSchema";
+import { DirectusError, DirectusErrorResponse } from "@/types/directus";
 export const DocumentEditor = ({
   collection,
   id,
@@ -64,6 +69,9 @@ export const DocumentEditor = ({
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
   const { directus } = useAuth();
+
+  const { data: fields } = useFields(collection as keyof CoreSchema);
+
   const context = useForm<Record<string, unknown>>();
   const {
     control,
@@ -80,7 +88,7 @@ export const DocumentEditor = ({
     collection: collection as keyof CoreSchema,
     id,
   });
-  const { data: fields } = useFields(collection as keyof CoreSchema);
+
   const { mutateAsync: updateDoc } = mutateDocument(
     collection as keyof CoreSchema,
     id as number
@@ -168,6 +176,7 @@ export const DocumentEditor = ({
           // Type-based switch statement from previous code
           switch (item.type) {
             case "string":
+            case "text":
               switch (item.meta.interface) {
                 case "input":
                   return (
@@ -176,12 +185,16 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <Input
                           {...defaultProps}
                           onChangeText={onChange}
                           value={value as string}
                           autoCapitalize="none"
+                          error={error?.message}
                         />
                       )}
                     />
@@ -193,11 +206,15 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <TextArea
                           {...defaultProps}
                           onChangeText={onChange}
                           value={value as string}
+                          error={error?.message}
                         />
                       )}
                     />
@@ -225,13 +242,17 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <Input
                           {...defaultProps}
                           onChangeText={onChange}
                           value={"**********"}
                           autoCapitalize="none"
                           disabled
+                          error={error?.message}
                         />
                       )}
                     />
@@ -243,13 +264,17 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <ColorPicker
                           {...defaultProps}
                           onValueChange={onChange}
                           value={value as string}
                           presets={item.meta.options?.presets}
                           opacity={item.meta.options?.opacity}
+                          error={error?.message}
                         />
                       )}
                     />
@@ -262,7 +287,10 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <Input
                           {...defaultProps}
                           onChangeText={onChange}
@@ -270,6 +298,7 @@ export const DocumentEditor = ({
                           autoCapitalize="none"
                           disabled
                           helper="Fallback"
+                          error={error?.message}
                         />
                       )}
                     />
@@ -279,28 +308,82 @@ export const DocumentEditor = ({
             case "integer":
             case "float":
             case "decimal":
-              return (
-                <Controller
-                  key={item.field}
-                  control={control}
-                  rules={{ required: item.meta.required }}
-                  name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                  render={({ field: { onChange, value } }) => (
-                    <NumberInput
-                      {...defaultProps}
-                      onChangeText={onChange}
-                      value={value as string}
-                      autoCapitalize="none"
-                      keyboardType="numeric"
-                      min={item.meta.options?.min}
-                      max={item.meta.options?.max}
-                      step={item.meta.options?.step}
-                      float={item.type === "float"}
-                      decimal={item.type === "decimal"}
+            case "bigInteger":
+              switch (item.meta.interface) {
+                case "input":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <NumberInput
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                          autoCapitalize="none"
+                          keyboardType="numeric"
+                          min={item.meta.options?.min}
+                          max={item.meta.options?.max}
+                          step={item.meta.options?.step}
+                          float={item.type === "float"}
+                          decimal={item.type === "decimal"}
+                          error={error?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
-              );
+                  );
+                case "select-dropdown-m2o":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <M2OInput
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as string}
+                          item={item}
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+
+                default:
+                  // Fallback for string type
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                          autoCapitalize="none"
+                          disabled
+                          helper="Fallback"
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+              }
 
             case "uuid":
               switch (item.meta.interface) {
@@ -311,17 +394,43 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <ImageInput
                           {...defaultProps}
                           onChange={onChange}
                           value={value as string}
+                          error={error?.message}
                         />
                       )}
                     />
                   );
                 default:
-                  return <Input {...defaultProps} />;
+                  // Fallback for string type
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={value as string}
+                          autoCapitalize="none"
+                          disabled
+                          helper="Fallback"
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
               }
 
             case "alias":
@@ -333,12 +442,16 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <M2OInput
                           {...defaultProps}
                           onValueChange={onChange}
                           value={value as string}
                           item={item}
+                          error={error?.message}
                         />
                       )}
                     />
@@ -350,13 +463,17 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <M2MInput
                           {...defaultProps}
                           onChange={onChange}
                           value={value as number[]}
                           item={item}
                           docId={id}
+                          error={error?.message}
                         />
                       )}
                     />
@@ -372,11 +489,15 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <DateTime
                           {...defaultProps}
                           onValueChange={onChange}
                           value={String(value)}
+                          error={error?.message}
                         />
                       )}
                     />
@@ -388,7 +509,10 @@ export const DocumentEditor = ({
                       control={control}
                       rules={{ required: item.meta.required }}
                       name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                      render={({ field: { onChange, value } }) => (
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
                         <Input
                           {...defaultProps}
                           onChangeText={onChange}
@@ -396,6 +520,7 @@ export const DocumentEditor = ({
                           autoCapitalize="none"
                           disabled
                           helper="Fallback"
+                          error={error?.message}
                         />
                       )}
                     />
@@ -408,11 +533,15 @@ export const DocumentEditor = ({
                   control={control}
                   rules={{ required: item.meta.required }}
                   name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                  render={({ field: { onChange, value } }) => (
+                  render={({
+                    field: { onChange, value },
+                    fieldState: { error },
+                  }) => (
                     <JsonInput
                       {...defaultProps}
                       onChange={onChange}
                       value={value as string}
+                      error={error?.message}
                     />
                   )}
                 />
@@ -429,7 +558,10 @@ export const DocumentEditor = ({
                   control={control}
                   rules={{ required: item.meta.required }}
                   name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                  render={({ field: { onChange, value } }) => (
+                  render={({
+                    field: { onChange, value },
+                    fieldState: { error },
+                  }) => (
                     <Input
                       {...defaultProps}
                       onChangeText={onChange}
@@ -437,6 +569,7 @@ export const DocumentEditor = ({
                       autoCapitalize="none"
                       disabled
                       helper="Fallback"
+                      error={error?.message}
                     />
                   )}
                 />
@@ -487,6 +620,15 @@ export const DocumentEditor = ({
         });
         queryClient.invalidateQueries({
           queryKey: ["documents", collection],
+        });
+      },
+      onError: (error: any) => {
+        const errors = error.errors as DirectusErrorResponse;
+        each(errors, (error) => {
+          console.log(error);
+          context.setError(error.extensions.field, {
+            message: error.message,
+          });
         });
       },
     });

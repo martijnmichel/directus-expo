@@ -14,6 +14,7 @@ import { useDocuments } from "@/state/queries/directus/collection";
 import { Modal } from "../display/modal";
 import { DocumentEditor } from "../content/DocumentEditor";
 import { createStyleSheet } from "react-native-unistyles";
+import { X } from "../icons";
 
 interface Schema {
   [key: string]: any;
@@ -22,7 +23,7 @@ interface Schema {
 interface M2OInputProps {
   item: ReadFieldOutput<Schema>;
   value?: string | number;
-  onValueChange?: (value: string | number) => void;
+  onValueChange?: (value: string | number | null) => void;
   label?: string;
   error?: string;
   helper?: string;
@@ -45,7 +46,8 @@ export const M2OInput = ({
   helper,
 }: M2OInputProps) => {
   const { data: options, refetch } = useDocuments(
-    item.schema.foreign_key_table as any
+    item.schema.foreign_key_table as any,
+    { filter: item.meta.options?.filter }
   );
 
   const selectOptions = options?.map((opt: any) => {
@@ -66,6 +68,11 @@ export const M2OInput = ({
         options={selectOptions || []}
         value={value}
         onValueChange={onValueChange}
+        append={
+          <Button variant="ghost" rounded onPress={() => onValueChange?.(null)}>
+            <X />
+          </Button>
+        }
       />
 
       {item.meta.options?.enableCreate && (

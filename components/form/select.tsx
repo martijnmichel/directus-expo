@@ -100,8 +100,16 @@ export const Select = ({
             ? selectedOption.text || selectedOption.value
             : placeholder}
         </Text>
-        {clonedAppend}
-        <View style={{ marginLeft: "auto" }}>
+        <View
+          style={{
+            marginLeft: "auto",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.xs,
+          }}
+        >
+          {clonedAppend}
           <ChevronDown
             size={20}
             color={

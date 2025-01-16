@@ -125,7 +125,8 @@ const stylesheet = createStyleSheet((theme) => ({
   listItem: {
     flexDirection: "row",
     alignItems: "center",
-    padding: theme.spacing.md,
+    paddingVertical: theme.spacing.xs,
+    paddingLeft: theme.spacing.md,
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,
