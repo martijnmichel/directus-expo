@@ -94,4 +94,27 @@ export const formStyles = createStyleSheet((theme) => ({
     paddingLeft: theme.spacing.md,
     paddingRight: theme.spacing.sm,
   },
+  checkboxGroup: {
+    marginTop: 4,
+  },
+  checkboxItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    color: theme.colors.textPrimary,
+  },
+  checkboxContainer: {
+    width: 24,
+    height: 24,
+    padding: 0,
+    margin: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: theme.borderWidth.md,
+    borderColor: theme.colors.border,
+  },
 }));

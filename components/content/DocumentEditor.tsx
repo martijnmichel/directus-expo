@@ -52,7 +52,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { directusToZod } from "@/utils/zod/directusToZod";
 import { z } from "zod";
 import { generateZodSchema } from "@/utils/zod/generateZodSchema";
-import { DirectusError, DirectusErrorResponse } from "@/types/directus";
+import { DirectusErrorResponse } from "@/types/directus";
+import { Toggle } from "../form/toggle";
+import { RadioButtonGroup } from "../form/radio-button-group";
+import { SelectMulti } from "../form/select-multi";
+import { CheckboxGroup } from "../form/checkbox-group";
 export const DocumentEditor = ({
   collection,
   id,
@@ -279,6 +283,51 @@ export const DocumentEditor = ({
                       )}
                     />
                   );
+
+                case "select-dropdown":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <Select
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as string}
+                          options={item.meta.options?.choices || []}
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+
+                case "select-radio":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <RadioButtonGroup
+                          {...defaultProps}
+                          onChange={onChange}
+                          value={value as string}
+                          options={item.meta.options?.choices || []}
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+
                 default:
                   // Fallback for string type
                   return (
@@ -527,25 +576,100 @@ export const DocumentEditor = ({
                   );
               }
             case "json":
-              return (
-                <Controller
-                  key={item.field}
-                  control={control}
-                  rules={{ required: item.meta.required }}
-                  name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                  render={({
-                    field: { onChange, value },
-                    fieldState: { error },
-                  }) => (
-                    <JsonInput
-                      {...defaultProps}
-                      onChange={onChange}
-                      value={value as string}
-                      error={error?.message}
+              switch (item.meta.interface) {
+                case "select-multiple-dropdown":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <SelectMulti
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as (string | number)[]}
+                          options={item.meta.options?.choices || []}
+                          error={error?.message}
+                        />
+                      )}
                     />
-                  )}
-                />
-              );
+                  );
+
+                case "select-multiple-checkbox":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <CheckboxGroup
+                          {...defaultProps}
+                          onChange={onChange}
+                          value={value as (string | number)[]}
+                          options={item.meta.options?.choices || []}
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+
+                default:
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <Input
+                          {...defaultProps}
+                          onChangeText={onChange}
+                          value={String(value)}
+                          autoCapitalize="none"
+                          disabled
+                          helper="Fallback"
+                          error={error?.message}
+                        />
+                      )}
+                    />
+                  );
+              }
+
+            case "boolean":
+              switch (item.meta.interface) {
+                case "boolean":
+                  return (
+                    <Controller
+                      key={item.field}
+                      control={control}
+                      rules={{ required: item.meta.required }}
+                      name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                      render={({
+                        field: { onChange, value },
+                        fieldState: { error },
+                      }) => (
+                        <Toggle
+                          {...defaultProps}
+                          onValueChange={onChange}
+                          value={value as boolean}
+                          error={error?.message}
+                          info={item.meta.options?.label}
+                        />
+                      )}
+                    />
+                  );
+              }
 
             default:
               // Final fallback for unknown types

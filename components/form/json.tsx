@@ -23,8 +23,14 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
     const [errorLine, setErrorLine] = useState<number | null>(null);
 
     useEffect(() => {
-      const lineCount = (value?.match(/\n/g)?.length || 0) + 1;
-      setLines(Array.from({ length: lineCount }, (_, i) => i + 1));
+      if (!value || typeof value !== "string") {
+        return;
+      }
+      const lineCount = !!value
+        ? ((value || "")?.match(/\n/g)?.length || 0) + 1
+        : 0;
+      if (lineCount)
+        setLines(Array.from({ length: lineCount }, (_, i) => i + 1));
     }, [value]);
 
     const handleChange = useCallback(
