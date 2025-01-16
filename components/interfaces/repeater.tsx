@@ -10,6 +10,7 @@ import { List } from "../display/list";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { Trash } from "../icons";
 import { Edit } from "../icons";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -84,9 +85,9 @@ export const RepeaterInput = ({
 
       <Link
         href={{
-          pathname: `/modals/repeater`,
+          pathname: `/modals/repeater/add`,
           params: {
-            fields: JSON.stringify(item.meta?.options?.fields || []),
+            fields: objectToBase64(item.meta?.options?.fields || []),
             item_field: item.field,
           },
         }}

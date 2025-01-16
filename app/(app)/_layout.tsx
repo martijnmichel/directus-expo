@@ -22,6 +22,10 @@ export default function TabsLayout() {
         name="modals/m2m"
         options={{ presentation: "modal", headerShown: false }}
       />
+      <Stack.Screen
+        name="modals/repeater"
+        options={{ presentation: "modal", headerShown: false }}
+      />
     </Stack>
   );
 }
