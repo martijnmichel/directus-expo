@@ -6,6 +6,7 @@ import {
   Modal,
   TextInput,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
@@ -56,72 +57,85 @@ export const ColorPicker = ({
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(colorPickerStyles);
   const { styles: formStyle } = useStyles(formStyles);
-  const [draftValue, setDraftValue] = useState<string | undefined>(value);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [draftValue, setDraftValue] = useState<string>(value || "#ff0000");
+  const [position, setPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const [spectrumWidth, setSpectrumWidth] = useState(0);
   const [spectrumHeight, setSpectrumHeight] = useState(0);
-  const [hue, setHue] = useState(0);
-  const [huePosition, setHuePosition] = useState(0);
-  const [alpha, setAlpha] = useState<number>(1);
+  const [hue, setHue] = useState<number>(0);
+  const [huePosition, setHuePosition] = useState<number>(0);
+  const [alpha, setAlpha] = useState<number>(
+    value?.length === 9 ? parseInt(value.slice(7, 9), 16) / 255 : 1
+  );
 
   const spectrumRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
 
-  const handleColorSelect = (color: string) => {
-    setDraftValue(color);
-
-    // Parse RGBA from hex
-    const hasAlpha = color.length === 9;
-    const r = parseInt(color.slice(1, 3), 16) / 255;
-    const g = parseInt(color.slice(3, 5), 16) / 255;
-    const b = parseInt(color.slice(5, 7), 16) / 255;
-    const a = hasAlpha ? parseInt(color.slice(7, 9), 16) / 255 : 1;
-
-    // Set alpha value
-    setAlpha(a);
-
-    // RGB to HSV conversion stays the same
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    const delta = max - min;
-
-    // Calculate Value
-    const v = max;
-
-    // Calculate Saturation
-    const s = max === 0 ? 0 : delta / max;
-
-    // Calculate Hue
-    let h;
-    if (delta === 0) {
-      h = 0;
-    } else if (max === r) {
-      h = ((g - b) / delta) % 6;
-    } else if (max === g) {
-      h = (b - r) / delta + 2;
-    } else {
-      h = (r - g) / delta + 4;
+  useEffect(() => {
+    if (value) {
+      handleColorSelect(value);
     }
+  }, [value]);
 
-    h = h / 6;
-    if (h < 0) h += 1;
+  const handleColorSelect = useCallback(
+    (color: string) => {
+      setDraftValue(color);
 
-    // Invert the hue for position setting
-    const invertedH = (1 - h) % 1;
+      // Parse RGBA from hex
+      const hasAlpha = color.length === 9;
+      const r = parseInt(color.slice(1, 3), 16) / 255;
+      const g = parseInt(color.slice(3, 5), 16) / 255;
+      const b = parseInt(color.slice(5, 7), 16) / 255;
+      const a = hasAlpha ? parseInt(color.slice(7, 9), 16) / 255 : 1;
 
-    // Set positions using inverted hue
-    setHuePosition(invertedH * spectrumWidth);
-    setHue(invertedH);
+      setAlpha(a);
 
-    setPosition({
-      x: s * spectrumWidth,
-      y: (1 - v) * spectrumHeight,
-    });
+      // RGB to HSV conversion stays the same
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const delta = max - min;
 
-    console.log("Color:", color);
-    console.log("HSV:", { h, s, v });
-    console.log("Mapped Hue:", h);
-  };
+      // Calculate Value
+      const v = max;
+
+      // Calculate Saturation
+      const s = max === 0 ? 0 : delta / max;
+
+      // Calculate Hue
+      let h;
+      if (delta === 0) {
+        h = 0;
+      } else if (max === r) {
+        h = ((g - b) / delta) % 6;
+      } else if (max === g) {
+        h = (b - r) / delta + 2;
+      } else {
+        h = (r - g) / delta + 4;
+      }
+
+      h = h / 6;
+      if (h < 0) h += 1;
+
+      // Invert the hue for position setting
+      const invertedH = (1 - h) % 1;
+
+      // Set positions using inverted hue
+      setHuePosition(invertedH * spectrumWidth);
+      setHue(invertedH);
+
+      setPosition({
+        x: s * spectrumWidth,
+        y: (1 - v) * spectrumHeight,
+      });
+
+      console.log("Color:", color);
+      console.log("HSV:", { h, s, v });
+      console.log("Mapped Hue:", h);
+    },
+    [spectrumWidth, spectrumHeight]
+  );
 
   const handleConfirm = () => {
     onValueChange?.(draftValue!);
@@ -202,62 +216,108 @@ export const ColorPicker = ({
   }, []);
 
   const handleColorSelection = useCallback(
-    (event: MouseEvent | GestureResponderEvent | any) => {
+    (event: any) => {
       if (!spectrumRef.current) return;
 
-      // @ts-ignore - getBoundingClientRect is available on web
-      const rect = spectrumRef.current.getBoundingClientRect?.() || {
-        left: 0,
-        top: 0,
+      // Get the touch or mouse coordinates
+      let pageX, pageY;
+      if (event.nativeEvent) {
+        // iOS/Android touch events
+        const touch = event.nativeEvent.touches?.[0] || event.nativeEvent;
+        pageX = touch.pageX;
+        pageY = touch.pageY;
+      } else {
+        // Web mouse events
+        pageX = event.clientX;
+        pageY = event.clientY;
+      }
+
+      // Get element position
+      const measureCallback = (
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        pageX: number,
+        pageY: number
+      ) => {
+        const relativeX = Math.max(0, Math.min(pageX - x, width));
+        const relativeY = Math.max(0, Math.min(pageY - y, height));
+
+        setPosition({
+          x: relativeX,
+          y: relativeY,
+        });
+
+        const saturation = relativeX / width;
+        const value = 1 - relativeY / height;
+        const rgb = hsvToRgb(1 - hue, saturation, value);
+        const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b, alpha);
+        setDraftValue(hexColor);
       };
-      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
-      const x = Math.max(0, Math.min(clientX - rect.left, spectrumWidth));
-      const y = Math.max(0, Math.min(clientY - rect.top, spectrumHeight));
-
-      setPosition({ x, y });
-
-      const saturation = x / spectrumWidth;
-      const value = 1 - y / spectrumHeight;
-
-      const finalHue = (1 - hue) % 1;
-      const rgb = hsvToRgb(finalHue, saturation, value);
-      const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
-      setDraftValue(hexColor);
+      spectrumRef.current.measure(
+        (
+          fx: number,
+          fy: number,
+          width: number,
+          height: number,
+          px: number,
+          py: number
+        ) => {
+          measureCallback(px, py, width, height, pageX, pageY);
+        }
+      );
     },
-    [spectrumWidth, spectrumHeight, hue]
+    [hue, alpha]
   );
 
   const handleHueSelection = useCallback(
-    (event: MouseEvent | GestureResponderEvent | any) => {
+    (event: any) => {
       if (!hueRef.current) return;
 
-      // @ts-ignore - getBoundingClientRect is available on web
-      const rect = hueRef.current.getBoundingClientRect?.() || {
-        left: 0,
-        top: 0,
+      // Get the touch or mouse coordinates
+      let pageX;
+      if (event.nativeEvent) {
+        // iOS/Android touch events
+        const touch = event.nativeEvent.touches?.[0] || event.nativeEvent;
+        pageX = touch.pageX;
+      } else {
+        // Web mouse events
+        pageX = event.clientX;
+      }
+
+      // Get element position
+      const measureCallback = (x: number, y: number, width: number) => {
+        const handleWidth = 20;
+        const maxX = width - handleWidth;
+        const relativeX = Math.max(0, Math.min(pageX - x, maxX));
+        const hueValue = relativeX / maxX;
+
+        setHuePosition(relativeX);
+        setHue(hueValue);
+
+        const saturation = position.x / spectrumWidth;
+        const value = 1 - position.y / spectrumHeight;
+        const rgb = hsvToRgb(1 - hueValue, saturation, value);
+        const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b, alpha);
+        setDraftValue(hexColor);
       };
-      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
 
-      // Calculate bounds relative to the gradient bar
-      const handleWidth = 20; // Width of the handle
-      const maxX = rect.width - handleWidth; // Maximum position accounting for handle width
-
-      // Constrain x to the actual gradient bounds
-      const x = Math.max(0, Math.min(clientX - rect.left, maxX));
-      const hueValue = x / maxX; // Calculate hue based on the constrained width
-
-      setHuePosition(x);
-      setHue(hueValue);
-
-      const saturation = position.x / spectrumWidth;
-      const value = 1 - position.y / spectrumHeight;
-      const rgb = hsvToRgb(1 - hueValue, saturation, value);
-      const hexColor = rgbToHex(rgb.r, rgb.g, rgb.b);
-      setDraftValue(hexColor);
+      hueRef.current.measure(
+        (
+          fx: number,
+          fy: number,
+          width: number,
+          height: number,
+          px: number,
+          py: number
+        ) => {
+          measureCallback(px, py, width); // Only pass needed parameters
+        }
+      );
     },
-    [spectrumWidth, position]
+    [position, spectrumWidth, spectrumHeight, alpha]
   );
 
   const [r, g, b] = draftValue
@@ -376,18 +436,27 @@ export const ColorPicker = ({
                   style={StyleSheet.absoluteFill}
                   onTouchStart={handleHueSelection}
                   onTouchMove={handleHueSelection}
+                  onStartShouldSetResponder={() => true}
+                  onMoveShouldSetResponder={() => true}
+                  onResponderGrant={handleHueSelection}
+                  onResponderMove={handleHueSelection}
                   onMouseDown={(e: any) => {
-                    handleHueSelection(e);
-                    const handleMouseMove = (e: MouseEvent) => {
-                      e.preventDefault();
+                    if (Platform.OS === "web") {
                       handleHueSelection(e);
-                    };
-                    const handleMouseUp = () => {
-                      window.removeEventListener("mousemove", handleMouseMove);
-                      window.removeEventListener("mouseup", handleMouseUp);
-                    };
-                    window.addEventListener("mousemove", handleMouseMove);
-                    window.addEventListener("mouseup", handleMouseUp);
+                      const handleMouseMove = (e: MouseEvent) => {
+                        e.preventDefault();
+                        handleHueSelection(e);
+                      };
+                      const handleMouseUp = () => {
+                        window.removeEventListener(
+                          "mousemove",
+                          handleMouseMove
+                        );
+                        window.removeEventListener("mouseup", handleMouseUp);
+                      };
+                      window.addEventListener("mousemove", handleMouseMove);
+                      window.addEventListener("mouseup", handleMouseUp);
+                    }
                   }}
                 />
                 <View style={[styles.hueSelector, { left: huePosition }]} />
@@ -419,18 +488,24 @@ export const ColorPicker = ({
                 style={StyleSheet.absoluteFill}
                 onTouchStart={handleColorSelection}
                 onTouchMove={handleColorSelection}
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderGrant={handleColorSelection}
+                onResponderMove={handleColorSelection}
                 onMouseDown={(e: any) => {
-                  handleColorSelection(e);
-                  const handleMouseMove = (e: MouseEvent) => {
-                    e.preventDefault();
+                  if (Platform.OS === "web") {
                     handleColorSelection(e);
-                  };
-                  const handleMouseUp = () => {
-                    window.removeEventListener("mousemove", handleMouseMove);
-                    window.removeEventListener("mouseup", handleMouseUp);
-                  };
-                  window.addEventListener("mousemove", handleMouseMove);
-                  window.addEventListener("mouseup", handleMouseUp);
+                    const handleMouseMove = (e: MouseEvent) => {
+                      e.preventDefault();
+                      handleColorSelection(e);
+                    };
+                    const handleMouseUp = () => {
+                      window.removeEventListener("mousemove", handleMouseMove);
+                      window.removeEventListener("mouseup", handleMouseUp);
+                    };
+                    window.addEventListener("mousemove", handleMouseMove);
+                    window.addEventListener("mouseup", handleMouseUp);
+                  }
                 }}
               />
               <View
