@@ -11,6 +11,26 @@ export default function Layout() {
       }}
     >
       <Stack.Screen
+        name="[collection]/pick"
+        options={{
+          headerTitle: "",
+          presentation: "modal",
+          // Optional: add iOS-style modal presentation
+          animation: "slide_from_bottom",
+        }}
+      />
+
+      <Stack.Screen
+        name="[collection]/add"
+        options={{
+          headerTitle: "",
+          presentation: "modal",
+          // Optional: add iOS-style modal presentation
+          animation: "slide_from_bottom",
+        }}
+      />
+
+      <Stack.Screen
         name="[collection]/[id]/index"
         options={{
           headerTitle: "",

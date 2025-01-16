@@ -74,7 +74,7 @@ export const DocListItem = <T extends keyof CoreSchema>({
       </Text>
 
       <Link
-        href={`/content/${relation.related_collection}/${
+        href={`/modals/m2m/${relation.related_collection}/${
           doc[junction.meta.junction_field as keyof typeof doc]?.id
         }`}
         asChild

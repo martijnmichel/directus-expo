@@ -27,6 +27,7 @@ import { List, ListItem } from "../display/list";
 import { useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
 import EventBus, { MittEvents } from "@/utils/mitt";
+import { mutateDocument } from "@/state/actions/mutateItem";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -79,37 +80,10 @@ export const M2MInput = ({
 
   const allowCreate = relationPermission?.create.access === "full";
 
-  const { data: options, refetch } = useQuery({
-    queryKey: ["options", item.collection, item.field],
-    queryFn: () =>
-      directus!.request(
-        readItems(relation?.related_collection as any, {
-          fields: [`*`],
-          filter: {
-            _and: [
-              ...(valueProp?.length > 0
-                ? [
-                    {
-                      id: {
-                        _nin: valueProp,
-                      },
-                    },
-                  ]
-                : []),
-              {
-                [`$FOLLOW(${junction?.collection},${relation?.field})`]: {
-                  _none: {
-                    [junction?.field as any]: {
-                      _eq: docId,
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        })
-      ),
-  });
+  const { mutate: mutateOptions } = mutateDocument(
+    junction?.collection as keyof CoreSchema,
+    "+"
+  );
 
   useEffect(() => {
     const updateM2M = (event: any) => {
@@ -120,8 +94,17 @@ export const M2MInput = ({
     const addM2M = (event: MittEvents["m2m:add"]) => {
       if (event.field === item.field) {
         console.log("m2m:add", event);
-        setAddedDocIds([...addedDocIds, event.data.id]);
-        props.onChange([...valueProp, event.data.id]);
+
+        const data = {
+          [relation?.field as string]: event.data.id as number,
+        };
+        mutateOptions(data, {
+          onSuccess: (newData) => {
+            console.log({ newData });
+            setAddedDocIds([...addedDocIds, newData.id]);
+            props.onChange([...valueProp, newData.id]);
+          },
+        });
       }
     };
     EventBus.on("m2m:add", addM2M);
@@ -130,11 +113,6 @@ export const M2MInput = ({
       EventBus.off("m2m:add", addM2M);
     };
   }, []);
-
-  useEffect(() => {
-    refetch();
-  }, [valueProp]);
-  console.log({ item, relation, junction, value, valueProp, options });
 
   return (
     relation &&
@@ -187,12 +165,10 @@ export const M2MInput = ({
           {allowCreate && (
             <Link
               href={{
-                pathname: `/modals/m2m/[collection]/[id]`,
+                pathname: `/modals/m2m/[collection]/add`,
                 params: {
                   collection: relation.related_collection,
-                  id: "+",
-                  junction_collection: junction.collection,
-                  related_field: item.field,
+                  item_field: item.field,
                 },
               }}
               asChild
@@ -200,7 +176,27 @@ export const M2MInput = ({
               <Button>Add new</Button>
             </Link>
           )}
-          <Modal>
+
+          <Link
+            href={{
+              pathname: `/modals/m2m/[collection]/pick`,
+              params: {
+                collection: relation.related_collection,
+                junction_collection: junction.collection,
+                related_collection: relation.related_collection,
+                related_field: relation.field,
+                current_value: valueProp.join(","),
+                junction_field: junction.field,
+                doc_id: docId,
+                item_field: item.field,
+              },
+            }}
+            asChild
+          >
+            <Button>Add existing</Button>
+          </Link>
+
+          {/** <Modal>
             <Modal.Trigger>
               <Button>Add existing</Button>
             </Modal.Trigger>
@@ -251,7 +247,7 @@ export const M2MInput = ({
                 </List>
               )}
             </Modal.Content>
-          </Modal>
+          </Modal> */}
         </Horizontal>
       </Vertical>
     )
