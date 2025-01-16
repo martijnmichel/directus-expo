@@ -1,20 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Text, View, FlatList } from "react-native";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Link } from "expo-router";
-import { Horizontal, Vertical } from "../layout/Stack";
-import { List } from "../display/list";
-import EventBus, { MittEvents } from "@/utils/mitt";
-import { Trash } from "../icons";
-import { Edit } from "../icons";
-import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { Vertical } from "../layout/Stack";
 import {
-  parseRepeaterTemplate,
-  parseTemplate,
-} from "@/helpers/document/template";
+  DndProvider,
+  Draggable,
+  DndProviderProps,
+} from "@mgcrea/react-native-dnd";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import EventBus, { MittEvents } from "@/utils/mitt";
+import { DragIcon, Trash, Edit } from "../icons";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { parseRepeaterTemplate } from "@/helpers/document/template";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -23,6 +24,7 @@ interface RepeaterInputProps {
   label?: string;
   error?: string;
   helper?: string;
+  sortable?: boolean;
 }
 
 export const RepeaterInput = ({
@@ -30,72 +32,123 @@ export const RepeaterInput = ({
   label,
   error,
   helper,
-  value: valueProp = [],
-  ...props
+  value: items = [],
+  sortable = true,
+  onChange,
 }: RepeaterInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(stylesheet);
+  const [localItems, setLocalItems] = useState(items);
 
   useEffect(() => {
-    const addRepeaterItem = (event: MittEvents["repeater:add"]) => {
-      if (event.field === item.field) {
-        props.onChange([...valueProp, event.data]);
+    setLocalItems(items);
+  }, [items]);
+
+  const handleDragEnd: DndProviderProps["onDragEnd"] = ({ active, over }) => {
+    "worklet";
+    if (over && active.id !== over.id) {
+      const oldIndex = parseInt(active.id as string, 10);
+      const newIndex = parseInt(over.id as string, 10);
+
+      const newItems = [...items];
+      const [movedItem] = newItems.splice(oldIndex, 1);
+      newItems.splice(newIndex, 0, movedItem);
+
+      setLocalItems(newItems);
+      onChange(newItems);
+    }
+  };
+
+  const getDisplayValue = (repeatItem: any) => {
+    const format = item.meta?.display_options?.format;
+    return parseRepeaterTemplate(format, repeatItem);
+  };
+
+  const renderItem = ({
+    item: repeaterItem,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => (
+    <Draggable
+      id={index.toString()}
+      disabled={!sortable}
+      style={styles.listItem}
+    >
+      <View style={styles.dragHandle}>
+        <DragIcon />
+      </View>
+
+      <Text style={styles.content}>{getDisplayValue(repeaterItem)}</Text>
+
+      <Link
+        href={{
+          pathname: `/modals/repeater/edit`,
+          params: {
+            data: objectToBase64(item),
+            fields: objectToBase64(item.meta?.options?.fields || []),
+            item_field: item.field,
+          },
+        }}
+        asChild
+      >
+        <Button variant="ghost" rounded>
+          <Edit />
+        </Button>
+      </Link>
+
+      <Button
+        variant="ghost"
+        onPress={() => {
+          const newValue = [...items];
+          newValue.splice(index, 1);
+          onChange(newValue);
+        }}
+        rounded
+      >
+        <Trash />
+      </Button>
+    </Draggable>
+  );
+
+  useEffect(() => {
+    const handleRepeaterAdd = (data: any) => {
+      if (data.field === item.field) {
+        const newValue = [...items, data.value];
+        onChange(newValue);
       }
     };
 
-    EventBus.on("repeater:add", addRepeaterItem);
-    return () => {
-      EventBus.off("repeater:add", addRepeaterItem);
+    const handleRepeaterEdit = (data: any) => {
+      if (data.field === item.field) {
+        const newValue = [...items];
+        newValue[data.index] = data.value;
+        onChange(newValue);
+      }
     };
-  }, [valueProp, props.onChange]);
 
-  const getDisplayValue = (repeatItem: any) => {
-    const fields = item.meta?.options?.fields || [];
-    const format = item.meta?.display_options?.format;
+    EventBus.on("repeater:add", handleRepeaterAdd);
 
-    console.log({ fields, format, repeatItem });
-
-    return parseRepeaterTemplate(format, repeatItem);
-  };
+    return () => {
+      EventBus.off("repeater:add", handleRepeaterAdd);
+    };
+  }, [item.field, items, onChange]);
 
   return (
     <Vertical spacing="xs">
       {label && <Text style={formControlStyles.label}>{label}</Text>}
-      <List>
-        {valueProp.map((repeaterItem, index) => (
-          <View key={index} style={styles.listItem}>
-            <Text style={styles.content}>{getDisplayValue(repeaterItem)}</Text>
 
-            <Link
-              href={{
-                pathname: `/modals/repeater/edit`,
-                params: {
-                  data: objectToBase64(item),
-                  fields: objectToBase64(item.meta?.options?.fields || []),
-                  item_field: item.field,
-                },
-              }}
-              asChild
-            >
-              <Button variant="ghost" rounded>
-                <Edit />
-              </Button>
-            </Link>
-
-            <Button
-              variant="ghost"
-              onPress={() => {
-                const newValue = [...valueProp];
-                newValue.splice(index, 1);
-                props.onChange(newValue);
-              }}
-              rounded
-            >
-              <Trash />
-            </Button>
-          </View>
-        ))}
-      </List>
+      <GestureHandlerRootView style={styles.list}>
+        <DndProvider onDragEnd={handleDragEnd}>
+          <FlatList
+            data={localItems}
+            renderItem={renderItem}
+            keyExtractor={(_, index) => index.toString()}
+            scrollEnabled={true}
+          />
+        </DndProvider>
+      </GestureHandlerRootView>
 
       {(error || helper) && (
         <Text
@@ -136,12 +189,26 @@ const stylesheet = createStyleSheet((theme) => ({
     borderColor: theme.colors.border,
     height: 44,
     maxWidth: 500,
+    marginBottom: theme.spacing.xs,
   },
   content: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.spacing.sm,
     fontFamily: theme.typography.body.fontFamily,
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.textPrimary,
+  },
+  list: {
+    flex: 0,
+    width: "100%",
+    minHeight: 100,
+  },
+  dragHandle: {
+    padding: theme.spacing.xs,
+    marginRight: theme.spacing.sm,
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
   },
 }));

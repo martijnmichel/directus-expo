@@ -23,3 +23,4 @@ export * from "./Alert";
 export * from "./Home";
 export * from "./Database";
 export * from "./Palette";
+export * from "./Drag";
