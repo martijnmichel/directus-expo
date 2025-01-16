@@ -62,6 +62,7 @@ export const ColorPicker = ({
   const [spectrumHeight, setSpectrumHeight] = useState(0);
   const [hue, setHue] = useState(0);
   const [huePosition, setHuePosition] = useState(0);
+  const [alpha, setAlpha] = useState<number>(1);
 
   const spectrumRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
@@ -69,12 +70,17 @@ export const ColorPicker = ({
   const handleColorSelect = (color: string) => {
     setDraftValue(color);
 
-    // RGB to HSV conversion stays the same
+    // Parse RGBA from hex
+    const hasAlpha = color.length === 9;
     const r = parseInt(color.slice(1, 3), 16) / 255;
     const g = parseInt(color.slice(3, 5), 16) / 255;
     const b = parseInt(color.slice(5, 7), 16) / 255;
+    const a = hasAlpha ? parseInt(color.slice(7, 9), 16) / 255 : 1;
 
-    // Convert RGB to HSV
+    // Set alpha value
+    setAlpha(a);
+
+    // RGB to HSV conversion stays the same
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     const delta = max - min;
@@ -174,16 +180,19 @@ export const ColorPicker = ({
     };
   };
 
-  const rgbToHex = (r: number, g: number, b: number) => {
-    return (
-      "#" +
-      [r, g, b]
-        .map((x) => {
-          const hex = x.toString(16);
-          return hex.length === 1 ? "0" + hex : hex;
-        })
-        .join("")
-    );
+  const rgbToHex = (r: number, g: number, b: number, a?: number) => {
+    const rgb = [r, g, b]
+      .map((x) => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      })
+      .join("");
+
+    if (a !== undefined) {
+      const alpha = Math.round(a * 255).toString(16);
+      return `#${rgb}${alpha.length === 1 ? "0" + alpha : alpha}`;
+    }
+    return `#${rgb}`;
   };
 
   const handleSpectrumLayout = useCallback((event: any) => {
@@ -337,7 +346,10 @@ export const ColorPicker = ({
               <View
                 style={[
                   styles.previewCircle,
-                  { backgroundColor: draftValue || "#000" },
+                  {
+                    backgroundColor: draftValue || "#000",
+                    opacity: alpha,
+                  },
                 ]}
               />
               <View
@@ -443,7 +455,7 @@ export const ColorPicker = ({
                   value={String(r)}
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
-                    const newColor = rgbToHex(value, g, b);
+                    const newColor = rgbToHex(value, g, b, alpha);
                     handleColorSelect(newColor);
                   }}
                 />
@@ -457,7 +469,7 @@ export const ColorPicker = ({
                   value={String(g)}
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
-                    const newColor = rgbToHex(r, value, b);
+                    const newColor = rgbToHex(r, value, b, alpha);
                     handleColorSelect(newColor);
                   }}
                 />
@@ -471,7 +483,7 @@ export const ColorPicker = ({
                   value={String(b)}
                   onChangeText={(text) => {
                     const value = Math.min(255, parseInt(text) || 0);
-                    const newColor = rgbToHex(r, g, value);
+                    const newColor = rgbToHex(r, g, value, alpha);
                     handleColorSelect(newColor);
                   }}
                 />
@@ -483,10 +495,13 @@ export const ColorPicker = ({
                     style={styles.rgbInput}
                     keyboardType="numeric"
                     maxLength={3}
-                    value="100"
+                    value={String(Math.round(alpha * 100))}
                     onChangeText={(text) => {
                       const value = Math.min(100, parseInt(text) || 0);
-                      // Handle alpha value
+                      const newAlpha = value / 100;
+                      setAlpha(newAlpha);
+                      const newColor = rgbToHex(r, g, b, newAlpha);
+                      handleColorSelect(newColor);
                     }}
                   />
                 </View>
@@ -500,7 +515,13 @@ export const ColorPicker = ({
                   key={color}
                   style={[
                     styles.colorButton,
-                    { backgroundColor: color },
+                    {
+                      backgroundColor: color,
+                      opacity:
+                        color.length === 9
+                          ? parseInt(color.slice(7, 9), 16) / 255
+                          : 1,
+                    },
                     draftValue === color && styles.selectedColor,
                   ]}
                   onPress={() => handleColorSelect(color)}
