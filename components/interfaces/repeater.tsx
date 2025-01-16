@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Text, View, FlatList } from "react-native";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { Button } from "../display/button";
@@ -9,13 +9,16 @@ import { Vertical } from "../layout/Stack";
 import {
   DndProvider,
   Draggable,
-  DndProviderProps,
+  DraggableGrid,
+  DraggableStack,
+  UniqueIdentifier,
 } from "@mgcrea/react-native-dnd";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { DragIcon, Trash, Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
+import { runOnJS } from "react-native-reanimated";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -32,123 +35,95 @@ export const RepeaterInput = ({
   label,
   error,
   helper,
-  value: items = [],
+  value = [],
   sortable = true,
   onChange,
 }: RepeaterInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(stylesheet);
-  const [localItems, setLocalItems] = useState(items);
 
-  useEffect(() => {
-    setLocalItems(items);
-  }, [items]);
-
-  const handleDragEnd: DndProviderProps["onDragEnd"] = ({ active, over }) => {
-    "worklet";
-    if (over && active.id !== over.id) {
-      const oldIndex = parseInt(active.id as string, 10);
-      const newIndex = parseInt(over.id as string, 10);
-
-      const newItems = [...items];
-      const [movedItem] = newItems.splice(oldIndex, 1);
-      newItems.splice(newIndex, 0, movedItem);
-
-      setLocalItems(newItems);
-      onChange(newItems);
-    }
-  };
+  const onOrderChange = useCallback(
+    (order: UniqueIdentifier[]) => {
+      console.log({ order });
+      // Reorder the items based on the new order
+      const newItems = order.map((index) => value[parseInt(index as string)]);
+      console.log({ newItems });
+      onChange?.(newItems);
+    },
+    [value, onChange]
+  );
 
   const getDisplayValue = (repeatItem: any) => {
     const format = item.meta?.display_options?.format;
     return parseRepeaterTemplate(format, repeatItem);
   };
 
-  const renderItem = ({
-    item: repeaterItem,
-    index,
-  }: {
-    item: any;
-    index: number;
-  }) => (
-    <Draggable
-      id={index.toString()}
-      disabled={!sortable}
-      style={styles.listItem}
-    >
-      <View style={styles.dragHandle}>
-        <DragIcon />
-      </View>
-
-      <Text style={styles.content}>{getDisplayValue(repeaterItem)}</Text>
-
-      <Link
-        href={{
-          pathname: `/modals/repeater/edit`,
-          params: {
-            data: objectToBase64(item),
-            fields: objectToBase64(item.meta?.options?.fields || []),
-            item_field: item.field,
-          },
-        }}
-        asChild
-      >
-        <Button variant="ghost" rounded>
-          <Edit />
-        </Button>
-      </Link>
-
-      <Button
-        variant="ghost"
-        onPress={() => {
-          const newValue = [...items];
-          newValue.splice(index, 1);
-          onChange(newValue);
-        }}
-        rounded
-      >
-        <Trash />
-      </Button>
-    </Draggable>
-  );
-
   useEffect(() => {
-    const handleRepeaterAdd = (data: any) => {
+    EventBus.on("repeater:add", (data) => {
       if (data.field === item.field) {
-        const newValue = [...items, data.value];
-        onChange(newValue);
+        onChange([...value, data.data]);
       }
-    };
-
-    const handleRepeaterEdit = (data: any) => {
-      if (data.field === item.field) {
-        const newValue = [...items];
-        newValue[data.index] = data.value;
-        onChange(newValue);
-      }
-    };
-
-    EventBus.on("repeater:add", handleRepeaterAdd);
-
-    return () => {
-      EventBus.off("repeater:add", handleRepeaterAdd);
-    };
-  }, [item.field, items, onChange]);
+    });
+  }, [onChange]);
 
   return (
     <Vertical spacing="xs">
       {label && <Text style={formControlStyles.label}>{label}</Text>}
 
-      <GestureHandlerRootView style={styles.list}>
-        <DndProvider onDragEnd={handleDragEnd}>
-          <FlatList
-            data={localItems}
-            renderItem={renderItem}
-            keyExtractor={(_, index) => index.toString()}
-            scrollEnabled={true}
-          />
-        </DndProvider>
-      </GestureHandlerRootView>
+      <DndProvider>
+        <DraggableStack
+          key={JSON.stringify(value)}
+          direction="column"
+          onOrderChange={onOrderChange}
+        >
+          {value.map((repeaterItem, index) => (
+            <Draggable
+              key={index}
+              id={index.toString()}
+              disabled={!sortable}
+              data={repeaterItem}
+              style={[styles.listItem, styles.fullWidth]}
+            >
+              <View style={styles.dragHandle}>
+                <DragIcon />
+              </View>
+
+              <Text style={styles.content}>
+                {getDisplayValue(repeaterItem)}
+              </Text>
+
+              <Link
+                href={{
+                  pathname: `/modals/repeater/edit`,
+                  params: {
+                    data: objectToBase64(item),
+                    fields: objectToBase64(item.meta?.options?.fields || []),
+                    item_field: item.field,
+                    index: index,
+                  },
+                }}
+                asChild
+              >
+                <Button variant="ghost" rounded>
+                  <Edit />
+                </Button>
+              </Link>
+
+              <Button
+                variant="ghost"
+                onPress={() => {
+                  const newValue = [...value];
+                  newValue.splice(index, 1);
+                  onChange?.(newValue);
+                }}
+                rounded
+              >
+                <Trash />
+              </Button>
+            </Draggable>
+          ))}
+        </DraggableStack>
+      </DndProvider>
 
       {(error || helper) && (
         <Text
@@ -198,9 +173,8 @@ const stylesheet = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
   },
   list: {
-    flex: 0,
     width: "100%",
-    minHeight: 100,
+    minHeight: 44,
   },
   dragHandle: {
     padding: theme.spacing.xs,
@@ -210,5 +184,12 @@ const stylesheet = createStyleSheet((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "transparent",
+  },
+  grid: {
+    width: "100%",
+    alignItems: "stretch",
+  },
+  fullWidth: {
+    width: "100%",
   },
 }));
