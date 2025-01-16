@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import {
   View,
   Text,
@@ -73,11 +79,73 @@ export const ColorPicker = ({
   const spectrumRef = useRef<View>(null);
   const hueRef = useRef<View>(null);
 
+  const [dimensions, setDimensions] = useState<{
+    spectrumWidth: number;
+    spectrumHeight: number;
+    hueWidth: number;
+  } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!spectrumRef.current || !hueRef.current) return;
+
+    const initializePositions = () => {
+      spectrumRef.current?.measure((fx, fy, width, height, px, py) => {
+        hueRef.current?.measure((hfx, hfy, hueWidth) => {
+          setDimensions({
+            spectrumWidth: width,
+            spectrumHeight: height,
+            hueWidth: hueWidth,
+          });
+        });
+      });
+    };
+
+    initializePositions();
+  }, []);
+
   useEffect(() => {
-    if (value) {
-      handleColorSelect(value);
+    if (!dimensions || !value) return;
+
+    const r = parseInt(value.slice(1, 3), 16) / 255;
+    const g = parseInt(value.slice(3, 5), 16) / 255;
+    const b = parseInt(value.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+
+    const v = max;
+
+    const s = max === 0 ? 0 : delta / max;
+
+    let h;
+    if (delta === 0) {
+      h = 0;
+    } else if (max === r) {
+      h = ((g - b) / delta) % 6;
+    } else if (max === g) {
+      h = (b - r) / delta + 2;
+    } else {
+      h = (r - g) / delta + 4;
     }
-  }, [value]);
+
+    h = h / 6;
+    if (h < 0) h += 1;
+
+    const invertedH = (1 - h) % 1;
+
+    setHuePosition(invertedH * (dimensions.hueWidth - 20));
+    setHue(invertedH);
+
+    setPosition({
+      x: s * dimensions.spectrumWidth,
+      y: (1 - v) * dimensions.spectrumHeight,
+    });
+
+    if (value.length === 9) {
+      setAlpha(parseInt(value.slice(7, 9), 16) / 255);
+    }
+  }, [dimensions, value]);
 
   const handleColorSelect = useCallback(
     (color: string) => {
@@ -465,8 +533,22 @@ export const ColorPicker = ({
 
             <View
               ref={spectrumRef}
+              onLayout={() => {
+                if (!dimensions) {
+                  spectrumRef.current?.measure(
+                    (fx, fy, width, height, px, py) => {
+                      hueRef.current?.measure((hfx, hfy, hueWidth) => {
+                        setDimensions({
+                          spectrumWidth: width,
+                          spectrumHeight: height,
+                          hueWidth: hueWidth,
+                        });
+                      });
+                    }
+                  );
+                }
+              }}
               style={styles.spectrumContainer}
-              onLayout={handleSpectrumLayout}
             >
               <LinearGradient
                 style={StyleSheet.absoluteFill}
