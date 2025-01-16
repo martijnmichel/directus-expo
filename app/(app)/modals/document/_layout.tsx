@@ -6,12 +6,11 @@ export default function Layout() {
   return (
     <Stack>
       <Stack.Screen
-        name="[collection]/index"
-        options={{ headerTitle: "", headerLeft: () => <BackButton /> }}
-      />
-      <Stack.Screen
-        name="[collection]/[id]/index"
-        options={{ headerTitle: "", headerLeft: () => <BackButton /> }}
+        name="add.tsx"
+        options={{
+          headerTitle: "",
+          presentation: "modal",
+        }}
       />
     </Stack>
   );

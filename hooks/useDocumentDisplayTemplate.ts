@@ -37,5 +37,9 @@ export const useDocumentDisplayTemplate = ({
     fetch();
   }, [collection, docId, template]);
 
+  if (docId === "+") {
+    return "Add Document";
+  }
+
   return template ? parseTemplate(template, data) : docId.toString();
 };

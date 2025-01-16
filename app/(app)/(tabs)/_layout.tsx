@@ -12,7 +12,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useTrackedPath } from "@/hooks/useTrackPath";
+import { useTrackedPath, useTrackPath } from "@/hooks/useTrackPath";
 import { Pressable } from "react-native";
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -22,6 +22,9 @@ export default function TabsLayout() {
   const { bottom } = useSafeAreaInsets();
   const { data } = useTrackedPath();
   const router = useRouter();
+
+  useTrackPath();
+
   // Add loading check
   if (isLoading) {
     return null; // or return a loading spinner
@@ -35,7 +38,7 @@ export default function TabsLayout() {
     <Tabs>
       <TabSlot />
       <TabList style={styles.tabBar}>
-        <Pressable
+        {/**<Pressable
           style={[styles.item, { paddingBottom: bottom }]}
           onPress={() => {
             router.push(data || "/");
@@ -43,7 +46,17 @@ export default function TabsLayout() {
         >
           <Home size={24} color={theme.colors.textPrimary} />
           <Text>Content</Text>
-        </Pressable>
+        </Pressable> */}
+
+        <TabTrigger
+          style={[styles.item, { paddingBottom: bottom }]}
+          name="content"
+          href="/"
+        >
+          <Home size={24} color={theme.colors.textPrimary} />
+          <Text>Content</Text>
+        </TabTrigger>
+
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
           name="profile"
@@ -60,12 +73,6 @@ export default function TabsLayout() {
           <Cog size={24} color={theme.colors.textPrimary} />
           <Text>Settings</Text>
         </TabTrigger>
-
-        <TabTrigger
-          style={[styles.item, { display: "none" }]}
-          name="content"
-          href="/"
-        />
 
         <TabTrigger
           style={[styles.item, { display: "none" }]}
