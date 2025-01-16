@@ -4,11 +4,7 @@ import {
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { useStyles } from "react-native-unistyles";
-import { formStyles } from "./form/style";
-import { Controller } from "react-hook-form";
-import { Input } from "./form/input";
-import { Select } from "./form/select";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Horizontal, Vertical } from "./layout/Stack";
 import { Modal } from "./display/modal";
@@ -17,6 +13,7 @@ import { Alert } from "react-native";
 import { Check, Edit } from "./icons";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
+import { Input } from "./interfaces/input";
 export type API = {
   name: string;
   url: string;

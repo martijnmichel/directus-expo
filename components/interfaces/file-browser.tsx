@@ -4,11 +4,11 @@ import { Grid } from "../display/grid";
 import { Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { RadioButton } from "../form/radio-button";
 import { PortalOutlet } from "../layout/Portal";
 import { Button } from "../display/button";
 import { Check } from "../icons";
 import { Image } from "expo-image";
+import { RadioButton } from "./radio-button";
 interface FileBrowserProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;

@@ -37,9 +37,13 @@ import { Plus } from "../icons";
 import { Button } from "../display/button";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Modal } from "../display/modal";
-import { Input } from "../form/input";
+import { Input } from "../interfaces/input";
 
-export default function CollectionLayout({ children }: { children: React.ReactNode }) {
+export default function CollectionLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { data: collections } = useCollections();
   const { collection } = useLocalSearchParams();

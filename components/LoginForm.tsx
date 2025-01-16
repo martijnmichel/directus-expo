@@ -9,10 +9,9 @@ import {
 } from "react-native";
 import { useForm, Controller, Form } from "react-hook-form";
 import { useAuth } from "../contexts/AuthContext";
-import { Input } from "./form/input";
+import { Input } from "./interfaces/input";
 import { Button } from "./display/button";
 import { useStyles } from "react-native-unistyles";
-import { formStyles } from "./form/style";
 import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 import { APISelect } from "./APISelect";
@@ -21,8 +20,8 @@ import {
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import { ErrorList } from "./form/ErrorList";
 import { API } from "./APIForm";
+import { formStyles } from "./interfaces/style";
 
 interface LoginForm {
   email: string;

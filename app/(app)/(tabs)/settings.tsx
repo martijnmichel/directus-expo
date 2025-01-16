@@ -8,7 +8,6 @@ import { useThemeToggle } from "@/unistyles/useThemeToggle";
 import { router } from "expo-router";
 import { Moon } from "@/components/icons/Moon";
 import { Sun } from "@/components/icons/Sun";
-import { Toggle } from "@/components/form/toggle";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useServerInfo } from "@/state/queries/directus/server";
 import { APISelect } from "@/components/APISelect";
@@ -16,6 +15,7 @@ import { Divider } from "@/components/layout/divider";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { API } from "@/components/APIForm";
+import { Toggle } from "@/components/interfaces/toggle";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
