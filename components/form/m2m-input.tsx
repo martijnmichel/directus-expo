@@ -26,6 +26,7 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
 import { useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
+import EventBus, { MittEvents } from "@/utils/mitt";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -80,7 +81,6 @@ export const M2MInput = ({
 
   const { data: options, refetch } = useQuery({
     queryKey: ["options", item.collection, item.field],
-    enabled: !!junction && !!relation && !!item.collection,
     queryFn: () =>
       directus!.request(
         readItems(relation?.related_collection as any, {
@@ -110,6 +110,26 @@ export const M2MInput = ({
         })
       ),
   });
+
+  useEffect(() => {
+    const updateM2M = (event: any) => {
+      console.log("m2m:update", event);
+    };
+    EventBus.on("m2m:update", updateM2M);
+
+    const addM2M = (event: MittEvents["m2m:add"]) => {
+      if (event.field === item.field) {
+        console.log("m2m:add", event);
+        setAddedDocIds([...addedDocIds, event.data.id]);
+        props.onChange([...valueProp, event.data.id]);
+      }
+    };
+    EventBus.on("m2m:add", addM2M);
+    return () => {
+      EventBus.off("m2m:update", updateM2M);
+      EventBus.off("m2m:add", addM2M);
+    };
+  }, []);
 
   useEffect(() => {
     refetch();
@@ -172,7 +192,7 @@ export const M2MInput = ({
                   collection: relation.related_collection,
                   id: "+",
                   junction_collection: junction.collection,
-                  related_field: relation.field,
+                  related_field: item.field,
                 },
               }}
               asChild

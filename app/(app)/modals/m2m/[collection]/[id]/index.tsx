@@ -57,21 +57,18 @@ export default function Collection() {
               collection={collection as keyof CoreSchema}
               id={id as string}
               onSave={async (document) => {
-                mutate(
-                  {
-                    [related_field]: document.id as number,
+                const data = {
+                  [related_field as string]: document.id as number,
+                };
+                mutate(data, {
+                  onSuccess: (newData) => {
+                    router.dismiss();
+                    EventBus.emit("m2m:add", {
+                      data: newData,
+                      field: related_field,
+                    });
                   },
-                  {
-                    onSuccess: (newRelatedItem) => {
-                      console.log("newRelatedItem", newRelatedItem);
-                      router.dismiss();
-                      EventBus.emit("m2m:add", {
-                        data: newRelatedItem,
-                        field: related_field,
-                      });
-                    },
-                  }
-                );
+                });
               }}
             />
           </Section>

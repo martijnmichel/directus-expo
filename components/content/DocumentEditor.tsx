@@ -112,18 +112,6 @@ export const DocumentEditor = ({
     }
   }, [document]);
 
-  const navigation = useNavigation();
-
-  useEffect(() => {
-    const update = (event: any) => {
-      console.log("m2m:update", event);
-    };
-    EventBus.on("m2m:update", update);
-    return () => {
-      EventBus.off("m2m:update", update);
-    };
-  }, [navigation]);
-
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)

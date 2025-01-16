@@ -37,8 +37,12 @@ export const DocListItem = <T extends keyof CoreSchema>({
     data: doc,
     isLoading,
     error,
-  } = useDocument(junction?.meta.many_collection as keyof CoreSchema, docId, {
-    fields: ["*.*"],
+  } = useDocument({
+    collection: junction?.meta.many_collection as keyof CoreSchema,
+    id: docId,
+    options: {
+      fields: ["*.*"],
+    },
   });
 
   if (error) {
