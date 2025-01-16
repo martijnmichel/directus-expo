@@ -34,10 +34,13 @@ export const DateTime = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [selectedTime, setSelectedTime] = useState(() => {
-    const initialHours = value ? dayjs(value).format("HH") : "12";
-    const initialMinutes = value ? dayjs(value).format("mm") : "00";
-    console.log("Initial time:", initialHours, initialMinutes);
-    return { hours: initialHours, minutes: initialMinutes };
+    if (value && dayjs(value).isValid()) {
+      return {
+        hours: dayjs(value).format("HH"),
+        minutes: dayjs(value).format("mm"),
+      };
+    }
+    return { hours: "12", minutes: "00" };
   });
   const { styles, theme } = useStyles(dateTimeStyles);
   const { styles: formStyle } = useStyles(formStyles);
@@ -172,7 +175,9 @@ export const DateTime = ({
             disabled && { color: theme.colors.textTertiary },
           ]}
         >
-          {value ? dayjs(value).format("lll") : placeholder}
+          {value && dayjs(value).isValid()
+            ? dayjs(value).format("lll")
+            : placeholder}
         </Text>
         <View style={{ marginLeft: "auto" }}>
           <Calendar
