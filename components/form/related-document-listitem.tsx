@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, Pressable } from "react-native";
 import { CoreSchema, ReadRelationOutput } from "@directus/sdk";
 import { Trash, Edit, Redo } from "../icons";
@@ -9,8 +9,9 @@ import { useDocument } from "@/state/queries/directus/collection";
 import { parseTemplate } from "@/helpers/document/template";
 import { Link } from "expo-router";
 import { Button } from "../display/button";
+import { EventBus } from "@/utils/mitt";
 
-export const DocListItem = <T extends keyof CoreSchema>({
+export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   docId,
   junction,
   relation,
@@ -36,6 +37,7 @@ export const DocListItem = <T extends keyof CoreSchema>({
   const {
     data: doc,
     isLoading,
+    refetch,
     error,
   } = useDocument({
     collection: junction?.meta.many_collection as keyof CoreSchema,
@@ -44,6 +46,22 @@ export const DocListItem = <T extends keyof CoreSchema>({
       fields: ["*.*"],
     },
   });
+
+  useEffect(() => {
+    EventBus.on("m2m:update", (event) => {
+      console.log({ event, relation, docId });
+      if (
+        event.collection === relation.related_collection &&
+        doc?.[junction.meta.junction_field as keyof typeof doc]?.id ===
+          event.docId
+      ) {
+        refetch();
+      }
+    });
+    return () => {
+      EventBus.off("m2m:update", () => refetch());
+    };
+  }, [refetch, relation.related_collection, doc]);
 
   if (error) {
     return (
@@ -74,9 +92,13 @@ export const DocListItem = <T extends keyof CoreSchema>({
       </Text>
 
       <Link
-        href={`/modals/m2m/${relation.related_collection}/${
-          doc[junction.meta.junction_field as keyof typeof doc]?.id
-        }`}
+        href={{
+          pathname: `/modals/m2m/[collection]/[id]`,
+          params: {
+            collection: relation.related_collection,
+            id: doc[junction.meta.junction_field as keyof typeof doc]?.id,
+          },
+        }}
         asChild
       >
         <Button variant="ghost" rounded>

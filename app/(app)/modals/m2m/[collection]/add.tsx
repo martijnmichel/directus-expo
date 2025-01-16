@@ -23,6 +23,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import EventBus from "@/utils/mitt";
 import { useAuth } from "@/contexts/AuthContext";
 import { mutateDocument } from "@/state/actions/mutateItem";
+import { CoreSchemaDocument } from "@/types/directus";
 export default function Collection() {
   const { collection, item_field } = useLocalSearchParams();
   const id = "+";
@@ -55,7 +56,7 @@ export default function Collection() {
               onSave={async (document) => {
                 router.dismiss();
                 EventBus.emit("m2m:add", {
-                  data: document,
+                  data: document as CoreSchemaDocument,
                   field: item_field as string,
                 });
               }}

@@ -47,6 +47,7 @@ import { each, filter, find, isEmpty, map } from "lodash";
 import { DateTime } from "../form/datetime";
 import { ColorPicker } from "../form/color";
 import EventBus from "@/utils/mitt";
+import { queryClient } from "@/app/_layout";
 export const DocumentEditor = ({
   collection,
   id,
@@ -480,6 +481,13 @@ export const DocumentEditor = ({
         context.reset(updatedDoc);
 
         onSave?.(updatedDoc as Record<string, unknown>);
+
+        queryClient.invalidateQueries({
+          queryKey: ["document", collection, id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["documents", collection],
+        });
       },
     });
   };

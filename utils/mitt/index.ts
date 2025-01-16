@@ -1,10 +1,12 @@
+import { CoreSchemaDocument } from "@/types/directus";
+import { CoreSchema } from "@directus/sdk";
 import mitt, { Emitter } from "mitt";
 
 // Define your event types here
 export type MittEvents = {
-  "m2m:add": { data: any; field: string };
-  "m2m:remove": { data: any; field: string };
-  "m2m:update": { data: any; field: string };
+  "m2m:add": { data: CoreSchemaDocument; field: string };
+  "m2m:remove": { data: CoreSchemaDocument; field: string };
+  "m2m:update": { collection: keyof CoreSchema; docId: string | number };
   error: Error;
 };
 

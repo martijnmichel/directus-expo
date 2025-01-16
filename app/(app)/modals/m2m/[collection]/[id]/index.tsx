@@ -18,14 +18,14 @@ import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { map } from "lodash";
 import { CoreSchema, createItem, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
-import { useCollection } from "@/state/queries/directus/collection";
+import {
+  useCollection,
+  useDocument,
+} from "@/state/queries/directus/collection";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
-import EventBus from "@/utils/mitt";
-import { useAuth } from "@/contexts/AuthContext";
-import { mutateDocument } from "@/state/actions/mutateItem";
+import { EventBus } from "@/utils/mitt";
 export default function Collection() {
-  const { collection, id, junction_collection, related_field } =
-    useLocalSearchParams();
+  const { collection, id } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const navigation = useNavigation();
   const headerTitle = useDocumentDisplayTemplate({
@@ -33,11 +33,6 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
-  const { directus } = useAuth();
-  const { mutate } = mutateDocument(
-    junction_collection as keyof CoreSchema,
-    id as string
-  );
 
   const headerStyles = useHeaderStyles();
 
@@ -57,17 +52,11 @@ export default function Collection() {
               collection={collection as keyof CoreSchema}
               id={id as string}
               onSave={async (document) => {
-                const data = {
-                  [related_field as string]: document.id as number,
-                };
-                mutate(data, {
-                  onSuccess: (newData) => {
-                    router.dismiss();
-                    EventBus.emit("m2m:add", {
-                      data: newData,
-                      field: related_field,
-                    });
-                  },
+                router.dismiss();
+                console.log({ collection, id });
+                EventBus.emit("m2m:update", {
+                  collection: collection as keyof CoreSchema,
+                  docId: document.id as string,
                 });
               }}
             />

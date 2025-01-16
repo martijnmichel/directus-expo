@@ -34,7 +34,7 @@ export default function Collection() {
     junction_collection,
     junction_field,
     doc_id,
-    field,
+    item_field,
   } = useLocalSearchParams();
 
   const { data: fields } = useFields(related_collection as keyof CoreSchema);
@@ -114,7 +114,7 @@ export default function Collection() {
           router.dismiss();
           EventBus.emit("m2m:add", {
             data: doc,
-            field: field as string,
+            field: item_field as string,
           });
         }}
       />

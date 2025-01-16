@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import {
   CoreSchema,
@@ -8,7 +8,7 @@ import {
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import { DocListItem } from "./doc-listitem";
+import { RelatedDocumentListItem } from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -86,11 +86,6 @@ export const M2MInput = ({
   );
 
   useEffect(() => {
-    const updateM2M = (event: any) => {
-      console.log("m2m:update", event);
-    };
-    EventBus.on("m2m:update", updateM2M);
-
     const addM2M = (event: MittEvents["m2m:add"]) => {
       if (event.field === item.field) {
         console.log("m2m:add", event);
@@ -109,10 +104,9 @@ export const M2MInput = ({
     };
     EventBus.on("m2m:add", addM2M);
     return () => {
-      EventBus.off("m2m:update", updateM2M);
       EventBus.off("m2m:add", addM2M);
     };
-  }, []);
+  }, [addedDocIds, valueProp, props.onChange]);
 
   return (
     relation &&
@@ -124,7 +118,7 @@ export const M2MInput = ({
             const isDeselected = value?.includes(id) && !valueProp.includes(id);
             const isNew = !value?.includes(id);
             return (
-              <DocListItem
+              <RelatedDocumentListItem
                 key={id}
                 docId={id}
                 junction={junction!}
@@ -195,59 +189,6 @@ export const M2MInput = ({
           >
             <Button>Add existing</Button>
           </Link>
-
-          {/** <Modal>
-            <Modal.Trigger>
-              <Button>Add existing</Button>
-            </Modal.Trigger>
-            <Modal.Content variant="bottomSheet" title="Import from URL">
-              {({ close }) => (
-                <List>
-                  {options?.map((opt) => (
-                    <Pressable
-                      key={opt.id}
-                      onPress={async () => {
-                        close();
-                        console.log(opt);
-
-                        console.log(
-                          opt[
-                            relation?.schema
-                              .foreign_key_column as keyof typeof opt
-                          ]
-                        );
-
-                        try {
-                          const doc = (await directus!.request(
-                            createItem(
-                              junction?.collection as keyof CoreSchema,
-                              {
-                                [relation.field]:
-                                  opt[
-                                    relation?.schema
-                                      .foreign_key_column as keyof typeof opt
-                                  ],
-                              }
-                            )
-                          )) as { id: number } & Record<string, unknown>;
-                          console.log({ doc, docDoc: doc[relation.field] });
-                          setAddedDocIds([
-                            ...addedDocIds,
-                            doc[relation.field] as number,
-                          ]);
-                          props.onChange([...valueProp, doc.id]);
-                        } catch (e) {
-                          console.error(e);
-                        }
-                      }}
-                    >
-                      <ListItem>{JSON.stringify(opt)}</ListItem>
-                    </Pressable>
-                  ))}
-                </List>
-              )}
-            </Modal.Content>
-          </Modal> */}
         </Horizontal>
       </Vertical>
     )
