@@ -4,11 +4,11 @@ import { Grid } from "../display/grid";
 import { Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { RadioButton } from "../interfaces/radio-button";
 import { PortalOutlet } from "../layout/Portal";
 import { Button } from "../display/button";
 import { Check } from "../icons";
 import { Image } from "expo-image";
-import { RadioButton } from "./radio-button";
 interface FileBrowserProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
@@ -70,7 +70,7 @@ export const FileBrowser = ({
               <View style={styles.imageWrapper}>
                 <Image
                   style={[styles.image, selected && styles.selected]}
-                  source={{ uri: `${directus?.url}/assets/${file.id}` }}
+                  source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
                 />
                 <View style={styles.radioWrapper}>
                   <RadioButton
