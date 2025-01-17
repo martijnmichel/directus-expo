@@ -1,31 +1,36 @@
-import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons/";
+import { MsIcon } from "material-symbols-react-native";
+import * as msIconDefinition from "@material-symbols-react-native/outlined-400";
+
+export type DirectusIconName = keyof typeof msIconDefinition;
 
 interface DirectusIconProps {
-  name: string;
+  name: DirectusIconName;
   size?: number;
   color?: string;
 }
 
-export const DirectusIcon = ({ name, ...props }: DirectusIconProps) => {
-  // Convert directus icon names to material icon names
-  // e.g., "location_pin" -> "location-pin"
-  const iconName = name?.replace(/_/g, "-");
+export const DirectusIcon = ({
+  name,
+  size,
+  color,
+  ...props
+}: DirectusIconProps) => {
+  // Convert directus icon name to material symbols name format
+  // e.g., "avg_pace" -> "msAvgPace"
+  const iconName =
+    "ms" +
+    name
+      .split("_")
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join("");
 
-  // Check if icon exists in MaterialCommunityIcons first
-  if (iconName in MaterialCommunityIcons.glyphMap) {
-    return (
-      <MaterialCommunityIcons
-        name={iconName as keyof typeof MaterialCommunityIcons.glyphMap}
-        {...props}
-      />
-    );
+  // Get the icon definition
+  const iconDef = msIconDefinition[iconName as DirectusIconName];
+
+  if (!iconDef) {
+    console.warn(`Icon "${name}" not found`);
+    return null;
   }
 
-  // Fallback to MaterialIcons
-  return (
-    <MaterialIcons
-      name={iconName as keyof typeof MaterialIcons.glyphMap}
-      {...props}
-    />
-  );
+  return <MsIcon icon={iconDef} size={size} color={color} {...props} />;
 };

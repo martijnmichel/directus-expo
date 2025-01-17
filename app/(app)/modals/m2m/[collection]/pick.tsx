@@ -27,6 +27,7 @@ import { mutateDocument } from "@/state/actions/mutateItem";
 import { useQuery } from "@tanstack/react-query";
 import { Table } from "@/components/display/table";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
+import { CoreSchemaDocument } from "@/types/directus";
 export default function Collection() {
   const {
     related_collection,
@@ -118,7 +119,7 @@ export default function Collection() {
           console.log(doc);
           router.dismiss();
           EventBus.emit("m2m:add", {
-            data: doc,
+            data: doc as CoreSchemaDocument,
             field: item_field as string,
           });
         }}
