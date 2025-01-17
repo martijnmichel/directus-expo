@@ -7,7 +7,7 @@ import { useDocuments } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
@@ -97,6 +97,7 @@ const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
+  const path = usePathname();
 
   const filterContext = useDocumentsFilters();
   const { page, limit, search, setSearch } = filterContext;
@@ -144,7 +145,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           router.push(`/content/${collection}/${doc.id}`);
         }}
       />
-      <PortalOutlet name="floating-toolbar">
+      <PortalOutlet name="floating-toolbar" path={/^\/content\/[^/]+$/}>
         <Pagination {...filterContext} total={documents?.total} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>

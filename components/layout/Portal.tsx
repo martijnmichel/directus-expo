@@ -1,3 +1,4 @@
+import { useNavigation, usePathname, useRouter } from "expo-router";
 import React, {
   createContext,
   useCallback,
@@ -68,17 +69,36 @@ export const PortalHost = ({ name }: PortalHostProps) => {
 interface PortalOutletProps {
   name: string;
   children: React.ReactNode;
+  path?: string | RegExp;
 }
 
-export const PortalOutlet = ({ name, children }: PortalOutletProps) => {
+export const PortalOutlet = ({ name, children, path }: PortalOutletProps) => {
   const { mount, unmount } = useContext(PortalContext);
+  const navigation = useNavigation();
+  const currentPath = usePathname();
 
   useEffect(() => {
-    mount(name, children);
-    return () => {
+    const pathMatches = path
+      ? typeof path === "string"
+        ? currentPath === path
+        : path.test(currentPath)
+      : true;
+
+    if (pathMatches) {
+      mount(name, children);
+      return () => unmount(name);
+    } else {
       unmount(name);
-    };
-  }, [name, children]);
+    }
+  }, [name, children, path, currentPath, mount, unmount]);
+
+  useEffect(() => {
+    const cleanup = navigation.addListener("beforeRemove", () => {
+      unmount(name);
+    });
+
+    return cleanup;
+  }, [navigation, name, unmount]);
 
   return null;
 };
