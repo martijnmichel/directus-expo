@@ -21,4 +21,21 @@ i18n.use(initReactI18next).init({
   },
 });
 
+export const Locales = ["en", "nl"];
+
+export const localeSettings = {
+  en: {
+    label: "English",
+    icon: "globe",
+    flag: "🇬🇧",
+    code: "en-US",
+  },
+  nl: {
+    label: "Nederlands",
+    icon: "globe",
+    flag: "🇳🇱",
+    code: "nl-NL",
+  },
+};
+
 export default i18n;

@@ -16,6 +16,7 @@ import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { API } from "@/components/APIForm";
 import { Toggle } from "@/components/interfaces/toggle";
+import { LocaleSelect } from "@/components/settings/locale-switch";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
@@ -64,7 +65,7 @@ export default function TabTwoScreen() {
         <Section>
           <Vertical>
             <H3>Options</H3>
-
+            <LocaleSelect />
             <Toggle
               value={currentTheme === "dark"}
               label="Dark Mode"
