@@ -52,7 +52,7 @@ export const SelectMulti = ({
   const { styles: formStyle } = useStyles(formStyles);
 
   const selectedOptions = options.filter((option) =>
-    value.includes(option.value)
+    value?.includes(option.value)
   );
 
   const clonedPrepend = prepend
@@ -170,7 +170,7 @@ export const SelectMulti = ({
                   {item.icon && (
                     <View style={styles.optionIcon}>
                       <DirectusIcon
-                        name={item.icon}
+                        name={item.icon as any}
                         size={20}
                         color={item.color || theme.colors.textPrimary}
                       />

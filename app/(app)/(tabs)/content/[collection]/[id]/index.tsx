@@ -8,7 +8,7 @@ import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { H1 } from "@/components/display/typography";
 import UserCollections from "@/components/content/UserCollections";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { map } from "lodash";
 import { CoreSchema, readItem } from "@directus/sdk";
@@ -41,6 +41,9 @@ export default function Collection() {
             <DocumentEditor
               collection={collection as keyof CoreSchema}
               id={id as string}
+              onSave={() => {
+                router.back();
+              }}
             />
           </Section>
         </Container>

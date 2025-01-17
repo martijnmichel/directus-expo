@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  aggregate,
   CoreSchema,
   Query,
   readCollections,
@@ -18,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { mutateUser } from "@/state/actions/updateUser";
 import { mutateMe } from "@/state/actions/updateMe";
+import { get } from "lodash";
 export const useMe = () => {
   const { directus } = useAuth();
   return useQuery({
@@ -76,7 +78,13 @@ export const useUsers = (query?: Query<CoreSchema, any>) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["users"],
-    queryFn: () => directus?.request(readUsers(query)),
+    queryFn: async () => {
+      const items = await directus?.request(readUsers(query));
+      const pagination = await directus?.request(
+        aggregate("directus_users", { aggregate: { count: "*", ...query } })
+      );
+      return { items, total: Number(get(pagination, "0.count")) };
+    },
   });
 };
 
@@ -92,7 +100,15 @@ export const useRoles = (query?: Query<CoreSchema, any>) => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["roles"],
-    queryFn: () => directus?.request(readRoles(query)),
+    queryFn: async () => {
+      const items = await directus?.request(readRoles(query));
+      const pagination = await directus?.request(
+        aggregate("directus_roles", {
+          aggregate: { count: "*", ...query },
+        })
+      );
+      return { items, total: Number(get(pagination, "0.count")) };
+    },
   });
 };
 
@@ -100,7 +116,11 @@ export const useProviders = () => {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["providers"],
-    queryFn: () => directus?.request(readProviders()),
+    queryFn: async () => {
+      const items = await directus?.request(readProviders());
+
+      return { items, total: 0 };
+    },
   });
 };
 

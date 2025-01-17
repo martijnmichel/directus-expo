@@ -22,7 +22,7 @@ import { runOnJS } from "react-native-reanimated";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
-  value: any[];
+  value: any[] | undefined;
   onChange: (value: any[]) => void;
   label?: string;
   error?: string;
@@ -76,7 +76,7 @@ export const RepeaterInput = ({
           direction="column"
           onOrderChange={onOrderChange}
         >
-          {value.map((repeaterItem, index) => (
+          {(value || []).map((repeaterItem, index) => (
             <Draggable
               key={index}
               id={index.toString()}

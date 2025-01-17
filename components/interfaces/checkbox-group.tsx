@@ -14,7 +14,7 @@ interface CheckboxGroupProps {
   error?: string;
   helper?: string;
   options: Option[];
-  value?: (string | number)[];
+  value?: (string | number)[] | undefined;
   onChange?: (value: (string | number)[]) => void;
   disabled?: boolean;
 }
@@ -47,7 +47,7 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
         {options.map((option) => (
           <View key={option.value} style={styles.checkboxItem}>
             <Checkbox
-              checked={value.includes(option.value)}
+              checked={value?.includes(option.value)}
               onChange={() => handleCheckboxChange(option.value)}
               disabled={disabled}
               text={option.text}

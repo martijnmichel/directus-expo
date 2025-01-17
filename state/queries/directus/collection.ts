@@ -1,5 +1,6 @@
 import { useAuth } from "@/contexts/AuthContext";
 import {
+  aggregate,
   CoreSchema,
   Query,
   readCollection,
@@ -19,6 +20,7 @@ import {
   UseQueryResult,
 } from "@tanstack/react-query";
 import { coreCollections } from "./core";
+import { get } from "lodash";
 
 export const useCollection = (id: string) => {
   const { directus } = useAuth();
@@ -35,11 +37,28 @@ export const useDocuments = (
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
 
+  console.log({ collection, query });
+
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        queryKey: ["documents", collection],
-        queryFn: () => directus?.request(readItems(collection as any, query)),
+        queryKey: ["documents", collection, query],
+        queryFn: async () => {
+          const items = await directus?.request(
+            readItems(collection as any, query)
+          );
+          const pagination = await directus?.request(
+            aggregate(collection as any, {
+              aggregate: { count: "*" },
+              query,
+            })
+          );
+
+          return {
+            items,
+            total: Number(get(pagination, "0.count")),
+          };
+        },
       });
 };
 

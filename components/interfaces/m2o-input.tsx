@@ -48,7 +48,7 @@ export const M2OInput = ({
     { filter: item.meta.options?.filter }
   );
 
-  const selectOptions = options?.map((opt: any) => {
+  const selectOptions = options?.items?.map((opt: any) => {
     return {
       value: opt[item.schema?.foreign_key_column!] || opt.id || "",
       text: parseTemplate(item.meta?.options?.template || "", opt),

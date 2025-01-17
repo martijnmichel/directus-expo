@@ -8,14 +8,75 @@ import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router } from "expo-router";
-import { useEffect } from "react";
-import { Text } from "react-native";
+import { useEffect, useState } from "react";
+import { UseQueryResult } from "@tanstack/react-query";
+import { Horizontal, Vertical } from "../layout/Stack";
+import { ChevronRight } from "../icons";
+import { Button } from "../display/button";
+import { DirectusIcon } from "../display/directus-icon";
+
+const useDocumentsFilters = () => {
+  const [page, setPage] = useState(1);
+  const [limit, updateLimit] = useState(25);
+
+  const next = () => {
+    setPage(page + 1);
+  };
+
+  const previous = () => {
+    setPage(page - 1);
+  };
+
+  const setLimit = (limit: number) => {
+    setPage(1);
+    updateLimit(limit);
+  };
+
+  return { page, limit, next, previous, setLimit };
+};
+
+const Pagination = (
+  context: ReturnType<typeof useDocumentsFilters> & {
+    total: number | null | undefined;
+  }
+) => {
+  return (
+    <Horizontal>
+      <Button
+        rounded
+        disabled={context.page === 1}
+        variant="soft"
+        onPress={context.previous}
+      >
+        <DirectusIcon name="chevron_left" />
+      </Button>
+      <Button
+        rounded
+        disabled={
+          context.page === Math.ceil((context.total || 0) / context.limit)
+        }
+        variant="soft"
+        onPress={context.next}
+      >
+        <DirectusIcon name="chevron_right" />
+      </Button>
+    </Horizontal>
+  );
+};
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
+
+  const filterContext = useDocumentsFilters();
+  const { page, limit } = filterContext;
+
   const { data: documents, refetch } = useDocuments(
-    collection as keyof CoreSchema[keyof CoreSchema]
+    collection as keyof CoreSchema[keyof CoreSchema],
+    {
+      page,
+      limit,
+    }
   );
 
   const { label } = useFieldMeta(collection);
@@ -24,10 +85,10 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   const preset = presets?.find((p) => p.collection === collection);
 
-  console.log({ preset });
+  console.log({ documents });
 
   const tableFields =
-    (preset && preset.layout_query?.tabular.fields) ||
+    (preset && preset.layout_query?.tabular?.fields) ||
     fields?.map((f) => f.field) ||
     [];
 
@@ -36,22 +97,25 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   }, [refetch]);
 
   return (
-    <Table
-      headers={reduce(
-        tableFields,
-        (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
-        {}
-      )}
-      fields={tableFields}
-      items={(documents as Record<string, unknown>[]) || []}
-      widths={preset?.layout_options?.tabular.widths}
-      renderRow={(doc) =>
-        map(tableFields, (f) => doc[f] as number | string | null)
-      }
-      onRowPress={(doc) => {
-        console.log(doc);
-        router.push(`/content/${collection}/${doc.id}`);
-      }}
-    />
+    <Vertical>
+      <Table
+        headers={reduce(
+          tableFields,
+          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
+          {}
+        )}
+        fields={tableFields}
+        items={(documents?.items as Record<string, unknown>[]) || []}
+        widths={preset?.layout_options?.tabular?.widths}
+        renderRow={(doc) =>
+          map(tableFields, (f) => doc[f] as number | string | null)
+        }
+        onRowPress={(doc) => {
+          console.log(doc);
+          router.push(`/content/${collection}/${doc.id}`);
+        }}
+      />
+      <Pagination {...filterContext} total={documents?.total} />
+    </Vertical>
   );
 }
