@@ -16,7 +16,7 @@ const findSimilarIcons = (searchTerm: string) => {
   );
 };
 
-const iconMapping: Record<string, string> = {
+const iconMapping: Record<string, DirectusIconName> = {
   // Common UI icons
   add: "msAdd",
   arrow_back: "msArrowBack",
@@ -29,7 +29,7 @@ const iconMapping: Record<string, string> = {
   error: "msError",
   help: "msHelp",
   info: "msInfo",
-  local_offer: "msLocalOffer",
+  local_offer: "msLocalActivity",
   menu: "msMenu",
   more_vert: "msMoreVert",
   place: "msLocationOn",
@@ -40,7 +40,7 @@ const iconMapping: Record<string, string> = {
   // Content/Files
   folder: "msFolder",
   image: "msImage",
-  file: "msInsertDriveFile",
+  file: "msFilePresent",
   attachment: "msAttachFile",
 
   // Navigation
@@ -52,9 +52,9 @@ const iconMapping: Record<string, string> = {
   visibility: "msVisibility",
   visibility_off: "msVisibilityOff",
   favorite: "msFavorite",
-  favorite_border: "msFavoriteBorder",
+  favorite_border: "msFavorite",
   star: "msStar",
-  star_border: "msStarBorder",
+  star_border: "msStar",
   warning: "msWarning",
   lock: "msLock",
   lock_open: "msLockOpen",
@@ -63,7 +63,7 @@ const iconMapping: Record<string, string> = {
   chat: "msChat",
   comment: "msComment",
   notifications: "msNotifications",
-  phone: "msPhone",
+  phone: "msPhoneCallback",
 
   // Media
   play_arrow: "msPlayArrow",
@@ -74,12 +74,12 @@ const iconMapping: Record<string, string> = {
 
   // Social
   person: "msPerson",
-  people: "msPeople",
+  people: "msGroup",
   group: "msGroup",
   share: "msShare",
 
   // Time
-  access_time: "msAccessTime",
+  access_time: "msSchedule",
   calendar_today: "msCalendarToday",
   event: "msEvent",
   schedule: "msSchedule",
