@@ -19,6 +19,7 @@ import { DragIcon, Trash, Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
 import { runOnJS } from "react-native-reanimated";
+import { useTranslation } from "react-i18next";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -41,6 +42,7 @@ export const RepeaterInput = ({
 }: RepeaterInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(stylesheet);
+  const { t } = useTranslation();
 
   const onOrderChange = useCallback(
     (order: UniqueIdentifier[]) => {
@@ -149,7 +151,7 @@ export const RepeaterInput = ({
           }}
           asChild
         >
-          <Button>Add Item</Button>
+          <Button>{t("components.repeater.addItem")}</Button>
         </Link>
       </Horizontal>
     </Vertical>

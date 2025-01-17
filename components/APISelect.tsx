@@ -69,7 +69,7 @@ export function APISelect({
                   <Edit />
                 </Button>
               </Modal.Trigger>
-              <Modal.Content title="Edit API">
+              <Modal.Content title={t("components.modal.editApi")}>
                 {({ close }) => (
                   <APIForm defaultValues={value} onSuccess={() => close()} />
                 )}
@@ -84,10 +84,8 @@ export function APISelect({
               </ConfirmDialog.Trigger>
 
               <ConfirmDialog.Content
-                title="Delete Item"
-                description="Are you sure you want to delete this item? This action cannot be undone."
-                confirmLabel="Delete"
-                cancelLabel="Cancel"
+                title={t("components.confirmDialog.delete")}
+                description={t("components.confirmDialog.confirmDelete")}
                 variant="danger"
                 onConfirm={async () => {
                   const isActive = data?.find((api) => api.id === value.id);

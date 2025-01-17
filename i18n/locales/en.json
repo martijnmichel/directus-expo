@@ -8,7 +8,8 @@
       "emailRequired": "Email is required",
       "passwordRequired": "Password is required",
       "apiUrlRequired": "API URL is required",
-      "loginFailed": "Login failed. Please check your credentials."
+      "loginFailed": "Login failed. Please check your credentials.",
+      "invalidApiUrl": "Invalid API URL"
     },
     "api": "Directus API"
   },
@@ -35,5 +36,40 @@
     "noData": "No data available",
     "loadingMore": "Loading more...",
     "showMore": "Show more"
+  },
+  "components": {
+    "table": {
+      "noData": "No data available",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{current}} of {{total}}"
+    },
+    "modal": {
+      "close": "Close"
+    },
+    "confirmDialog": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "repeater": {
+      "addItem": "Add Item",
+      "editItem": "Edit Item",
+      "deleteItem": "Delete Item"
+    },
+    "documentEditor": {
+      "save": "Save",
+      "delete": "Delete",
+      "confirmDelete": "Are you sure you want to delete this item?"
+    },
+    "fileUpload": {
+      "dragDrop": "Drag and drop files here",
+      "browse": "Browse files"
+    },
+    "tabs": {
+      "content": "Content",
+      "profile": "Profile",
+      "settings": "Settings"
+    }
   }
 }

@@ -23,6 +23,9 @@ import { DirectusErrorResponse } from "@/types/directus";
 import { mapFields } from "@/helpers/document/mapFields";
 import { formStyles } from "../interfaces/style";
 import { Stack } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { Text } from "../display/typography";
+
 export const DocumentEditor = ({
   collection,
   id,
@@ -35,6 +38,7 @@ export const DocumentEditor = ({
   onSave?: (doc: Record<string, unknown>) => void;
   onDelete?: () => void;
 }) => {
+  const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
@@ -148,20 +152,13 @@ export const DocumentEditor = ({
     });
   };
 
-  const SubmitButton = () => (
-    <Button
-      rounded
-      loading={context.formState.isSubmitting}
-      disabled={
-        !context.formState.isDirty ||
-        !context.formState.isValid ||
-        context.formState.isSubmitting
-      }
-      onPress={context.handleSubmit(handleSubmit)}
-    >
-      <Check />
-    </Button>
-  );
+  const handleDelete = () => {
+    // Implement delete functionality with confirmation dialog
+  };
+
+  const handleSave = () => {
+    context.handleSubmit(handleSubmit)();
+  };
 
   if (isFetching) {
     return null;
@@ -172,16 +169,20 @@ export const DocumentEditor = ({
         options={{
           headerRight: () => (
             <Horizontal>
-              <Button rounded variant="soft">
+              <Button rounded variant="soft" onPress={handleDelete}>
                 <Trash />
               </Button>
-              <SubmitButton />
+              <Button rounded onPress={handleSave}>
+                <Check />
+              </Button>
             </Horizontal>
           ),
         }}
       />
       <PortalOutlet name="modal-header">
-        <SubmitButton />
+        <Button rounded onPress={handleSave}>
+          <Check />
+        </Button>
       </PortalOutlet>
       <View style={styles.form}>{fieldComponents}</View>
     </FormProvider>

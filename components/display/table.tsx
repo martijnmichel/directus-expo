@@ -2,6 +2,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import React, { useState } from "react";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Dictionary } from "lodash";
+import { useTranslation } from "react-i18next";
 
 interface TableProps<T extends Record<string, unknown>> {
   headers?: { [key: string]: string };
@@ -11,6 +12,7 @@ interface TableProps<T extends Record<string, unknown>> {
   maxHeight?: number;
   widths?: { [key: string]: number };
   onRowPress?: (item: T) => void;
+  noDataText?: string;
 }
 
 type SortConfig = {
@@ -46,9 +48,11 @@ export function Table<T extends Record<string, unknown>>({
   maxHeight = 500,
   widths = {},
   onRowPress,
+  noDataText,
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
   const [sort, setSort] = useState<SortConfig | null>(null);
+  const { t } = useTranslation();
 
   console.log({ widths, headers, fields });
 
@@ -191,6 +195,11 @@ export function Table<T extends Record<string, unknown>>({
           ))}
         </ScrollView>
       </View>
+      {!items.length && (
+        <Text style={styles.noData}>
+          {noDataText || t("components.table.noData")}
+        </Text>
+      )}
     </ScrollView>
   );
 }
@@ -248,5 +257,11 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   truncate: {
     overflow: "hidden",
+  },
+  noData: {
+    ...theme.typography.body,
+    color: theme.colors.textSecondary,
+    textAlign: "center",
+    padding: theme.spacing.lg,
   },
 }));

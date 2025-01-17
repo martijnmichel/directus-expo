@@ -8,8 +8,10 @@
             "emailRequired": "E-mail is verplicht",
             "passwordRequired": "Wachtwoord is verplicht",
             "apiUrlRequired": "API URL is verplicht",
-            "loginFailed": "Inloggen mislukt. Controleer uw gegevens."
-        }
+            "loginFailed": "Inloggen mislukt. Controleer uw gegevens.",
+            "invalidApiUrl": "Ongeldige API URL"
+        },
+        "api": "Directus API"
     },
     "navigation": {
         "content": "Inhoud",
@@ -34,5 +36,40 @@
         "noData": "Geen gegevens beschikbaar",
         "loadingMore": "Meer laden...",
         "showMore": "Toon meer"
+    },
+    "components": {
+        "table": {
+            "noData": "Geen gegevens beschikbaar",
+            "previous": "Vorige",
+            "next": "Volgende",
+            "page": "Pagina {{current}} van {{total}}"
+        },
+        "modal": {
+            "close": "Sluiten"
+        },
+        "confirmDialog": {
+            "confirm": "Bevestigen",
+            "cancel": "Annuleren",
+            "delete": "Verwijderen"
+        },
+        "repeater": {
+            "addItem": "Item toevoegen",
+            "editItem": "Item bewerken",
+            "deleteItem": "Item verwijderen"
+        },
+        "documentEditor": {
+            "save": "Opslaan",
+            "delete": "Verwijderen",
+            "confirmDelete": "Weet u zeker dat u dit item wilt verwijderen?"
+        },
+        "fileUpload": {
+            "dragDrop": "Sleep bestanden hierheen",
+            "browse": "Bladeren"
+        },
+        "tabs": {
+            "content": "Inhoud",
+            "profile": "Profiel",
+            "settings": "Instellingen"
+        }
     }
 }

@@ -53,8 +53,8 @@ export default function TabsLayout() {
           name="content"
           href="/"
         >
-          <Cube size={24} color={theme.colors.textPrimary} />
-          <Text>Content</Text>
+          <Cube size={32} color={theme.colors.textPrimary} />
+          <Text>{t("components.tabs.content")}</Text>
         </TabTrigger>
 
         <TabTrigger
@@ -62,16 +62,16 @@ export default function TabsLayout() {
           name="profile"
           href="/profile"
         >
-          <Users size={24} color={theme.colors.textPrimary} />
-          <Text>Profile</Text>
+          <Users size={32} color={theme.colors.textPrimary} />
+          <Text>{t("components.tabs.profile")}</Text>
         </TabTrigger>
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
           name="settings"
           href="/settings"
         >
-          <Cog size={24} color={theme.colors.textPrimary} />
-          <Text>Settings</Text>
+          <Cog size={32} color={theme.colors.textPrimary} />
+          <Text>{t("components.tabs.settings")}</Text>
         </TabTrigger>
 
         <TabTrigger

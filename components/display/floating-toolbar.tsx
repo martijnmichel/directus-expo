@@ -2,8 +2,10 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import React from "react";
 import Animated, { SlideInDown, SlideInUp } from "react-native-reanimated";
 import { PortalHost } from "../layout/Portal";
+import { useTranslation } from "react-i18next";
 
 export function FloatingToolbar() {
+  const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
 
   return (

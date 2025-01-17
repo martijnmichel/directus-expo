@@ -13,12 +13,9 @@ import { DirectusIcon, DirectusIconName } from "../display/directus-icon";
 
 export default function UserCollections() {
   const { data } = useCollections();
+  const { t, i18n } = useTranslation();
 
   console.log({ data });
-
-  const {
-    i18n: { language },
-  } = useTranslation();
 
   const renderCollections = (parent?: string) => {
     return map(
@@ -51,7 +48,7 @@ export default function UserCollections() {
                   />
                 }
               >
-                {getCollectionTranslation(collection, language)}
+                {getCollectionTranslation(collection, i18n.language)}
               </CollapsibleTrigger>
               <CollapsibleContent style={{ paddingLeft: 20 }}>
                 <List>{renderCollections(collection.collection)}</List>
@@ -76,7 +73,7 @@ export default function UserCollections() {
                 />
               }
             >
-              {getCollectionTranslation(collection, language)}
+              {getCollectionTranslation(collection, i18n.language)}
             </ListItem>
           );
         }

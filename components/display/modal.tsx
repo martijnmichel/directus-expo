@@ -28,6 +28,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { PortalHost } from "../layout/Portal";
+import { useTranslation } from "react-i18next";
 
 interface ModalContextType {
   isOpen: boolean;
@@ -84,6 +85,7 @@ const ModalContent = ({
   height = "90%",
   ...props
 }: ModalContentProps) => {
+  const { t } = useTranslation();
   const { styles } = useStyles(modalStyles);
   const { isOpen, close } = useContext(ModalContext);
 
@@ -121,7 +123,7 @@ const ModalContent = ({
             rounded
             style={styles.closeButton}
           >
-            <X size={24} />
+            <X size={24} aria-label={t("components.modal.close")} />
           </Button>
         )}
 

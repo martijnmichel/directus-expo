@@ -95,6 +95,7 @@ const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
 };
 
 export function CollectionDataTable({ collection }: { collection: string }) {
+  const { t } = useTranslation();
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
   const path = usePathname();
@@ -144,6 +145,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           console.log(doc);
           router.push(`/content/${collection}/${doc.id}`);
         }}
+        noDataText={t("components.table.noData")}
       />
       <PortalOutlet name="floating-toolbar" path={/^\/content\/[^/]+$/}>
         <Pagination {...filterContext} total={documents?.total} />

@@ -22,6 +22,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { H2, Text } from "./typography";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmDialogContextType {
   isOpen: boolean;
@@ -42,8 +43,6 @@ interface ConfirmDialogProps {
 interface ConfirmDialogContentProps {
   title: string;
   description: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
   onConfirm: () => void;
   onCancel?: () => void;
   variant?: "danger" | "default";
@@ -70,13 +69,12 @@ export const ConfirmDialog = ({ children }: ConfirmDialogProps) => {
 const ConfirmDialogContent = ({
   title,
   description,
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
   onConfirm,
   onCancel,
   variant = "default",
   contentStyle,
 }: ConfirmDialogContentProps) => {
+  const { t } = useTranslation();
   const { styles } = useStyles(confirmDialogStyles);
   const { isOpen, close } = useContext(ConfirmDialogContext);
   const shakeX = useSharedValue(0);
@@ -140,10 +138,10 @@ const ConfirmDialogContent = ({
               onPress={handleCancel}
               style={styles.actionButton}
             >
-              {cancelLabel}
+              {t("components.confirmDialog.cancel")}
             </Button>
             <Button onPress={handleConfirm} style={styles.actionButton}>
-              {confirmLabel}
+              {t("components.confirmDialog.confirm")}
             </Button>
           </View>
         </Animated.View>
