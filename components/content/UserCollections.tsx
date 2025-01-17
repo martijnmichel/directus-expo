@@ -1,4 +1,4 @@
-import { filter, map } from "lodash";
+import { filter, map, orderBy } from "lodash";
 import {
   Collapsible,
   CollapsibleContent,
@@ -9,7 +9,7 @@ import { Fragment } from "react";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { useTranslation } from "react-i18next";
-import { DirectusIcon } from "../display/directus-icon";
+import { DirectusIcon, DirectusIconName } from "../display/directus-icon";
 
 export default function UserCollections() {
   const { data } = useCollections();
@@ -22,9 +22,12 @@ export default function UserCollections() {
 
   const renderCollections = (parent?: string) => {
     return map(
-      filter(
-        data,
-        (c) => !c.collection.startsWith("directus_") && !c.meta?.hidden
+      orderBy(
+        filter(
+          data,
+          (c) => !c.collection.startsWith("directus_") && !c.meta?.hidden
+        ),
+        (i) => i.meta.sort
       ),
       (collection) => {
         if (parent && parent !== collection.meta?.group && collection.schema) {
@@ -41,9 +44,11 @@ export default function UserCollections() {
               <CollapsibleTrigger
                 color={collection.meta.color || ""}
                 prepend={
-                  collection.meta.icon && (
-                    <DirectusIcon name={collection.meta.icon} />
-                  )
+                  <DirectusIcon
+                    name={
+                      (collection.meta.icon as DirectusIconName) || "msDatabase"
+                    }
+                  />
                 }
               >
                 {getCollectionTranslation(collection, language)}
@@ -64,9 +69,11 @@ export default function UserCollections() {
               href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
               prepend={
-                collection.meta.icon && (
-                  <DirectusIcon name={collection.meta.icon} />
-                )
+                <DirectusIcon
+                  name={
+                    (collection.meta.icon as DirectusIconName) || "database"
+                  }
+                />
               }
             >
               {getCollectionTranslation(collection, language)}

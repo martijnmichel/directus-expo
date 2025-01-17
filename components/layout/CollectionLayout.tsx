@@ -91,7 +91,11 @@ export default function CollectionLayout({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: (evt, gestureState) => {
+        // Only respond to gestures that start on the main content or if menu is open
+        const isMainContentGesture = evt.nativeEvent.locationX > 300;
+        return isMenuOpen || isMainContentGesture;
+      },
       onMoveShouldSetPanResponder: (_, gestureState) => {
         const isHorizontalSwipe =
           Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
@@ -106,7 +110,21 @@ export default function CollectionLayout({
           slideAnim.setValue(newValue);
         }
       },
-      onPanResponderRelease: (_, gestureState) => {
+      onPanResponderRelease: (evt, gestureState) => {
+        // If it's just a tap (no significant movement) and menu is open
+        if (
+          Math.abs(gestureState.dx) < 5 &&
+          Math.abs(gestureState.dy) < 5 &&
+          isMenuOpen
+        ) {
+          // Only close if tap is on the main content area
+          if (evt.nativeEvent.locationX > 300) {
+            closeMenu();
+            return;
+          }
+        }
+
+        // Handle swipe gestures
         if (isMenuOpen) {
           if (gestureState.dx < -20) {
             closeMenu();
@@ -141,7 +159,6 @@ export default function CollectionLayout({
       />
       <View style={[styles.container, { position: "relative" }]}>
         <Animated.View
-          {...panResponder.panHandlers}
           style={[
             styles.sideMenu,
             {
@@ -160,8 +177,10 @@ export default function CollectionLayout({
         </Animated.View>
 
         <Animated.View
+          {...panResponder.panHandlers}
           style={[
             styles.mainContent,
+            isMenuOpen && styles.overlay,
             {
               transform: [
                 {

@@ -49,14 +49,12 @@ export const ListItem = ({
       children
     );
 
-  const clonedPrepend = prepend ? (
-    React.cloneElement(prepend as React.ReactElement, {
-      color: color || theme.colors.primary,
-      size: prependSize,
-    })
-  ) : (
-    <Database size={20} color={color || theme.colors.primary} />
-  );
+  const clonedPrepend = prepend
+    ? React.cloneElement(prepend as React.ReactElement, {
+        color: color || theme.colors.primary,
+        size: prependSize,
+      })
+    : null;
 
   const renderContent = () => (
     <>
