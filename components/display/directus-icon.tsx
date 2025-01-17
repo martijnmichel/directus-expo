@@ -3,10 +3,19 @@ import * as msIconDefinition from "@material-symbols-react-native/outlined-400";
 import { MaterialIcons } from "@expo/vector-icons";
 
 export type DirectusIconName = keyof typeof msIconDefinition;
-export type MaterialIconName = keyof typeof MaterialIcons.glyphMap;
+type IconMap = typeof MaterialIcons.glyphMap;
+export type MaterialIconName = keyof IconMap extends infer K
+  ? K extends string
+    ? K extends `${infer First}-${infer Middle}-${infer Last}`
+      ? `${First}_${Middle}_${Last}`
+      : K extends `${infer First}-${infer Last}`
+      ? `${First}_${Last}`
+      : K
+    : never
+  : never;
 
 interface DirectusIconProps {
-  name: DirectusIconName;
+  name: DirectusIconName | MaterialIconName;
   size?: number;
   color?: string;
 }
@@ -129,7 +138,9 @@ export const DirectusIcon = ({
         .join("");
 
   // Get the icon definition
-  const iconDef = msIconDefinition[iconName as DirectusIconName];
+  const iconDef =
+    msIconDefinition[name as DirectusIconName] ||
+    msIconDefinition[iconName as DirectusIconName];
 
   if (!iconDef) {
     console.warn(

@@ -13,7 +13,7 @@ import { Container } from "@/components/layout/Container";
 import UserCollections from "@/components/content/UserCollections";
 import { FloatingActionButton } from "@/components/display/FloatingActionButton";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { H1 } from "@/components/display/typography";
+import { H1, Text } from "@/components/display/typography";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useCollections, useSettings } from "@/state/queries/directus/core";
 import { useCollection } from "@/state/queries/directus/collection";
@@ -124,8 +124,8 @@ export default function CollectionLayout({
           ]}
         >
           <Horizontal style={styles.sideMenuHeader}>
-            <DirectusIcon name="wind_power" size={24} />
-            {settings?.project_name}
+            <DirectusIcon name="msSolarPower" size={24} />
+            <Text>{settings?.project_name}</Text>
           </Horizontal>
           <View style={styles.sideMenuContent}>
             <UserCollections />
