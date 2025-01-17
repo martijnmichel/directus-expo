@@ -35,6 +35,7 @@ import {
   Droppable,
   UniqueIdentifier,
 } from "@mgcrea/react-native-dnd";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -135,57 +136,59 @@ export const M2MInput = ({
     junction && (
       <Vertical spacing="xs">
         {label && <Text style={formControlStyles.label}>{label}</Text>}
-        <DndProvider>
-          <DraggableStack
-            key={JSON.stringify(valueProp)}
-            direction="column"
-            onOrderChange={onOrderChange}
-            style={{ gap: 3 }}
-          >
-            {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-              const isDeselected =
-                value?.includes(id) && !valueProp.includes(id);
-              const isNew = !value?.includes(id);
+        <GestureHandlerRootView>
+          <DndProvider>
+            <DraggableStack
+              key={JSON.stringify(valueProp)}
+              direction="column"
+              onOrderChange={onOrderChange}
+              style={{ gap: 3 }}
+            >
+              {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+                const isDeselected =
+                  value?.includes(id) && !valueProp.includes(id);
+                const isNew = !value?.includes(id);
 
-              const Item = (
-                <RelatedDocumentListItem
-                  key={id}
-                  docId={id}
-                  junction={junction!}
-                  relation={relation!}
-                  template={item.meta.options?.template}
-                  isSortable={!!sortField}
-                  onAdd={(item: Record<string, unknown>) => {
-                    setAddedDocIds([...addedDocIds, item.id as number]);
-                    props.onChange([...valueProp, item.id as number]);
-                  }}
-                  onDelete={(item) => {
-                    console.log({ item });
-                    setAddedDocIds(
-                      addedDocIds.filter(
-                        (v) =>
-                          v !==
-                          (item[relation.field as keyof typeof item] as any)
-                      )
-                    );
-                    props.onChange(valueProp.filter((v) => v !== id));
-                  }}
-                  isNew={isNew}
-                  isDeselected={isDeselected}
-                />
-              );
-              return (
-                <Draggable
-                  key={id + "draggable"}
-                  id={id.toString()}
-                  disabled={!sortField}
-                >
-                  {Item}
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
+                const Item = (
+                  <RelatedDocumentListItem
+                    key={id}
+                    docId={id}
+                    junction={junction!}
+                    relation={relation!}
+                    template={item.meta.options?.template}
+                    isSortable={!!sortField}
+                    onAdd={(item: Record<string, unknown>) => {
+                      setAddedDocIds([...addedDocIds, item.id as number]);
+                      props.onChange([...valueProp, item.id as number]);
+                    }}
+                    onDelete={(item) => {
+                      console.log({ item });
+                      setAddedDocIds(
+                        addedDocIds.filter(
+                          (v) =>
+                            v !==
+                            (item[relation.field as keyof typeof item] as any)
+                        )
+                      );
+                      props.onChange(valueProp.filter((v) => v !== id));
+                    }}
+                    isNew={isNew}
+                    isDeselected={isDeselected}
+                  />
+                );
+                return (
+                  <Draggable
+                    key={id + "draggable"}
+                    id={id.toString()}
+                    disabled={!sortField}
+                  >
+                    {Item}
+                  </Draggable>
+                );
+              })}
+            </DraggableStack>
+          </DndProvider>
+        </GestureHandlerRootView>
         {(error || helper) && (
           <Text
             style={[

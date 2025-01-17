@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { H1 } from "../display/typography";
+import { PortalHost } from "./Portal";
+import { FloatingToolbar } from "../display/floating-toolbar";
 
 interface LayoutProps extends ViewProps {
   children: React.ReactNode;

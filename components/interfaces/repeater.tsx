@@ -70,60 +70,62 @@ export const RepeaterInput = ({
     <Vertical spacing="xs">
       {label && <Text style={formControlStyles.label}>{label}</Text>}
 
-      <DndProvider>
-        <DraggableStack
-          key={JSON.stringify(value)}
-          direction="column"
-          onOrderChange={onOrderChange}
-        >
-          {(value || []).map((repeaterItem, index) => (
-            <Draggable
-              key={index}
-              id={index.toString()}
-              disabled={!sortable}
-              data={repeaterItem}
-              style={[styles.listItem, styles.fullWidth]}
-            >
-              <View style={styles.dragHandle}>
-                <DragIcon />
-              </View>
-
-              <Text style={styles.content}>
-                {getDisplayValue(repeaterItem)}
-              </Text>
-
-              <Link
-                href={{
-                  pathname: `/modals/repeater/edit`,
-                  params: {
-                    document: objectToBase64(repeaterItem),
-                    fields: objectToBase64(item.meta?.options?.fields || []),
-                    item_field: item.field,
-                    index: index,
-                  },
-                }}
-                asChild
+      <GestureHandlerRootView>
+        <DndProvider>
+          <DraggableStack
+            key={JSON.stringify(value)}
+            direction="column"
+            onOrderChange={onOrderChange}
+          >
+            {(value || []).map((repeaterItem, index) => (
+              <Draggable
+                key={index}
+                id={index.toString()}
+                disabled={!sortable}
+                data={repeaterItem}
+                style={[styles.listItem, styles.fullWidth]}
               >
-                <Button variant="ghost" rounded>
-                  <Edit />
+                <View style={styles.dragHandle}>
+                  <DragIcon />
+                </View>
+
+                <Text style={styles.content}>
+                  {getDisplayValue(repeaterItem)}
+                </Text>
+
+                <Link
+                  href={{
+                    pathname: `/modals/repeater/edit`,
+                    params: {
+                      document: objectToBase64(repeaterItem),
+                      fields: objectToBase64(item.meta?.options?.fields || []),
+                      item_field: item.field,
+                      index: index,
+                    },
+                  }}
+                  asChild
+                >
+                  <Button variant="ghost" rounded>
+                    <Edit />
+                  </Button>
+                </Link>
+
+                <Button
+                  variant="ghost"
+                  onPress={() => {
+                    const newValue = [...value];
+                    newValue.splice(index, 1);
+                    onChange?.(newValue);
+                  }}
+                  rounded
+                >
+                  <Trash />
                 </Button>
-              </Link>
-
-              <Button
-                variant="ghost"
-                onPress={() => {
-                  const newValue = [...value];
-                  newValue.splice(index, 1);
-                  onChange?.(newValue);
-                }}
-                rounded
-              >
-                <Trash />
-              </Button>
-            </Draggable>
-          ))}
-        </DraggableStack>
-      </DndProvider>
+              </Draggable>
+            ))}
+          </DraggableStack>
+        </DndProvider>
+      </GestureHandlerRootView>
 
       {(error || helper) && (
         <Text

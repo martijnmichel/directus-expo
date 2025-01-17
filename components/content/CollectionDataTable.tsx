@@ -1,5 +1,5 @@
 import { useCollection, usePresets } from "@/state/queries/directus/collection";
-import { map, reduce } from "lodash";
+import { debounce, map, reduce } from "lodash";
 import { Table } from "../display/table";
 import { Container } from "../layout/Container";
 import { useFields } from "@/state/queries/directus/collection";
@@ -8,16 +8,20 @@ import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { ChevronRight } from "../icons";
 import { Button } from "../display/button";
 import { DirectusIcon } from "../display/directus-icon";
+import { PortalOutlet } from "../layout/Portal";
+import { Modal } from "../display/modal";
+import { Input } from "../interfaces/input";
 
 const useDocumentsFilters = () => {
   const [page, setPage] = useState(1);
   const [limit, updateLimit] = useState(25);
+  const [search, setSearch] = useState("");
 
   const next = () => {
     setPage(page + 1);
@@ -32,7 +36,7 @@ const useDocumentsFilters = () => {
     updateLimit(limit);
   };
 
-  return { page, limit, next, previous, setLimit };
+  return { page, limit, next, previous, setLimit, search, setSearch };
 };
 
 const Pagination = (
@@ -64,18 +68,45 @@ const Pagination = (
   );
 };
 
+const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
+  const [search, setSearch] = useState(context.search);
+
+  const handleSearch = useCallback(
+    debounce(() => context.setSearch(search), 500),
+    [context.setSearch, search]
+  );
+
+  useEffect(() => {
+    handleSearch();
+  }, [handleSearch]);
+
+  return (
+    <Modal>
+      <Modal.Trigger>
+        <Button rounded variant="soft">
+          <DirectusIcon name="search" />
+        </Button>
+      </Modal.Trigger>
+      <Modal.Content>
+        <Input value={search} onChangeText={setSearch} placeholder="Search" />
+      </Modal.Content>
+    </Modal>
+  );
+};
+
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   const filterContext = useDocumentsFilters();
-  const { page, limit } = filterContext;
+  const { page, limit, search, setSearch } = filterContext;
 
   const { data: documents, refetch } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema],
     {
       page,
       limit,
+      search,
     }
   );
 
@@ -84,8 +115,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const { data: presets } = usePresets();
 
   const preset = presets?.find((p) => p.collection === collection);
-
-  console.log({ documents });
 
   const tableFields =
     (preset && preset.layout_query?.tabular?.fields) ||
@@ -115,7 +144,10 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           router.push(`/content/${collection}/${doc.id}`);
         }}
       />
-      <Pagination {...filterContext} total={documents?.total} />
+      <PortalOutlet name="floating-toolbar">
+        <Pagination {...filterContext} total={documents?.total} />
+        <SearchFilter {...filterContext} />
+      </PortalOutlet>
     </Vertical>
   );
 }

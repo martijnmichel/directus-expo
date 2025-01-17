@@ -8,6 +8,7 @@ import {
   PanResponderGestureState,
   Pressable,
 } from "react-native";
+import RNAnimated from "react-native-reanimated";
 import { Layout } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import UserCollections from "@/components/content/UserCollections";
@@ -40,6 +41,7 @@ import { Modal } from "../display/modal";
 import { Input } from "../interfaces/input";
 import { Horizontal } from "./Stack";
 import { DirectusIcon } from "../display/directus-icon";
+import { PortalHost, PortalOutlet } from "./Portal";
 
 export default function CollectionLayout({
   children,
@@ -151,11 +153,22 @@ export default function CollectionLayout({
           <ScrollView>
             <Container>{children}</Container>
           </ScrollView>
-          <FloatingActionButton
-            position="bottomLeft"
-            icon={isMenuOpen ? "close" : "menu"}
-            onPress={toggleMenu}
-          />
+
+          <View style={styles.floatingToolbar}>
+            <Horizontal>
+              <Button rounded onPress={toggleMenu}>
+                <DirectusIcon name={isMenuOpen ? "close" : "menu"} />
+              </Button>
+
+              {!isMenuOpen && (
+                <RNAnimated.View entering={FadeIn}>
+                  <Horizontal>
+                    <PortalHost key={pathname} name="floating-toolbar" />
+                  </Horizontal>
+                </RNAnimated.View>
+              )}
+            </Horizontal>
+          </View>
         </Animated.View>
       </View>
     </Layout>
@@ -166,6 +179,12 @@ const stylesheet = createStyleSheet((theme) => ({
   container: {
     flex: 1,
     position: "relative",
+  },
+  floatingToolbar: {
+    position: "absolute",
+    bottom: theme.spacing.md,
+    left: theme.spacing.md,
+    right: theme.spacing.md,
   },
   overlay: {
     position: "absolute",

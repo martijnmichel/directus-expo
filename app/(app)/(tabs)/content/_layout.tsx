@@ -7,11 +7,11 @@ export default function Layout() {
     <Stack>
       <Stack.Screen
         name="[collection]/index"
-        options={{ headerTitle: "", headerLeft: () => <BackButton /> }}
+        options={{ headerTitle: "", headerBackVisible: false }}
       />
       <Stack.Screen
         name="[collection]/[id]/index"
-        options={{ headerTitle: "", headerLeft: () => <BackButton /> }}
+        options={{ headerTitle: "", headerBackVisible: false }}
       />
     </Stack>
   );
