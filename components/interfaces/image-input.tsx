@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, Platform } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
 import { formStyles } from "./style";
@@ -52,11 +52,25 @@ export const ImageInput = ({
     if (!result.canceled && result.assets[0]) {
       try {
         const data = new FormData();
-        data.append("file", {
-          uri: result.assets[0].uri,
-          type: result.assets[0].mimeType || "image/jpeg",
-          name: result.assets[0].uri.split("/").pop() || "image.jpg",
-        } as any);
+
+        if (Platform.OS === "web") {
+          // For web: Convert base64 to blob and create a File object
+          const response = await fetch(result.assets[0].uri);
+          const blob = await response.blob();
+          const file = new File(
+            [blob],
+            result.assets[0].uri.split("/").pop() || "image.jpg",
+            { type: result.assets[0].mimeType || "image/jpeg" }
+          );
+          data.append("file", file);
+        } else {
+          // For native: Use the React Native structure
+          data.append("file", {
+            uri: result.assets[0].uri,
+            type: result.assets[0].mimeType || "image/jpeg",
+            name: result.assets[0].uri.split("/").pop() || "image.jpg",
+          } as any);
+        }
 
         const file = await directus?.request(uploadFiles(data));
         if (file) {
