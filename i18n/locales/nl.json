@@ -1,75 +1,76 @@
 {
-    "form": {
-        "email": "E-mail",
-        "password": "Wachtwoord",
-        "apiUrl": "API URL",
-        "login": "Inloggen",
-        "errors": {
-            "emailRequired": "E-mail is verplicht",
-            "passwordRequired": "Wachtwoord is verplicht",
-            "apiUrlRequired": "API URL is verplicht",
-            "loginFailed": "Inloggen mislukt. Controleer uw gegevens.",
-            "invalidApiUrl": "Ongeldige API URL"
-        },
-        "api": "Directus API"
+  "form": {
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "apiUrl": "API URL",
+    "login": "Inloggen",
+    "errors": {
+      "emailRequired": "E-mail is verplicht",
+      "passwordRequired": "Wachtwoord is verplicht",
+      "apiUrlRequired": "API URL is verplicht",
+      "loginFailed": "Inloggen mislukt. Controleer uw gegevens.",
+      "invalidApiUrl": "Ongeldige API URL"
     },
-    "navigation": {
-        "content": "Inhoud",
-        "users": "Gebruikers",
-        "settings": "Instellingen"
+    "api": "Directus API"
+  },
+  "navigation": {
+    "content": "Inhoud",
+    "users": "Gebruikers",
+    "settings": "Instellingen"
+  },
+  "button": {
+    "getStarted": "Gratis beginnen",
+    "learnMore": "Meer informatie",
+    "viewGithub": "Bekijk op GitHub",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "close": "Sluiten"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "warning": "Waarschuwing"
+  },
+  "layout": {
+    "noData": "Geen gegevens beschikbaar",
+    "loadingMore": "Meer laden...",
+    "showMore": "Toon meer"
+  },
+  "components": {
+    "table": {
+      "noData": "Geen gegevens beschikbaar",
+      "previous": "Vorige",
+      "next": "Volgende",
+      "page": "Pagina {{current}} van {{total}}",
+      "search": "Zoek documenten"
     },
-    "button": {
-        "getStarted": "Gratis beginnen",
-        "learnMore": "Meer informatie",
-        "viewGithub": "Bekijk op GitHub",
-        "save": "Opslaan",
-        "cancel": "Annuleren",
-        "close": "Sluiten"
+    "modal": {
+      "close": "Sluiten"
     },
-    "common": {
-        "loading": "Laden...",
-        "error": "Fout",
-        "success": "Succes",
-        "warning": "Waarschuwing"
+    "confirmDialog": {
+      "confirm": "Bevestigen",
+      "cancel": "Annuleren",
+      "delete": "Verwijderen"
     },
-    "layout": {
-        "noData": "Geen gegevens beschikbaar",
-        "loadingMore": "Meer laden...",
-        "showMore": "Toon meer"
+    "repeater": {
+      "addItem": "Item toevoegen",
+      "editItem": "Item bewerken",
+      "deleteItem": "Item verwijderen"
     },
-    "components": {
-        "table": {
-            "noData": "Geen gegevens beschikbaar",
-            "previous": "Vorige",
-            "next": "Volgende",
-            "page": "Pagina {{current}} van {{total}}"
-        },
-        "modal": {
-            "close": "Sluiten"
-        },
-        "confirmDialog": {
-            "confirm": "Bevestigen",
-            "cancel": "Annuleren",
-            "delete": "Verwijderen"
-        },
-        "repeater": {
-            "addItem": "Item toevoegen",
-            "editItem": "Item bewerken",
-            "deleteItem": "Item verwijderen"
-        },
-        "documentEditor": {
-            "save": "Opslaan",
-            "delete": "Verwijderen",
-            "confirmDelete": "Weet u zeker dat u dit item wilt verwijderen?"
-        },
-        "fileUpload": {
-            "dragDrop": "Sleep bestanden hierheen",
-            "browse": "Bladeren"
-        },
-        "tabs": {
-            "content": "Inhoud",
-            "profile": "Profiel",
-            "settings": "Instellingen"
-        }
+    "documentEditor": {
+      "save": "Opslaan",
+      "delete": "Verwijderen",
+      "confirmDelete": "Weet u zeker dat u dit item wilt verwijderen?"
+    },
+    "fileUpload": {
+      "dragDrop": "Sleep bestanden hierheen",
+      "browse": "Bladeren"
+    },
+    "tabs": {
+      "content": "Inhoud",
+      "profile": "Profiel",
+      "settings": "Instellingen"
     }
+  }
 }

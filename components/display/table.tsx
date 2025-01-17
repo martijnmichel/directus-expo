@@ -45,7 +45,6 @@ export function Table<T extends Record<string, unknown>>({
   fields,
   items = [],
   renderRow,
-  maxHeight = 500,
   widths = {},
   onRowPress,
   noDataText,
@@ -173,7 +172,7 @@ export function Table<T extends Record<string, unknown>>({
           </View>
         )}
 
-        <ScrollView style={[styles.bodyContainer, { maxHeight }]}>
+        <ScrollView style={[styles.bodyContainer]}>
           {sortedItems.map((item, rowIndex) => (
             <Pressable
               onPress={() => onRowPress?.(item)}

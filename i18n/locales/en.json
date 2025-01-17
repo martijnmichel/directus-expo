@@ -42,7 +42,8 @@
       "noData": "No data available",
       "previous": "Previous",
       "next": "Next",
-      "page": "Page {{current}} of {{total}}"
+      "page": "Page {{current}} of {{total}}",
+      "search": "Search documents"
     },
     "modal": {
       "close": "Close"

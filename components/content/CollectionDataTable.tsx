@@ -11,12 +11,14 @@ import { router, usePathname } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
-import { ChevronRight } from "../icons";
+import { Check, ChevronRight } from "../icons";
 import { Button } from "../display/button";
 import { DirectusIcon } from "../display/directus-icon";
 import { PortalOutlet } from "../layout/Portal";
 import { Modal } from "../display/modal";
 import { Input } from "../interfaces/input";
+import { Text } from "../display/typography";
+import { View } from "react-native";
 
 const useDocumentsFilters = () => {
   const [page, setPage] = useState(1);
@@ -44,6 +46,7 @@ const Pagination = (
     total: number | null | undefined;
   }
 ) => {
+  const totalPages = Math.ceil((context.total || 0) / context.limit);
   return (
     <Horizontal>
       <Button
@@ -54,11 +57,10 @@ const Pagination = (
       >
         <DirectusIcon name="chevron_left" />
       </Button>
+
       <Button
         rounded
-        disabled={
-          context.page === Math.ceil((context.total || 0) / context.limit)
-        }
+        disabled={context.page === totalPages}
         variant="soft"
         onPress={context.next}
       >
@@ -70,7 +72,7 @@ const Pagination = (
 
 const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
   const [search, setSearch] = useState(context.search);
-
+  const { t } = useTranslation();
   const handleSearch = useCallback(
     debounce(() => context.setSearch(search), 500),
     [context.setSearch, search]
@@ -87,8 +89,10 @@ const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
           <DirectusIcon name="search" />
         </Button>
       </Modal.Trigger>
-      <Modal.Content>
-        <Input value={search} onChangeText={setSearch} placeholder="Search" />
+      <Modal.Content title={t("components.table.search")}>
+        <Vertical>
+          <Input value={search} onChangeText={setSearch} placeholder="Search" />
+        </Vertical>
       </Modal.Content>
     </Modal>
   );
@@ -151,6 +155,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         <Pagination {...filterContext} total={documents?.total} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>
+      <View style={{ height: 60 }} />
     </Vertical>
   );
 }
