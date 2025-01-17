@@ -53,7 +53,7 @@ export default function TabsLayout() {
           name="content"
           href="/"
         >
-          <Home size={24} color={theme.colors.textPrimary} />
+          <Cube size={24} color={theme.colors.textPrimary} />
           <Text>Content</Text>
         </TabTrigger>
 

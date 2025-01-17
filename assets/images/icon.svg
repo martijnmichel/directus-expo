@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Define color palette -->
+  <defs>
+    <style>
+      .p1 { fill: #6644FF }
+      .p2 { fill: #5533EE }
+      .p3 { fill: #4422DD }
+    </style>
+  </defs>
+
+  <!-- Main body - scaled up and centered -->
+  <rect x="180" y="240" width="8" height="8" class="p1"/>
+  <rect x="188" y="240" width="8" height="8" class="p2"/>
+  <rect x="196" y="240" width="8" height="8" class="p1"/>
+  <rect x="204" y="240" width="8" height="8" class="p2"/>
+  <rect x="212" y="240" width="8" height="8" class="p1"/>
+  <rect x="220" y="240" width="8" height="8" class="p2"/>
+  <rect x="228" y="240" width="8" height="8" class="p1"/>
+  <rect x="236" y="240" width="8" height="8" class="p2"/>
+  <rect x="244" y="240" width="8" height="8" class="p1"/>
+  <rect x="252" y="240" width="8" height="8" class="p2"/>
+  <rect x="260" y="240" width="8" height="8" class="p1"/>
+  <rect x="268" y="240" width="8" height="8" class="p2"/>
+
+  <!-- Upper body -->
+  <rect x="196" y="232" width="8" height="8" class="p2"/>
+  <rect x="204" y="232" width="8" height="8" class="p1"/>
+  <rect x="212" y="232" width="8" height="8" class="p2"/>
+  <rect x="220" y="232" width="8" height="8" class="p1"/>
+  <rect x="228" y="232" width="8" height="8" class="p2"/>
+  <rect x="236" y="232" width="8" height="8" class="p1"/>
+  <rect x="244" y="232" width="8" height="8" class="p2"/>
+  <rect x="252" y="232" width="8" height="8" class="p1"/>
+  <rect x="260" y="232" width="8" height="8" class="p2"/>
+  <rect x="268" y="232" width="8" height="8" class="p1"/>
+  <rect x="276" y="232" width="8" height="8" class="p2"/>
+
+  <!-- Neck -->
+  <rect x="252" y="224" width="8" height="8" class="p1"/>
+  <rect x="260" y="224" width="8" height="8" class="p2"/>
+  <rect x="268" y="224" width="8" height="8" class="p1"/>
+  <rect x="276" y="224" width="8" height="8" class="p2"/>
+  <rect x="284" y="224" width="8" height="8" class="p1"/>
+  <rect x="292" y="224" width="8" height="8" class="p2"/>
+  <rect x="300" y="224" width="8" height="8" class="p1"/>
+
+  <!-- Head -->
+  <rect x="284" y="216" width="8" height="8" class="p2"/>
+  <rect x="292" y="216" width="8" height="8" class="p1"/>
+  <rect x="300" y="216" width="8" height="8" class="p2"/>
+  <rect x="308" y="216" width="8" height="8" class="p1"/>
+  <rect x="316" y="216" width="8" height="8" class="p2"/>
+  <rect x="324" y="216" width="8" height="8" class="p1"/>
+
+  <!-- Antlers/ears -->
+  <rect x="300" y="208" width="8" height="8" class="p1"/>
+  <rect x="308" y="208" width="8" height="8" class="p2"/>
+  <rect x="316" y="208" width="8" height="8" class="p1"/>
+  <rect x="324" y="208" width="8" height="8" class="p2"/>
+  <rect x="308" y="200" width="8" height="8" class="p1"/>
+  <rect x="316" y="200" width="8" height="8" class="p2"/>
+  <rect x="324" y="200" width="8" height="8" class="p1"/>
+  <rect x="332" y="200" width="8" height="8" class="p2"/>
+
+  <!-- Front legs -->
+  <rect x="236" y="248" width="8" height="8" class="p2"/>
+  <rect x="236" y="256" width="8" height="8" class="p1"/>
+  <rect x="236" y="264" width="8" height="8" class="p2"/>
+  <rect x="236" y="272" width="8" height="8" class="p3"/>
+  <rect x="236" y="280" width="8" height="8" class="p2"/>
+
+  <!-- Back legs -->
+  <rect x="188" y="248" width="8" height="8" class="p2"/>
+  <rect x="188" y="256" width="8" height="8" class="p1"/>
+  <rect x="188" y="264" width="8" height="8" class="p2"/>
+  <rect x="188" y="272" width="8" height="8" class="p3"/>
+  <rect x="188" y="280" width="8" height="8" class="p2"/>
+
+  <!-- Tail -->
+  <rect x="172" y="232" width="8" height="8" class="p1"/>
+  <rect x="164" y="232" width="8" height="8" class="p2"/>
+  <rect x="156" y="232" width="8" height="8" class="p1"/>
+  <rect x="148" y="224" width="8" height="8" class="p2"/>
+</svg>

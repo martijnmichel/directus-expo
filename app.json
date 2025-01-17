@@ -22,7 +22,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.martijnmichel.directusexpo"
+      "package": "com.martijnmichel.directusexpo",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -46,6 +50,12 @@
       "eas": {
         "projectId": "66baa699-7004-4c6a-85ee-941ba6062451"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/66baa699-7004-4c6a-85ee-941ba6062451"
     }
   }
 }

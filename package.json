@@ -9,7 +9,22 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "generate-icons": "ts-node scripts/generate-icon-mapping.ts",
-    "release": "semantic-release"
+    "release": "semantic-release",
+    "start:dev": "EXPO_PUBLIC_ENV=development expo start --clear",
+    "start:staging": "EXPO_PUBLIC_ENV=staging expo start --clear",
+    "start:prod": "EXPO_PUBLIC_ENV=production expo start --clear",
+    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:staging:ios": "eas build --profile staging --platform ios",
+    "build:preview:ios": "eas build --profile preview --platform ios",
+    "build:prod:ios": "eas build --profile production --platform ios",
+    "build:dev:android": "eas build --profile development --platform android",
+    "build:staging:android": "eas build --profile staging --platform android",
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:prod:android": "eas build --profile production --platform android",
+    "eas:dev": "eas update --branch development --message \"Dev Update\"",
+    "eas:staging": "eas update --branch staging --message \"Staging Update\"",
+    "eas:preview": "eas update --branch preview --message \"Preview Update\"",
+    "eas:prod": "eas update --branch production --message \"Production Update\""
   },
   "jest": {
     "preset": "jest-expo"
@@ -68,7 +83,8 @@
     "react-native-webview": "13.12.5",
     "ts-node": "^10.9.2",
     "uuid": "^11.0.5",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "expo-updates": "~0.26.12"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

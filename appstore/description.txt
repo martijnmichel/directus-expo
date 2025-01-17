@@ -1,0 +1,27 @@
+Directus - Your Content Management Companion
+
+Transform your content management experience with Directus, the powerful open data platform now available on mobile. Access, manage, and control your content with ease, right from your smartphone or tablet.
+
+Key Features:
+• Intuitive Content Management: Create, edit and publish content on the go
+• Rich Text Editor: Format your content with a full-featured mobile editor
+• Media Library: Upload and manage images, videos, and documents directly from your device
+• Collection Management: Browse and update your content collections anywhere
+• Role-based Access: Securely manage who can view and edit content
+• Multi-language Support: Work in your preferred language with full internationalization
+• Real-time Updates: See changes instantly across your team
+
+Perfect for:
+• Content managers needing quick updates in the field
+• Marketing teams managing digital content
+• Editors reviewing and publishing articles
+• Digital publishers maintaining multiple content streams
+• Team leaders coordinating content strategies
+
+Whether you're updating a blog post, managing your website content, or coordinating your digital presence, the Directus mobile app provides a streamlined interface to handle your content needs efficiently.
+
+Built with the same commitment to simplicity and user experience as our web platform, the Directus mobile app ensures you have complete control over your content wherever you are. Experience the freedom of managing your content from any device.
+
+Download now and take your content management on the go.
+
+Compatible with Android and iOS devices.
