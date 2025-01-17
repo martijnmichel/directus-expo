@@ -16,12 +16,87 @@ const findSimilarIcons = (searchTerm: string) => {
   );
 };
 
-// Log available icons for debugging
-console.log(
-  'Icons containing "confirmation":',
-  findSimilarIcons("confirmation")
-);
-console.log('Icons containing "timer":', findSimilarIcons("timer"));
+const iconMapping: Record<string, string> = {
+  // Common UI icons
+  add: "msAdd",
+  arrow_back: "msArrowBack",
+  arrow_forward: "msArrowForward",
+  check: "msCheck",
+  close: "msClose",
+  delete: "msDelete",
+  edit: "msEdit",
+  email: "msMail",
+  error: "msError",
+  help: "msHelp",
+  info: "msInfo",
+  local_offer: "msLocalOffer",
+  menu: "msMenu",
+  more_vert: "msMoreVert",
+  place: "msLocationOn",
+  refresh: "msRefresh",
+  search: "msSearch",
+  settings: "msSettings",
+
+  // Content/Files
+  folder: "msFolder",
+  image: "msImage",
+  file: "msInsertDriveFile",
+  attachment: "msAttachFile",
+
+  // Navigation
+  home: "msHome",
+  list: "msList",
+  dashboard: "msDashboard",
+
+  // Status/Actions
+  visibility: "msVisibility",
+  visibility_off: "msVisibilityOff",
+  favorite: "msFavorite",
+  favorite_border: "msFavoriteBorder",
+  star: "msStar",
+  star_border: "msStarBorder",
+  warning: "msWarning",
+  lock: "msLock",
+  lock_open: "msLockOpen",
+
+  // Communication
+  chat: "msChat",
+  comment: "msComment",
+  notifications: "msNotifications",
+  phone: "msPhone",
+
+  // Media
+  play_arrow: "msPlayArrow",
+  pause: "msPause",
+  stop: "msStop",
+  volume_up: "msVolumeUp",
+  volume_off: "msVolumeOff",
+
+  // Social
+  person: "msPerson",
+  people: "msPeople",
+  group: "msGroup",
+  share: "msShare",
+
+  // Time
+  access_time: "msAccessTime",
+  calendar_today: "msCalendarToday",
+  event: "msEvent",
+  schedule: "msSchedule",
+
+  // Transportation
+  directions: "msDirections",
+  navigation: "msNavigation",
+  map: "msMap",
+
+  // Misc
+  language: "msLanguage",
+  print: "msPrint",
+  sync: "msSync",
+  cloud: "msCloud",
+  cloud_upload: "msCloudUpload",
+  cloud_download: "msCloudDownload",
+};
 
 export const DirectusIcon = ({
   name,
@@ -33,22 +108,23 @@ export const DirectusIcon = ({
   // e.g., "confirmation_number" -> "msConfirmationNumber"
   // e.g., "timer_3_alt_1" -> "msTimer_3Alt_1"
   const iconName =
+    iconMapping[name] ||
     "ms" +
-    name
-      .split("_")
-      .map((part, index) => {
-        if (index === 0) {
-          // First word is always capitalized
+      name
+        .split("_")
+        .map((part, index) => {
+          if (index === 0) {
+            // First word is always capitalized
+            return part.charAt(0).toUpperCase() + part.slice(1);
+          }
+          // If it's a number, keep it with underscore
+          if (!isNaN(Number(part))) {
+            return "_" + part;
+          }
+          // For other parts, capitalize without underscore
           return part.charAt(0).toUpperCase() + part.slice(1);
-        }
-        // If it's a number, keep it with underscore
-        if (!isNaN(Number(part))) {
-          return "_" + part;
-        }
-        // For other parts, capitalize without underscore
-        return part.charAt(0).toUpperCase() + part.slice(1);
-      })
-      .join("");
+        })
+        .join("");
 
   // Get the icon definition
   const iconDef = msIconDefinition[iconName as DirectusIconName];
