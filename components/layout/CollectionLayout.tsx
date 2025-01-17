@@ -15,7 +15,7 @@ import { FloatingActionButton } from "@/components/display/FloatingActionButton"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { H1 } from "@/components/display/typography";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { useCollections } from "@/state/queries/directus/core";
+import { useCollections, useSettings } from "@/state/queries/directus/core";
 import { useCollection } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
@@ -38,6 +38,8 @@ import { Button } from "../display/button";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Modal } from "../display/modal";
 import { Input } from "../interfaces/input";
+import { Horizontal } from "./Stack";
+import { DirectusIcon } from "../display/directus-icon";
 
 export default function CollectionLayout({
   children,
@@ -52,6 +54,7 @@ export default function CollectionLayout({
   const pathname = usePathname();
   const { styles } = useStyles(stylesheet);
   const { label } = useCollectionMeta(data);
+  const { data: settings } = useSettings();
 
   const headerStyles = useHeaderStyles();
   const closeMenu = useCallback(() => {
@@ -89,59 +92,6 @@ export default function CollectionLayout({
     closeMenu();
   }, [pathname]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: (evt, gestureState) => {
-        // Only respond to gestures that start on the main content or if menu is open
-        const isMainContentGesture = evt.nativeEvent.locationX > 300;
-        return isMenuOpen || isMainContentGesture;
-      },
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        const isHorizontalSwipe =
-          Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-        return isHorizontalSwipe;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        if (isMenuOpen) {
-          const newValue = Math.max(0, Math.min(1, 1 + gestureState.dx / 300));
-          slideAnim.setValue(newValue);
-        } else {
-          const newValue = Math.max(0, Math.min(1, gestureState.dx / 300));
-          slideAnim.setValue(newValue);
-        }
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        // If it's just a tap (no significant movement) and menu is open
-        if (
-          Math.abs(gestureState.dx) < 5 &&
-          Math.abs(gestureState.dy) < 5 &&
-          isMenuOpen
-        ) {
-          // Only close if tap is on the main content area
-          if (evt.nativeEvent.locationX > 300) {
-            closeMenu();
-            return;
-          }
-        }
-
-        // Handle swipe gestures
-        if (isMenuOpen) {
-          if (gestureState.dx < -20) {
-            closeMenu();
-          } else {
-            openMenu();
-          }
-        } else {
-          if (gestureState.dx > 50) {
-            openMenu();
-          } else {
-            closeMenu();
-          }
-        }
-      },
-    })
-  ).current;
-
   return (
     <Layout>
       <Stack.Screen
@@ -173,11 +123,16 @@ export default function CollectionLayout({
             },
           ]}
         >
-          <UserCollections />
+          <Horizontal style={styles.sideMenuHeader}>
+            <DirectusIcon name="wind_power" size={24} />
+            {settings?.project_name}
+          </Horizontal>
+          <View style={styles.sideMenuContent}>
+            <UserCollections />
+          </View>
         </Animated.View>
 
         <Animated.View
-          {...panResponder.panHandlers}
           style={[
             styles.mainContent,
             isMenuOpen && styles.overlay,
@@ -201,21 +156,6 @@ export default function CollectionLayout({
             icon={isMenuOpen ? "close" : "menu"}
             onPress={toggleMenu}
           />
-
-          <Modal>
-            <Modal.Trigger>
-              <FloatingActionButton position="bottomRight" icon="search" />
-            </Modal.Trigger>
-            <Modal.Content>
-              <Input
-                autoFocus
-                placeholder="Search"
-                onChangeText={(text) => {
-                  console.log(text);
-                }}
-              />
-            </Modal.Content>
-          </Modal>
         </Animated.View>
       </View>
     </Layout>
@@ -244,6 +184,12 @@ const stylesheet = createStyleSheet((theme) => ({
     width: 300,
     backgroundColor: theme.colors.backgroundAlt,
     zIndex: 1,
+  },
+  sideMenuHeader: {
+    backgroundColor: theme.colors.backgroundDark,
+    padding: theme.spacing.md,
+  },
+  sideMenuContent: {
     padding: theme.spacing.md,
   },
   mainContent: {

@@ -103,11 +103,4 @@ const stylesheet = createStyleSheet((theme) => ({
   menuItem: {
     position: "absolute",
   },
-  menuButton: {
-    elevation: 4,
-    shadowColor: theme.colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
 }));

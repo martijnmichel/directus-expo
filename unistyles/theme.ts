@@ -19,6 +19,7 @@ export const lightTheme = {
     background: "#FFFFFF" as string,
     backgroundAlt: "#F0F4F9" as string, // Light gray background
     backgroundDark: "#e4eaf1" as string,
+    backgroundDarkest: "#d4d9e1" as string,
 
     // Border colors
     border: "#e4eaf1" as string,
@@ -102,7 +103,7 @@ export const darkTheme: AppTheme = {
     background: "#0b0b0b", // Dark background
     backgroundAlt: "#1a1a1a", // Slightly lighter dark
     backgroundDark: "#141414", // Darker shade
-
+    backgroundDarkest: "#000000",
     border: "#2F2F2F",
 
     // Utility colors

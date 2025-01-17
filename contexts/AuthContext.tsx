@@ -10,6 +10,7 @@ import {
   DirectusClient,
   DirectusUser,
   readMe,
+  readSettings,
   rest,
   RestClient,
 } from "@directus/sdk";
@@ -19,6 +20,7 @@ import {
   LocalStorageKeys,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
+import { UnistylesRuntime } from "react-native-unistyles";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -108,6 +110,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (token) {
           await directus.refresh();
           const user = await directus.request(readMe());
+          const settings = await directus.request(readSettings());
+          if (settings) {
+          }
           setUser(user as DirectusUser);
           setIsAuthenticated(true);
         }
