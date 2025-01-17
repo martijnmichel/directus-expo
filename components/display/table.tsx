@@ -9,7 +9,7 @@ interface TableProps<T extends Record<string, unknown>> {
   fields: string[];
   items?: T[];
   renderRow: (item: T) => (React.ReactNode | null)[];
-  maxHeight?: number;
+
   widths?: { [key: string]: number };
   onRowPress?: (item: T) => void;
   noDataText?: string;
@@ -159,7 +159,10 @@ export function Table<T extends Record<string, unknown>>({
               <Pressable
                 key={field}
                 onPress={() => handleSort(index)}
-                style={[styles.headerCell, { width: getColumnWidth(field) }]}
+                style={[
+                  styles.headerCell,
+                  { width: getColumnWidth(field), flexShrink: 0 },
+                ]}
               >
                 <Text
                   style={[styles.headerText, styles.truncate]}
@@ -172,7 +175,7 @@ export function Table<T extends Record<string, unknown>>({
           </View>
         )}
 
-        <ScrollView style={[styles.bodyContainer]}>
+        <ScrollView style={styles.bodyContainer}>
           {sortedItems.map((item, rowIndex) => (
             <Pressable
               onPress={() => onRowPress?.(item)}
@@ -184,7 +187,10 @@ export function Table<T extends Record<string, unknown>>({
                 return (
                   <View
                     key={cellIndex}
-                    style={[styles.cell, { width: getColumnWidth(field) }]}
+                    style={[
+                      styles.cell,
+                      { width: getColumnWidth(field), flexShrink: 0 },
+                    ]}
                   >
                     {renderCell(cell)}
                   </View>
@@ -247,7 +253,6 @@ const stylesheet = createStyleSheet((theme) => ({
   cell: {
     padding: theme.spacing.lg,
     justifyContent: "center",
-    flex: 1,
   },
   cellText: {
     color: theme.colors.textPrimary,
