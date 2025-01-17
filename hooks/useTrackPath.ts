@@ -1,4 +1,4 @@
-import { usePathname } from "expo-router";
+import { RelativePathString, usePathname } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -63,7 +63,7 @@ export const useTrackedPath = () => {
   const back = useCallback(
     (fallbackPath = "/content") => {
       if (!data?.paths.length) {
-        router.push(fallbackPath);
+        router.push(fallbackPath as RelativePathString);
         return;
       }
 
@@ -80,7 +80,7 @@ export const useTrackedPath = () => {
         current: previousPath,
       });
 
-      router.push(previousPath);
+      router.push(previousPath as RelativePathString);
     },
     [data?.paths, router, setContentPath]
   );

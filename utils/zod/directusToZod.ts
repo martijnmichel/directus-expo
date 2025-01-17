@@ -44,14 +44,16 @@ export function directusToZod(
     for (const [key, value] of Object.entries(rules)) {
       switch (key) {
         case "_and":
-          value?.forEach((rule) => {
+          value?.forEach((rule: DirectusValidationRule) => {
             currentSchema = applyRules(rule);
           });
           break;
 
         case "_or":
           if (value) {
-            const orSchemas = value.map((rule) => applyRules(rule));
+            const orSchemas = value.map((rule: DirectusValidationRule) =>
+              applyRules(rule)
+            );
             currentSchema = z.union(
               orSchemas as [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
             );

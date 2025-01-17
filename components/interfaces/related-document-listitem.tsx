@@ -10,6 +10,7 @@ import { parseTemplate } from "@/helpers/document/template";
 import { Link } from "expo-router";
 import { Button } from "../display/button";
 import { EventBus } from "@/utils/mitt";
+import { CoreSchemaDocument } from "@/types/directus";
 
 export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   docId,
@@ -49,11 +50,13 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
 
   useEffect(() => {
     EventBus.on("m2m:update", (event) => {
-      console.log({ event, relation, docId });
       if (
         event.collection === relation.related_collection &&
-        doc?.[junction.meta.junction_field as keyof typeof doc]?.id ===
-          event.docId
+        (
+          doc?.[
+            junction.meta.junction_field as keyof typeof doc
+          ] as CoreSchemaDocument
+        )?.id === event.docId
       ) {
         refetch();
       }
@@ -88,7 +91,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
       <Text
         style={[styles.content, isDeselected && styles.listItemDeselectedText]}
       >
-        {template ? parseTemplate(template, doc) : doc.id}
+        {parseTemplate(template, doc)}
       </Text>
 
       <Link
@@ -96,7 +99,11 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
           pathname: `/modals/m2m/[collection]/[id]`,
           params: {
             collection: relation.related_collection,
-            id: doc[junction.meta.junction_field as keyof typeof doc]?.id,
+            id: (
+              doc?.[
+                junction.meta.junction_field as keyof typeof doc
+              ] as CoreSchemaDocument
+            )?.id,
           },
         }}
         asChild

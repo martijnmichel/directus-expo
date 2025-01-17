@@ -51,7 +51,6 @@ export const mapFields = ({
     ?.sort((a, b) => ((a.meta.sort || 0) < (b.meta.sort || 0) ? -1 : 1))
     .map((item) => {
       const defaultProps = {
-        key: item.field,
         label: getLabel(item.field),
         helper: item.meta.note || undefined,
         disabled: item.meta.readonly,

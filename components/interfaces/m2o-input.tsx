@@ -11,8 +11,6 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { coreCollections } from "@/state/queries/directus/core";
 import { useDocuments } from "@/state/queries/directus/collection";
-import { Modal } from "../display/modal";
-import { DocumentEditor } from "../content/DocumentEditor";
 import { createStyleSheet } from "react-native-unistyles";
 import { X } from "../icons";
 
@@ -74,21 +72,6 @@ export const M2OInput = ({
           </Button>
         }
       />
-
-      {item.meta.options?.enableCreate && (
-        <Modal>
-          <Modal.Trigger>
-            <Button>Add new</Button>
-          </Modal.Trigger>
-          <Modal.Content variant="bottomSheet" title="Add new">
-            <DocumentEditor
-              collection={item.schema?.foreign_key_table as any}
-              id={"+"}
-              onSave={() => refetch()}
-            />
-          </Modal.Content>
-        </Modal>
-      )}
     </Vertical>
   );
 };

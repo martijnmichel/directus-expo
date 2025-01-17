@@ -40,7 +40,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
 const stylesheet = createStyleSheet((theme) => ({
   container: {
     borderWidth: 2,
-    borderColor: theme.colors.primary,
+    borderColor: theme.colors.border,
     borderRadius: 999,
     padding: 2,
     alignItems: "center",
@@ -50,7 +50,7 @@ const stylesheet = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.primary,
   },
   dot: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.primary,
     borderRadius: 999,
   },
   wrapper: {

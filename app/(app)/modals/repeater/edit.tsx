@@ -10,9 +10,10 @@ import { RepeaterDocument } from "@/components/content/RepeaterDocument";
 import { base64ToObject } from "@/helpers/document/docToBase64";
 
 const RepeaterModal = () => {
-  const { fields, data } = useLocalSearchParams();
+  const { fields, document } = useLocalSearchParams();
 
-  const defaultValues = base64ToObject(data as string);
+  const defaultValues = base64ToObject(document as string);
+  console.log({ defaultValues, fields });
   return (
     <KeyboardAwareLayout>
       <Stack.Screen options={{ headerTitle: "Repeater" }} />

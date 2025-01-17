@@ -5,7 +5,7 @@ import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Link } from "expo-router";
-import { Vertical } from "../layout/Stack";
+import { Horizontal, Vertical } from "../layout/Stack";
 import {
   DndProvider,
   Draggable,
@@ -96,7 +96,7 @@ export const RepeaterInput = ({
                 href={{
                   pathname: `/modals/repeater/edit`,
                   params: {
-                    data: objectToBase64(item),
+                    document: objectToBase64(repeaterItem),
                     fields: objectToBase64(item.meta?.options?.fields || []),
                     item_field: item.field,
                     index: index,
@@ -136,18 +136,20 @@ export const RepeaterInput = ({
         </Text>
       )}
 
-      <Link
-        href={{
-          pathname: `/modals/repeater/add`,
-          params: {
-            fields: objectToBase64(item.meta?.options?.fields || []),
-            item_field: item.field,
-          },
-        }}
-        asChild
-      >
-        <Button>Add Item</Button>
-      </Link>
+      <Horizontal spacing="xs">
+        <Link
+          href={{
+            pathname: `/modals/repeater/add`,
+            params: {
+              fields: objectToBase64(item.meta?.options?.fields || []),
+              item_field: item.field,
+            },
+          }}
+          asChild
+        >
+          <Button>Add Item</Button>
+        </Link>
+      </Horizontal>
     </Vertical>
   );
 };

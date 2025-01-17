@@ -138,9 +138,8 @@ export const DocumentEditor = ({
         });
       },
       onError: (error: any) => {
-        const errors = error.errors as DirectusErrorResponse;
-        each(errors, (error) => {
-          console.log(error);
+        const e = error as DirectusErrorResponse;
+        each(e.errors, (error) => {
           context.setError(error.extensions.field, {
             message: error.message,
           });

@@ -1,4 +1,4 @@
-import { MaterialIcons } from "@expo/vector-icons/";
+import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons/";
 
 interface DirectusIconProps {
   name: string;
@@ -7,12 +7,25 @@ interface DirectusIconProps {
 }
 
 export const DirectusIcon = ({ name, ...props }: DirectusIconProps) => {
-  // Convert directus icon names to material icon names if needed
+  // Convert directus icon names to material icon names
   // e.g., "location_pin" -> "location-pin"
-  const iconName = name?.replace(
-    /_/g,
-    "-"
-  ) as keyof typeof MaterialIcons.glyphMap;
+  const iconName = name?.replace(/_/g, "-");
 
-  return <MaterialIcons name={iconName} {...props} />;
+  // Check if icon exists in MaterialCommunityIcons first
+  if (iconName in MaterialCommunityIcons.glyphMap) {
+    return (
+      <MaterialCommunityIcons
+        name={iconName as keyof typeof MaterialCommunityIcons.glyphMap}
+        {...props}
+      />
+    );
+  }
+
+  // Fallback to MaterialIcons
+  return (
+    <MaterialIcons
+      name={iconName as keyof typeof MaterialIcons.glyphMap}
+      {...props}
+    />
+  );
 };

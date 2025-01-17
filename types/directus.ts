@@ -1,7 +1,6 @@
-export type CoreSchemaDocument = {
-  id: string;
-  [key: string]: any;
-};
+export interface CoreSchemaDocument extends Record<string, unknown> {
+  id: string | number;
+}
 
 export type DirectusErrorResponse = {
   errors: {

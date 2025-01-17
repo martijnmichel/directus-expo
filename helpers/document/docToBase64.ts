@@ -7,7 +7,7 @@ export const objectToBase64 = (obj: any): string => {
   try {
     const jsonString = JSON.stringify(obj);
     return btoa(jsonString);
-  } catch (error) {
+  } catch (error: any) {
     throw new Error("Failed to convert object to base64: " + error.message);
   }
 };
@@ -21,7 +21,7 @@ export const base64ToObject = <T = any>(base64String: string): T => {
   try {
     const jsonString = atob(base64String);
     return JSON.parse(jsonString) as T;
-  } catch (error) {
+  } catch (error: any) {
     throw new Error("Failed to convert base64 to object: " + error.message);
   }
 };

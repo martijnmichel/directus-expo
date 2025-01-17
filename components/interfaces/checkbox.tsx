@@ -62,7 +62,7 @@ export const Checkbox = ({
         {text && (
           <Text
             style={[
-              { color: theme.colors.text },
+              { color: theme.colors.textPrimary },
               disabled && { color: theme.colors.textTertiary },
             ]}
           >

@@ -39,7 +39,7 @@ export const useDocuments = (
     ? coreCollection.readItems(query)
     : useQuery({
         queryKey: ["documents", collection],
-        queryFn: () => directus?.request(readItems(collection, query)),
+        queryFn: () => directus?.request(readItems(collection as any, query)),
       });
 };
 

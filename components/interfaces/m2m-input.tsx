@@ -24,7 +24,7 @@ import {
 } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
-import { useQuery } from "@tanstack/react-query";
+import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/mutateItem";
@@ -91,15 +91,18 @@ export const M2MInput = ({
         console.log("m2m:add", event);
 
         const data = {
-          [relation?.field as string]: event.data.id as number,
+          [relation?.field as string]: event.data.id,
         };
-        mutateOptions(data, {
-          onSuccess: (newData) => {
-            console.log({ newData });
-            setAddedDocIds([...addedDocIds, newData.id]);
-            props.onChange([...valueProp, newData.id]);
-          },
-        });
+        mutateOptions(
+          data,
+          // @ts-ignore
+          {
+            onSuccess: (newData: any) => {
+              setAddedDocIds([...addedDocIds, newData.id]);
+              props.onChange([...valueProp, newData.id]);
+            },
+          }
+        );
       }
     };
     EventBus.on("m2m:add", addM2M);
