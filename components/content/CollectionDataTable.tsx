@@ -19,6 +19,7 @@ import { Modal } from "../display/modal";
 import { Input } from "../interfaces/input";
 import { Text } from "../display/typography";
 import { View } from "react-native";
+import { getFieldValue } from "@/helpers/document/getFieldValue";
 
 const useDocumentsFilters = () => {
   const [page, setPage] = useState(1);
@@ -143,7 +144,13 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         items={(documents?.items as Record<string, unknown>[]) || []}
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
-          map(tableFields, (f) => doc[f] as number | string | null)
+          map(tableFields, (f) => {
+            const field = fields?.find((fo) => fo.field === f);
+
+            return field
+              ? getFieldValue(field, doc)
+              : (doc[f] as number | string | null);
+          })
         }
         onRowPress={(doc) => {
           console.log(doc);
