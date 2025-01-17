@@ -155,13 +155,12 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
     justifyContent: "flex-start",
     gap: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     fontFamily: theme.typography.body.fontFamily,
   },
   content: {
     paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
+    paddingBottom: theme.spacing.sm,
   },
   groupDetail: {
     borderBottomWidth: theme.borderWidth.md,
