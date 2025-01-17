@@ -36,3 +36,5 @@ yarn-error.*
 *.tsbuildinfo
 android
 ios
+
+release.test
