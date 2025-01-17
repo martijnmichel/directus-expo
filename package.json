@@ -7,7 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "generate-icons": "ts-node scripts/generate-icon-mapping.ts"
   },
   "jest": {
     "preset": "jest-expo"
@@ -64,11 +65,13 @@
     "react-native-unistyles": "^2.20.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
+    "ts-node": "^10.9.2",
     "uuid": "^11.0.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/node": "^22.10.7",
     "@types/react": "~18.3.12",
     "babel-plugin-module-resolver": "^5.0.2",
     "jest": "^29.2.1",
