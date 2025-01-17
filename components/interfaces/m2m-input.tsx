@@ -15,7 +15,7 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { map, uniq } from "lodash";
+import { get, map, uniq } from "lodash";
 import {
   Link,
   RelativePathString,
@@ -28,6 +28,13 @@ import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/mutateItem";
+import {
+  DndProvider,
+  Draggable,
+  DraggableStack,
+  Droppable,
+  UniqueIdentifier,
+} from "@mgcrea/react-native-dnd";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -64,6 +71,9 @@ export const M2MInput = ({
       r.meta.one_field === item.field
   );
 
+  const sortField = junction?.meta.sort_field;
+  console.log({ sortField });
+
   const relation = relations?.find(
     (r) => r.field === junction?.meta.junction_field
   );
@@ -78,7 +88,9 @@ export const M2MInput = ({
     (junction?.meta.one_field &&
       junctionPermissions?.create.fields?.includes(junction?.meta.one_field));
 
-  const allowCreate = relationPermission?.create.access === "full";
+  const allowCreate =
+    relationPermission?.create.access === "full" &&
+    get(item, "meta.options.enableCreate") !== false;
 
   const { mutate: mutateOptions } = mutateDocument(
     junction?.collection as keyof CoreSchema,
@@ -111,42 +123,69 @@ export const M2MInput = ({
     };
   }, [addedDocIds, valueProp, props.onChange]);
 
+  const onOrderChange = (newOrder: UniqueIdentifier[]) => {
+    const newOrderIds = newOrder.map((id) => parseInt(id as string));
+    props.onChange?.(newOrderIds);
+  };
+
+  console.log({ valueProp });
+
   return (
     relation &&
     junction && (
       <Vertical spacing="xs">
         {label && <Text style={formControlStyles.label}>{label}</Text>}
-        <List>
-          {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-            const isDeselected = value?.includes(id) && !valueProp.includes(id);
-            const isNew = !value?.includes(id);
-            return (
-              <RelatedDocumentListItem
-                key={id}
-                docId={id}
-                junction={junction!}
-                relation={relation!}
-                template={item.meta.options?.template}
-                onAdd={(item: Record<string, unknown>) => {
-                  setAddedDocIds([...addedDocIds, item.id as number]);
-                  props.onChange([...valueProp, item.id as number]);
-                }}
-                onDelete={(item) => {
-                  console.log({ item });
-                  setAddedDocIds(
-                    addedDocIds.filter(
-                      (v) =>
-                        v !== (item[relation.field as keyof typeof item] as any)
-                    )
-                  );
-                  props.onChange(valueProp.filter((v) => v !== id));
-                }}
-                isNew={isNew}
-                isDeselected={isDeselected}
-              />
-            );
-          })}
-        </List>
+        <DndProvider>
+          <DraggableStack
+            key={JSON.stringify(valueProp)}
+            direction="column"
+            onOrderChange={onOrderChange}
+            style={{ gap: 3 }}
+          >
+            {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+              const isDeselected =
+                value?.includes(id) && !valueProp.includes(id);
+              const isNew = !value?.includes(id);
+
+              const Item = (
+                <RelatedDocumentListItem
+                  key={id}
+                  docId={id}
+                  junction={junction!}
+                  relation={relation!}
+                  template={item.meta.options?.template}
+                  isSortable={!!sortField}
+                  onAdd={(item: Record<string, unknown>) => {
+                    setAddedDocIds([...addedDocIds, item.id as number]);
+                    props.onChange([...valueProp, item.id as number]);
+                  }}
+                  onDelete={(item) => {
+                    console.log({ item });
+                    setAddedDocIds(
+                      addedDocIds.filter(
+                        (v) =>
+                          v !==
+                          (item[relation.field as keyof typeof item] as any)
+                      )
+                    );
+                    props.onChange(valueProp.filter((v) => v !== id));
+                  }}
+                  isNew={isNew}
+                  isDeselected={isDeselected}
+                />
+              );
+              return (
+                <Draggable
+                  key={id + "draggable"}
+                  id={id.toString()}
+                  disabled={!sortField}
+                >
+                  {Item}
+                </Draggable>
+              );
+            })}
+          </DraggableStack>
+        </DndProvider>
         {(error || helper) && (
           <Text
             style={[

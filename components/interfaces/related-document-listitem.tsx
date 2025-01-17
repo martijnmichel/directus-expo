@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Pressable } from "react-native";
 import { CoreSchema, ReadRelationOutput } from "@directus/sdk";
-import { Trash, Edit, Redo } from "../icons";
+import { Trash, Edit, Redo, DragIcon } from "../icons";
 import { Modal } from "../display/modal";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Text } from "../display/typography";
@@ -21,6 +21,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   onAdd,
   isNew,
   isDeselected,
+  isSortable,
   ...props
 }: {
   docId: string | number;
@@ -31,6 +32,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   onAdd?: (doc: Record<string, unknown>) => void;
   isNew?: boolean;
   isDeselected?: boolean;
+  isSortable?: boolean;
 }) => {
   const { styles } = useStyles(stylesheet);
   const [addOpen, setAddOpen] = useState(false);
@@ -88,8 +90,13 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
         isNew && styles.listItemNew,
       ]}
     >
+      {isSortable && <DragIcon />}
       <Text
-        style={[styles.content, isDeselected && styles.listItemDeselectedText]}
+        style={[
+          styles.content,
+          isDeselected && styles.listItemDeselectedText,
+          isSortable && { marginLeft: 12 },
+        ]}
       >
         {parseTemplate(template, doc)}
       </Text>
@@ -156,6 +163,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.sm,
+
     fontFamily: theme.typography.body.fontFamily,
   },
   deleteButton: {
