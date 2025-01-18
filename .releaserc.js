@@ -7,13 +7,13 @@ module.exports = {
       {
         preset: "conventionalcommits",
         releaseRules: [
-          { type: "feat", release: "minor" },
+          { type: "feat", release: "patch" },
           { type: "fix", release: "patch" },
-          { type: "perf", release: "patch" },
-          { type: "refactor", release: "patch" },
-          { type: "style", release: "patch" },
-          { type: "docs", release: "patch" },
-          { type: "chore", release: "patch" },
+          { type: "perf", release: "minor" },
+          { type: "refactor", release: "minor" },
+          { type: "style", release: "minor" },
+          { type: "docs", release: "minor" },
+          { type: "chore", release: "minor" },
           { scope: "no-release", release: false },
         ],
         parserOpts: {

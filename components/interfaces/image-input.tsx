@@ -28,6 +28,7 @@ interface ImageInputProps {
   helper?: string;
   value?: string;
   onChange: (value: string | string[]) => void;
+  disabled?: boolean;
 }
 
 export const ImageInput = ({
@@ -36,6 +37,7 @@ export const ImageInput = ({
   helper,
   value,
   onChange,
+  disabled,
 }: ImageInputProps) => {
   const { styles, theme } = useStyles(imageStyles);
   const { styles: formStyle } = useStyles(formStyles);
@@ -105,65 +107,67 @@ export const ImageInput = ({
           />
         </View>
 
-        <Vertical spacing="md" style={styles.uploadContainer}>
-          <Horizontal spacing="md">
-            <Button variant="soft" rounded onPress={pickImage}>
-              <Upload />
-            </Button>
-
-            <Modal>
-              <Modal.Trigger>
-                <Button rounded variant="soft">
-                  <Link />
-                </Button>
-              </Modal.Trigger>
-              <Modal.Content title="Import from URL">
-                {({ close }) => (
-                  <Vertical>
-                    <Input
-                      placeholder="Enter URL"
-                      value={imageUrl}
-                      onChangeText={setImageUrl}
-                      style={{ flex: 1 }}
-                    />
-                    <Button
-                      disabled={!imageUrl}
-                      onPress={() => {
-                        close();
-                        handleUrlSubmit();
-                      }}
-                    >
-                      Upload
-                    </Button>
-                  </Vertical>
-                )}
-              </Modal.Content>
-            </Modal>
-            <Modal>
-              <Modal.Trigger>
-                <Button rounded variant="soft">
-                  <Gallery />
-                </Button>
-              </Modal.Trigger>
-              <Modal.Content variant="bottomSheet" title="Import from URL">
-                {({ close }) => (
-                  <FileBrowser
-                    onSelect={(v) => {
-                      onChange(v);
-                      close();
-                    }}
-                  />
-                )}
-              </Modal.Content>
-            </Modal>
-
-            {value && (
-              <Button variant="soft" rounded onPress={() => onChange?.("")}>
-                <X />
+        {!disabled && (
+          <Vertical spacing="md" style={styles.uploadContainer}>
+            <Horizontal spacing="md">
+              <Button variant="soft" rounded onPress={pickImage}>
+                <Upload />
               </Button>
-            )}
-          </Horizontal>
-        </Vertical>
+
+              <Modal>
+                <Modal.Trigger>
+                  <Button rounded variant="soft">
+                    <Link />
+                  </Button>
+                </Modal.Trigger>
+                <Modal.Content title="Import from URL">
+                  {({ close }) => (
+                    <Vertical>
+                      <Input
+                        placeholder="Enter URL"
+                        value={imageUrl}
+                        onChangeText={setImageUrl}
+                        style={{ flex: 1 }}
+                      />
+                      <Button
+                        disabled={!imageUrl}
+                        onPress={() => {
+                          close();
+                          handleUrlSubmit();
+                        }}
+                      >
+                        Upload
+                      </Button>
+                    </Vertical>
+                  )}
+                </Modal.Content>
+              </Modal>
+              <Modal>
+                <Modal.Trigger>
+                  <Button rounded variant="soft">
+                    <Gallery />
+                  </Button>
+                </Modal.Trigger>
+                <Modal.Content variant="bottomSheet" title="Import from URL">
+                  {({ close }) => (
+                    <FileBrowser
+                      onSelect={(v) => {
+                        onChange(v);
+                        close();
+                      }}
+                    />
+                  )}
+                </Modal.Content>
+              </Modal>
+
+              {value && (
+                <Button variant="soft" rounded onPress={() => onChange?.("")}>
+                  <X />
+                </Button>
+              )}
+            </Horizontal>
+          </Vertical>
+        )}
       </View>
 
       {(error || helper) && (
