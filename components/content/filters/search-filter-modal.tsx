@@ -10,13 +10,12 @@ import { DirectusIcon } from "@/components/display/directus-icon";
 import { Vertical } from "@/components/layout/Stack";
 import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 
-export const SearchFilter = (context: UseDocumentsFiltersReturn) => {
-  const { state, actions } = context;
+export const SearchFilter = (state: UseDocumentsFiltersReturn) => {
   const [search, setSearch] = useState(state.search);
   const { t } = useTranslation();
   const handleSearch = useCallback(
-    debounce(() => actions.setSearch(search), 500),
-    [actions.setSearch, search]
+    debounce(() => state.setSearch(search), 500),
+    [state.setSearch, search]
   );
 
   useEffect(() => {
