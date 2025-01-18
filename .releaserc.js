@@ -1,7 +1,25 @@
 module.exports = {
   branches: ["main"],
   plugins: [
-    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        preset: "angular",
+        releaseRules: [
+          { type: "feat", release: "minor" },
+          { type: "fix", release: "patch" },
+          { type: "perf", release: "patch" },
+          { type: "refactor", release: "patch" },
+          { type: "style", release: "patch" },
+          { type: "docs", release: "patch" },
+          { type: "chore", release: "patch" },
+          { scope: "no-release", release: false },
+        ],
+        parserOpts: {
+          noteKeywords: ["BREAKING CHANGE", "BREAKING CHANGES"],
+        },
+      },
+    ],
     "@semantic-release/release-notes-generator",
     [
       "@semantic-release/changelog",
@@ -21,9 +39,7 @@ module.exports = {
       "@semantic-release/exec",
       {
         prepareCmd:
-          // Update package.json version
           "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version && " +
-          // Update app version
           "node scripts/update-app-version.js ${nextRelease.version}",
       },
     ],
