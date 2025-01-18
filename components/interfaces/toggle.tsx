@@ -79,7 +79,7 @@ export const Toggle: React.FC<ToggleProps> = ({
 
 const styleSheet = createStyleSheet((theme) => ({
   formControl: {
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   label: {
     ...theme.typography.label,
@@ -89,6 +89,8 @@ const styleSheet = createStyleSheet((theme) => ({
     width: 52,
     height: 32,
     borderRadius: theme.borderRadius.full,
+    borderWidth: theme.borderWidth.sm,
+    borderColor: theme.colors.border,
     backgroundColor: theme.colors.backgroundDark,
     padding: theme.spacing.xs,
     justifyContent: "center",
@@ -107,7 +109,7 @@ const styleSheet = createStyleSheet((theme) => ({
     width: 24,
     height: 24,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.black,
   },
   thumbDisabled: {
     backgroundColor: theme.colors.textMuted,

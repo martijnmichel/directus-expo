@@ -1,11 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Redirect, Slot, Stack, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
-
+  const headerStyle = useHeaderStyles();
   // Add loading check
   if (isLoading) {
     return null; // or return a loading spinner

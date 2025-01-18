@@ -9,13 +9,15 @@ import { useLocalSearchParams } from "expo-router";
 import { RepeaterDocument } from "@/components/content/RepeaterDocument";
 import { base64ToObject } from "@/helpers/document/docToBase64";
 import { EventBus } from "@/utils/mitt";
+import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 
 const RepeaterModal = () => {
   const { fields, item_field } = useLocalSearchParams();
   const router = useRouter();
+  const headerStyle = useHeaderStyles({ isModal: true });
   return (
     <KeyboardAwareLayout>
-      <Stack.Screen options={{ headerTitle: "Repeater" }} />
+      <Stack.Screen options={{ headerTitle: "Repeater", ...headerStyle }} />
       <KeyboardAwareScrollView>
         <Container>
           <Section>

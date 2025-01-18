@@ -34,7 +34,7 @@ export default function Collection() {
     template: data?.meta.display_template || "",
   });
 
-  const headerStyles = useHeaderStyles();
+  const headerStyles = useHeaderStyles({ isModal: true });
 
   return (
     <KeyboardAwareLayout>

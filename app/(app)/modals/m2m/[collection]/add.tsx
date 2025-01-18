@@ -36,14 +36,14 @@ export default function Collection() {
   });
   const { directus } = useAuth();
 
-  const headerStyles = useHeaderStyles();
+  const headerStyle = useHeaderStyles({ isModal: true });
 
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
         options={{
           headerTitle,
-          ...headerStyles,
+          ...headerStyle,
           presentation: "modal",
         }}
       />

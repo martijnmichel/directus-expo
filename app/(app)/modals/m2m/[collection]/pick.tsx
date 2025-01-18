@@ -91,7 +91,7 @@ export default function Collection() {
     refetch();
   });
 
-  const headerStyles = useHeaderStyles();
+  const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
 
   return (
