@@ -76,10 +76,9 @@ export const DocumentEditor = ({
 
   console.log({ isDirty, isValid, isSubmitting });
 
-  const getDocumentFieldValues = (doc?: Record<string, unknown>) => {
-    return fields?.reduce((acc, field) => {
-      acc[field.field as keyof CoreSchema] =
-        doc?.[field.field as keyof CoreSchema];
+  const getDocumentFieldValues = (document: Record<string, unknown>) => {
+    return Object.keys(document).reduce((acc, key) => {
+      acc[key] = document[key] === null ? "" : document[key];
       return acc;
     }, {} as Record<string, unknown>);
   };

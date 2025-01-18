@@ -3,7 +3,9 @@ import {
   aggregate,
   CoreSchema,
   deleteRole,
+  deleteRoles,
   deleteUser,
+  deleteUsers,
   Query,
   readCollections,
   readMe,
@@ -141,6 +143,12 @@ export const coreCollections = {
         mutationFn: () => directus!.request(deleteUser(id)),
       });
     },
+    removeItems: (ids: string[]) => {
+      const { directus } = useAuth();
+      return useMutation({
+        mutationFn: () => directus!.request(deleteUsers(ids)),
+      });
+    },
   },
   [prefix + "roles"]: {
     readItem: useRole,
@@ -149,6 +157,12 @@ export const coreCollections = {
       const { directus } = useAuth();
       return useMutation({
         mutationFn: () => directus!.request(deleteRole(id)),
+      });
+    },
+    removeItems: (ids: string[]) => {
+      const { directus } = useAuth();
+      return useMutation({
+        mutationFn: () => directus!.request(deleteRoles(ids)),
       });
     },
   },
