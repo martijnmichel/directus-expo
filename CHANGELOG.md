@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/martijnmichel/directus-expo/compare/v0.1.0...v0.1.1) (2025-01-18)
+
+
+### Bug Fixes
+
+* permissions for m2m & m2o ([6826d3b](https://github.com/martijnmichel/directus-expo/commit/6826d3b2423c9c98f7b3ad840f8cb69ff323c3f3))
+
 # [0.1.0](https://github.com/martijnmichel/directus-expo/compare/v0.0.70...v0.1.0) (2025-01-18)
 
 
