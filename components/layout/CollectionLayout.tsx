@@ -43,7 +43,6 @@ import { Horizontal } from "./Stack";
 import { DirectusIcon } from "../display/directus-icon";
 import { PortalHost, PortalOutlet } from "./Portal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FilterProvider } from "@/contexts/FilterContext";
 
 export default function CollectionLayout({
   children,
@@ -97,7 +96,7 @@ export default function CollectionLayout({
   }, [pathname]);
 
   return (
-    <FilterProvider>
+    <>
       <Stack.Screen
         options={{
           headerTitle: label,
@@ -171,7 +170,7 @@ export default function CollectionLayout({
           </View>
         </Animated.View>
       </View>
-    </FilterProvider>
+    </>
   );
 }
 

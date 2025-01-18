@@ -1,14 +1,16 @@
-import { useDocumentsFilters } from "@/contexts/FilterContext";
 import { Horizontal } from "@/components/layout/Stack";
 import { Button } from "@/components/display/button";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Text } from "@/components/display/typography";
+import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 
-export const Pagination = (context: { total: number | null | undefined }) => {
+export const Pagination = (
+  context: UseDocumentsFiltersReturn & { total: number }
+) => {
   const {
     state: { page, limit },
     actions: { next, previous },
-  } = useDocumentsFilters();
+  } = context;
   const totalPages = Math.ceil((context.total || 0) / limit);
   return (
     <Horizontal>

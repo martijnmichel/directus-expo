@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useMemo } from "react";
 
-interface FilterContextType {
+export interface UseDocumentsFiltersReturn {
   state: {
     page: number;
     limit: number;
@@ -14,9 +14,7 @@ interface FilterContextType {
   };
 }
 
-const FilterContext = createContext<FilterContextType | undefined>(undefined);
-
-export const FilterProvider = ({ children }: { children: React.ReactNode }) => {
+export const useDocumentsFilters = (): UseDocumentsFiltersReturn => {
   const [page, setPage] = useState(1);
   const [limit, updateLimit] = useState(5);
   const [search, updateSearch] = useState("");
@@ -47,15 +45,5 @@ export const FilterProvider = ({ children }: { children: React.ReactNode }) => {
     [page, limit, search]
   );
 
-  return (
-    <FilterContext.Provider value={value}>{children}</FilterContext.Provider>
-  );
-};
-
-export const useDocumentsFilters = (): FilterContextType => {
-  const context = useContext(FilterContext);
-  if (context === undefined) {
-    throw new Error("useDocumentsFilters must be used within a FilterProvider");
-  }
-  return context;
+  return value;
 };

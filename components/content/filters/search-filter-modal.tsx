@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Input } from "@/components/interfaces/input";
-import { useDocumentsFilters } from "@/contexts/FilterContext";
 import { debounce } from "lodash";
 import { useState } from "react";
 import { useCallback } from "react";
@@ -9,9 +8,10 @@ import { Modal } from "@/components/display/modal";
 import { Button } from "@/components/display/button";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Vertical } from "@/components/layout/Stack";
+import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 
-export const SearchFilter = () => {
-  const { state, actions } = useDocumentsFilters();
+export const SearchFilter = (context: UseDocumentsFiltersReturn) => {
+  const { state, actions } = context;
   const [search, setSearch] = useState(state.search);
   const { t } = useTranslation();
   const handleSearch = useCallback(

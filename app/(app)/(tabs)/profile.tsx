@@ -4,23 +4,20 @@ import { Container } from "@/components/layout/Container";
 import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
 import { useAuth } from "@/contexts/AuthContext";
-import { FilterProvider } from "@/contexts/FilterContext";
 import { ScrollView } from "react-native";
 export default function TabTwoScreen() {
   const { user } = useAuth();
   return (
     <Layout>
-      <FilterProvider>
-        <ScrollView>
-          <Container>
-            <Section>
-              <CollectionDataTable collection="directus_users" />
-            </Section>
-          </Container>
-        </ScrollView>
+      <ScrollView>
+        <Container>
+          <Section>
+            <CollectionDataTable collection="directus_users" />
+          </Section>
+        </Container>
+      </ScrollView>
 
-        <FloatingToolbar />
-      </FilterProvider>
+      <FloatingToolbar />
     </Layout>
   );
 }
