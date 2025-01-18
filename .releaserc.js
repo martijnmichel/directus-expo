@@ -1,5 +1,11 @@
 module.exports = {
-  branches: ["main"],
+  branches: [
+    {
+      name: "main",
+      // Set initial version for the main branch
+      range: "0.0.x",
+    },
+  ],
   tagFormat: "v${version}",
   plugins: [
     [
@@ -8,7 +14,7 @@ module.exports = {
         preset: "conventionalcommits",
         releaseRules: [
           { type: "feat", release: "minor" },
-          { type: "fix", release: "minor" },
+          { type: "fix", release: "patch" },
           { type: "perf", release: "patch" },
           { type: "refactor", release: "patch" },
           { type: "style", release: "patch" },
@@ -29,6 +35,12 @@ module.exports = {
       },
     ],
     [
+      "@semantic-release/npm",
+      {
+        npmPublish: false,
+      },
+    ],
+    [
       "@semantic-release/git",
       {
         assets: ["package.json", "CHANGELOG.md"],
@@ -39,13 +51,10 @@ module.exports = {
     [
       "@semantic-release/exec",
       {
-        prepareCmd:
-          "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version && " +
-          "node scripts/update-app-version.js ${nextRelease.version}",
+        prepareCmd: "node scripts/update-app-version.js ${nextRelease.version}",
       },
     ],
   ],
-  initialVersion: "0.0.70",
   dryRun: false,
   ci: false,
 };
