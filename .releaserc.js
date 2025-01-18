@@ -3,25 +3,28 @@ module.exports = {
   plugins: [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/changelog",
+    [
+      "@semantic-release/changelog",
+      {
+        changelogFile: "CHANGELOG.md",
+      },
+    ],
     [
       "@semantic-release/git",
       {
-        assets: ["CHANGELOG.md", "app.json"],
+        assets: ["package.json", "CHANGELOG.md"],
         message:
           "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
       },
     ],
     [
-      "@semantic-release/npm",
-      {
-        npmPublish: false,
-      },
-    ],
-    [
       "@semantic-release/exec",
       {
-        prepareCmd: "node scripts/update-app-version.js ${nextRelease.version}",
+        prepareCmd:
+          // Update package.json version
+          "npm version ${nextRelease.version} --no-git-tag-version --allow-same-version && " +
+          // Update app version
+          "node scripts/update-app-version.js ${nextRelease.version}",
       },
     ],
   ],
