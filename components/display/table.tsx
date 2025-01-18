@@ -53,8 +53,6 @@ export function Table<T extends Record<string, unknown>>({
   const [sort, setSort] = useState<SortConfig | null>(null);
   const { t } = useTranslation();
 
-  console.log({ widths, headers, fields });
-
   const handleSort = (columnIndex: number) => {
     setSort((prev) => ({
       column: columnIndex,

@@ -20,84 +20,9 @@ import { Input } from "../interfaces/input";
 import { Text } from "../display/typography";
 import { View } from "react-native";
 import { getFieldValue } from "@/helpers/document/getFieldValue";
-
-const useDocumentsFilters = () => {
-  const [page, setPage] = useState(1);
-  const [limit, updateLimit] = useState(25);
-  const [search, setSearch] = useState("");
-
-  const next = () => {
-    setPage(page + 1);
-  };
-
-  const previous = () => {
-    setPage(page - 1);
-  };
-
-  const setLimit = (limit: number) => {
-    setPage(1);
-    updateLimit(limit);
-  };
-
-  return { page, limit, next, previous, setLimit, search, setSearch };
-};
-
-const Pagination = (
-  context: ReturnType<typeof useDocumentsFilters> & {
-    total: number | null | undefined;
-  }
-) => {
-  const totalPages = Math.ceil((context.total || 0) / context.limit);
-  return (
-    <Horizontal>
-      <Button
-        rounded
-        disabled={context.page === 1}
-        variant="soft"
-        onPress={context.previous}
-      >
-        <DirectusIcon name="chevron_left" />
-      </Button>
-
-      <Button
-        rounded
-        disabled={context.page === totalPages}
-        variant="soft"
-        onPress={context.next}
-      >
-        <DirectusIcon name="chevron_right" />
-      </Button>
-    </Horizontal>
-  );
-};
-
-const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
-  const [search, setSearch] = useState(context.search);
-  const { t } = useTranslation();
-  const handleSearch = useCallback(
-    debounce(() => context.setSearch(search), 500),
-    [context.setSearch, search]
-  );
-
-  useEffect(() => {
-    handleSearch();
-  }, [handleSearch]);
-
-  return (
-    <Modal>
-      <Modal.Trigger>
-        <Button rounded variant="soft">
-          <DirectusIcon name="search" />
-        </Button>
-      </Modal.Trigger>
-      <Modal.Content variant="quickView" title={t("components.table.search")}>
-        <Vertical>
-          <Input value={search} onChangeText={setSearch} placeholder="Search" />
-        </Vertical>
-      </Modal.Content>
-    </Modal>
-  );
-};
+import { FilterProvider, useDocumentsFilters } from "@/contexts/FilterContext";
+import { SearchFilter } from "./filters/search-filter-modal";
+import { Pagination } from "./filters/pagination";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -106,9 +31,12 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const path = usePathname();
 
   const filterContext = useDocumentsFilters();
-  const { page, limit, search, setSearch } = filterContext;
+  const {
+    state: { page, limit, search },
+    actions: { next, previous, setLimit, setSearch },
+  } = filterContext;
 
-  const { data: documents, refetch } = useDocuments(
+  const { data: documents } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema],
     {
       page,
@@ -141,10 +69,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     fields?.map((f) => f.field) ||
     [];
 
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
-
   return (
     <Vertical>
       <Table
@@ -171,9 +95,12 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         }}
         noDataText={t("components.table.noData")}
       />
-      <PortalOutlet name="floating-toolbar" path={/^\/content\/[^/]+$/}>
-        <Pagination {...filterContext} total={documents?.total} />
-        <SearchFilter {...filterContext} />
+      <PortalOutlet
+        name="floating-toolbar"
+        path={/^\/content\/|\/profile\/[^/]+$/}
+      >
+        <Pagination total={documents?.total} />
+        <SearchFilter />
       </PortalOutlet>
       <View style={{ height: 60 }} />
     </Vertical>

@@ -106,6 +106,8 @@ export const darkTheme: AppTheme = {
     backgroundDarkest: "#000000",
     border: "#2F2F2F",
 
+    textMuted: "#4F5464",
+
     // Utility colors
     white: "#000000" as string,
     black: "#FFFFFF" as string,

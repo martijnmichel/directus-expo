@@ -3,6 +3,7 @@ import React from "react";
 import Animated, { SlideInDown, SlideInUp } from "react-native-reanimated";
 import { PortalHost } from "../layout/Portal";
 import { useTranslation } from "react-i18next";
+import { Horizontal } from "../layout/Stack";
 
 export function FloatingToolbar() {
   const { t } = useTranslation();
@@ -10,7 +11,9 @@ export function FloatingToolbar() {
 
   return (
     <Animated.View entering={SlideInDown} style={[styles.toolbar]}>
-      <PortalHost name="floating-toolbar" />
+      <Horizontal>
+        <PortalHost name="floating-toolbar" />
+      </Horizontal>
     </Animated.View>
   );
 }

@@ -16,8 +16,6 @@ export default function UserCollections() {
   const { data } = useCollections();
   const { t, i18n } = useTranslation();
 
-  console.log({ data });
-
   const CollectionGroup = ({
     collection,
   }: {
@@ -80,7 +78,6 @@ export default function UserCollections() {
           const hasChildren =
             filter(data, (c) => c.meta.group === collection.collection).length >
             0;
-          console.log(collection.collection, hasChildren);
           return hasChildren ? (
             <CollectionGroup
               collection={collection}

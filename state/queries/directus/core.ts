@@ -77,11 +77,11 @@ export const useUser = (id: string) => {
 export const useUsers = (query?: Query<CoreSchema, any>) => {
   const { directus } = useAuth();
   return useQuery({
-    queryKey: ["users"],
+    queryKey: ["users", query],
     queryFn: async () => {
       const items = await directus?.request(readUsers(query));
       const pagination = await directus?.request(
-        aggregate("directus_users", { aggregate: { count: "*", ...query } })
+        aggregate("directus_users", { aggregate: { count: "*" } })
       );
       return { items, total: Number(get(pagination, "0.count")) };
     },
@@ -104,7 +104,7 @@ export const useRoles = (query?: Query<CoreSchema, any>) => {
       const items = await directus?.request(readRoles(query));
       const pagination = await directus?.request(
         aggregate("directus_roles", {
-          aggregate: { count: "*", ...query },
+          aggregate: { count: "*", query },
         })
       );
       return { items, total: Number(get(pagination, "0.count")) };

@@ -21,6 +21,7 @@ import {
 } from "@tanstack/react-query";
 import { coreCollections } from "./core";
 import { get } from "lodash";
+import { useMemo } from "react";
 
 export const useCollection = (id: string) => {
   const { directus } = useAuth();
@@ -39,18 +40,31 @@ export const useDocuments = (
 
   console.log({ collection, query });
 
+  const { limit, page, ...restQuery } = query || {};
+  const paginationParams = { limit, page };
+
+  // Memoize the full query to prevent unnecessary rerenders
+  const fullQuery = useMemo(
+    () => ({
+      ...restQuery,
+      ...paginationParams,
+    }),
+    [JSON.stringify(restQuery), page, limit]
+  );
+
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        queryKey: ["documents", collection, query],
+        queryKey: ["documents", collection, restQuery, paginationParams],
+        staleTime: 5000,
         queryFn: async () => {
           const items = await directus?.request(
-            readItems(collection as any, query)
+            readItems(collection as any, fullQuery)
           );
           const pagination = await directus?.request(
             aggregate(collection as any, {
               aggregate: { count: "*" },
-              query,
+              query: restQuery,
             })
           );
 
