@@ -96,7 +96,7 @@ export default function CollectionLayout({
   }, [pathname]);
 
   return (
-    <Layout>
+    <>
       <Stack.Screen
         options={{
           headerTitle: label,
@@ -151,12 +151,7 @@ export default function CollectionLayout({
             },
           ]}
         >
-          <ScrollView>
-            <Container>
-              {children}
-              <View style={{ paddingBottom: bottom }} />
-            </Container>
-          </ScrollView>
+          {children}
 
           <View style={styles.floatingToolbar}>
             <Horizontal>
@@ -175,7 +170,7 @@ export default function CollectionLayout({
           </View>
         </Animated.View>
       </View>
-    </Layout>
+    </>
   );
 }
 
