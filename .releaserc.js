@@ -1,11 +1,5 @@
 module.exports = {
-  branches: [
-    {
-      name: "main",
-      // Set initial version for the main branch
-      range: "0.0.x",
-    },
-  ],
+  branches: ["main"],
   tagFormat: "v${version}",
   plugins: [
     [
