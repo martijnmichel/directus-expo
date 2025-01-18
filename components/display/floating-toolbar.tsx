@@ -27,7 +27,7 @@ const stylesheet = createStyleSheet((theme) => ({
     width: "100%",
     display: "flex",
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     padding: theme.spacing.md,
   },

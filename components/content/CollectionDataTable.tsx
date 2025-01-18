@@ -23,40 +23,12 @@ import { getFieldValue } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/contexts/useDocumentsFilters";
 import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
-
-const SearchFilter = (context: UseDocumentsFiltersReturn) => {
-  const [search, setSearch] = useState(context.search);
-  const { t } = useTranslation();
-  const handleSearch = useCallback(
-    debounce(() => context.setSearch(search), 500),
-    [context.setSearch, search]
-  );
-
-  useEffect(() => {
-    handleSearch();
-  }, [handleSearch]);
-
-  return (
-    <Modal>
-      <Modal.Trigger>
-        <Button rounded variant="soft">
-          <DirectusIcon name="search" />
-        </Button>
-      </Modal.Trigger>
-      <Modal.Content title={t("components.table.search")}>
-        <Vertical>
-          <Input value={search} onChangeText={setSearch} placeholder="Search" />
-        </Vertical>
-      </Modal.Content>
-    </Modal>
-  );
-};
+import { SearchFilter } from "./filters/search-filter-modal";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
-  const path = usePathname();
 
   const filterContext = useDocumentsFilters();
   const { page, limit, search, setSearch } = filterContext;
