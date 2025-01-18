@@ -45,6 +45,7 @@ interface M2MInputProps {
   label?: string;
   error?: string;
   helper?: string;
+  disabled?: boolean;
 }
 
 export const M2MInput = ({
@@ -54,6 +55,7 @@ export const M2MInput = ({
   error,
   helper,
   value: valueProp = [],
+  disabled,
   ...props
 }: M2MInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
@@ -200,41 +202,43 @@ export const M2MInput = ({
           </Text>
         )}
 
-        <Horizontal spacing="xs">
-          {allowCreate && (
+        {!disabled && (
+          <Horizontal spacing="xs">
+            {allowCreate && (
+              <Link
+                href={{
+                  pathname: `/modals/m2m/[collection]/add`,
+                  params: {
+                    collection: relation.related_collection,
+                    item_field: item.field,
+                  },
+                }}
+                asChild
+              >
+                <Button>Add new</Button>
+              </Link>
+            )}
+
             <Link
               href={{
-                pathname: `/modals/m2m/[collection]/add`,
+                pathname: `/modals/m2m/[collection]/pick`,
                 params: {
                   collection: relation.related_collection,
+                  junction_collection: junction.collection,
+                  related_collection: relation.related_collection,
+                  related_field: relation.field,
+                  current_value: valueProp.join(","),
+                  junction_field: junction.field,
+                  doc_id: docId,
                   item_field: item.field,
                 },
               }}
               asChild
             >
-              <Button>Add new</Button>
+              <Button>Add existing</Button>
             </Link>
-          )}
-
-          <Link
-            href={{
-              pathname: `/modals/m2m/[collection]/pick`,
-              params: {
-                collection: relation.related_collection,
-                junction_collection: junction.collection,
-                related_collection: relation.related_collection,
-                related_field: relation.field,
-                current_value: valueProp.join(","),
-                junction_field: junction.field,
-                doc_id: docId,
-                item_field: item.field,
-              },
-            }}
-            asChild
-          >
-            <Button>Add existing</Button>
-          </Link>
-        </Horizontal>
+          </Horizontal>
+        )}
       </Vertical>
     )
   );

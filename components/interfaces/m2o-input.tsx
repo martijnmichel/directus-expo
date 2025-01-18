@@ -25,6 +25,7 @@ interface M2OInputProps {
   label?: string;
   error?: string;
   helper?: string;
+  disabled?: boolean;
 }
 
 const stylesheet = createStyleSheet((theme) => ({
@@ -42,6 +43,7 @@ export const M2OInput = ({
   label,
   error,
   helper,
+  disabled,
 }: M2OInputProps) => {
   const { data: options, refetch } = useDocuments(
     item.schema.foreign_key_table as any,
@@ -63,13 +65,20 @@ export const M2OInput = ({
         label={label}
         error={error}
         helper={helper}
+        disabled={disabled}
         options={selectOptions || []}
         value={value}
         onValueChange={onValueChange}
         append={
-          <Button variant="ghost" rounded onPress={() => onValueChange?.(null)}>
-            <X />
-          </Button>
+          !disabled && (
+            <Button
+              variant="ghost"
+              rounded
+              onPress={() => onValueChange?.(null)}
+            >
+              <X />
+            </Button>
+          )
         }
       />
     </Vertical>
