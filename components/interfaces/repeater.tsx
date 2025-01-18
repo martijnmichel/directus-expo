@@ -20,6 +20,7 @@ import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
 import { runOnJS } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
+import { Alert } from "../display/alert";
 
 interface RepeaterInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -29,6 +30,7 @@ interface RepeaterInputProps {
   error?: string;
   helper?: string;
   sortable?: boolean;
+  disabled?: boolean;
 }
 
 export const RepeaterInput = ({
@@ -39,6 +41,7 @@ export const RepeaterInput = ({
   value = [],
   sortable = true,
   onChange,
+  disabled,
 }: RepeaterInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(stylesheet);
@@ -71,6 +74,10 @@ export const RepeaterInput = ({
   return (
     <Vertical spacing="xs">
       {label && <Text style={formControlStyles.label}>{label}</Text>}
+
+      {!value?.length && (
+        <Alert message={t("components.repeater.noItems")} status="info" />
+      )}
 
       <GestureHandlerRootView>
         <DndProvider>
@@ -114,6 +121,7 @@ export const RepeaterInput = ({
 
                 <Button
                   variant="ghost"
+                  disabled={disabled}
                   onPress={() => {
                     const newValue = [...value];
                     newValue.splice(index, 1);
@@ -140,20 +148,22 @@ export const RepeaterInput = ({
         </Text>
       )}
 
-      <Horizontal spacing="xs">
-        <Link
-          href={{
-            pathname: `/modals/repeater/add`,
-            params: {
-              fields: objectToBase64(item.meta?.options?.fields || []),
-              item_field: item.field,
-            },
-          }}
-          asChild
-        >
-          <Button>{t("components.repeater.addItem")}</Button>
-        </Link>
-      </Horizontal>
+      {!disabled && (
+        <Horizontal spacing="xs">
+          <Link
+            href={{
+              pathname: `/modals/repeater/add`,
+              params: {
+                fields: objectToBase64(item.meta?.options?.fields || []),
+                item_field: item.field,
+              },
+            }}
+            asChild
+          >
+            <Button>{t("components.repeater.addItem")}</Button>
+          </Link>
+        </Horizontal>
+      )}
     </Vertical>
   );
 };

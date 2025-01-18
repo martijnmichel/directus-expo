@@ -21,12 +21,15 @@ import { SelectMulti } from "@/components/interfaces/select-multi";
 import { formStyles } from "@/components/interfaces/style";
 import { TextArea } from "@/components/interfaces/textarea";
 import { Toggle } from "@/components/interfaces/toggle";
+import { usePermissions } from "@/state/queries/directus/core";
 import { CoreSchema } from "@directus/sdk";
 import { ReadFieldOutput } from "@directus/sdk";
 import { ReactNode } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
 import { View } from "react-native";
 import { useStyles } from "react-native-unistyles";
+import { getCanCreate, getCanUpdate } from "./fieldPermissions";
+import { isFieldAllowed } from "../permissions/isFieldAllowed";
 
 export const mapFields = ({
   fields,
@@ -37,9 +40,11 @@ export const mapFields = ({
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
   control: UseFormReturn["control"];
-  docId?: number | string;
+  docId?: number | string | "+";
 }): ReactNode => {
   const { styles } = useStyles(formStyles);
+
+  const { data: permissions } = usePermissions();
 
   const getLabel = (field: string) =>
     fields
@@ -50,10 +55,25 @@ export const mapFields = ({
   return fields
     ?.sort((a, b) => ((a.meta.sort || 0) < (b.meta.sort || 0) ? -1 : 1))
     .map((item) => {
+      const canCreate = isFieldAllowed(
+        item.field,
+        "create",
+        permissions?.[item.collection]
+      );
+
+      const canUpdate = isFieldAllowed(
+        item.field,
+        "update",
+        permissions?.[item.collection]
+      );
+
       const defaultProps = {
         label: getLabel(item.field),
         helper: item.meta.note || undefined,
-        disabled: item.meta.readonly,
+        disabled:
+          item.meta.readonly ||
+          (docId === "+" && !canCreate) ||
+          (docId !== "+" && !canUpdate),
         placeholder: item.meta.options?.placeholder,
         prepend: item.meta.options?.iconLeft && (
           <DirectusIcon name={item.meta.options.iconLeft} />
@@ -351,6 +371,47 @@ export const mapFields = ({
                 );
             }
 
+          case "hash":
+            switch (item.meta.interface) {
+              case "input-hash":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        {...defaultProps}
+                        onChangeText={onChange}
+                        value={value as string}
+                        autoCapitalize="none"
+                        secureTextEntry
+                      />
+                    )}
+                  />
+                );
+              default:
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({ field: { onChange, value } }) => (
+                      <Input
+                        {...defaultProps}
+                        onChangeText={onChange}
+                        value={value as string}
+                        autoCapitalize="none"
+                        secureTextEntry
+                        disabled
+                        helper="Fallback"
+                      />
+                    )}
+                  />
+                );
+            }
           case "uuid":
             switch (item.meta.interface) {
               case "file-image":

@@ -56,7 +56,8 @@
     "repeater": {
       "addItem": "Add Item",
       "editItem": "Edit Item",
-      "deleteItem": "Delete Item"
+      "deleteItem": "Delete Item",
+      "noItems": "No items"
     },
     "documentEditor": {
       "save": "Save",

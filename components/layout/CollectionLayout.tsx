@@ -16,7 +16,11 @@ import { FloatingActionButton } from "@/components/display/FloatingActionButton"
 import { useState, useRef, useEffect, useCallback } from "react";
 import { H1, Text } from "@/components/display/typography";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { useCollections, useSettings } from "@/state/queries/directus/core";
+import {
+  useCollections,
+  usePermissions,
+  useSettings,
+} from "@/state/queries/directus/core";
 import { useCollection } from "@/state/queries/directus/collection";
 import { CoreSchema } from "@directus/sdk";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
@@ -60,6 +64,13 @@ export default function CollectionLayout({
   const { data: settings } = useSettings();
   const { bottom } = useSafeAreaInsets();
   const headerStyles = useHeaderStyles();
+  const { data: permissions } = usePermissions();
+  const collectionPermissions = permissions?.[collection as keyof CoreSchema];
+  console.log({ collectionPermissions });
+  const canCreate = ["full", "partial"].includes(
+    collectionPermissions?.create.access || ""
+  );
+
   const closeMenu = useCallback(() => {
     console.log("Closing menu");
     Animated.timing(slideAnim, {
@@ -101,13 +112,14 @@ export default function CollectionLayout({
         options={{
           headerTitle: label,
           ...headerStyles,
-          headerRight: () => (
-            <Link href={`/content/${collection}/+`} asChild>
-              <Button rounded>
-                <Plus />
-              </Button>
-            </Link>
-          ),
+          headerRight: () =>
+            canCreate && (
+              <Link href={`/content/${collection}/+`} asChild>
+                <Button rounded>
+                  <Plus />
+                </Button>
+              </Link>
+            ),
         }}
       />
       <View style={[styles.container, { position: "relative" }]}>

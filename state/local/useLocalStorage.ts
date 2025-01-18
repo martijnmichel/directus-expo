@@ -23,10 +23,10 @@ export const useLocalStorage = <T extends any = undefined>(
         if (value === "undefined") return undefined;
 
         try {
-          return JSON.parse(value) as T;
+          return (JSON.parse(value) as T) || {};
         } catch {
           // If JSON parsing fails, return the raw value
-          return value as T;
+          return (value as T) || "";
         }
       } catch (error) {
         console.error("Error reading from storage:", error);
