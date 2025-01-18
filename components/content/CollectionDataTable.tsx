@@ -96,7 +96,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         }}
         noDataText={t("components.table.noData")}
       />
-      <PortalOutlet name="floating-toolbar" path={/^\/content\/[^/]+$/}>
+      <PortalOutlet name="floating-toolbar">
         <Pagination {...filterContext} total={documents?.total} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>
