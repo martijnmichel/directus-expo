@@ -8,5 +8,6 @@ export const isActionAllowed = (
 ) => {
   if (!permissions?.[collection]) return false;
   if (permissions?.[collection][action].access === "full") return true;
+  if (permissions?.[collection][action].access === "partial") return true;
   if (permissions?.[collection][action].access === "none") return false;
 };
