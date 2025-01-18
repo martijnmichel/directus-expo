@@ -46,9 +46,6 @@ export const RepeaterDocument = ({
         options={{
           headerRight: () => (
             <Horizontal>
-              <Button rounded variant="soft">
-                <Trash />
-              </Button>
               <SubmitButton />
             </Horizontal>
           ),

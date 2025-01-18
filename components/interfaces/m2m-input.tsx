@@ -27,7 +27,7 @@ import { List, ListItem } from "../display/list";
 import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
 import EventBus, { MittEvents } from "@/utils/mitt";
-import { mutateDocument } from "@/state/actions/mutateItem";
+import { mutateDocument } from "@/state/actions/updateDocument";
 import {
   DndProvider,
   Draggable,

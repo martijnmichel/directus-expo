@@ -22,7 +22,6 @@ import { useCollection } from "@/state/queries/directus/collection";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import EventBus from "@/utils/mitt";
 import { useAuth } from "@/contexts/AuthContext";
-import { mutateDocument } from "@/state/actions/mutateItem";
 import { CoreSchemaDocument } from "@/types/directus";
 export default function Collection() {
   const { collection, item_field } = useLocalSearchParams();

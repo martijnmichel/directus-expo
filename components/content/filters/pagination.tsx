@@ -2,7 +2,7 @@ import { Horizontal } from "@/components/layout/Stack";
 import { Button } from "@/components/display/button";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Text } from "@/components/display/typography";
-import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
+import { UseDocumentsFiltersReturn } from "@/hooks/useDocumentsFilters";
 
 export const Pagination = (
   context: UseDocumentsFiltersReturn & { total?: number }

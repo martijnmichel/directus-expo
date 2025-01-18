@@ -33,9 +33,9 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   const handleCheckboxChange = (optionValue: string | number) => {
     if (!onChange) return;
 
-    const newValue = value.includes(optionValue)
-      ? value.filter((v) => v !== optionValue)
-      : [...value, optionValue];
+    const newValue = value?.includes(optionValue)
+      ? value?.filter((v) => v !== optionValue)
+      : [...(value || []), optionValue];
 
     onChange(newValue);
   };

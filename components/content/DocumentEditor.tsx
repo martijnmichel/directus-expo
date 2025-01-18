@@ -12,7 +12,6 @@ import {
 import { View } from "react-native";
 import { Check, Trash } from "../icons";
 import { coreCollections } from "@/state/queries/directus/core";
-import { mutateDocument } from "@/state/actions/mutateItem";
 import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { Horizontal } from "../layout/Stack";
@@ -25,6 +24,8 @@ import { formStyles } from "../interfaces/style";
 import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Text } from "../display/typography";
+import { deleteDocument } from "@/state/actions/deleteDocument";
+import { mutateDocument } from "@/state/actions/updateDocument";
 
 export const DocumentEditor = ({
   collection,
@@ -42,7 +43,10 @@ export const DocumentEditor = ({
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
-  const { directus } = useAuth();
+  const { mutate: deleteDoc } = deleteDocument(
+    collection as keyof CoreSchema,
+    id as number
+  );
 
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
@@ -154,6 +158,7 @@ export const DocumentEditor = ({
 
   const handleDelete = () => {
     // Implement delete functionality with confirmation dialog
+    deleteDoc();
   };
 
   const handleSave = () => {
@@ -172,18 +177,23 @@ export const DocumentEditor = ({
               <Button rounded variant="soft" onPress={handleDelete}>
                 <Trash />
               </Button>
-              <Button rounded onPress={handleSave}>
+              <Button
+                rounded
+                disabled={!isDirty || !isValid || isSubmitting}
+                loading={isSubmitting}
+                onPress={handleSave}
+              >
                 <Check />
               </Button>
             </Horizontal>
           ),
         }}
       />
-      <PortalOutlet name="modal-header">
+      {/** <PortalOutlet name="modal-header">
         <Button rounded onPress={handleSave}>
           <Check />
         </Button>
-      </PortalOutlet>
+      </PortalOutlet> */}
       <View style={styles.form}>{fieldComponents}</View>
     </FormProvider>
   );

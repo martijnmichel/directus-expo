@@ -8,7 +8,7 @@ import { Modal } from "@/components/display/modal";
 import { Button } from "@/components/display/button";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Vertical } from "@/components/layout/Stack";
-import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
+import { UseDocumentsFiltersReturn } from "@/hooks/useDocumentsFilters";
 
 export const SearchFilter = (state: UseDocumentsFiltersReturn) => {
   const [search, setSearch] = useState(state.search);

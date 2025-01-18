@@ -23,7 +23,6 @@ import {
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import EventBus from "@/utils/mitt";
 import { useAuth } from "@/contexts/AuthContext";
-import { mutateDocument } from "@/state/actions/mutateItem";
 import { useQuery } from "@tanstack/react-query";
 import { Table } from "@/components/display/table";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";

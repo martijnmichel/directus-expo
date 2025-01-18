@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   aggregate,
   CoreSchema,
+  deleteRole,
+  deleteUser,
   Query,
   readCollections,
   readMe,
@@ -133,10 +135,22 @@ export const coreCollections = {
     readItems: useUsers,
     updateItem: mutateUser,
     updateMe: mutateMe,
+    removeItem: (id: string) => {
+      const { directus } = useAuth();
+      return useMutation({
+        mutationFn: () => directus!.request(deleteUser(id)),
+      });
+    },
   },
   [prefix + "roles"]: {
     readItem: useRole,
     readItems: useRoles,
+    removeItem: (id: string) => {
+      const { directus } = useAuth();
+      return useMutation({
+        mutationFn: () => directus!.request(deleteRole(id)),
+      });
+    },
   },
   [prefix + "providers"]: {
     readItems: useProviders,
