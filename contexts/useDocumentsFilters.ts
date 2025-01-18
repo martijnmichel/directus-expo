@@ -3,7 +3,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 
 const defaults = {
   page: 1,
-  limit: 2,
+  limit: 25,
   search: "",
 };
 

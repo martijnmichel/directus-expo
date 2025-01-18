@@ -8,8 +8,6 @@ import { DateUtils } from "@/utils/dayjs";
 export const LocaleSelect = () => {
   const { i18n } = useTranslation();
 
-  console.log(i18n.language);
-
   return (
     <Select
       value={i18n.language}
@@ -18,7 +16,7 @@ export const LocaleSelect = () => {
         DateUtils.setLocale(value as string);
       }}
       options={map(localeSettings, (lang, key) => ({
-        value: lang.code,
+        value: key,
         text: `${lang.flag} ${lang.label}`,
       }))}
     />
