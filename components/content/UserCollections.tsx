@@ -1,4 +1,4 @@
-import { filter, map, orderBy } from "lodash";
+import { filter, map, orderBy, some } from "lodash";
 import {
   Collapsible,
   CollapsibleContent,
@@ -10,12 +10,44 @@ import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { useTranslation } from "react-i18next";
 import { DirectusIcon, DirectusIconName } from "../display/directus-icon";
+import { CoreSchema, ReadCollectionOutput } from "@directus/sdk";
 
 export default function UserCollections() {
   const { data } = useCollections();
   const { t, i18n } = useTranslation();
 
   console.log({ data });
+
+  const CollectionGroup = ({
+    collection,
+  }: {
+    collection: ReadCollectionOutput<CoreSchema>;
+  }) => {
+    const hasChildren =
+      filter(data, (c) => c.meta.group === collection.collection).length > 0;
+
+    return (
+      <Collapsible
+        defaultOpen={collection.meta.collapse === "open"}
+        key={`collection-${collection.collection}`}
+      >
+        <CollapsibleTrigger
+          color={collection.meta.color || ""}
+          href={`/content/${collection.collection}`}
+          prepend={
+            <DirectusIcon
+              name={(collection.meta.icon as DirectusIconName) || "msDatabase"}
+            />
+          }
+        >
+          {getCollectionTranslation(collection, i18n.language)}
+        </CollapsibleTrigger>
+        <CollapsibleContent style={{ paddingLeft: 20 }}>
+          <List>{renderCollections(collection.collection)}</List>
+        </CollapsibleContent>
+      </Collapsible>
+    );
+  };
 
   const renderCollections = (parent?: string) => {
     return map(
@@ -34,26 +66,10 @@ export default function UserCollections() {
           (!collection.schema && parent === collection.meta?.group)
         ) {
           return (
-            <Collapsible
-              defaultOpen={collection.meta.collapse === "open"}
+            <CollectionGroup
               key={`collection-${collection.collection}`}
-            >
-              <CollapsibleTrigger
-                color={collection.meta.color || ""}
-                prepend={
-                  <DirectusIcon
-                    name={
-                      (collection.meta.icon as DirectusIconName) || "msDatabase"
-                    }
-                  />
-                }
-              >
-                {getCollectionTranslation(collection, i18n.language)}
-              </CollapsibleTrigger>
-              <CollapsibleContent style={{ paddingLeft: 20 }}>
-                <List>{renderCollections(collection.collection)}</List>
-              </CollapsibleContent>
-            </Collapsible>
+              collection={collection}
+            />
           );
         } else if (
           (parent &&
@@ -61,7 +77,16 @@ export default function UserCollections() {
             !!collection.schema) ||
           (!parent && !collection.meta.group)
         ) {
-          return (
+          const hasChildren =
+            filter(data, (c) => c.meta.group === collection.collection).length >
+            0;
+          console.log(collection.collection, hasChildren);
+          return hasChildren ? (
+            <CollectionGroup
+              collection={collection}
+              key={`collection-${collection.collection}`}
+            />
+          ) : (
             <ListItem
               href={`/(app)/(tabs)/content/${collection.collection}`}
               key={`collection-${collection.collection}`}

@@ -9,6 +9,7 @@ import {
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { ChevronRight } from "@/components/icons/Chevron";
 import { Text } from "./typography";
+import { router } from "expo-router";
 
 // Context
 interface CollapsibleContextType {
@@ -72,6 +73,7 @@ interface CollapsibleTriggerProps extends ViewProps {
   color?: string;
   prepend?: React.ReactNode;
   prependSize?: number;
+  href?: string;
 }
 
 export const CollapsibleTrigger = ({
@@ -79,6 +81,7 @@ export const CollapsibleTrigger = ({
   style,
   color,
   prepend,
+  href,
   prependSize = 20,
   ...props
 }: CollapsibleTriggerProps) => {
@@ -110,15 +113,21 @@ export const CollapsibleTrigger = ({
     : null;
 
   return (
-    <Pressable onPress={toggle} style={[styles.trigger, style]} {...props}>
+    <Pressable
+      onPress={() => {
+        if (href) router.push(href as any);
+        else toggle();
+      }}
+      style={[styles.trigger, style]}
+      {...props}
+    >
       {clonedPrepend}
       {triggerContent}
-      <Animated.View
-        style={{ transform: [{ rotate }], marginLeft: "auto" }}
-        pointerEvents="none"
-      >
-        <ChevronRight color={color || theme.colors.primary} size={20} />
-      </Animated.View>
+      <Pressable style={{ marginLeft: "auto" }} onPress={toggle}>
+        <Animated.View style={{ transform: [{ rotate }] }} pointerEvents="none">
+          <ChevronRight color={color || theme.colors.primary} size={20} />
+        </Animated.View>
+      </Pressable>
     </Pressable>
   );
 };

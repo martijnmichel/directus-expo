@@ -42,6 +42,7 @@ import { Input } from "../interfaces/input";
 import { Horizontal } from "./Stack";
 import { DirectusIcon } from "../display/directus-icon";
 import { PortalHost, PortalOutlet } from "./Portal";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function CollectionLayout({
   children,
@@ -57,7 +58,7 @@ export default function CollectionLayout({
   const { styles } = useStyles(stylesheet);
   const { label } = useCollectionMeta(data);
   const { data: settings } = useSettings();
-
+  const { bottom } = useSafeAreaInsets();
   const headerStyles = useHeaderStyles();
   const closeMenu = useCallback(() => {
     console.log("Closing menu");
@@ -151,7 +152,10 @@ export default function CollectionLayout({
           ]}
         >
           <ScrollView>
-            <Container>{children}</Container>
+            <Container>
+              {children}
+              <View style={{ paddingBottom: bottom }} />
+            </Container>
           </ScrollView>
 
           <View style={styles.floatingToolbar}>

@@ -29,6 +29,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { PortalHost } from "../layout/Portal";
 import { useTranslation } from "react-i18next";
+import { KeyboardAwareScrollView } from "../layout/Layout";
 
 interface ModalContextType {
   isOpen: boolean;
@@ -52,7 +53,7 @@ interface ModalContentProps {
     | React.ReactNode
     | ((props: { close: () => void }) => React.ReactNode);
   contentStyle?: ViewStyle;
-  variant?: "default" | "bottomSheet";
+  variant?: "default" | "bottomSheet" | "quickView";
   height?: number | `${number}%` | "auto";
   actions?: React.ReactNode;
   visible?: boolean;
@@ -112,6 +113,7 @@ const ModalContent = ({
         style={[
           styles.modalOverlay,
           variant === "bottomSheet" && styles.bottomSheetOverlay,
+          variant === "quickView" && styles.quickViewOverlay,
         ]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={close} />
@@ -214,6 +216,10 @@ const modalStyles = createStyleSheet((theme) => ({
     borderBottomRightRadius: 0,
     paddingTop: theme.spacing.sm,
     backgroundColor: theme.colors.background,
+  },
+  quickViewOverlay: {
+    justifyContent: "flex-end",
+    paddingBottom: theme.spacing.xxl,
   },
   bottomSheetHandle: {
     width: 36,

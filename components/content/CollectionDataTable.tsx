@@ -90,7 +90,7 @@ const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
           <DirectusIcon name="search" />
         </Button>
       </Modal.Trigger>
-      <Modal.Content title={t("components.table.search")}>
+      <Modal.Content variant="quickView" title={t("components.table.search")}>
         <Vertical>
           <Input value={search} onChangeText={setSearch} placeholder="Search" />
         </Vertical>
