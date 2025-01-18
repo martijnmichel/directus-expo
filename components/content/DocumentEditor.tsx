@@ -11,7 +11,11 @@ import {
 } from "@/state/queries/directus/collection";
 import { View } from "react-native";
 import { Check, Trash } from "../icons";
-import { coreCollections } from "@/state/queries/directus/core";
+import {
+  coreCollections,
+  useItemPermissions,
+  usePermissions,
+} from "@/state/queries/directus/core";
 import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { Horizontal } from "../layout/Stack";
@@ -26,6 +30,8 @@ import { useTranslation } from "react-i18next";
 import { Text } from "../display/typography";
 import { deleteDocument } from "@/state/actions/deleteDocument";
 import { mutateDocument } from "@/state/actions/updateDocument";
+import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
+import ToastManager from "@/utils/toast";
 
 export const DocumentEditor = ({
   collection,
@@ -44,6 +50,11 @@ export const DocumentEditor = ({
   const modalContext = useContext(ModalContext);
   const { styles } = useStyles(formStyles);
   const { mutate: deleteDoc } = deleteDocument(
+    collection as keyof CoreSchema,
+    id as number
+  );
+
+  const { data: itemPermissions } = useItemPermissions(
     collection as keyof CoreSchema,
     id as number
   );
@@ -72,7 +83,12 @@ export const DocumentEditor = ({
     id as number
   );
 
-  const fieldComponents = mapFields({ fields, control, docId: id });
+  const fieldComponents = mapFields({
+    fields,
+    control,
+    docId: id,
+    permitted: itemPermissions?.update.access,
+  });
 
   console.log({ isDirty, isValid, isSubmitting });
 
@@ -150,6 +166,10 @@ export const DocumentEditor = ({
           context.setError(error.extensions.field, {
             message: error.message,
           });
+          ToastManager.error({
+            message: "Error updating document",
+            description: error.message,
+          });
         });
       },
     });
@@ -173,9 +193,11 @@ export const DocumentEditor = ({
         options={{
           headerRight: () => (
             <Horizontal>
-              <Button rounded variant="soft" onPress={handleDelete}>
-                <Trash />
-              </Button>
+              {itemPermissions?.delete.access && (
+                <Button rounded variant="soft" onPress={handleDelete}>
+                  <Trash />
+                </Button>
+              )}
               <Button
                 rounded
                 disabled={!isDirty || !isValid || isSubmitting}

@@ -17,11 +17,21 @@ import { getFieldValue } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
+import { usePermissions } from "@/state/queries/directus/core";
+import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
+
+  const { data: permissions } = usePermissions();
+
+  const canRead = isActionAllowed(
+    collection as keyof CoreSchema,
+    "read",
+    permissions
+  );
 
   const filterContext = useDocumentsFilters();
   const { page, limit, search, setSearch } = filterContext;
@@ -84,8 +94,9 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           })
         }
         onRowPress={(doc) => {
-          console.log(doc);
-          router.push(`/content/${collection}/${doc.id}`);
+          if (canRead) {
+            router.push(`/content/${collection}/${doc.id}`);
+          }
         }}
         noDataText={t("components.table.noData")}
       />

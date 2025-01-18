@@ -8,6 +8,7 @@ import {
   deleteUsers,
   Query,
   readCollections,
+  readItemPermissions,
   readMe,
   readPermissions,
   readProviders,
@@ -61,6 +62,18 @@ export const useSettings = () => {
   return useQuery({
     queryKey: ["settings"],
     queryFn: () => directus?.request(readSettings()),
+  });
+};
+
+export const useItemPermissions = (
+  collection: keyof CoreSchema,
+  docId?: number | string | "+"
+) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["document-permissions", collection, docId],
+    queryFn: () =>
+      directus?.request(readItemPermissions(collection as any, docId)),
   });
 };
 

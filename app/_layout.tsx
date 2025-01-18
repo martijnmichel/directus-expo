@@ -26,7 +26,7 @@ import {
   Inter_900Black,
 } from "@expo-google-fonts/inter";
 import { queryClient } from "@/utils/react-query";
-
+import Toast from "react-native-toast-message";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,
@@ -42,6 +42,7 @@ export default function RootLayout() {
             <AuthProvider>
               <PortalProvider>
                 <Slot />
+                <Toast />
               </PortalProvider>
             </AuthProvider>
           </ConfirmDialogProvider>

@@ -21,8 +21,11 @@ import { SelectMulti } from "@/components/interfaces/select-multi";
 import { formStyles } from "@/components/interfaces/style";
 import { TextArea } from "@/components/interfaces/textarea";
 import { Toggle } from "@/components/interfaces/toggle";
-import { usePermissions } from "@/state/queries/directus/core";
-import { CoreSchema } from "@directus/sdk";
+import {
+  useItemPermissions,
+  usePermissions,
+} from "@/state/queries/directus/core";
+import { CoreSchema, readItemPermissions } from "@directus/sdk";
 import { ReadFieldOutput } from "@directus/sdk";
 import { ReactNode } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
@@ -36,16 +39,17 @@ export const mapFields = ({
   parent,
   control,
   docId,
+  permitted = true,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
   control: UseFormReturn["control"];
   docId?: number | string | "+";
+  permitted?: boolean;
 }): ReactNode => {
   const { styles } = useStyles(formStyles);
 
   const { data: permissions } = usePermissions();
-
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)
@@ -73,7 +77,8 @@ export const mapFields = ({
         disabled:
           item.meta.readonly ||
           (docId === "+" && !canCreate) ||
-          (docId !== "+" && !canUpdate),
+          (docId !== "+" && !canUpdate) ||
+          (docId !== "+" && !permitted),
         placeholder: item.meta.options?.placeholder,
         prepend: item.meta.options?.iconLeft && (
           <DirectusIcon name={item.meta.options.iconLeft} />
@@ -91,7 +96,12 @@ export const mapFields = ({
       } else if (item.meta.interface === "group-accordion") {
         return (
           <Accordion key={item.field}>
-            {mapFields({ parent: item.meta.field, fields, control })}
+            {mapFields({
+              parent: item.meta.field,
+              fields,
+              control,
+              permitted,
+            })}
           </Accordion>
         );
       } else if (
@@ -108,7 +118,12 @@ export const mapFields = ({
             </CollapsibleTrigger>
             <CollapsibleContent>
               <View style={styles.form}>
-                {mapFields({ parent: item.meta.field, fields, control })}
+                {mapFields({
+                  parent: item.meta.field,
+                  fields,
+                  control,
+                  permitted,
+                })}
               </View>
             </CollapsibleContent>
           </Collapsible>

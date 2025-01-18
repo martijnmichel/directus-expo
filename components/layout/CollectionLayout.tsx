@@ -47,6 +47,7 @@ import { Horizontal } from "./Stack";
 import { DirectusIcon } from "../display/directus-icon";
 import { PortalHost, PortalOutlet } from "./Portal";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 
 export default function CollectionLayout({
   children,
@@ -67,8 +68,10 @@ export default function CollectionLayout({
   const { data: permissions } = usePermissions();
   const collectionPermissions = permissions?.[collection as keyof CoreSchema];
   console.log({ collectionPermissions });
-  const canCreate = ["full", "partial"].includes(
-    collectionPermissions?.create.access || ""
+  const canCreate = isActionAllowed(
+    collection as keyof CoreSchema,
+    "create",
+    permissions
   );
 
   const closeMenu = useCallback(() => {
