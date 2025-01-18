@@ -5,20 +5,15 @@ import { Text } from "@/components/display/typography";
 import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 
 export const Pagination = (
-  context: UseDocumentsFiltersReturn & { total: number }
+  context: UseDocumentsFiltersReturn & { total?: number }
 ) => {
-  const {
-    state: { page, limit },
-    actions: { next, previous },
-  } = context;
+  const { page, limit, next, previous } = context;
   const totalPages = Math.ceil((context.total || 0) / limit);
   return (
     <Horizontal>
       <Button rounded disabled={page === 1} variant="soft" onPress={previous}>
         <DirectusIcon name="chevron_left" />
       </Button>
-
-      <Text>{page}</Text>
 
       <Button
         rounded

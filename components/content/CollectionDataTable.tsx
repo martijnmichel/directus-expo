@@ -20,58 +20,11 @@ import { Input } from "../interfaces/input";
 import { Text } from "../display/typography";
 import { View } from "react-native";
 import { getFieldValue } from "@/helpers/document/getFieldValue";
+import { useDocumentsFilters } from "@/contexts/useDocumentsFilters";
+import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
+import { Pagination } from "./filters/pagination";
 
-const useDocumentsFilters = () => {
-  const [page, setPage] = useState(1);
-  const [limit, updateLimit] = useState(5);
-  const [search, setSearch] = useState("");
-
-  const next = () => {
-    setPage(page + 1);
-  };
-
-  const previous = () => {
-    setPage(page - 1);
-  };
-
-  const setLimit = (limit: number) => {
-    setPage(1);
-    updateLimit(limit);
-  };
-
-  return { page, limit, next, previous, setLimit, search, setSearch };
-};
-
-const Pagination = (
-  context: ReturnType<typeof useDocumentsFilters> & {
-    total: number | null | undefined;
-  }
-) => {
-  const totalPages = Math.ceil((context.total || 0) / context.limit);
-  return (
-    <Horizontal>
-      <Button
-        rounded
-        disabled={context.page === 1}
-        variant="soft"
-        onPress={context.previous}
-      >
-        <DirectusIcon name="chevron_left" />
-      </Button>
-
-      <Button
-        rounded
-        disabled={context.page === totalPages}
-        variant="soft"
-        onPress={context.next}
-      >
-        <DirectusIcon name="chevron_right" />
-      </Button>
-    </Horizontal>
-  );
-};
-
-const SearchFilter = (context: ReturnType<typeof useDocumentsFilters>) => {
+const SearchFilter = (context: UseDocumentsFiltersReturn) => {
   const [search, setSearch] = useState(context.search);
   const { t } = useTranslation();
   const handleSearch = useCallback(
