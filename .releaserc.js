@@ -1,10 +1,11 @@
 module.exports = {
   branches: ["main"],
+  tagFormat: "v${version}",
   plugins: [
     [
       "@semantic-release/commit-analyzer",
       {
-        preset: "angular",
+        preset: "conventionalcommits",
         releaseRules: [
           { type: "feat", release: "minor" },
           { type: "fix", release: "patch" },
@@ -44,4 +45,7 @@ module.exports = {
       },
     ],
   ],
+  initialVersion: "0.0.70",
+  dryRun: false,
+  ci: false,
 };
