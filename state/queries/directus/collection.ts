@@ -40,31 +40,19 @@ export const useDocuments = (
 
   console.log({ collection, query });
 
-  const { limit, page, ...restQuery } = query || {};
-  const paginationParams = { limit, page };
-
-  // Memoize the full query to prevent unnecessary rerenders
-  const fullQuery = useMemo(
-    () => ({
-      ...restQuery,
-      ...paginationParams,
-    }),
-    [JSON.stringify(restQuery), page, limit]
-  );
-
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        queryKey: ["documents", collection, restQuery, paginationParams],
-        staleTime: 5000,
+        queryKey: ["documents", collection, query],
+
         queryFn: async () => {
           const items = await directus?.request(
-            readItems(collection as any, fullQuery)
+            readItems(collection as any, query)
           );
           const pagination = await directus?.request(
             aggregate(collection as any, {
               aggregate: { count: "*" },
-              query: restQuery,
+              query,
             })
           );
 

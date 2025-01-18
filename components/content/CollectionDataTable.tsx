@@ -21,7 +21,6 @@ import { Text } from "../display/typography";
 import { View } from "react-native";
 import { getFieldValue } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/contexts/useDocumentsFilters";
-import { UseDocumentsFiltersReturn } from "@/contexts/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
 
