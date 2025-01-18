@@ -28,6 +28,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Table } from "@/components/display/table";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { CoreSchemaDocument } from "@/types/directus";
+import { Container } from "@/components/layout/Container";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function Collection() {
   const {
     related_collection,
@@ -48,7 +50,7 @@ export default function Collection() {
   console.log({ preset });
 
   const tableFields =
-    (preset && preset.layout_query?.tabular.fields) ||
+    (preset && preset.layout_query?.tabular?.fields) ||
     fields?.map((f) => f.field) ||
     [];
 
@@ -93,6 +95,7 @@ export default function Collection() {
 
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <Layout>
@@ -111,7 +114,7 @@ export default function Collection() {
         )}
         fields={tableFields}
         items={(options as Record<string, unknown>[]) || []}
-        widths={preset?.layout_options?.tabular.widths}
+        widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
           map(tableFields, (f) => doc[f] as number | string | null)
         }
@@ -124,6 +127,7 @@ export default function Collection() {
           });
         }}
       />
+      <View style={{ paddingBottom: bottom }} />
     </Layout>
   );
 }

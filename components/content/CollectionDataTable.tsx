@@ -11,16 +11,10 @@ import { router, usePathname } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
-import { Check, ChevronRight } from "../icons";
-import { Button } from "../display/button";
-import { DirectusIcon } from "../display/directus-icon";
 import { PortalOutlet } from "../layout/Portal";
-import { Modal } from "../display/modal";
-import { Input } from "../interfaces/input";
-import { Text } from "../display/typography";
 import { View } from "react-native";
 import { getFieldValue } from "@/helpers/document/getFieldValue";
-import { useDocumentsFilters } from "@/contexts/useDocumentsFilters";
+import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
 

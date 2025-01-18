@@ -113,7 +113,7 @@ export const mapFields = ({
                       <Input
                         {...defaultProps}
                         onChangeText={onChange}
-                        value={value as string}
+                        value={(value as string) || ""}
                         autoCapitalize="none"
                         error={error?.message}
                       />
@@ -260,7 +260,7 @@ export const mapFields = ({
                       <Input
                         {...defaultProps}
                         onChangeText={onChange}
-                        value={value as string}
+                        value={(value as string) || ""}
                         autoCapitalize="none"
                         disabled
                         helper="Fallback"

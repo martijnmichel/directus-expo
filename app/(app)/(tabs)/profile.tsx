@@ -10,11 +10,7 @@ export default function TabTwoScreen() {
   return (
     <Layout>
       <ScrollView>
-        <Container>
-          <Section>
-            <CollectionDataTable collection="directus_users" />
-          </Section>
-        </Container>
+        <CollectionDataTable collection="directus_users" />
       </ScrollView>
 
       <FloatingToolbar />
