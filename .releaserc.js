@@ -13,7 +13,7 @@ module.exports = {
           { type: "refactor", release: "minor" },
           { type: "style", release: "minor" },
           { type: "docs", release: "minor" },
-          { type: "chore", release: "minor" },
+          { type: "chore", release: "path" },
           { scope: "no-release", release: false },
         ],
         parserOpts: {

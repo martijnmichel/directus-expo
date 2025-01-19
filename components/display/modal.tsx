@@ -45,6 +45,8 @@ export const ModalContext = createContext<ModalContextType>({
 
 interface ModalProps {
   children: React.ReactNode;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 interface ModalContentProps {
@@ -61,17 +63,30 @@ interface ModalContentProps {
 }
 
 interface ModalTriggerProps {
-  children: React.ReactElement;
+  children:
+    | React.ReactNode
+    | ((props: { open: () => void }) => React.ReactNode);
 }
 
-export const Modal = ({ children }: ModalProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const Modal = ({ children, open, onClose }: ModalProps) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
 
-  const open = () => setIsOpen(true);
-  const close = () => setIsOpen(false);
+  // Use controlled or uncontrolled state
+  const isOpen = open !== undefined ? open : internalIsOpen;
+
+  const openModal = () => {
+    setInternalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setInternalIsOpen(false);
+    onClose?.();
+  };
 
   return (
-    <ModalContext.Provider value={{ isOpen, open, close }}>
+    <ModalContext.Provider
+      value={{ isOpen, open: openModal, close: closeModal }}
+    >
       {children}
     </ModalContext.Provider>
   );
@@ -165,9 +180,11 @@ const ModalContent = ({
 const ModalTrigger = ({ children }: ModalTriggerProps) => {
   const { open } = useContext(ModalContext);
 
-  return cloneElement(children, {
-    onPress: open,
-  });
+  return typeof children === "function"
+    ? children({ open })
+    : cloneElement(children as React.ReactElement, {
+        onPress: open,
+      });
 };
 
 // Attach sub-components to Modal

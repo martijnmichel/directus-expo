@@ -15,7 +15,6 @@ import { M2OInput } from "@/components/interfaces/m2o-input";
 import { NumberInput } from "@/components/interfaces/number-input";
 import { RadioButtonGroup } from "@/components/interfaces/radio-button-group";
 import { RepeaterInput } from "@/components/interfaces/repeater";
-import { RichText } from "@/components/interfaces/richtext";
 import { Select } from "@/components/interfaces/select";
 import { SelectMulti } from "@/components/interfaces/select-multi";
 import { formStyles } from "@/components/interfaces/style";
@@ -33,6 +32,7 @@ import { View } from "react-native";
 import { useStyles } from "react-native-unistyles";
 import { getCanCreate, getCanUpdate } from "./fieldPermissions";
 import { isFieldAllowed } from "../permissions/isFieldAllowed";
+import { TinyMCEEditor } from "@/components/interfaces/tinymce";
 
 export const mapFields = ({
   fields,
@@ -183,7 +183,7 @@ export const mapFields = ({
                     rules={{ required: item.meta.required }}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({ field: { onChange, value } }) => (
-                      <RichText
+                      <TinyMCEEditor
                         {...defaultProps}
                         onChange={onChange}
                         value={value as string}
