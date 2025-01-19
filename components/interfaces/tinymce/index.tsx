@@ -37,6 +37,8 @@ export const TinyMCEEditor = ({
   const { theme } = useStyles();
   const { directus } = useAuth();
   const [filePickerOpen, setFilePickerOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(0);
   const handleContentChange = (newContent: string) => {
     onChange?.(newContent);
   };
@@ -90,7 +92,10 @@ export const TinyMCEEditor = ({
       content_style: 'img { max-width: 100%; height: auto; } .tox-toolbar { background-color: ${
         theme.colors.backgroundAlt
       } }',
-      toolbar: '${item.meta.options?.toolbar.join(" ")}',
+      toolbar: '${item.meta.options?.toolbar.join(" ")} customFullscreen',
+      toolbar_mode: 'floating',
+      toolbar_location: 'bottom',
+      add_license_key: 'gpl',
       height: 500,
       plugins: ['lists', 'link', 'image', 'table'],
       setup: function(editor) {
@@ -100,12 +105,21 @@ export const TinyMCEEditor = ({
         editor.on('init', function() {
           const content = '${escapeContent(value)}';
           tinymce.activeEditor.setContent(content);
+        });
 
+        editor.on('Load', function() {
+
+ window.ReactNativeWebView.postMessage({ name: 'setHeight', height: document.getElementById('editor').height })
          
         });
+
         editor.ui.registry.addButton('customImage', {
             icon: 'image',
             onAction: () => window.ReactNativeWebView.postMessage({ name: 'openImagePicker' })
+        });
+        editor.ui.registry.addButton('customFullscreen', {
+            icon: 'maximize',
+            onAction: () => window.ReactNativeWebView.postMessage({ name: 'openFullscreen' })
         });
       }
     });
@@ -114,46 +128,44 @@ export const TinyMCEEditor = ({
 </html>
 `;
 
+const Editor =   <WebView
+originWhitelist={["*"]}
+ref={webViewRef}
+source={{ html: TINYMCE_HTML }}
+onMessage={(event) => {
+  switch (event.nativeEvent.data.name) {
+    case "contentChange":
+      handleContentChange(event.nativeEvent.data.content);
+      break;
+    case "setHeight":
+      console.log("setHeight", event.nativeEvent.data.height);
+      setEditorHeight(event.nativeEvent.data.height);
+      break;
+    case "openImagePicker":
+      setFilePickerOpen(true);
+      break;
+    case "openFullscreen":
+      setEditorOpen(true);
+      break;
+  }
+}}
+style={styles.editor}
+/>
+
+
   return (
     <>
-      <View style={[styles.preview, disabled && styles.previewDisabled]}>
-        <WebView
-          originWhitelist={["*"]}
-          ref={webViewRef}
-          source={{ html: TINYMCE_HTML }}
-          onMessage={(event) => {
-            switch (event.nativeEvent.data.name) {
-              case "contentChange":
-                handleContentChange(event.nativeEvent.data.content);
-                break;
-              case "openImagePicker":
-                setFilePickerOpen(true);
-                break;
-            }
-          }}
-          style={styles.editor}
-        />
+      <View style={[styles.preview, disabled && styles.previewDisabled, { height: editorHeight }]}>
+        {Editor}
 
-        {/**   <WebView
-          style={styles.webview}
-          source={{
-            html: `
-                      <html>
-                        <head>
-                          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                          <style>
-                            body { margin: 0; padding: 8px; font-family: -apple-system, sans-serif; }
-                            img { max-width: 100%; height: auto; }
-                          </style>
-                        </head>
-                        <body>${content}</body>
-                      </html>
-                    `,
-          }}
-          scrollEnabled={true}
-          nestedScrollEnabled={true}
-        /> */}
+        
       </View>
+
+      <Modal open={editorOpen} onClose={() => setEditorOpen(false)}>
+        <Modal.Content fullscreen={true} contentStyle={{ flex: 1 }}>
+          {Editor}
+        </Modal.Content>
+      </Modal>
 
       <Modal open={filePickerOpen} onClose={() => setFilePickerOpen(false)}>
         <Modal.Content>
@@ -170,8 +182,7 @@ export const TinyMCEEditor = ({
 
 const editorStyles = createStyleSheet((theme) => ({
   preview: {
-    height: 500,
-    overflow: "hidden",
+   height: 500, overflow: "hidden",
   },
   previewDisabled: {
     opacity: 0.5,
