@@ -187,6 +187,7 @@ export const mapFields = ({
                         {...defaultProps}
                         onChange={onChange}
                         value={value as string}
+                        item={item}
                       />
                     )}
                   />
