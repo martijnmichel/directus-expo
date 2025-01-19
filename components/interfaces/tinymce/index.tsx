@@ -1,5 +1,11 @@
-import React, { useState, useRef } from "react";
-import { View, Pressable, TextInput } from "react-native";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import {
+  View,
+  Pressable,
+  TextInput,
+  Modal as RNModal,
+  SafeAreaView,
+} from "react-native";
 import { WebView } from "react-native-webview";
 import {
   createStyleSheet,
@@ -12,6 +18,10 @@ import { Button } from "@/components/display/button";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { ImageInput } from "../image-input";
 import { useAuth } from "@/contexts/AuthContext";
+import { H1 } from "@/components/display/typography";
+import { Horizontal } from "@/components/layout/Stack";
+import { Check, X } from "@/components/icons";
+import { useSafeAreaFrame } from "react-native-safe-area-context";
 
 interface TinyMCEEditorProps
   extends Omit<React.ComponentProps<typeof Input>, "value" | "onChangeText"> {
@@ -68,19 +78,19 @@ export const TinyMCEEditor = ({
 
   const TINYMCE_HTML = `
 <!DOCTYPE html>
-<html>
+<html style="margin: 0; background-color: ${theme.colors.background};">
 <head>
   <script src="https://app.ecbase.nl/js/tinymce/tinymce.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; }
+    body { margin: 0; background-color: ${theme.colors.background}}
     .mce-content-body { font-family: -apple-system, sans-serif; width: 100%; overlfow-x: hidden }
     img { width: 100%; height: auto; }
     table { width: 100%; }
     td { border: 1px solid #ccc; padding: 8px; }
   </style>
 </head>
-<body>
+<body style="height: 100%;">
   <textarea id="editor"></textarea>
   <script>
     tinymce.init({
@@ -89,37 +99,31 @@ export const TinyMCEEditor = ({
       nowrap: true,
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
       content_css: '${themeName}',
-      content_style: 'img { max-width: 100%; height: auto; } .tox-toolbar { background-color: ${
-        theme.colors.backgroundAlt
-      } }',
-      toolbar: '${item.meta.options?.toolbar.join(" ")} customFullscreen',
-      toolbar_mode: 'floating',
-      toolbar_location: 'bottom',
+      content_style: 'img { max-width: 100%; height: auto; }',
+      toolbar: '${item.meta.options?.toolbar.join(" ")}',
+      toolbar_sticky: true,
       add_license_key: 'gpl',
-      height: 500,
-      plugins: ['lists', 'link', 'image', 'table'],
+      plugins: ['lists', 'link', 'image', 'table', 'fullscreen', 'autoresize'],
       setup: function(editor) {
         editor.on('change keyup blur', function() {
-          window.ReactNativeWebView.postMessage({ name: 'contentChange', content: editor.getContent() });
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            name: 'contentChange',
+            content: editor.getContent()
+          }));
         });
         editor.on('init', function() {
           const content = '${escapeContent(value)}';
           tinymce.activeEditor.setContent(content);
         });
 
-        editor.on('Load', function() {
-
- window.ReactNativeWebView.postMessage({ name: 'setHeight', height: document.getElementById('editor').height })
-         
+        editor.on('FullscreenStateChanged', function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
         });
 
+        
         editor.ui.registry.addButton('customImage', {
             icon: 'image',
-            onAction: () => window.ReactNativeWebView.postMessage({ name: 'openImagePicker' })
-        });
-        editor.ui.registry.addButton('customFullscreen', {
-            icon: 'maximize',
-            onAction: () => window.ReactNativeWebView.postMessage({ name: 'openFullscreen' })
+            onAction: () => window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openImagePicker' }))
         });
       }
     });
@@ -128,44 +132,74 @@ export const TinyMCEEditor = ({
 </html>
 `;
 
-const Editor =   <WebView
-originWhitelist={["*"]}
-ref={webViewRef}
-source={{ html: TINYMCE_HTML }}
-onMessage={(event) => {
-  switch (event.nativeEvent.data.name) {
-    case "contentChange":
-      handleContentChange(event.nativeEvent.data.content);
-      break;
-    case "setHeight":
-      console.log("setHeight", event.nativeEvent.data.height);
-      setEditorHeight(event.nativeEvent.data.height);
-      break;
-    case "openImagePicker":
-      setFilePickerOpen(true);
-      break;
-    case "openFullscreen":
-      setEditorOpen(true);
-      break;
-  }
-}}
-style={styles.editor}
-/>
+  const Editor = useMemo(
+    () => (
+      <WebView
+        originWhitelist={["*"]}
+        ref={webViewRef}
+        source={{ html: TINYMCE_HTML }}
+        onMessage={(event) => {
+          const data = JSON.parse(event.nativeEvent.data);
+          switch (data.name) {
+            case "contentChange":
+              handleContentChange(data.content);
+              break;
+            case "setHeight":
+              console.log("setHeight", data.height);
+              setEditorHeight(data.height);
+              break;
+            case "openImagePicker":
+              setFilePickerOpen(true);
+              break;
+            case "openFullscreen":
+              setEditorOpen(true);
 
+              break;
+          }
+        }}
+        style={styles.editor}
+      />
+    ),
+    []
+  );
 
   return (
     <>
-      <View style={[styles.preview, disabled && styles.previewDisabled, { height: editorHeight }]}>
+      <View style={[styles.preview, disabled && styles.previewDisabled]}>
         {Editor}
-
-        
       </View>
 
-      <Modal open={editorOpen} onClose={() => setEditorOpen(false)}>
-        <Modal.Content fullscreen={true} contentStyle={{ flex: 1 }}>
+      <RNModal
+        visible={editorOpen}
+        onRequestClose={() => setEditorOpen(false)}
+        transparent={true}
+        animationType="fade"
+        style={styles.fullscreenEditor}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
           {Editor}
-        </Modal.Content>
-      </Modal>
+          <Horizontal
+            style={{
+              justifyContent: "flex-end",
+              padding: theme.spacing.md,
+              backgroundColor: theme.colors.background,
+            }}
+          >
+            <Button
+              rounded
+              variant="soft"
+              onPress={() => {
+                setEditorOpen(false);
+              }}
+            >
+              <X />
+            </Button>
+            <Button rounded onPress={() => setEditorOpen(false)}>
+              <Check />
+            </Button>
+          </Horizontal>
+        </SafeAreaView>
+      </RNModal>
 
       <Modal open={filePickerOpen} onClose={() => setFilePickerOpen(false)}>
         <Modal.Content>
@@ -182,7 +216,8 @@ style={styles.editor}
 
 const editorStyles = createStyleSheet((theme) => ({
   preview: {
-   height: 500, overflow: "hidden",
+    height: 500,
+    overflow: "hidden",
   },
   previewDisabled: {
     opacity: 0.5,
@@ -199,5 +234,13 @@ const editorStyles = createStyleSheet((theme) => ({
   },
   editor: {
     flex: 1,
+    height: "100%",
+  },
+  fullscreenEditor: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 }));
