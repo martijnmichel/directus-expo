@@ -88,9 +88,10 @@ export const TinyMCEEditor = ({
     img { width: 100%; height: auto; }
     table { width: 100%; }
     td { border: 1px solid #ccc; padding: 8px; }
+    .tox-statusbar { display: none; }
   </style>
 </head>
-<body style="height: 100%;">
+<body style="height: 500px;">
   <textarea id="editor"></textarea>
   <script>
     tinymce.init({
@@ -102,8 +103,10 @@ export const TinyMCEEditor = ({
       content_style: 'img { max-width: 100%; height: auto; }',
       toolbar: '${item.meta.options?.toolbar.join(" ")}',
       toolbar_sticky: true,
+      toolbar_location: 'bottom',
       add_license_key: 'gpl',
-      plugins: ['lists', 'link', 'image', 'table', 'fullscreen', 'autoresize'],
+      height: 500,
+      plugins: ['lists', 'link', 'image', 'table'],
       setup: function(editor) {
         editor.on('change keyup blur', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -118,6 +121,7 @@ export const TinyMCEEditor = ({
 
         editor.on('FullscreenStateChanged', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
+           console.log(tinymce)
         });
 
         
@@ -152,6 +156,11 @@ export const TinyMCEEditor = ({
               setFilePickerOpen(true);
               break;
             case "openFullscreen":
+              /**
+               *    full screen works with either fullscreen and autoresize plugin,
+               *    but setting 500px on init will not resize it when going to full screen
+               *    and setting autoresize to true will not work on init (because it will be higher than the container height)
+               * */
               setEditorOpen(true);
 
               break;
