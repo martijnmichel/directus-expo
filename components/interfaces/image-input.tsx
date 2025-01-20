@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Platform, ViewProps } from "react-native";
+import { View, Text, Pressable, Platform } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
 import { formStyles } from "./style";
@@ -21,7 +21,15 @@ import { Modal } from "../display/modal";
 import { FileBrowser } from "./file-browser";
 import { importFile, uploadFiles } from "@directus/sdk";
 import { Image } from "expo-image";
-import { InterfaceProps } from ".";
+
+interface ImageInputProps {
+  label?: string;
+  error?: string;
+  helper?: string;
+  value?: string;
+  onChange: (value: string | string[]) => void;
+  disabled?: boolean;
+}
 
 export const ImageInput = ({
   label,
@@ -30,7 +38,7 @@ export const ImageInput = ({
   value,
   onChange,
   disabled,
-}: InterfaceProps<ViewProps, string | string[]>) => {
+}: ImageInputProps) => {
   const { styles, theme } = useStyles(imageStyles);
   const { styles: formStyle } = useStyles(formStyles);
   const [imageUrl, setImageUrl] = useState("");
@@ -68,7 +76,7 @@ export const ImageInput = ({
 
         const file = await directus?.request(uploadFiles(data));
         if (file) {
-          onChange?.(file?.id);
+          onChange(file?.id);
         }
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -80,7 +88,7 @@ export const ImageInput = ({
     try {
       const file = await directus?.request(importFile(imageUrl));
       if (file) {
-        onChange?.(file.id);
+        onChange(file.id);
       }
       setImageUrl("");
     } catch (error) {
@@ -144,7 +152,7 @@ export const ImageInput = ({
                   {({ close }) => (
                     <FileBrowser
                       onSelect={(v) => {
-                        onChange?.(v);
+                        onChange(v);
                         close();
                       }}
                     />

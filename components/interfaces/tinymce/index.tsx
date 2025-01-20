@@ -6,8 +6,6 @@ import {
   Modal as RNModal,
   SafeAreaView,
   Keyboard,
-  ViewProps,
-  Text,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {
@@ -22,11 +20,16 @@ import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { ImageInput } from "../image-input";
 import { useAuth } from "@/contexts/AuthContext";
 import { H1 } from "@/components/display/typography";
-import { Horizontal, Vertical } from "@/components/layout/Stack";
+import { Horizontal } from "@/components/layout/Stack";
 import { Check, X } from "@/components/icons";
 import { KeyboardAwareLayout } from "@/components/layout/Layout";
-import { InterfaceProps } from "..";
-import { formStyles } from "../style";
+
+interface TinyMCEEditorProps
+  extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
+  value?: string;
+  item: ReadFieldOutput<CoreSchema>;
+  onChange?: (text: string) => void;
+}
 
 export const TinyMCEEditor = ({
   value = "",
@@ -35,17 +38,15 @@ export const TinyMCEEditor = ({
   error,
   helper,
   style,
-  iconColor,
-  iconSize,
-  prepend,
-  append,
   item,
   disabled,
-}: InterfaceProps<ViewProps, string>) => {
+  ...props
+}: TinyMCEEditorProps) => {
   const { styles } = useStyles(editorStyles);
-  const { styles: fStyles, theme } = useStyles(formStyles);
   const webViewRef = useRef<WebView>(null);
+  const webViewRefFullscreen = useRef<WebView>(null);
   const themeName = UnistylesRuntime.themeName;
+  const { theme } = useStyles();
   const { directus } = useAuth();
   const [filePickerOpen, setFilePickerOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -181,39 +182,11 @@ export const TinyMCEEditor = ({
     );
   }, [editorOpen]);
 
-  // Default to error color if there's an error, otherwise use the theme's text color
-  const defaultIconColor = error
-    ? theme.colors.error
-    : theme.colors.textSecondary;
-
-  const finalIconColor = iconColor || defaultIconColor;
-
-  const clonedPrepend = prepend
-    ? React.cloneElement(prepend as React.ReactElement, {
-        color: finalIconColor,
-        size: iconSize,
-      })
-    : null;
-
-  const clonedAppend = append
-    ? React.cloneElement(append as React.ReactElement, {
-        color: finalIconColor,
-        size: iconSize,
-      })
-    : null;
-
   return (
-    <Vertical spacing={theme.spacing.xs}>
-      {label && <Text style={fStyles.label}>{label}</Text>}
-
+    <>
       <View style={[styles.preview, disabled && styles.previewDisabled]}>
         {Editor}
       </View>
-      {(error || helper) && (
-        <Text style={[fStyles.helperText, error && fStyles.errorText]}>
-          {error || helper}
-        </Text>
-      )}
 
       <RNModal
         visible={editorOpen}
@@ -256,7 +229,7 @@ export const TinyMCEEditor = ({
           />
         </Modal.Content>
       </Modal>
-    </Vertical>
+    </>
   );
 };
 
