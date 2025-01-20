@@ -21,9 +21,9 @@ interface DirectusIconProps {
 }
 
 // Debug helper to find exact icon names
-const findSimilarIcons = (searchTerm: string) => {
+const findSimilarIcons = (searchTerm?: string) => {
   return Object.keys(msIconDefinition).filter((key) =>
-    key.toLowerCase().includes(searchTerm.toLowerCase())
+    key.toLowerCase().includes(searchTerm?.toLowerCase() ?? "")
   );
 };
 
@@ -122,7 +122,7 @@ export const DirectusIcon = ({
     iconMapping[name] ||
     "ms" +
       name
-        .split("_")
+        ?.split("_")
         .map((part, index) => {
           if (index === 0) {
             // First word is always capitalized
@@ -145,7 +145,7 @@ export const DirectusIcon = ({
   if (!iconDef) {
     console.warn(
       `Icon "${name}" not found, transformed to "${iconName}". Available similar icons:`,
-      findSimilarIcons(name.split("_")[0])
+      findSimilarIcons(name?.split("_")[0])
     );
     return null;
   }
