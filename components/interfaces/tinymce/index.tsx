@@ -21,10 +21,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { H1 } from "@/components/display/typography";
 import { Horizontal } from "@/components/layout/Stack";
 import { Check, X } from "@/components/icons";
-import { useSafeAreaFrame } from "react-native-safe-area-context";
 
 interface TinyMCEEditorProps
-  extends Omit<React.ComponentProps<typeof Input>, "value" | "onChangeText"> {
+  extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
   value?: string;
   item: ReadFieldOutput<CoreSchema>;
   onChange?: (text: string) => void;
