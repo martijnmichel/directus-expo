@@ -52,6 +52,9 @@ export const DocumentEditor = ({
     id as number
   );
 
+  const { styles } = useStyles(formStyles);
+
+  const { data: permissions } = usePermissions();
   const context = useForm<Record<string, unknown>>();
   const {
     control,
@@ -61,13 +64,14 @@ export const DocumentEditor = ({
     fields,
     control,
     docId: id,
-    permitted: itemPermissions?.update.access,
+    canUpdateItem: itemPermissions?.update.access,
+    permissions,
+    styles,
   });
 
   const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
-  const { styles } = useStyles(formStyles);
   const { mutate: deleteDoc } = deleteDocument(
     collection as keyof CoreSchema,
     id as number
@@ -184,7 +188,7 @@ export const DocumentEditor = ({
         options={{
           headerRight: () => (
             <Horizontal>
-              {itemPermissions?.delete.access && (
+              {itemPermissions?.delete.access && id !== "+" && (
                 <Button rounded variant="soft" onPress={handleDelete}>
                   <Trash />
                 </Button>

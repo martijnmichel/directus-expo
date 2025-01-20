@@ -24,7 +24,11 @@ import {
   useItemPermissions,
   usePermissions,
 } from "@/state/queries/directus/core";
-import { CoreSchema, readItemPermissions } from "@directus/sdk";
+import {
+  CoreSchema,
+  readItemPermissions,
+  ReadUserPermissionsOutput,
+} from "@directus/sdk";
 import { ReadFieldOutput } from "@directus/sdk";
 import { ReactNode } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
@@ -36,23 +40,25 @@ import { TinyMCEEditor } from "@/components/interfaces/tinymce";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { H2 } from "@/components/display/typography";
 import { Divider } from "@/components/layout/divider";
+import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript/src/types";
 
 export const mapFields = ({
   fields,
   parent,
   control,
   docId,
-  permitted = true,
+  canUpdateItem = true,
+  permissions,
+  styles,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
   control: UseFormReturn["control"];
   docId?: number | string | "+";
-  permitted?: boolean;
+  canUpdateItem?: boolean;
+  permissions?: ReadUserPermissionsOutput;
+  styles?: any;
 }): ReactNode => {
-  const { styles } = useStyles(formStyles);
-
-  const { data: permissions } = usePermissions();
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)
@@ -81,7 +87,7 @@ export const mapFields = ({
           item.meta.readonly ||
           (docId === "+" && !canCreate) ||
           (docId !== "+" && !canUpdate) ||
-          (docId !== "+" && !permitted),
+          (docId !== "+" && !canUpdateItem),
         placeholder: item.meta.options?.placeholder,
         prepend: item.meta.options?.iconLeft && (
           <DirectusIcon name={item.meta.options.iconLeft} />
@@ -103,7 +109,9 @@ export const mapFields = ({
               parent: item.meta.field,
               fields,
               control,
-              permitted,
+              canUpdateItem,
+              permissions,
+              styles,
             })}
           </Accordion>
         );
@@ -126,7 +134,9 @@ export const mapFields = ({
                   parent: item.meta.field,
                   fields,
                   control,
-                  permitted,
+                  canUpdateItem,
+                  permissions,
+                  styles,
                 })}
               </View>
             </CollapsibleContent>
@@ -324,7 +334,7 @@ export const mapFields = ({
                         onChangeText={onChange}
                         value={(value as string) || ""}
                         autoCapitalize="none"
-                        disabled
+                        disabled={!!item.meta.interface}
                         helper="Fallback"
                         error={error?.message}
                       />

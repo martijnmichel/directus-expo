@@ -131,7 +131,7 @@ export const M2MInput = ({
     props.onChange?.(newOrderIds);
   };
 
-  console.log({ valueProp });
+  console.log({ valueProp, relation, junction, item });
 
   return (
     relation &&
