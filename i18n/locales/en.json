@@ -71,7 +71,8 @@
     "tabs": {
       "content": "Content",
       "profile": "Profile",
-      "settings": "Settings"
+      "settings": "Settings",
+      "gallery": "Gallery"
     }
   }
 }

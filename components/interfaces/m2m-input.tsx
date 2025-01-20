@@ -103,16 +103,18 @@ export const M2MInput = ({
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
       if (event.field === item.field) {
-        console.log("m2m:add", event);
+        console.log("m2m:add:received", event);
 
         const data = {
           [relation?.field as string]: event.data.id,
         };
+        console.log("m2m:add:sending", data);
         mutateOptions(
           data,
           // @ts-ignore
           {
             onSuccess: (newData: any) => {
+              console.log("m2m:add:success", newData);
               setAddedDocIds([...addedDocIds, newData.id]);
               props.onChange([...valueProp, newData.id]);
             },
@@ -124,7 +126,7 @@ export const M2MInput = ({
     return () => {
       EventBus.off("m2m:add", addM2M);
     };
-  }, [addedDocIds, valueProp, props.onChange]);
+  }, [addedDocIds, valueProp, props.onChange, relation, junction]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder.map((id) => parseInt(id as string));

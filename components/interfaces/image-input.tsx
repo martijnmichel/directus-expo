@@ -27,8 +27,9 @@ interface ImageInputProps {
   error?: string;
   helper?: string;
   value?: string;
-  onChange: (value: string | string[]) => void;
+  onChange?: (value: string | string[]) => void;
   disabled?: boolean;
+  sources?: ("device" | "url" | "library")[];
 }
 
 export const ImageInput = ({
@@ -38,6 +39,7 @@ export const ImageInput = ({
   value,
   onChange,
   disabled,
+  sources = ["device", "url", "library"],
 }: ImageInputProps) => {
   const { styles, theme } = useStyles(imageStyles);
   const { styles: formStyle } = useStyles(formStyles);
@@ -76,7 +78,7 @@ export const ImageInput = ({
 
         const file = await directus?.request(uploadFiles(data));
         if (file) {
-          onChange(file?.id);
+          onChange?.(file?.id);
         }
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -88,7 +90,7 @@ export const ImageInput = ({
     try {
       const file = await directus?.request(importFile(imageUrl));
       if (file) {
-        onChange(file.id);
+        onChange?.(file.id);
       }
       setImageUrl("");
     } catch (error) {
@@ -110,55 +112,61 @@ export const ImageInput = ({
         {!disabled && (
           <Vertical spacing="md" style={styles.uploadContainer}>
             <Horizontal spacing="md">
-              <Button variant="soft" rounded onPress={pickImage}>
-                <Upload />
-              </Button>
+              {sources.includes("device") && (
+                <Button variant="soft" rounded onPress={pickImage}>
+                  <Upload />
+                </Button>
+              )}
 
-              <Modal>
-                <Modal.Trigger>
-                  <Button rounded variant="soft">
-                    <Link />
-                  </Button>
-                </Modal.Trigger>
-                <Modal.Content title="Import from URL">
-                  {({ close }) => (
-                    <Vertical>
-                      <Input
-                        placeholder="Enter URL"
-                        value={imageUrl}
-                        onChangeText={setImageUrl}
-                        style={{ flex: 1 }}
-                      />
-                      <Button
-                        disabled={!imageUrl}
-                        onPress={() => {
+              {sources.includes("url") && (
+                <Modal>
+                  <Modal.Trigger>
+                    <Button rounded variant="soft">
+                      <Link />
+                    </Button>
+                  </Modal.Trigger>
+                  <Modal.Content title="Import from URL">
+                    {({ close }) => (
+                      <Vertical>
+                        <Input
+                          placeholder="Enter URL"
+                          value={imageUrl}
+                          onChangeText={setImageUrl}
+                          style={{ flex: 1 }}
+                        />
+                        <Button
+                          disabled={!imageUrl}
+                          onPress={() => {
+                            close();
+                            handleUrlSubmit();
+                          }}
+                        >
+                          Upload
+                        </Button>
+                      </Vertical>
+                    )}
+                  </Modal.Content>
+                </Modal>
+              )}
+              {sources.includes("library") && (
+                <Modal>
+                  <Modal.Trigger>
+                    <Button rounded variant="soft">
+                      <Gallery />
+                    </Button>
+                  </Modal.Trigger>
+                  <Modal.Content variant="bottomSheet" title="Import from URL">
+                    {({ close }) => (
+                      <FileBrowser
+                        onSelect={(v) => {
+                          onChange?.(v);
                           close();
-                          handleUrlSubmit();
                         }}
-                      >
-                        Upload
-                      </Button>
-                    </Vertical>
-                  )}
-                </Modal.Content>
-              </Modal>
-              <Modal>
-                <Modal.Trigger>
-                  <Button rounded variant="soft">
-                    <Gallery />
-                  </Button>
-                </Modal.Trigger>
-                <Modal.Content variant="bottomSheet" title="Import from URL">
-                  {({ close }) => (
-                    <FileBrowser
-                      onSelect={(v) => {
-                        onChange(v);
-                        close();
-                      }}
-                    />
-                  )}
-                </Modal.Content>
-              </Modal>
+                      />
+                    )}
+                  </Modal.Content>
+                </Modal>
+              )}
 
               {value && (
                 <Button variant="soft" rounded onPress={() => onChange?.("")}>

@@ -14,6 +14,7 @@ import {
 } from "react-native-safe-area-context";
 import { useTrackedPath, useTrackPath } from "@/hooks/useTrackPath";
 import { Pressable } from "react-native";
+import { DirectusIcon } from "@/components/display/directus-icon";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
@@ -59,11 +60,15 @@ export default function TabsLayout() {
 
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
-          name="profile"
-          href="/profile"
+          name="gallery"
+          href="/gallery"
         >
-          <Users size={32} color={theme.colors.textPrimary} />
-          <Text>{t("components.tabs.profile")}</Text>
+          <DirectusIcon
+            name="image"
+            size={32}
+            color={theme.colors.textPrimary}
+          />
+          <Text>{t("components.tabs.gallery")}</Text>
         </TabTrigger>
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
