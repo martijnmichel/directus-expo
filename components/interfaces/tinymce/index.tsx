@@ -124,25 +124,18 @@ export const TinyMCEEditor = ({
           tinymce.activeEditor.setContent(content);
         });
 
-        editor.on('focus', function() {
-          tinymce.activeEditor.execCommand('mceFullScreen')
-        });
-
-        editor.on('FullscreenStateChanged', function({ state }) {
+        /**
+         * editor.on('focus', function() {
+           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }));
               
-           if (state) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
-            
-           } else {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'closeFullscreen' }))
-          
-           }
-          
-        });
+        });*/
 
         editor.ui.registry.addButton('customFullscreen', {
             icon: 'fullscreen',
-            onAction: () => window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }))
+            onAction: () => {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }));
+             
+            }
         });
        
 
