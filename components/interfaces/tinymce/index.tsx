@@ -139,14 +139,18 @@ export const TinyMCEEditor = ({
 
         /**
          * editor.on('focus', function() {
-           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }));
+           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent(), field: '${
+             item.field
+           }', collection: '${item.collection}' }));
               
         });*/
 
         editor.ui.registry.addButton('customFullscreen', {
             icon: 'fullscreen',
             onAction: () => {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }));
+              window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent(), field: '${
+                item.field
+              }', collection: '${item.collection}' }));
              
             }
         });
@@ -155,7 +159,9 @@ export const TinyMCEEditor = ({
         
         editor.ui.registry.addButton('customImage', {
             icon: 'image',
-            onAction: () => window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openImagePicker' }))
+            onAction: () => window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openImagePicker', field: '${
+              item.field
+            }', collection: '${item.collection}' }))
         });
       }
     });
@@ -172,21 +178,26 @@ export const TinyMCEEditor = ({
           source={{ html: TINYMCE_HTML }}
           onMessage={(event) => {
             const data = JSON.parse(event.nativeEvent.data);
-            switch (data.name) {
-              case "contentChange":
-                handleContentChange(data.content);
-                break;
-              case "setHeight":
-                console.log("setHeight", data.height);
-                setEditorHeight(data.height);
-                break;
-              case "openImagePicker":
-                setFilePickerOpen(true);
-                break;
-              case "openFullscreen":
-                setEditorOpen(true);
+            if (
+              item.field === data.field &&
+              item.collection === data.collection
+            ) {
+              switch (data.name) {
+                case "contentChange":
+                  handleContentChange(data.content);
+                  break;
+                case "setHeight":
+                  console.log("setHeight", data.height);
+                  setEditorHeight(data.height);
+                  break;
+                case "openImagePicker":
+                  setFilePickerOpen(true);
+                  break;
+                case "openFullscreen":
+                  setEditorOpen(true);
 
-                break;
+                  break;
+              }
             }
           }}
           style={styles.editor}
