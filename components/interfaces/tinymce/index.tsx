@@ -21,6 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { H1 } from "@/components/display/typography";
 import { Horizontal } from "@/components/layout/Stack";
 import { Check, X } from "@/components/icons";
+import { KeyboardAwareLayout } from "@/components/layout/Layout";
 
 interface TinyMCEEditorProps
   extends Omit<React.ComponentProps<typeof Input>, "value" | "onChange"> {
@@ -91,7 +92,7 @@ export const TinyMCEEditor = ({
     .tox-tinymce { height: 100vh !important; border: none !important; border-radius: 0 !important; }
   </style>
 </head>
-<body style="background-color: red; height: 100vh;">
+<body style="height: 100vh;">
   <textarea id="editor"></textarea>
   <script>
     tinymce.init({
@@ -156,38 +157,42 @@ export const TinyMCEEditor = ({
 </html>
 `;
 
-  const Editor = (
-    <WebView
-      originWhitelist={["*"]}
-      ref={webViewRef}
-      source={{ html: TINYMCE_HTML }}
-      onMessage={(event) => {
-        const data = JSON.parse(event.nativeEvent.data);
-        switch (data.name) {
-          case "contentChange":
-            handleContentChange(data.content);
-            break;
-          case "setHeight":
-            console.log("setHeight", data.height);
-            setEditorHeight(data.height);
-            break;
-          case "openImagePicker":
-            setFilePickerOpen(true);
-            break;
-          case "openFullscreen":
-            /**
-             *    full screen works with either fullscreen and autoresize plugin,
-             *    but setting 500px on init will not resize it when going to full screen
-             *    and setting autoresize to true will not work on init (because it will be higher than the container height)
-             * */
-            setEditorOpen(true);
+  const Editor = useMemo(() => {
+    return (
+      <KeyboardAwareLayout>
+        <WebView
+          originWhitelist={["*"]}
+          ref={webViewRef}
+          source={{ html: TINYMCE_HTML }}
+          onMessage={(event) => {
+            const data = JSON.parse(event.nativeEvent.data);
+            switch (data.name) {
+              case "contentChange":
+                handleContentChange(data.content);
+                break;
+              case "setHeight":
+                console.log("setHeight", data.height);
+                setEditorHeight(data.height);
+                break;
+              case "openImagePicker":
+                setFilePickerOpen(true);
+                break;
+              case "openFullscreen":
+                /**
+                 *    full screen works with either fullscreen and autoresize plugin,
+                 *    but setting 500px on init will not resize it when going to full screen
+                 *    and setting autoresize to true will not work on init (because it will be higher than the container height)
+                 * */
+                setEditorOpen(true);
 
-            break;
-        }
-      }}
-      style={styles.editor}
-    />
-  );
+                break;
+            }
+          }}
+          style={styles.editor}
+        />
+      </KeyboardAwareLayout>
+    );
+  }, []);
 
   return (
     <>
