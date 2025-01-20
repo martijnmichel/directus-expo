@@ -60,7 +60,6 @@ interface ModalContentProps {
   actions?: React.ReactNode;
   visible?: boolean;
   onRequestClose?: () => void;
-  fullscreen?: boolean;
 }
 
 interface ModalTriggerProps {
@@ -100,13 +99,11 @@ const ModalContent = ({
   actions,
   variant = "default",
   height = "90%",
-  fullscreen = false,
   ...props
 }: ModalContentProps) => {
   const { t } = useTranslation();
   const { styles } = useStyles(modalStyles);
   const { isOpen, close } = useContext(ModalContext);
-  const [isFullscreen, setIsFullscreen] = useState(fullscreen);
 
   const contentStyles = [
     styles.modalContent,
@@ -114,7 +111,7 @@ const ModalContent = ({
       ...styles.bottomSheetContent,
       height: typeof height === "number" ? height : height,
     },
-    variant === "default" && isFullscreen && styles.fullscreenContent,
+    variant === "default",
     contentStyle,
   ];
 
@@ -165,22 +162,7 @@ const ModalContent = ({
           <View style={styles.header}>
             <View style={styles.headerContent}>
               {title && <H2>{title}</H2>}
-              <View style={styles.actions}>
-                {variant === "default" && (
-                  <Button
-                    onPress={() => setIsFullscreen(!isFullscreen)}
-                    variant="soft"
-                    rounded
-                  >
-                    {isFullscreen ? (
-                      <X size={24} aria-label={t("components.modal.exitFullscreen")} />
-                    ) : (
-                      <X size={24} aria-label={t("components.modal.enterFullscreen")} />
-                    )}
-                  </Button>
-                )}
-                {actions}
-              </View>
+              <View style={styles.actions}>{actions}</View>
               <PortalHost name="modal-header" />
             </View>
           </View>
