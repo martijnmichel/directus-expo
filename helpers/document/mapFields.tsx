@@ -192,24 +192,7 @@ export const mapFields = ({
                     )}
                   />
                 );
-              case "input-rich-text-md":
-                return (
-                  <Controller
-                    key={item.field}
-                    control={control}
-                    rules={{ required: item.meta.required }}
-                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
-                    render={({ field: { onChange, value } }) => (
-                      <TinyMCEEditor
-                        {...defaultProps}
-                        onChange={onChange}
-                        value={value as string}
-                        item={item}
-                        markdown
-                      />
-                    )}
-                  />
-                );
+
               case "system-token":
                 return (
                   <Controller
