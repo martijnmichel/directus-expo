@@ -96,7 +96,7 @@ export const TinyMCEEditor = ({
 <!DOCTYPE html>
 <html style="margin: 0; background-color: ${theme.colors.background};">
 <head>
-  <script src="https://app.ecbase.nl/js/tinymce/tinymce.min.js"></script>
+  <script src="https://file.martijnvde.nl/js/tinymce/js/tinymce/tinymce.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { margin: 0; background-color: ${theme.colors.background}}
