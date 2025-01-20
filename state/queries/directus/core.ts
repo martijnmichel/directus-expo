@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   aggregate,
   CoreSchema,
+  deletePolicy,
   deleteRole,
   deleteRoles,
   deleteUser,
@@ -12,6 +13,7 @@ import {
   readMe,
   readPermissions,
   readPolicies,
+  readPolicy,
   readProviders,
   readRelations,
   readRole,
@@ -27,6 +29,7 @@ import { mutateUser } from "@/state/actions/updateUser";
 import { mutateMe } from "@/state/actions/updateMe";
 import { get } from "lodash";
 import { addRole } from "@/state/actions/addRole";
+import { addPolicy } from "@/state/actions/addPolicy";
 export const useMe = () => {
   const { directus, user } = useAuth();
   return useQuery({
@@ -104,6 +107,14 @@ export const useUsers = (query?: Query<CoreSchema, any>) => {
       );
       return { items, total: Number(get(pagination, "0.count")) };
     },
+  });
+};
+
+export const usePolicy = (id: string) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["policy", id],
+    queryFn: () => directus?.request(readPolicy(id)),
   });
 };
 
@@ -191,7 +202,15 @@ export const coreCollections = {
     },
   },
   [prefix + "policies"]: {
+    readItem: usePolicy,
     readItems: usePolicies,
+    createItem: addPolicy,
+    removeItem: (id: string) => {
+      const { directus } = useAuth();
+      return useMutation({
+        mutationFn: () => directus!.request(deletePolicy(id)),
+      });
+    },
   },
   [prefix + "providers"]: {
     readItems: useProviders,

@@ -50,6 +50,8 @@ export const M2OInput = ({
     { filter: item.meta.options?.filter || [] }
   );
 
+  console.log({ options });
+
   const selectOptions = options?.items?.map((opt: any) => {
     return {
       value: opt[item.schema?.foreign_key_column!] || opt.id || "",
