@@ -12,18 +12,23 @@ export const mutateDocument = (
 ) => {
   const { directus, user } = useAuth();
   const { data } = useCollection(collection);
-  const { updateItem: updateCoreItem, updateMe } =
-    coreCollections[collection] || {};
+  const {
+    updateItem: updateCoreItem,
+    updateMe,
+    createItem: createCoreItem,
+  } = coreCollections[collection] || {};
 
   console.log({ data, id });
 
   if ((id === "+" || !id) && !data?.meta.singleton) {
-    return useMutation({
-      mutationFn: (data: Record<string, unknown>) => {
-        console.log("createItem", collection, id);
-        return directus!.request(createItem(collection, data as any));
-      },
-    });
+    return createCoreItem
+      ? createCoreItem()
+      : useMutation({
+          mutationFn: (data: Record<string, unknown>) => {
+            console.log("createItem", collection, id);
+            return directus!.request(createItem(collection, data as any));
+          },
+        });
   }
 
   if (data?.meta.singleton) {

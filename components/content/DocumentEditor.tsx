@@ -40,11 +40,30 @@ export const DocumentEditor = ({
   onSave,
 }: {
   collection: keyof CoreSchema;
-  id?: number | string;
+  id?: number | string | "+";
   defaultValues?: Record<string, unknown>;
   onSave?: (doc: Record<string, unknown>) => void;
   onDelete?: () => void;
 }) => {
+  const { data: fields } = useFields(collection as keyof CoreSchema);
+
+  const { data: itemPermissions } = useItemPermissions(
+    collection as keyof CoreSchema,
+    id as number
+  );
+
+  const context = useForm<Record<string, unknown>>();
+  const {
+    control,
+    formState: { isDirty, isValid, isSubmitting, dirtyFields },
+  } = context;
+  const fieldComponents = mapFields({
+    fields,
+    control,
+    docId: id,
+    permitted: itemPermissions?.update.access,
+  });
+
   const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
@@ -53,19 +72,6 @@ export const DocumentEditor = ({
     collection as keyof CoreSchema,
     id as number
   );
-
-  const { data: itemPermissions } = useItemPermissions(
-    collection as keyof CoreSchema,
-    id as number
-  );
-
-  const { data: fields } = useFields(collection as keyof CoreSchema);
-
-  const context = useForm<Record<string, unknown>>();
-  const {
-    control,
-    formState: { isDirty, isValid, isSubmitting, dirtyFields },
-  } = context;
 
   const { data } = useCollection(collection as keyof CoreSchema);
   const {
@@ -83,27 +89,12 @@ export const DocumentEditor = ({
     id as number
   );
 
-  const fieldComponents = mapFields({
-    fields,
-    control,
-    docId: id,
-    permitted: itemPermissions?.update.access,
-  });
-
-  console.log({ isDirty, isValid, isSubmitting });
-
   const getDocumentFieldValues = (document: Record<string, unknown>) => {
     return Object.keys(document).reduce((acc, key) => {
       acc[key] = document[key] === null ? "" : document[key];
       return acc;
     }, {} as Record<string, unknown>);
   };
-
-  useEffect(() => {
-    if (isError) {
-      console.log({ error });
-    }
-  }, [isError, error]);
 
   useEffect(() => {
     /** if a document is fetched, reset the form with the document */

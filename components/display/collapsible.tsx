@@ -74,6 +74,7 @@ interface CollapsibleTriggerProps extends ViewProps {
   prepend?: React.ReactNode;
   prependSize?: number;
   href?: string;
+  variant?: "accordion" | "default";
 }
 
 export const CollapsibleTrigger = ({
@@ -83,6 +84,7 @@ export const CollapsibleTrigger = ({
   prepend,
   href,
   prependSize = 20,
+  variant = "default",
   ...props
 }: CollapsibleTriggerProps) => {
   const { isOpen, toggle } = useCollapsible();
@@ -103,7 +105,11 @@ export const CollapsibleTrigger = ({
   });
 
   const triggerContent =
-    typeof children === "string" ? <Text>{children}</Text> : children;
+    typeof children === "string" ? (
+      <Text style={styles.triggerText}>{children}</Text>
+    ) : (
+      children
+    );
 
   const clonedPrepend = prepend
     ? React.cloneElement(prepend as React.ReactElement, {
@@ -111,6 +117,17 @@ export const CollapsibleTrigger = ({
         size: prependSize,
       })
     : null;
+
+  const Toggle = (
+    <Pressable
+      style={{ marginLeft: variant === "accordion" ? 0 : "auto" }}
+      onPress={toggle}
+    >
+      <Animated.View style={{ transform: [{ rotate }] }} pointerEvents="none">
+        <ChevronRight color={color || theme.colors.primary} size={24} />
+      </Animated.View>
+    </Pressable>
+  );
 
   return (
     <Pressable
@@ -121,13 +138,10 @@ export const CollapsibleTrigger = ({
       style={[styles.trigger, style]}
       {...props}
     >
+      {variant === "accordion" && Toggle}
       {clonedPrepend}
       {triggerContent}
-      <Pressable style={{ marginLeft: "auto" }} onPress={toggle}>
-        <Animated.View style={{ transform: [{ rotate }] }} pointerEvents="none">
-          <ChevronRight color={color || theme.colors.primary} size={20} />
-        </Animated.View>
-      </Pressable>
+      {variant === "default" && Toggle}
     </Pressable>
   );
 };
@@ -166,6 +180,10 @@ const stylesheet = createStyleSheet((theme) => ({
     gap: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     fontFamily: theme.typography.body.fontFamily,
+  },
+  triggerText: {
+    ...theme.typography.label,
+    color: theme.colors.textPrimary,
   },
   content: {
     paddingTop: theme.spacing.sm,
