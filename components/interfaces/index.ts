@@ -1,3 +1,8 @@
+import { ReadFieldOutput } from "@directus/sdk";
+import { CoreSchema } from "@directus/sdk";
+import { ReactNode } from "react";
+import { TextInputProps } from "react-native";
+
 // Interface map defining available Directus interfaces and their configurations
 export const interfaceMap = {
   input: {
@@ -307,3 +312,17 @@ export const typeMap = {
     interfaces: ["oneToMany"],
   },
 };
+
+export type InterfaceProps<T extends any, V extends any> = {
+  label?: string;
+  error?: string;
+  prepend?: ReactNode;
+  append?: ReactNode;
+  helper?: string;
+  iconColor?: string;
+  iconSize?: number;
+  disabled?: boolean;
+  value?: V;
+  onChange?: (value: V) => void;
+  item?: ReadFieldOutput<CoreSchema>;
+} & T;

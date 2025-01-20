@@ -1,19 +1,19 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, TextInput, Text, ScrollView } from "react-native";
+import {
+  View,
+  TextInput,
+  Text,
+  ScrollView,
+  TextInputProps,
+} from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
+import { InterfaceProps } from ".";
 
-interface JsonInputProps {
-  label?: string;
-  error?: string;
-  helper?: string;
-  value: string;
-  onChange: (value: string) => void;
-  style?: any;
-  disabled?: boolean;
-}
-
-export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
+export const JsonInput = React.forwardRef<
+  TextInput,
+  InterfaceProps<TextInputProps, string>
+>(
   (
     { label, error, helper, value, onChange, style, disabled, ...props },
     ref
@@ -35,7 +35,7 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
 
     const handleChange = useCallback(
       (text: string) => {
-        onChange(text);
+        onChange?.(text);
         try {
           JSON.parse(text);
           setErrorLine(null);
@@ -49,10 +49,10 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
 
     const handleBlur = useCallback(() => {
       try {
-        const parsed = JSON.parse(value);
+        const parsed = JSON.parse(value || "");
         const formatted = JSON.stringify(parsed, null, 2);
         if (formatted !== value) {
-          onChange(formatted);
+          onChange?.(formatted);
         }
       } catch (e) {
         // Keep invalid JSON as-is
