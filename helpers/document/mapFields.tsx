@@ -33,6 +33,9 @@ import { useStyles } from "react-native-unistyles";
 import { getCanCreate, getCanUpdate } from "./fieldPermissions";
 import { isFieldAllowed } from "../permissions/isFieldAllowed";
 import { TinyMCEEditor } from "@/components/interfaces/tinymce";
+import { Horizontal, Vertical } from "@/components/layout/Stack";
+import { H2 } from "@/components/display/typography";
+import { Divider } from "@/components/layout/divider";
 
 export const mapFields = ({
   fields,
@@ -111,6 +114,7 @@ export const mapFields = ({
         return (
           <Collapsible key={item.field}>
             <CollapsibleTrigger
+              variant="accordion"
               color={item?.meta.options?.headerColor}
               prepend={<DirectusIcon name={item?.meta.options?.headerIcon} />}
             >
@@ -562,6 +566,18 @@ export const mapFields = ({
                       />
                     )}
                   />
+                );
+              case "presentation-divider":
+                return (
+                  <Vertical spacing="xs" style={{ marginTop: 20 }}>
+                    <Horizontal>
+                      {item.meta.options?.icon && (
+                        <DirectusIcon size={32} name={item.meta.options.icon} />
+                      )}
+                      <H2>{item.meta.options?.title}</H2>
+                    </Horizontal>
+                    <Divider />
+                  </Vertical>
                 );
             }
 

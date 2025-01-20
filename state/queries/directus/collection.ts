@@ -24,9 +24,9 @@ import { get } from "lodash";
 import { useMemo } from "react";
 
 export const useCollection = (id: string) => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["collection", id],
+    queryKey: ["collection", id, user?.id],
     queryFn: () => directus?.request(readCollection(id as keyof CoreSchema)),
   });
 };
@@ -71,7 +71,7 @@ export const useDocument = ({
   ...queryOptions
 }: {
   collection: keyof CoreSchema;
-  id?: number | string;
+  id?: number | string | "+";
   options?: Query<CoreSchema, any>;
   query?: Omit<UseQueryOptions, "queryKey" | "queryFn">;
 }): UseQueryResult<Record<string, unknown> | undefined, Error> => {
@@ -81,6 +81,14 @@ export const useDocument = ({
   );
 
   const coreCollection = coreCollections[collection];
+
+  if (id === "+") {
+    return useQuery({
+      queryKey: ["document-add", collection, "+"],
+      queryFn: async () => ({}),
+      ...queryOptions,
+    });
+  }
 
   if (collectionData?.meta.singleton) {
     return useQuery({
@@ -96,25 +104,23 @@ export const useDocument = ({
       : useQuery({
           queryKey: ["document", collection, id],
           queryFn: async () =>
-            id === "+"
-              ? {}
-              : directus?.request(readItem(collection as any, id!, options)),
+            directus?.request(readItem(collection as any, id!, options)),
           ...queryOptions,
         });
 };
 
 export const useFields = (collection: keyof CoreSchema) => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["fields", collection],
+    queryKey: ["fields", collection, user?.id],
     queryFn: () => directus?.request(readFieldsByCollection(collection)),
   });
 };
 
 export const usePresets = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["presets"],
+    queryKey: ["presets", user?.id],
     queryFn: () => directus?.request(readPresets()),
   });
 };

@@ -11,6 +11,7 @@ import {
   readItemPermissions,
   readMe,
   readPermissions,
+  readPolicies,
   readProviders,
   readRelations,
   readRole,
@@ -25,10 +26,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { mutateUser } from "@/state/actions/updateUser";
 import { mutateMe } from "@/state/actions/updateMe";
 import { get } from "lodash";
+import { addRole } from "@/state/actions/addRole";
 export const useMe = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["me"],
+    queryKey: ["me", user?.id],
     queryFn: () => directus?.request(readMe()),
   });
 };
@@ -92,9 +94,9 @@ export const useUser = (id: string) => {
 };
 
 export const useUsers = (query?: Query<CoreSchema, any>) => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["users", query],
+    queryKey: ["users", user?.id, query],
     queryFn: async () => {
       const items = await directus?.request(readUsers(query));
       const pagination = await directus?.request(
@@ -114,21 +116,33 @@ export const useRole = (id: string) => {
 };
 
 export const useRoles = (query?: Query<CoreSchema, any>) => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["roles"],
+    queryKey: ["roles", user?.id],
     queryFn: async () => {
       const items = await directus?.request(readRoles(query));
 
-      return { items };
+      return { items, total: 0 };
+    },
+  });
+};
+
+export const usePolicies = (query?: Query<CoreSchema, any>) => {
+  const { directus, user } = useAuth();
+  return useQuery({
+    queryKey: ["policies", user?.id],
+    queryFn: async () => {
+      const items = await directus?.request(readPolicies(query));
+
+      return { items, total: 0 };
     },
   });
 };
 
 export const useProviders = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["providers"],
+    queryKey: ["providers", user?.id],
     queryFn: async () => {
       const items = await directus?.request(readProviders());
 
@@ -162,6 +176,7 @@ export const coreCollections = {
   [prefix + "roles"]: {
     readItem: useRole,
     readItems: useRoles,
+    createItem: addRole,
     removeItem: (id: string) => {
       const { directus } = useAuth();
       return useMutation({
@@ -174,6 +189,9 @@ export const coreCollections = {
         mutationFn: () => directus!.request(deleteRoles(ids)),
       });
     },
+  },
+  [prefix + "policies"]: {
+    readItems: usePolicies,
   },
   [prefix + "providers"]: {
     readItems: useProviders,

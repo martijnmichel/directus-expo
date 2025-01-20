@@ -17,6 +17,7 @@ import { CoreSchema, createItem, readItem, readItems } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
   useCollection,
+  useDocuments,
   useFields,
   usePresets,
 } from "@/state/queries/directus/collection";
@@ -56,37 +57,34 @@ export default function Collection() {
   const value = (current_value as string)?.split(",");
 
   const { directus } = useAuth();
-  const { data: options, refetch } = useQuery({
-    queryKey: ["options", related_collection, related_field],
-    queryFn: () =>
-      directus!.request(
-        readItems(related_collection as any, {
-          fields: [`*`],
-          filter: {
-            _and: [
-              ...(value?.length > 0
-                ? [
-                    {
-                      id: {
-                        _nin: value,
-                      },
-                    },
-                  ]
-                : []),
-              {
-                [`$FOLLOW(${junction_collection},${related_field})`]: {
-                  _none: {
-                    [junction_field as any]: {
-                      _eq: doc_id,
-                    },
+  const { data: options, refetch } = useDocuments(
+    related_collection as keyof CoreSchema,
+    {
+      fields: [`*`],
+      filter: {
+        _and: [
+          ...(value?.length > 0
+            ? [
+                {
+                  id: {
+                    _nin: value,
                   },
                 },
+              ]
+            : []),
+          {
+            [`$FOLLOW(${junction_collection},${related_field})`]: {
+              _none: {
+                [junction_field as any]: {
+                  _eq: doc_id,
+                },
               },
-            ],
+            },
           },
-        })
-      ),
-  });
+        ],
+      },
+    }
+  );
 
   useFocusEffect(() => {
     refetch();
@@ -112,7 +110,7 @@ export default function Collection() {
           {}
         )}
         fields={tableFields}
-        items={(options as Record<string, unknown>[]) || []}
+        items={(options?.items as Record<string, unknown>[]) || []}
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
           map(tableFields, (f) => doc[f] as number | string | null)
