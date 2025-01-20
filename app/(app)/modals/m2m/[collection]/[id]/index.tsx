@@ -13,6 +13,7 @@ import {
   Stack,
   useLocalSearchParams,
   useNavigation,
+  usePathname,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { map } from "lodash";
@@ -27,7 +28,7 @@ import { EventBus } from "@/utils/mitt";
 export default function Collection() {
   const { collection, id } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
-  const navigation = useNavigation();
+  const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
     collection: collection as keyof CoreSchema,
     docId: id as string,
@@ -49,6 +50,7 @@ export default function Collection() {
         <Container>
           <Section>
             <DocumentEditor
+              key={`${path}-${collection}-${id}`}
               collection={collection as keyof CoreSchema}
               id={id as string}
               onSave={async (document) => {
