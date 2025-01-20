@@ -281,6 +281,27 @@ export const mapFields = ({
                     )}
                   />
                 );
+              case "select-dropdown-m2o":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <M2OInput
+                        {...defaultProps}
+                        onValueChange={onChange}
+                        value={value as string}
+                        item={item}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
 
               default:
                 // Fallback for string type

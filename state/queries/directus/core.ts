@@ -34,33 +34,33 @@ export const useMe = () => {
 };
 
 export const usePermissions = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["permissions"],
+    queryKey: ["permissions", user?.id],
     queryFn: () => directus?.request(readUserPermissions()),
   });
 };
 
 export const useCollections = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["collections"],
+    queryKey: ["collections", user?.id],
     queryFn: () => directus?.request(readCollections()),
   });
 };
 
 export const useRelations = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["relations"],
+    queryKey: ["relations", user?.id],
     queryFn: () => directus?.request(readRelations()),
   });
 };
 
 export const useSettings = () => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["settings"],
+    queryKey: ["settings", user?.id],
     queryFn: () => directus?.request(readSettings()),
   });
 };
@@ -69,9 +69,9 @@ export const useItemPermissions = (
   collection: keyof CoreSchema,
   docId?: number | string | "+"
 ) => {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   return useQuery({
-    queryKey: ["document-permissions", collection, docId],
+    queryKey: ["document-permissions", user?.id, collection, docId],
     queryFn: () =>
       directus?.request(readItemPermissions(collection as any, docId)),
   });
@@ -119,12 +119,8 @@ export const useRoles = (query?: Query<CoreSchema, any>) => {
     queryKey: ["roles"],
     queryFn: async () => {
       const items = await directus?.request(readRoles(query));
-      const pagination = await directus?.request(
-        aggregate("directus_roles", {
-          aggregate: { count: "*", query },
-        })
-      );
-      return { items, total: Number(get(pagination, "0.count")) };
+
+      return { items };
     },
   });
 };

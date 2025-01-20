@@ -47,7 +47,7 @@ export const M2OInput = ({
 }: M2OInputProps) => {
   const { data: options, refetch } = useDocuments(
     item.schema.foreign_key_table as any,
-    { filter: item.meta.options?.filter }
+    { filter: item.meta.options?.filter || [] }
   );
 
   const selectOptions = options?.items?.map((opt: any) => {
