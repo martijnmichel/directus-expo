@@ -5,6 +5,7 @@ import {
   TextInput,
   Modal as RNModal,
   SafeAreaView,
+  Keyboard,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import {
@@ -43,6 +44,7 @@ export const TinyMCEEditor = ({
 }: TinyMCEEditorProps) => {
   const { styles } = useStyles(editorStyles);
   const webViewRef = useRef<WebView>(null);
+  const webViewRefFullscreen = useRef<WebView>(null);
   const themeName = UnistylesRuntime.themeName;
   const { theme } = useStyles();
   const { directus } = useAuth();
@@ -76,7 +78,8 @@ export const TinyMCEEditor = ({
       .replace(/`/g, "\\`");
   };
 
-  const TINYMCE_HTML = `
+  const Editor = useMemo(() => {
+    const TINYMCE_HTML = `
 <!DOCTYPE html>
 <html style="margin: 0; background-color: ${theme.colors.background};">
 <head>
@@ -92,7 +95,7 @@ export const TinyMCEEditor = ({
     .tox-tinymce { height: 100vh !important; border: none !important; border-radius: 0 !important; }
   </style>
 </head>
-<body style="height: 100vh;">
+<body style="height: 100vh; background-color: ${theme.colors.background};">
   <textarea id="editor"></textarea>
   <script>
     tinymce.init({
@@ -103,12 +106,12 @@ export const TinyMCEEditor = ({
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
       content_css: '${themeName}',
       content_style: 'img { max-width: 100%; height: auto; }',
-      toolbar: '${item.meta.options?.toolbar.join(" ")}',
+      toolbar: '${item.meta.options?.toolbar.join(" ")} customFullscreen',
       toolbar_sticky: true,
       toolbar_location: 'bottom',
       statusbar: false,
       add_license_key: 'gpl',
-      plugins: ['lists', 'link', 'image', 'table', 'fullscreen'],
+      plugins: ['lists', 'link', 'image', 'table'],
       setup: function(editor) {
         editor.on('change keyup blur', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -121,29 +124,27 @@ export const TinyMCEEditor = ({
           tinymce.activeEditor.setContent(content);
         });
 
-        editor.on('FullscreenStateChanged', function() {
-          
+        editor.on('focus', function() {
+          tinymce.activeEditor.execCommand('mceFullScreen')
+        });
 
-           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
+        editor.on('FullscreenStateChanged', function({ state }) {
               
-           if (tinymce.activeEditor.isFullscreen()) {
-            document.body.classList.add('fullscreen')
+           if (state) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
+            
            } else {
-            document.body.classList.remove('fullscreen')
+            window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'closeFullscreen' }))
+          
            }
           
         });
 
-         editor.ui.registry.addButton('customFullscreen', {
+        editor.ui.registry.addButton('customFullscreen', {
             icon: 'fullscreen',
-            onAction: () => {
-                // resize 
-
-                window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
-                document.body.classList.add('fullscreen')
-                
-              }
-          });
+            onAction: () => window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen', content: tinymce.activeEditor.getContent() }))
+        });
+       
 
         
         editor.ui.registry.addButton('customImage', {
@@ -156,11 +157,10 @@ export const TinyMCEEditor = ({
 </body>
 </html>
 `;
-
-  const Editor = useMemo(() => {
     return (
       <KeyboardAwareLayout>
         <WebView
+          key={editorOpen ? "fullscreen" : "normal"}
           originWhitelist={["*"]}
           ref={webViewRef}
           source={{ html: TINYMCE_HTML }}
@@ -178,11 +178,6 @@ export const TinyMCEEditor = ({
                 setFilePickerOpen(true);
                 break;
               case "openFullscreen":
-                /**
-                 *    full screen works with either fullscreen and autoresize plugin,
-                 *    but setting 500px on init will not resize it when going to full screen
-                 *    and setting autoresize to true will not work on init (because it will be higher than the container height)
-                 * */
                 setEditorOpen(true);
 
                 break;
@@ -192,7 +187,7 @@ export const TinyMCEEditor = ({
         />
       </KeyboardAwareLayout>
     );
-  }, []);
+  }, [editorOpen]);
 
   return (
     <>
