@@ -89,24 +89,26 @@ export const TinyMCEEditor = ({
     table { width: 100%; }
     td { border: 1px solid #ccc; padding: 8px; }
     .tox-statusbar { display: none; }
+    .tox-tinymce { height: 100vh !important; border: none !important; border-radius: 0 !important; }
   </style>
 </head>
-<body style="height: 500px;">
+<body style="background-color: red; height: 100vh;">
   <textarea id="editor"></textarea>
   <script>
     tinymce.init({
       selector: '#editor',
       menubar: false,
       nowrap: true,
+      mode: 'exact',
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
       content_css: '${themeName}',
       content_style: 'img { max-width: 100%; height: auto; }',
       toolbar: '${item.meta.options?.toolbar.join(" ")}',
       toolbar_sticky: true,
       toolbar_location: 'bottom',
+      statusbar: false,
       add_license_key: 'gpl',
-      height: 500,
-      plugins: ['lists', 'link', 'image', 'table'],
+      plugins: ['lists', 'link', 'image', 'table', 'fullscreen'],
       setup: function(editor) {
         editor.on('change keyup blur', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -120,9 +122,28 @@ export const TinyMCEEditor = ({
         });
 
         editor.on('FullscreenStateChanged', function() {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
-           console.log(tinymce)
+          
+
+           window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
+              
+           if (tinymce.activeEditor.isFullscreen()) {
+            document.body.classList.add('fullscreen')
+           } else {
+            document.body.classList.remove('fullscreen')
+           }
+          
         });
+
+         editor.ui.registry.addButton('customFullscreen', {
+            icon: 'fullscreen',
+            onAction: () => {
+                // resize 
+
+                window.ReactNativeWebView.postMessage(JSON.stringify({ name: 'openFullscreen' }))
+                document.body.classList.add('fullscreen')
+                
+              }
+          });
 
         
         editor.ui.registry.addButton('customImage', {
@@ -136,40 +157,37 @@ export const TinyMCEEditor = ({
 </html>
 `;
 
-  const Editor = useMemo(
-    () => (
-      <WebView
-        originWhitelist={["*"]}
-        ref={webViewRef}
-        source={{ html: TINYMCE_HTML }}
-        onMessage={(event) => {
-          const data = JSON.parse(event.nativeEvent.data);
-          switch (data.name) {
-            case "contentChange":
-              handleContentChange(data.content);
-              break;
-            case "setHeight":
-              console.log("setHeight", data.height);
-              setEditorHeight(data.height);
-              break;
-            case "openImagePicker":
-              setFilePickerOpen(true);
-              break;
-            case "openFullscreen":
-              /**
-               *    full screen works with either fullscreen and autoresize plugin,
-               *    but setting 500px on init will not resize it when going to full screen
-               *    and setting autoresize to true will not work on init (because it will be higher than the container height)
-               * */
-              setEditorOpen(true);
+  const Editor = (
+    <WebView
+      originWhitelist={["*"]}
+      ref={webViewRef}
+      source={{ html: TINYMCE_HTML }}
+      onMessage={(event) => {
+        const data = JSON.parse(event.nativeEvent.data);
+        switch (data.name) {
+          case "contentChange":
+            handleContentChange(data.content);
+            break;
+          case "setHeight":
+            console.log("setHeight", data.height);
+            setEditorHeight(data.height);
+            break;
+          case "openImagePicker":
+            setFilePickerOpen(true);
+            break;
+          case "openFullscreen":
+            /**
+             *    full screen works with either fullscreen and autoresize plugin,
+             *    but setting 500px on init will not resize it when going to full screen
+             *    and setting autoresize to true will not work on init (because it will be higher than the container height)
+             * */
+            setEditorOpen(true);
 
-              break;
-          }
-        }}
-        style={styles.editor}
-      />
-    ),
-    []
+            break;
+        }
+      }}
+      style={styles.editor}
+    />
   );
 
   return (
@@ -227,6 +245,9 @@ const editorStyles = createStyleSheet((theme) => ({
   preview: {
     height: 500,
     overflow: "hidden",
+    borderWidth: theme.borderWidth.md,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
   },
   previewDisabled: {
     opacity: 0.5,
