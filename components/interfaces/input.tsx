@@ -3,12 +3,18 @@ import { View, TextInput, TextInputProps, Text } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 
-import { InterfaceProps } from "./index";
+interface InputProps extends TextInputProps {
+  label?: string;
+  error?: string;
+  prepend?: ReactNode;
+  append?: ReactNode;
+  helper?: string;
+  iconColor?: string;
+  iconSize?: number;
+  disabled?: boolean;
+}
 
-export const Input = React.forwardRef<
-  TextInput,
-  InterfaceProps<TextInputProps, string>
->(
+export const Input = React.forwardRef<TextInput, InputProps>(
   (
     {
       label,
