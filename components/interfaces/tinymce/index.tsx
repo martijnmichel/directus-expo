@@ -109,10 +109,10 @@ export const TinyMCEEditor = ({
   </style>
 </head>
 <body style="height: 100vh; background-color: ${theme.colors.background};">
-  <textarea id="editor"></textarea>
+  <textarea id="${item.field}-${item.collection}"></textarea>
   <script>
     tinymce.init({
-      selector: '#editor',
+      selector: '#${item.field}-${item.collection}',
       menubar: false,
       nowrap: true,
       mode: 'exact',
@@ -129,7 +129,9 @@ export const TinyMCEEditor = ({
         editor.on('change keyup blur', function() {
           window.ReactNativeWebView.postMessage(JSON.stringify({
             name: 'contentChange',
-            content: editor.getContent()
+            content: editor.getContent(),
+            field: '${item.field}',
+            collection: '${item.collection}'
           }));
         });
         editor.on('init', function() {
