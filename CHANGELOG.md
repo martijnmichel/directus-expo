@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/martijnmichel/directus-expo/compare/v0.2.2...v0.2.3) (2025-01-21)
+
+
+### Features
+
+* update/delete file ([e9ce136](https://github.com/martijnmichel/directus-expo/commit/e9ce136de3d759089256119fc198720fd4f2e6a6))
+
 ## [0.2.2](https://github.com/martijnmichel/directus-expo/compare/v0.2.1...v0.2.2) (2025-01-21)
 
 
