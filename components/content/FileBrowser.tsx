@@ -15,6 +15,7 @@ import { Link, router } from "expo-router";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { removeFiles } from "@/state/actions/deleteFiles";
+import { SearchFilter } from "./filters/search-filter-modal";
 interface FileBrowserProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
@@ -94,6 +95,7 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
 
       <PortalOutlet name="floating-toolbar" path="/files">
         <Pagination {...filterContext} total={files?.total || 0} />
+        <SearchFilter {...filterContext} />
         {selectedFiles.length > 0 && (
           <>
             <Button
