@@ -60,8 +60,8 @@ export default function TabsLayout() {
 
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
-          name="gallery"
-          href="/gallery"
+          name="files"
+          href="/files"
         >
           <DirectusIcon
             name="image"

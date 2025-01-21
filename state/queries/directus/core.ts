@@ -9,6 +9,8 @@ import {
   deleteUsers,
   Query,
   readCollections,
+  readFile,
+  readFiles,
   readItemPermissions,
   readMe,
   readPermissions,
@@ -30,6 +32,8 @@ import { mutateMe } from "@/state/actions/updateMe";
 import { get } from "lodash";
 import { addRole } from "@/state/actions/addRole";
 import { addPolicy } from "@/state/actions/addPolicy";
+import { removeFile } from "@/state/actions/deleteFile";
+import { removeFiles } from "@/state/actions/deleteFiles";
 export const useMe = () => {
   const { directus, user } = useAuth();
   return useQuery({
@@ -162,6 +166,28 @@ export const useProviders = () => {
   });
 };
 
+export const useFiles = (query?: Query<CoreSchema, any>) => {
+  const { directus, user } = useAuth();
+  return useQuery({
+    queryKey: ["files", user?.id, query],
+    queryFn: async () => {
+      const items = await directus?.request(readFiles(query));
+      const pagination = await directus?.request(
+        aggregate("directus_files", { aggregate: { count: "*" } })
+      );
+      return { items: items, total: Number(get(pagination, "0.count")) };
+    },
+  });
+};
+
+export const useFile = (id: string, query?: Query<CoreSchema, any>) => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["file", id, query],
+    queryFn: () => directus?.request(readFile(id, query)),
+  });
+};
+
 const prefix = "directus_";
 
 export const coreCollections = {
@@ -211,6 +237,12 @@ export const coreCollections = {
         mutationFn: () => directus!.request(deletePolicy(id)),
       });
     },
+  },
+  [prefix + "files"]: {
+    readItem: useFile,
+    readItems: useFiles,
+    removeItem: removeFile,
+    removeItems: removeFiles,
   },
   [prefix + "providers"]: {
     readItems: useProviders,

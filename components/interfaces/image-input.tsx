@@ -18,9 +18,9 @@ import {
 } from "../icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
-import { FileBrowser } from "./file-browser";
 import { importFile, uploadFiles } from "@directus/sdk";
 import { Image } from "expo-image";
+import { FileSelect } from "./file-select";
 
 interface ImageInputProps {
   label?: string;
@@ -157,7 +157,7 @@ export const ImageInput = ({
                   </Modal.Trigger>
                   <Modal.Content variant="bottomSheet" title="Import from URL">
                     {({ close }) => (
-                      <FileBrowser
+                      <FileSelect
                         onSelect={(v) => {
                           onChange?.(v);
                           close();

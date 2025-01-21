@@ -4,39 +4,24 @@ import { Grid } from "../display/grid";
 import { Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { RadioButton } from "../interfaces/radio-button";
+import { RadioButton } from "./radio-button";
 import { PortalOutlet } from "../layout/Portal";
 import { Button } from "../display/button";
 import { Check } from "../icons";
 import { Image } from "expo-image";
-interface FileBrowserProps {
+import { useFiles } from "@/state/queries/directus/core";
+import { formatFileSize } from "@/helpers/formatFileSize";
+interface FileSelectProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
 }
 
-export const FileBrowser = ({
-  onSelect,
-  multiple = false,
-}: FileBrowserProps) => {
+export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<DirectusFile | null>(null);
-  const [files, setFiles] = useState<DirectusFile[]>([]);
   const { directus, user } = useAuth();
   const { styles } = useStyles(stylesheet);
-
-  useEffect(() => {
-    const getFiles = async () => {
-      if (!directus || !user?.role) return;
-      const files = await directus.request(
-        readFiles({
-          limit: 1000,
-        })
-      );
-      setFiles(files as DirectusFile[]);
-    };
-
-    getFiles();
-  }, []);
+  const { data: files } = useFiles();
 
   const handleSelect = (file: DirectusFile) => {
     if (multiple) {
@@ -59,7 +44,7 @@ export const FileBrowser = ({
   return (
     <>
       <Grid cols={{ xs: 2, sm: 3, md: 4, lg: 5 }} spacing="lg">
-        {files.map((file) => {
+        {files?.items?.map((file) => {
           const selected = isSelected(file);
           return (
             <Pressable
@@ -111,14 +96,6 @@ export const FileBrowser = ({
       </PortalOutlet>
     </>
   );
-};
-
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
 
 const stylesheet = createStyleSheet((theme) => ({
