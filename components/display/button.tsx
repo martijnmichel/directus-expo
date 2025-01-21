@@ -33,6 +33,7 @@ export interface ButtonProps extends TouchableOpacityProps {
   fullWidth?: boolean;
   rounded?: boolean;
   children: React.ReactNode;
+  floating?: boolean;
 }
 
 export const Button = React.forwardRef<any, ButtonProps>(
@@ -48,6 +49,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
       disabled,
       style,
       children,
+      floating = false,
       ...props
     },
     ref
@@ -62,6 +64,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
       rounded && styles.rounded,
       fullWidth && styles.fullWidth,
       disabled && styles.disabled,
+      floating && styles.floating,
       style,
     ];
 
@@ -259,5 +262,15 @@ const stylesheet = createStyleSheet((theme) => ({
     aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  floating: {
+    shadowColor: theme.colors.backgroundInvert,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 8, // for Android
   },
 }));

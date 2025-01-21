@@ -101,6 +101,7 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
             <Button
               rounded
               variant="danger"
+              floating
               loading={isPending}
               onPress={() =>
                 mutate(
@@ -115,7 +116,12 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
             >
               <Trash />
             </Button>
-            <Button variant="soft" rounded onPress={() => setSelectedFiles([])}>
+            <Button
+              variant="soft"
+              floating
+              rounded
+              onPress={() => setSelectedFiles([])}
+            >
               <X />
             </Button>
           </>

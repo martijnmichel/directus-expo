@@ -26,7 +26,7 @@ export const SearchFilter = (state: UseDocumentsFiltersReturn) => {
   return (
     <Modal>
       <Modal.Trigger>
-        <Button rounded variant="soft">
+        <Button rounded floating variant="soft">
           <DirectusIcon name="search" />
         </Button>
       </Modal.Trigger>
