@@ -15,6 +15,7 @@ import {
 import { useTrackedPath, useTrackPath } from "@/hooks/useTrackPath";
 import { Pressable } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
+import { Folder } from "@/components/icons/Folder";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
@@ -63,8 +64,8 @@ export default function TabsLayout() {
           name="files"
           href="/files"
         >
-          <DirectusIcon name="image" size={32} color={"white"} />
-          <Text style={{ color: "white" }}>{t("components.tabs.gallery")}</Text>
+          <Folder size={32} color={"white"} />
+          <Text style={{ color: "white" }}>{t("components.tabs.files")}</Text>
         </TabTrigger>
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}

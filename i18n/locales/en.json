@@ -72,7 +72,8 @@
       "content": "Content",
       "profile": "Profile",
       "settings": "Settings",
-      "gallery": "Gallery"
+      "gallery": "Gallery",
+      "files": "Files"
     }
   }
 }

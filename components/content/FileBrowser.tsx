@@ -78,7 +78,7 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
                 </View>
                 <View style={styles.metadata}>
                   <Text style={styles.filename} numberOfLines={1}>
-                    {file.filename_download}
+                    {file.title || file.filename_disk || file.filename_download}
                   </Text>
                   <Text style={styles.fileInfo}>
                     {!!file.filesize && formatFileSize(Number(file.filesize))} •{" "}

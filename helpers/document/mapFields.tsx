@@ -580,7 +580,11 @@ export const mapFields = ({
                 );
               case "presentation-divider":
                 return (
-                  <Vertical spacing="xs" style={{ marginTop: 20 }}>
+                  <Vertical
+                    spacing="xs"
+                    style={{ marginTop: 20 }}
+                    key={item.field}
+                  >
                     <Horizontal>
                       {item.meta.options?.icon && (
                         <DirectusIcon size={32} name={item.meta.options.icon} />
