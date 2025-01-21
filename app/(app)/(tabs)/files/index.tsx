@@ -34,7 +34,6 @@ export default function TabTwoScreen() {
   return (
     <Layout>
       <Stack.Screen
-        name="index"
         options={{
           headerTitle: "Files",
           ...headerStyles,

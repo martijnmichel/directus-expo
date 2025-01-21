@@ -89,12 +89,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
     const renderContent = () => {
       if (loading) {
         return (
-          <ActivityIndicator
-            color={
-              variant === "primary" ? theme.colors.white : theme.colors.primary
-            }
-            style={styles.spinner}
-          />
+          <ActivityIndicator color={getIconColor()} style={styles.spinner} />
         );
       }
 

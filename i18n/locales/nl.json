@@ -70,7 +70,8 @@
     "tabs": {
       "content": "Inhoud",
       "profile": "Profiel",
-      "settings": "Instellingen"
+      "settings": "Instellingen",
+      "files": "Bestanden"
     }
   }
 }

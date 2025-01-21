@@ -12,6 +12,8 @@ import {
   ViewStyle,
   StyleSheet,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { X } from "../icons";
@@ -111,8 +113,7 @@ const ModalContent = ({
       ...styles.bottomSheetContent,
       height: typeof height === "number" ? height : height,
     },
-    variant === "default",
-    contentStyle,
+    variant === "default" && contentStyle,
   ];
 
   return (
@@ -123,57 +124,62 @@ const ModalContent = ({
       onRequestClose={close}
       {...props}
     >
-      <Animated.View
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(200)}
-        style={[
-          styles.modalOverlay,
-          variant === "bottomSheet" && styles.bottomSheetOverlay,
-          variant === "quickView" && styles.quickViewOverlay,
-        ]}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} />
-
-        {variant === "bottomSheet" && (
-          <Button
-            onPress={close}
-            variant="soft"
-            rounded
-            style={styles.closeButton}
-          >
-            <X size={24} aria-label={t("components.modal.close")} />
-          </Button>
-        )}
-
         <Animated.View
-          entering={
-            variant === "bottomSheet" ? SlideInDown.duration(200) : FadeIn
-          }
-          exiting={
-            variant === "bottomSheet" ? SlideOutDown.duration(200) : FadeOut
-          }
-          style={contentStyles}
-          onStartShouldSetResponder={() => true}
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={[
+            styles.modalOverlay,
+            variant === "bottomSheet" && styles.bottomSheetOverlay,
+            variant === "quickView" && styles.quickViewOverlay,
+          ]}
         >
+          <Pressable style={StyleSheet.absoluteFill} onPress={close} />
+
           {variant === "bottomSheet" && (
-            <View style={styles.bottomSheetHandle} />
+            <Button
+              onPress={close}
+              variant="soft"
+              rounded
+              style={styles.closeButton}
+            >
+              <X size={24} aria-label={t("components.modal.close")} />
+            </Button>
           )}
+          <Animated.View
+            entering={
+              ["bottomSheet", "quickView"].includes(variant)
+                ? SlideInDown.duration(200)
+                : FadeIn
+            }
+            exiting={
+              ["bottomSheet", "quickView"].includes(variant)
+                ? SlideOutDown.duration(200)
+                : FadeOut
+            }
+            style={contentStyles}
+            onStartShouldSetResponder={() => true}
+          >
+            {variant === "bottomSheet" && (
+              <View style={styles.bottomSheetHandle} />
+            )}
 
-          <View style={styles.header}>
-            <View style={styles.headerContent}>
-              {title && <H2>{title}</H2>}
-              <View style={styles.actions}>{actions}</View>
-              <PortalHost name="modal-header" />
+            <View style={styles.header}>
+              <View style={styles.headerContent}>
+                {title && <H2>{title}</H2>}
+                <View style={styles.actions}>{actions}</View>
+                <PortalHost name="modal-header" />
+              </View>
             </View>
-          </View>
 
-          {isOpen && (
-            <ScrollView>
-              {typeof children === "function" ? children({ close }) : children}
-            </ScrollView>
-          )}
+            {isOpen &&
+              (typeof children === "function" ? children({ close }) : children)}
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
+      </KeyboardAvoidingView>
     </RNModal>
   );
 };
