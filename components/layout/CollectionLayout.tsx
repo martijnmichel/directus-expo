@@ -170,7 +170,7 @@ export default function CollectionLayout({
 
           <View style={styles.floatingToolbar}>
             <Horizontal>
-              <Button rounded onPress={toggleMenu}>
+              <Button rounded floating onPress={toggleMenu}>
                 <DirectusIcon name={isMenuOpen ? "close" : "menu"} />
               </Button>
 

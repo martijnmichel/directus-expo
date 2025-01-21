@@ -11,7 +11,13 @@ export const Pagination = (
   const totalPages = Math.ceil((context.total || 0) / limit);
   return (
     <Horizontal>
-      <Button rounded disabled={page === 1} variant="soft" onPress={previous}>
+      <Button
+        rounded
+        floating
+        disabled={page === 1}
+        variant="soft"
+        onPress={previous}
+      >
         <DirectusIcon name="chevron_left" />
       </Button>
 
@@ -20,6 +26,7 @@ export const Pagination = (
         disabled={page === totalPages}
         variant="soft"
         onPress={next}
+        floating
       >
         <DirectusIcon name="chevron_right" />
       </Button>
