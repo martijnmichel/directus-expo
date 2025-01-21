@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
 import { formStyles } from "./style";
@@ -18,9 +24,9 @@ import {
 } from "../icons";
 import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
-import { importFile, uploadFiles } from "@directus/sdk";
 import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
+import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
 
 interface ImageInputProps {
   label?: string;
@@ -46,49 +52,29 @@ export const ImageInput = ({
   const [imageUrl, setImageUrl] = useState("");
   const { directus } = useAuth();
 
+  const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
+  const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
+
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
 
-    if (!result.canceled && result.assets[0]) {
-      try {
-        const data = new FormData();
-
-        if (Platform.OS === "web") {
-          // For web: Convert base64 to blob and create a File object
-          const response = await fetch(result.assets[0].uri);
-          const blob = await response.blob();
-          const file = new File(
-            [blob],
-            result.assets[0].uri.split("/").pop() || "image.jpg",
-            { type: result.assets[0].mimeType || "image/jpeg" }
-          );
-          data.append("file", file);
-        } else {
-          // For native: Use the React Native structure
-          data.append("file", {
-            uri: result.assets[0].uri,
-            type: result.assets[0].mimeType || "image/jpeg",
-            name: result.assets[0].uri.split("/").pop() || "image.jpg",
-          } as any);
-        }
-
-        const file = await directus?.request(uploadFiles(data));
-        if (file) {
-          onChange?.(file?.id);
-        }
-      } catch (error) {
-        console.error("Error uploading image:", error);
+      const file = await upload(result);
+      if (file) {
+        onChange?.(file.id);
       }
+    } catch (error) {
+      console.error("Error uploading image:", error);
     }
   };
 
   const handleUrlSubmit = async () => {
     try {
-      const file = await directus?.request(importFile(imageUrl));
+      const file = await importFile(imageUrl);
       if (file) {
         onChange?.(file.id);
       }
@@ -111,69 +97,76 @@ export const ImageInput = ({
 
         {!disabled && (
           <Vertical spacing="md" style={styles.uploadContainer}>
-            <Horizontal spacing="md">
-              {sources.includes("device") && (
-                <Button variant="soft" rounded onPress={pickImage}>
-                  <Upload />
-                </Button>
-              )}
+            {isUploading || isImporting ? (
+              <ActivityIndicator />
+            ) : (
+              <Horizontal spacing="md">
+                {sources.includes("device") && (
+                  <Button variant="soft" rounded onPress={pickImage}>
+                    <Upload />
+                  </Button>
+                )}
 
-              {sources.includes("url") && (
-                <Modal>
-                  <Modal.Trigger>
-                    <Button rounded variant="soft">
-                      <Link />
-                    </Button>
-                  </Modal.Trigger>
-                  <Modal.Content title="Import from URL">
-                    {({ close }) => (
-                      <Vertical>
-                        <Input
-                          placeholder="Enter URL"
-                          value={imageUrl}
-                          onChangeText={setImageUrl}
-                          style={{ flex: 1 }}
-                        />
-                        <Button
-                          disabled={!imageUrl}
-                          onPress={() => {
+                {sources.includes("url") && (
+                  <Modal>
+                    <Modal.Trigger>
+                      <Button rounded variant="soft">
+                        <Link />
+                      </Button>
+                    </Modal.Trigger>
+                    <Modal.Content title="Import from URL">
+                      {({ close }) => (
+                        <Vertical>
+                          <Input
+                            placeholder="Enter URL"
+                            value={imageUrl}
+                            onChangeText={setImageUrl}
+                            style={{ flex: 1 }}
+                          />
+                          <Button
+                            disabled={!imageUrl}
+                            onPress={() => {
+                              close();
+                              handleUrlSubmit();
+                            }}
+                          >
+                            Upload
+                          </Button>
+                        </Vertical>
+                      )}
+                    </Modal.Content>
+                  </Modal>
+                )}
+                {sources.includes("library") && (
+                  <Modal>
+                    <Modal.Trigger>
+                      <Button rounded variant="soft">
+                        <Gallery />
+                      </Button>
+                    </Modal.Trigger>
+                    <Modal.Content
+                      variant="bottomSheet"
+                      title="Import from URL"
+                    >
+                      {({ close }) => (
+                        <FileSelect
+                          onSelect={(v) => {
+                            onChange?.(v);
                             close();
-                            handleUrlSubmit();
                           }}
-                        >
-                          Upload
-                        </Button>
-                      </Vertical>
-                    )}
-                  </Modal.Content>
-                </Modal>
-              )}
-              {sources.includes("library") && (
-                <Modal>
-                  <Modal.Trigger>
-                    <Button rounded variant="soft">
-                      <Gallery />
-                    </Button>
-                  </Modal.Trigger>
-                  <Modal.Content variant="bottomSheet" title="Import from URL">
-                    {({ close }) => (
-                      <FileSelect
-                        onSelect={(v) => {
-                          onChange?.(v);
-                          close();
-                        }}
-                      />
-                    )}
-                  </Modal.Content>
-                </Modal>
-              )}
+                        />
+                      )}
+                    </Modal.Content>
+                  </Modal>
+                )}
 
-              {value && (
-                <Button variant="soft" rounded onPress={() => onChange?.("")}>
-                  <X />
-                </Button>
-              )}
-            </Horizontal>
+                {value && (
+                  <Button variant="soft" rounded onPress={() => onChange?.("")}>
+                    <X />
+                  </Button>
+                )}
+              </Horizontal>
+            )}
           </Vertical>
         )}
       </View>

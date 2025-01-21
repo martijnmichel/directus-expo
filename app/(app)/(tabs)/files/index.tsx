@@ -48,7 +48,12 @@ export default function TabTwoScreen() {
                       </Button>
                     </Modal.Trigger>
                     <Modal.Content>
-                      <ImageInput sources={["device", "url"]} />
+                      {({ close }) => (
+                        <ImageInput
+                          sources={["device", "url"]}
+                          onChange={close}
+                        />
+                      )}
                     </Modal.Content>
                   </Modal>
                 )}
