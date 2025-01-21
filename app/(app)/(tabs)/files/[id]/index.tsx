@@ -5,14 +5,21 @@ import {
   KeyboardAwareScrollView,
   Layout,
 } from "@/components/layout/Layout";
+import { Section } from "@/components/layout/Section";
+import { useAuth } from "@/contexts/AuthContext";
 import { useFile } from "@/state/queries/directus/core";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Image } from "expo-image";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { View } from "react-native";
+import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 export default function File() {
   const { id } = useLocalSearchParams();
   const { data: file } = useFile(id as string, { fields: ["title"] });
+  const { directus } = useAuth();
   const headerStyles = useHeaderStyles();
+  const { styles } = useStyles(stylesheet);
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
@@ -24,9 +31,41 @@ export default function File() {
       />
       <KeyboardAwareScrollView>
         <Container>
-          <DocumentEditor collection="directus_files" id={id as string} />
+          <View style={styles.imageContainer}>
+            <Image
+              style={styles.image}
+              contentFit="contain"
+              source={`${directus!.url}/assets/${id}`}
+            />
+          </View>
+          <DocumentEditor
+            collection="directus_files"
+            id={id as string}
+            onDelete={() => {
+              router.back();
+            }}
+            onSave={() => {
+              router.back();
+            }}
+          />
         </Container>
       </KeyboardAwareScrollView>
     </KeyboardAwareLayout>
   );
 }
+
+const stylesheet = createStyleSheet((theme) => ({
+  imageContainer: {
+    shadowColor: "black",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  image: {
+    width: "100%",
+    height: 300,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+}));

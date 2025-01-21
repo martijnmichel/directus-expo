@@ -38,6 +38,7 @@ export const DocumentEditor = ({
   id,
   defaultValues = {},
   onSave,
+  onDelete,
 }: {
   collection: keyof CoreSchema;
   id?: number | string | "+";
@@ -72,7 +73,7 @@ export const DocumentEditor = ({
   const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
-  const { mutate: deleteDoc } = deleteDocument(
+  const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
     collection as keyof CoreSchema,
     id as number
   );
@@ -172,7 +173,11 @@ export const DocumentEditor = ({
 
   const handleDelete = () => {
     // Implement delete functionality with confirmation dialog
-    deleteDoc();
+    deleteDoc(undefined, {
+      onSuccess: () => {
+        onDelete?.();
+      },
+    });
   };
 
   const handleSave = () => {
@@ -189,7 +194,12 @@ export const DocumentEditor = ({
           headerRight: () => (
             <Horizontal>
               {itemPermissions?.delete.access && id !== "+" && (
-                <Button rounded variant="soft" onPress={handleDelete}>
+                <Button
+                  rounded
+                  variant="soft"
+                  onPress={handleDelete}
+                  loading={isDeleting}
+                >
                   <Trash />
                 </Button>
               )}
