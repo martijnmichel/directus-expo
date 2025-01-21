@@ -10,7 +10,13 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
 import { cloneElement, isValidElement } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "soft";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "soft"
+  | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface IconProps {
@@ -73,6 +79,8 @@ export const Button = React.forwardRef<any, ButtonProps>(
           return theme.colors.textSecondary;
         case "ghost":
           return theme.colors.textPrimary;
+        case "danger":
+          return theme.colors.error;
         default:
           return "white";
       }
@@ -157,6 +165,9 @@ const stylesheet = createStyleSheet((theme) => ({
   soft: {
     backgroundColor: theme.colors.backgroundAlt,
   },
+  danger: {
+    backgroundColor: theme.colors.backgroundAlt,
+  },
 
   secondary: {
     backgroundColor: theme.colors.background,
@@ -213,6 +224,9 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   ghostText: {
     color: theme.colors.textSecondary,
+  },
+  dangerText: {
+    color: theme.colors.error,
   },
   smText: {
     fontSize: 14,

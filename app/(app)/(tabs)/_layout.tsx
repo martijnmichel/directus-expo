@@ -54,8 +54,8 @@ export default function TabsLayout() {
           name="content"
           href="/"
         >
-          <Cube size={32} color={theme.colors.textPrimary} />
-          <Text>{t("components.tabs.content")}</Text>
+          <Cube size={32} color={"white"} />
+          <Text style={{ color: "white" }}>{t("components.tabs.content")}</Text>
         </TabTrigger>
 
         <TabTrigger
@@ -63,20 +63,18 @@ export default function TabsLayout() {
           name="files"
           href="/files"
         >
-          <DirectusIcon
-            name="image"
-            size={32}
-            color={theme.colors.textPrimary}
-          />
-          <Text>{t("components.tabs.gallery")}</Text>
+          <DirectusIcon name="image" size={32} color={"white"} />
+          <Text style={{ color: "white" }}>{t("components.tabs.gallery")}</Text>
         </TabTrigger>
         <TabTrigger
           style={[styles.item, { paddingBottom: bottom }]}
           name="settings"
           href="/settings"
         >
-          <Cog size={32} color={theme.colors.textPrimary} />
-          <Text>{t("components.tabs.settings")}</Text>
+          <Cog size={32} color={"white"} />
+          <Text style={{ color: "white" }}>
+            {t("components.tabs.settings")}
+          </Text>
         </TabTrigger>
 
         <TabTrigger
@@ -91,7 +89,7 @@ export default function TabsLayout() {
 
 const stylesheet = createStyleSheet((theme) => ({
   tabBar: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.backgroundInvert,
   },
   item: {
     flex: 1,
@@ -101,6 +99,7 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
     gap: 4,
     paddingVertical: 12,
+    color: "white",
   },
   icon: {
     width: 24,
