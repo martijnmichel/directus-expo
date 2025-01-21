@@ -36,6 +36,7 @@ export default function TabTwoScreen() {
       <Stack.Screen
         options={{
           headerTitle: "Files",
+          headerBackVisible: false,
           ...headerStyles,
           headerRight: () => {
             return (
