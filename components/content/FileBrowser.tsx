@@ -7,11 +7,11 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { RadioButton } from "../interfaces/radio-button";
 import { PortalOutlet } from "../layout/Portal";
 import { Button } from "../display/button";
-import { Check, Trash } from "../icons";
+import { Check, Trash, X } from "../icons";
 import { Image } from "expo-image";
 import { useFiles } from "@/state/queries/directus/core";
 import { formatFileSize } from "@/helpers/formatFileSize";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { removeFiles } from "@/state/actions/deleteFiles";
@@ -53,9 +53,9 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
         {files?.items?.map((file) => {
           const selected = isSelected(file);
           return (
-            <Link
+            <Pressable
               key={file.filename_disk}
-              href={{ pathname: "/files/[id]", params: { id: file.id } }}
+              onPress={() => router.push(`/files/${file.id}`)}
             >
               <View style={styles.fileContainer}>
                 <View style={styles.imageWrapper}>
@@ -85,32 +85,38 @@ export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
                   </Text>
                 </View>
               </View>
-            </Link>
+            </Pressable>
           );
         })}
       </Grid>
 
       <View style={{ height: 80 }} />
 
-      <PortalOutlet name="floating-toolbar">
+      <PortalOutlet name="floating-toolbar" path="/files">
         <Pagination {...filterContext} total={files?.total || 0} />
         {selectedFiles.length > 0 && (
-          <Button
-            rounded
-            loading={isPending}
-            onPress={() =>
-              mutate(
-                selectedFiles.map((f) => f.id),
-                {
-                  onSuccess: () => {
-                    setSelectedFiles([]);
-                  },
-                }
-              )
-            }
-          >
-            <Trash />
-          </Button>
+          <>
+            <Button
+              rounded
+              variant="danger"
+              loading={isPending}
+              onPress={() =>
+                mutate(
+                  selectedFiles.map((f) => f.id),
+                  {
+                    onSuccess: () => {
+                      setSelectedFiles([]);
+                    },
+                  }
+                )
+              }
+            >
+              <Trash />
+            </Button>
+            <Button variant="soft" rounded onPress={() => setSelectedFiles([])}>
+              <X />
+            </Button>
+          </>
         )}
       </PortalOutlet>
     </>

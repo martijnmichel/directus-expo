@@ -38,7 +38,7 @@ import { getCanCreate, getCanUpdate } from "./fieldPermissions";
 import { isFieldAllowed } from "../permissions/isFieldAllowed";
 import { TinyMCEEditor } from "@/components/interfaces/tinymce";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
-import { H2 } from "@/components/display/typography";
+import { H2, H3 } from "@/components/display/typography";
 import { Divider } from "@/components/layout/divider";
 import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript/src/types";
 
@@ -99,7 +99,8 @@ export const mapFields = ({
       if (
         (parent && item.meta.group !== parent) ||
         (!!item.meta.group && !parent) ||
-        item.meta.hidden
+        item.meta.hidden ||
+        !item.meta.interface
       ) {
         return null;
       } else if (item.meta.interface === "group-accordion") {
@@ -584,7 +585,7 @@ export const mapFields = ({
                       {item.meta.options?.icon && (
                         <DirectusIcon size={32} name={item.meta.options.icon} />
                       )}
-                      <H2>{item.meta.options?.title}</H2>
+                      <H3 numberOfLines={1}>{item.meta.options?.title}</H3>
                     </Horizontal>
                     <Divider />
                   </Vertical>

@@ -20,6 +20,7 @@ export const lightTheme = {
     backgroundAlt: "#F0F4F9" as string, // Light gray background
     backgroundDark: "#e4eaf1" as string,
     backgroundDarkest: "#d4d9e1" as string,
+    backgroundInvert: "#263238" as string,
 
     // Border colors
     border: "#e4eaf1" as string,
