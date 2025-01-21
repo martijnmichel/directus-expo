@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/martijnmichel/directus-expo/compare/v0.2.1...v0.2.2) (2025-01-21)
+
+
+### Features
+
+* FileBrowser/File screen ([709501d](https://github.com/martijnmichel/directus-expo/commit/709501d930ed50712c6acfa10000020d886241b4))
+
 ## [0.2.1](https://github.com/martijnmichel/directus-expo/compare/v0.2.0...v0.2.1) (2025-01-20)
 
 
