@@ -1,3 +1,15 @@
+# [0.3.0](https://github.com/martijnmichel/directus-expo/compare/v0.2.3...v0.3.0) (2025-01-21)
+
+
+### Features
+
+* upload/import in filebrowser ([58b38cb](https://github.com/martijnmichel/directus-expo/commit/58b38cb763c85768fb31439fa374703e472c928b))
+
+
+### Performance Improvements
+
+* image browser! ([f5584ae](https://github.com/martijnmichel/directus-expo/commit/f5584ae7d74683a59b9e9189559c76bffb764dad))
+
 ## [0.2.3](https://github.com/martijnmichel/directus-expo/compare/v0.2.2...v0.2.3) (2025-01-21)
 
 
