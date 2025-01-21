@@ -7,6 +7,7 @@ import {
   deleteRoles,
   deleteUser,
   deleteUsers,
+  DirectusFile,
   Query,
   readCollections,
   readFile,
@@ -172,7 +173,9 @@ export const useFiles = (query?: Query<CoreSchema, any>) => {
   return useQuery({
     queryKey: ["files", user?.id, query],
     queryFn: async () => {
-      const items = await directus?.request(readFiles(query));
+      const items = (await directus?.request(
+        readFiles(query)
+      )) as unknown as DirectusFile[];
       const pagination = await directus?.request(
         aggregate("directus_files", { aggregate: { count: "*" } })
       );
