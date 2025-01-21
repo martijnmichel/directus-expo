@@ -32,3 +32,4 @@ const stylesheet = createStyleSheet((theme) => ({
     padding: theme.spacing.md,
   },
 }));
+export const ftStyles = stylesheet;

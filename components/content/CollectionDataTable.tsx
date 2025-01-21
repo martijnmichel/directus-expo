@@ -104,7 +104,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         <Pagination {...filterContext} total={documents?.total} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>
-      <View style={{ height: 60 }} />
+      <View style={{ height: 80 }} />
     </Vertical>
   );
 }

@@ -21,7 +21,7 @@ import { uploadFiles } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/display/button";
 import { Modal } from "@/components/display/modal";
-import { FileBrowser } from "../file-browser";
+import { FileBrowser } from "../file-select";
 import { ImageInput } from "../image-input";
 import ImageExtension from "@tiptap/extension-image";
 
