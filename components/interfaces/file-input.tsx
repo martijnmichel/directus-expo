@@ -35,6 +35,7 @@ import Animated, { SlideInDown, SlideInUp } from "react-native-reanimated";
 import { useFile } from "@/state/queries/directus/core";
 import { isImageType } from "@/helpers/document/isImageType";
 import { DirectusFile } from "@directus/sdk";
+import { DirectusIcon } from "../display/directus-icon";
 
 interface ImageInputProps {
   label?: string;
@@ -127,18 +128,20 @@ export const FileInput = ({
     if (!file) return null;
     else if (isImageType(file?.type ?? "")) {
       return (
-        <Horizontal style={{ alignItems: "center" }}>
+        <Horizontal style={{ alignItems: "center", width: "100%" }}>
           <Image
             source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
             style={{ width: 28, height: 28, borderRadius: 4 }}
           />
-          <Text>{file?.title || file.filename_disk}</Text>
+          <Text style={{ flexShrink: 1 }} numberOfLines={1}>
+            {file?.title || file.filename_disk}
+          </Text>
         </Horizontal>
       );
     } else
       return (
-        <Horizontal>
-          <Text>{file?.title || file.filename_disk}</Text>
+        <Horizontal style={{ alignItems: "center", width: "100%" }}>
+          <Text numberOfLines={1}>{file?.title || file.filename_disk}</Text>
         </Horizontal>
       );
   };
@@ -155,11 +158,21 @@ export const FileInput = ({
       >
         {prepend && <View style={styles.prepend}>{clonedPrepend}</View>}
         <Pressable
-          style={[styles.input, { display: "flex", flexDirection: "row" }]}
+          style={[
+            styles.input,
+            { display: "flex", flexDirection: "row", alignItems: "center" },
+          ]}
           onBlur={() => setTimeout(() => setIsOpen(false), 100)}
           onFocus={() => setIsOpen(true)}
         >
-          {value && <File id={value} />}
+          {value ? (
+            <File id={value} />
+          ) : (
+            <Horizontal>
+              <DirectusIcon name="attach_file" />
+              <Text>Select a file</Text>
+            </Horizontal>
+          )}
         </Pressable>
 
         {value && (
