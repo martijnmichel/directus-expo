@@ -185,12 +185,11 @@ const selectStyles = createStyleSheet((theme) => ({
     justifyContent: "flex-start",
     gap: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.background,
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    height: 44,
+    height: 48,
   },
   selectText: {
     ...theme.typography.body,

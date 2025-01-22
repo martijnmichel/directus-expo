@@ -145,7 +145,7 @@ const stylesheet = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
-    height: 44,
+    height: 48,
     maxWidth: 500,
   },
   listItemDeselected: {
