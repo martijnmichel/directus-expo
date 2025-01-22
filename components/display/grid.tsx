@@ -83,7 +83,6 @@ export const Grid: React.FC<GridProps> = ({
           flexDirection: "row",
           flexWrap: "wrap",
           margin: -(spacingValue / 2),
-          width: "100%",
         },
         style,
       ]}
