@@ -164,7 +164,7 @@ const stylesheet = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.backgroundAlt,
   },
   danger: {
-    backgroundColor: theme.colors.backgroundAlt,
+    backgroundColor: theme.colors.backgroundDark,
   },
 
   secondary: {
@@ -264,13 +264,13 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
   },
   floating: {
-    shadowColor: theme.colors.backgroundInvert,
+    shadowColor: theme.colors.backgroundDark,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
     shadowOpacity: 0.35,
-    shadowRadius: 6,
-    elevation: 8, // for Android
+    shadowRadius: 4,
+    elevation: 6, // for Android
   },
 }));
