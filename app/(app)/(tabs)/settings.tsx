@@ -18,6 +18,7 @@ import { API } from "@/components/APIForm";
 import { Toggle } from "@/components/interfaces/toggle";
 import { LocaleSelect } from "@/components/settings/locale-switch";
 import { DirectusIcon } from "@/components/display/directus-icon";
+import { View } from "react-native";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
@@ -43,6 +44,9 @@ export default function TabTwoScreen() {
       value: directus?.url.origin,
     },
     {
+      type: "spacing",
+    },
+    {
       label: "User",
       type: "heading",
       icon: <DirectusIcon name="verified_user" />,
@@ -55,52 +59,87 @@ export default function TabTwoScreen() {
       label: "Email",
       value: user?.email,
     },
+    {
+      type: "component",
+      component: (
+        <Button
+          onPress={async () => {
+            await logout();
+            router.push("/login");
+          }}
+          leftIcon={<DirectusIcon name="logout" />}
+          variant="danger"
+        >
+          Logout
+        </Button>
+      ),
+    },
+    {
+      type: "spacing",
+    },
+    {
+      label: "Options",
+      type: "heading",
+      icon: <DirectusIcon name="settings" />,
+    },
+    {
+      type: "component",
+      label: "Locale",
+      component: <LocaleSelect />,
+    },
+    {
+      type: "component",
+      label: "Dark Mode",
+      component: (
+        <Toggle value={currentTheme === "dark"} onValueChange={toggleTheme} />
+      ),
+    },
   ];
 
   return (
     <Layout>
       <Container>
         <Section>
-          <Vertical spacing="xl">
-            <Vertical>
-              {info.map((item) =>
-                item.type === "heading" ? (
-                  <Vertical style={{ marginTop: 16 }}>
-                    <Horizontal>
-                      {item.icon}
-                      <H3>{item.label}</H3>
-                    </Horizontal>
-                    <Divider />
-                  </Vertical>
-                ) : (
-                  <Horizontal>
-                    <Text style={{ flex: 1 }}>{item.label}</Text>
-                    <Text style={{ flex: 3 }}>{item.value}</Text>
-                  </Horizontal>
-                )
-              )}
+          <Vertical spacing="lg">
+            <Vertical spacing="lg">
+              {info.map((item, index) => {
+                switch (item.type) {
+                  case "heading":
+                    return (
+                      <Vertical key={item.label} spacing="xs">
+                        <Horizontal>
+                          {item.icon}
+                          <H3>{item.label}</H3>
+                        </Horizontal>
+                        <Divider />
+                      </Vertical>
+                    );
+                  case "spacing":
+                    return (
+                      <View key={`space-${index}`} style={{ height: 18 }} />
+                    );
+                  case "component":
+                    return (
+                      <Horizontal
+                        key={item.label}
+                        style={{ alignItems: "center" }}
+                      >
+                        {item.label && (
+                          <Text style={{ flex: 1 }}>{item.label}</Text>
+                        )}
+                        <View style={{ flex: 3 }}>{item.component}</View>
+                      </Horizontal>
+                    );
+                  default:
+                    return (
+                      <Horizontal key={item.label}>
+                        <Text style={{ flex: 1 }}>{item.label}</Text>
+                        <Text style={{ flex: 3 }}>{item.value}</Text>
+                      </Horizontal>
+                    );
+                }
+              })}
             </Vertical>
-
-            <Button
-              onPress={async () => {
-                await logout();
-                router.push("/login");
-              }}
-            >
-              Logout
-            </Button>
-          </Vertical>
-        </Section>
-        <Divider />
-        <Section>
-          <Vertical>
-            <H3>Options</H3>
-            <LocaleSelect />
-            <Toggle
-              value={currentTheme === "dark"}
-              label="Dark Mode"
-              onValueChange={toggleTheme}
-            />
           </Vertical>
         </Section>
       </Container>
