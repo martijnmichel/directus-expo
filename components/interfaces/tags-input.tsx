@@ -29,7 +29,7 @@ export const TagsInput = React.forwardRef<TextInput, TagsProps>(
       helper,
       style,
       disabled,
-      value,
+      value = [],
       presets,
       sortByAlphabet,
       onChange,

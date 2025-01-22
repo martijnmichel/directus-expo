@@ -43,6 +43,7 @@ import { Divider } from "@/components/layout/divider";
 import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript/src/types";
 
 import { TagsInput } from "@/components/interfaces/tags-input";
+import { FileInput } from "@/components/interfaces/file-input";
 
 export const mapFields = ({
   fields,
@@ -477,6 +478,27 @@ export const mapFields = ({
                       fieldState: { error },
                     }) => (
                       <ImageInput
+                        {...defaultProps}
+                        onChange={onChange}
+                        value={value as string}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "file":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <FileInput
                         {...defaultProps}
                         onChange={onChange}
                         value={value as string}
