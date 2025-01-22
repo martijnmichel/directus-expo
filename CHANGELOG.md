@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/martijnmichel/directus-expo/compare/v0.3.0...v0.3.1) (2025-01-22)
+
+
+### Bug Fixes
+
+* android quickView & bottomSheet ([448c7a6](https://github.com/martijnmichel/directus-expo/commit/448c7a6c92eae18439b17cfe9d7a1724d619fda3))
+
 # [0.3.0](https://github.com/martijnmichel/directus-expo/compare/v0.2.3...v0.3.0) (2025-01-21)
 
 
