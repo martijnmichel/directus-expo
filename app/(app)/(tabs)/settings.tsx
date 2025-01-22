@@ -17,8 +17,12 @@ import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { API } from "@/components/APIForm";
 import { Toggle } from "@/components/interfaces/toggle";
 import { LocaleSelect } from "@/components/settings/locale-switch";
-import { DirectusIcon } from "@/components/display/directus-icon";
+import {
+  DirectusIcon,
+  DirectusIconName,
+} from "@/components/display/directus-icon";
 import { View } from "react-native";
+import { DividerSubtitle } from "@/components/display/subtitle";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
@@ -33,7 +37,7 @@ export default function TabTwoScreen() {
     {
       label: "Server",
       type: "heading",
-      icon: <DirectusIcon name="msDatabase" />,
+      icon: "msDatabase",
     },
     {
       label: "API",
@@ -49,7 +53,7 @@ export default function TabTwoScreen() {
     {
       label: "User",
       type: "heading",
-      icon: <DirectusIcon name="verified_user" />,
+      icon: "verified_user",
     },
     {
       label: "Username",
@@ -80,7 +84,7 @@ export default function TabTwoScreen() {
     {
       label: "Options",
       type: "heading",
-      icon: <DirectusIcon name="settings" />,
+      icon: "settings",
     },
     {
       type: "component",
@@ -106,13 +110,11 @@ export default function TabTwoScreen() {
                 switch (item.type) {
                   case "heading":
                     return (
-                      <Vertical key={`heading-${index}`} spacing="xs">
-                        <Horizontal>
-                          {item.icon}
-                          <H3>{item.label}</H3>
-                        </Horizontal>
-                        <Divider />
-                      </Vertical>
+                      <DividerSubtitle
+                        key={`heading-${index}`}
+                        title={item.label!}
+                        icon={item.icon as DirectusIconName}
+                      />
                     );
                   case "spacing":
                     return (

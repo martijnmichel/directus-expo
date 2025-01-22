@@ -12,7 +12,7 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Ionicons } from "@expo/vector-icons"; // Assuming you're using Expo
 import { formStyles } from "./style";
 import { ChevronDown } from "../icons/Chevron";
-import { DirectusIcon } from "../display/directus-icon";
+import { DirectusIcon, DirectusIconName } from "../display/directus-icon";
 
 interface SelectOption {
   text: string;
@@ -135,7 +135,7 @@ export const Select = ({
                   {item.icon && (
                     <View style={styles.optionIcon}>
                       <DirectusIcon
-                        name={item.icon}
+                        name={item.icon as DirectusIconName}
                         size={20}
                         color={item.color || theme.colors.textPrimary}
                       />

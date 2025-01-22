@@ -4,14 +4,17 @@ import { Container } from "@/components/layout/Container";
 import { Divider } from "@/components/layout/divider";
 import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
+import { Vertical } from "@/components/layout/Stack";
 
 export default function Home() {
   return (
     <Layout>
       <Container>
-        <H1>Content</H1>
         <Section>
-          <UserCollections />
+          <Vertical>
+            <H1>Content</H1>
+            <UserCollections />
+          </Vertical>
         </Section>
       </Container>
     </Layout>
