@@ -43,7 +43,7 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
 
   return (
     <>
-      <Grid cols={{ xs: 2, sm: 3, md: 4, lg: 5 }} spacing="lg">
+      <Grid cols={{ xs: 3, sm: 4, md: 5, lg: 6 }} spacing="md">
         {files?.items?.map((file) => {
           const selected = isSelected(file);
           return (
