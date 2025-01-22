@@ -147,7 +147,7 @@ const stylesheet = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,
     borderColor: "transparent",
-    height: 48,
+    height: 44,
   },
   content: {
     flexDirection: "row",
@@ -195,7 +195,7 @@ const stylesheet = createStyleSheet((theme) => ({
   lg: {
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.xl,
-    minHeight: 48,
+    minHeight: 44,
     minWidth: 48,
   },
 
