@@ -8,6 +8,7 @@ import { Horizontal } from "../layout/Stack";
 import { Check, Trash } from "../icons";
 import { Stack } from "expo-router";
 import { Button } from "../display/button";
+import { useEffect } from "react";
 
 export const RepeaterDocument = ({
   fields,
@@ -20,21 +21,31 @@ export const RepeaterDocument = ({
 }) => {
   const { styles } = useStyles(formStyles);
   const context = useForm({ defaultValues });
+  const {
+    control,
+    reset,
+    handleSubmit,
+    formState: { isDirty, isValid, isSubmitting, dirtyFields },
+  } = context;
 
-  const handleSubmit = (data: Record<string, any>) => {
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues]);
+
+  const submit = (data: Record<string, any>) => {
     onSave?.(data);
   };
+
+  console.log({ context, fields });
 
   const SubmitButton = () => (
     <Button
       rounded
-      loading={context.formState.isSubmitting}
-      disabled={
-        !context.formState.isDirty ||
-        !context.formState.isValid ||
-        context.formState.isSubmitting
-      }
-      onPress={context.handleSubmit(handleSubmit)}
+      loading={isSubmitting}
+      disabled={!isDirty || !isValid || isSubmitting}
+      onPress={handleSubmit(submit)}
     >
       <Check />
     </Button>
@@ -54,7 +65,8 @@ export const RepeaterDocument = ({
       <View style={styles.form}>
         {mapFields({
           fields,
-          control: context.control,
+          control,
+          styles,
         })}
       </View>
     </FormProvider>
