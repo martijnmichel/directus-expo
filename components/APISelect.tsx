@@ -26,6 +26,7 @@ export function APISelect({
 }) {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
+    undefined,
     []
   );
   const confirm = useConfirmDialog();
