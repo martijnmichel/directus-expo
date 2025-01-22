@@ -20,6 +20,14 @@ export default function Collection() {
 
   const headerStyles = useHeaderStyles();
 
+  if (isLoading) {
+    return (
+      <Layout>
+        <></>
+      </Layout>
+    );
+  }
+
   return data?.meta.singleton ? (
     <KeyboardAwareLayout>
       <Stack.Screen
