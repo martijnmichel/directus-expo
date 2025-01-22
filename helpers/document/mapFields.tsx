@@ -42,6 +42,8 @@ import { H2, H3 } from "@/components/display/typography";
 import { Divider } from "@/components/layout/divider";
 import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript/src/types";
 
+import { TagsInput } from "@/components/interfaces/tags-input";
+
 export const mapFields = ({
   fields,
   parent,
@@ -700,6 +702,29 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as (string | number)[]}
                         item={item}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "tags":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <TagsInput
+                        {...defaultProps}
+                        sortByAlphabet={item.meta.options?.alphabetize}
+                        presets={item.meta.options?.presets}
+                        onChange={onChange}
+                        value={value as string[]}
                         error={error?.message}
                       />
                     )}

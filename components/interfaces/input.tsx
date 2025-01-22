@@ -16,18 +16,7 @@ interface InputProps extends TextInputProps {
 
 export const Input = React.forwardRef<TextInput, InputProps>(
   (
-    {
-      label,
-      error,
-      prepend,
-      append,
-      helper,
-      style,
-      iconColor,
-      iconSize = 20,
-      disabled,
-      ...props
-    },
+    { label, error, prepend, append, helper, style, disabled, ...props },
     ref
   ) => {
     const { styles, theme } = useStyles(formStyles);
@@ -37,19 +26,19 @@ export const Input = React.forwardRef<TextInput, InputProps>(
       ? theme.colors.error
       : theme.colors.textSecondary;
 
-    const finalIconColor = iconColor || defaultIconColor;
+    const finalIconColor = defaultIconColor;
 
     const clonedPrepend = prepend
       ? React.cloneElement(prepend as React.ReactElement, {
           color: finalIconColor,
-          size: iconSize,
+          size: 20,
         })
       : null;
 
     const clonedAppend = append
       ? React.cloneElement(append as React.ReactElement, {
           color: finalIconColor,
-          size: iconSize,
+          size: 20,
         })
       : null;
 
