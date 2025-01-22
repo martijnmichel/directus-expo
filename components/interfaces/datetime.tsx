@@ -311,7 +311,7 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    height: 48,
+    height: 44,
   },
   selectText: {
     ...theme.typography.body,

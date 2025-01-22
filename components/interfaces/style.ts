@@ -21,7 +21,7 @@ export const formStyles = createStyleSheet((theme) => ({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.background,
-    height: 48,
+    height: 44,
   },
   inputError: {
     borderColor: theme.colors.error,

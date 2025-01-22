@@ -178,7 +178,7 @@ const stylesheet = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
-    height: 48,
+    height: 44,
     maxWidth: 500,
     marginBottom: theme.spacing.xs,
   },

@@ -721,7 +721,7 @@ const colorPickerStyles = createStyleSheet((theme) => ({
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    height: 48,
+    height: 44,
   },
   colorPreviewContainer: {
     flexDirection: "row",
@@ -787,7 +787,7 @@ const colorPickerStyles = createStyleSheet((theme) => ({
   },
   previewCircle: {
     width: 48,
-    height: 48,
+    height: 44,
     borderRadius: 24,
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
