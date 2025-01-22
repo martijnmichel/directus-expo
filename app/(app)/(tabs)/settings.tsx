@@ -106,7 +106,7 @@ export default function TabTwoScreen() {
                 switch (item.type) {
                   case "heading":
                     return (
-                      <Vertical key={item.label} spacing="xs">
+                      <Vertical key={`heading-${index}`} spacing="xs">
                         <Horizontal>
                           {item.icon}
                           <H3>{item.label}</H3>
@@ -121,7 +121,7 @@ export default function TabTwoScreen() {
                   case "component":
                     return (
                       <Horizontal
-                        key={item.label}
+                        key={`component-${index}`}
                         style={{ alignItems: "center" }}
                       >
                         {item.label && (
@@ -132,7 +132,7 @@ export default function TabTwoScreen() {
                     );
                   default:
                     return (
-                      <Horizontal key={item.label}>
+                      <Horizontal key={`default-${index}`}>
                         <Text style={{ flex: 1 }}>{item.label}</Text>
                         <Text style={{ flex: 3 }}>{item.value}</Text>
                       </Horizontal>

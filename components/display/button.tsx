@@ -147,7 +147,7 @@ const stylesheet = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,
     borderColor: "transparent",
-    height: 44,
+    height: 48,
   },
   content: {
     flexDirection: "row",

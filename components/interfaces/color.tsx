@@ -721,7 +721,7 @@ const colorPickerStyles = createStyleSheet((theme) => ({
     borderWidth: theme.borderWidth.md,
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
-    height: 44,
+    height: 48,
   },
   colorPreviewContainer: {
     flexDirection: "row",
