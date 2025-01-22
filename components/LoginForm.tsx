@@ -39,6 +39,8 @@ export const LoginForm = () => {
     control,
     handleSubmit,
     setValue,
+    watch,
+    clearErrors,
     setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
@@ -54,6 +56,23 @@ export const LoginForm = () => {
           api: undefined,
         },
   });
+
+  const url = watch("api.url");
+  useEffect(() => {
+    if (url) {
+      clearErrors("api");
+      fetch(`${url}/server/health`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status !== "ok") {
+            setError("api", { message: "API is not healthy" });
+          }
+        })
+        .catch(() => {
+          setError("api", { message: "API is not healthy" });
+        });
+    }
+  }, [url]);
 
   useEffect(() => {
     if (api) {
@@ -127,8 +146,8 @@ export const LoginForm = () => {
           required: t("form.errors.apiUrlRequired"),
         }}
         name="api"
-        render={({ field: { onChange, value } }) => (
-          <APISelect value={value} onChange={onChange} />
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <APISelect value={value} onChange={onChange} error={error?.message} />
         )}
       />
 
