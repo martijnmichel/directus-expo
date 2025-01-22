@@ -44,6 +44,7 @@ import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript
 
 import { TagsInput } from "@/components/interfaces/tags-input";
 import { FileInput } from "@/components/interfaces/file-input";
+import { FilesMultiInput } from "@/components/interfaces/files-multi-input";
 
 export const mapFields = ({
   fields,
@@ -588,6 +589,28 @@ export const mapFields = ({
                       fieldState: { error },
                     }) => (
                       <M2MInput
+                        {...defaultProps}
+                        onChange={onChange}
+                        value={value as number[]}
+                        item={item}
+                        docId={docId}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+              case "files":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <FilesMultiInput
                         {...defaultProps}
                         onChange={onChange}
                         value={value as number[]}
