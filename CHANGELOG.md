@@ -1,3 +1,17 @@
+## [0.3.2](https://github.com/martijnmichel/directus-expo/compare/v0.3.1...v0.3.2) (2025-01-22)
+
+
+### Bug Fixes
+
+* repeater doc ([7b28b9a](https://github.com/martijnmichel/directus-expo/commit/7b28b9a25194096c763feac28c638c4c5f93e66a))
+
+
+### Features
+
+* remember i18n locale ([3056f4d](https://github.com/martijnmichel/directus-expo/commit/3056f4dee792fe0b9676a49429a1d937e43a4aac))
+* server health ([ec16614](https://github.com/martijnmichel/directus-expo/commit/ec166146d8bc36e675db2ca0af4284f40e3b4d2b))
+* tags interface ([a7016f1](https://github.com/martijnmichel/directus-expo/commit/a7016f136bf8818565c487c48b01158bee554b32))
+
 ## [0.3.1](https://github.com/martijnmichel/directus-expo/compare/v0.3.0...v0.3.1) (2025-01-22)
 
 
