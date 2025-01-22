@@ -26,6 +26,7 @@ import {
 } from "@/components/display/directus-icon";
 import { View } from "react-native";
 import { DividerSubtitle } from "@/components/display/subtitle";
+import { useTranslation } from "react-i18next";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
@@ -37,42 +38,48 @@ export default function TabTwoScreen() {
     LocalStorageKeys.DIRECTUS_API_ACTIVE
   );
 
+  const { t } = useTranslation();
+
   const info = [
     {
-      label: "Server",
+      label: t("settings.sections.server"),
       type: "heading",
       icon: "msDatabase",
     },
     {
-      label: "API",
+      label: t("settings.fields.api"),
       value: api?.name,
     },
     {
-      label: "URL",
+      label: t("settings.fields.url"),
       value: health?.serviceId,
     },
     {
-      label: "Status",
+      label: t("settings.fields.status"),
       value: health?.status,
     },
     {
-      label: "Version",
+      label: t("settings.fields.version"),
       value: health?.releaseId,
     },
     {
       type: "spacing",
     },
     {
-      label: "User",
+      label: t("settings.sections.user"),
       type: "heading",
       icon: "verified_user",
     },
     {
-      label: "Username",
+      label: t("settings.fields.firstname"),
       value: user?.first_name,
     },
     {
-      label: "Email",
+      label: t("settings.fields.lastname"),
+      value: user?.last_name,
+    },
+    {
+      label: t("settings.fields.email"),
       value: user?.email,
     },
     {
@@ -86,7 +93,7 @@ export default function TabTwoScreen() {
           leftIcon={<DirectusIcon name="logout" />}
           variant="danger"
         >
-          Logout
+          {t("settings.actions.logout")}
         </Button>
       ),
     },
@@ -94,18 +101,18 @@ export default function TabTwoScreen() {
       type: "spacing",
     },
     {
-      label: "Options",
+      label: t("settings.sections.options"),
       type: "heading",
       icon: "settings",
     },
     {
       type: "component",
-      label: "Locale",
+      label: t("settings.fields.locale"),
       component: <LocaleSelect />,
     },
     {
       type: "component",
-      label: "Dark Mode",
+      label: t("settings.fields.darkMode"),
       component: (
         <Toggle value={currentTheme === "dark"} onValueChange={toggleTheme} />
       ),
@@ -145,12 +152,12 @@ export default function TabTwoScreen() {
                       </Horizontal>
                     );
                   default:
-                    return (
+                    return !!item.value ? (
                       <Horizontal key={`default-${index}`}>
                         <Text style={{ flex: 1 }}>{item.label}</Text>
                         <Text style={{ flex: 3 }}>{item.value}</Text>
                       </Horizontal>
-                    );
+                    ) : null;
                 }
               })}
             </Vertical>

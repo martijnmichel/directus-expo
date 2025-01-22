@@ -68,17 +68,13 @@ export const mapFields = ({
   return fields
     ?.sort((a, b) => ((a.meta.sort || 0) < (b.meta.sort || 0) ? -1 : 1))
     .map((item) => {
-      const canCreate = isFieldAllowed(
-        item.field,
-        "create",
-        permissions?.[item.collection]
-      );
+      const canCreate = !!permissions
+        ? isFieldAllowed(item.field, "create", permissions?.[item.collection])
+        : true;
 
-      const canUpdate = isFieldAllowed(
-        item.field,
-        "update",
-        permissions?.[item.collection]
-      );
+      const canUpdate = !!permissions
+        ? isFieldAllowed(item.field, "update", permissions?.[item.collection])
+        : true;
 
       const defaultProps = {
         label: getLabel(item.field),

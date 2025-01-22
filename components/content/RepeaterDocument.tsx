@@ -52,7 +52,10 @@ export const RepeaterDocument = ({
         }}
       />
       <View style={styles.form}>
-        {mapFields({ fields, control: context.control })}
+        {mapFields({
+          fields,
+          control: context.control,
+        })}
       </View>
     </FormProvider>
   );

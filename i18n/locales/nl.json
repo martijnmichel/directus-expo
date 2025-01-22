@@ -73,5 +73,26 @@
       "settings": "Instellingen",
       "files": "Bestanden"
     }
+  },
+  "settings": {
+    "sections": {
+      "server": "Server",
+      "user": "Gebruiker",
+      "options": "Opties"
+    },
+    "fields": {
+      "api": "API",
+      "url": "URL",
+      "status": "Status",
+      "version": "Versie",
+      "firstname": "Voornaam",
+      "lastname": "Achternaam",
+      "email": "E-mail",
+      "locale": "Taal",
+      "darkMode": "Donkere modus"
+    },
+    "actions": {
+      "logout": "Uitloggen"
+    }
   }
 }

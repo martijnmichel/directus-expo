@@ -75,5 +75,26 @@
       "gallery": "Gallery",
       "files": "Files"
     }
+  },
+  "settings": {
+    "sections": {
+      "server": "Server",
+      "user": "User",
+      "options": "Options"
+    },
+    "fields": {
+      "api": "API",
+      "url": "URL",
+      "status": "Status",
+      "version": "Version",
+      "firstname": "Firstname",
+      "lastname": "Lastname",
+      "email": "Email",
+      "locale": "Locale",
+      "darkMode": "Dark Mode"
+    },
+    "actions": {
+      "logout": "Logout"
+    }
   }
 }

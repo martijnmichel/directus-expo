@@ -69,6 +69,14 @@ export const RepeaterInput = ({
         onChange([...value, data.data]);
       }
     });
+
+    EventBus.on("repeater:edit", (data) => {
+      if (data.field === item.field) {
+        const newValue = [...value];
+        newValue[data.index] = data.data;
+        onChange(newValue);
+      }
+    });
   }, [onChange]);
 
   return (
