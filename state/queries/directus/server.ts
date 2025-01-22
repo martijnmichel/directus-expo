@@ -4,16 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 
 export const useServerHealth = () => {
   const { directus } = useAuth();
+
   return useQuery({
-    queryKey: ["serverHealth"],
+    queryKey: ["serverHealth", directus?.url.origin],
     queryFn: () => directus?.request(serverHealth()),
+    enabled: !!directus,
   });
 };
 
 export const useServerInfo = () => {
   const { directus } = useAuth();
   return useQuery({
-    queryKey: ["serverInfo"],
+    queryKey: ["serverInfo", directus?.url.origin],
     queryFn: () => directus?.request(serverInfo()),
+    enabled: !!directus,
   });
 };

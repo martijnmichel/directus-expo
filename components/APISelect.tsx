@@ -17,12 +17,15 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { ConfirmDialog } from "./display/confirm-dialog";
 import { Text } from "./display/typography";
 import { Select } from "./interfaces/select";
+import { useServerHealth } from "@/state/queries/directus/server";
 export function APISelect({
   value,
   onChange,
+  error,
 }: {
   value?: API;
   onChange?: (value: API | undefined) => void;
+  error?: string;
 }) {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
@@ -49,6 +52,7 @@ export function APISelect({
         value={value?.url}
         placeholder={t("form.api")}
         label={t("form.api")}
+        error={error}
       />
       <Horizontal>
         <Modal>
