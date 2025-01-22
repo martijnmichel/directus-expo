@@ -1,6 +1,11 @@
 import { queryClient } from "@/utils/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 
 export enum LocalStorageKeys {
   APP_SETTINGS = "@app-settings",
@@ -11,6 +16,7 @@ export enum LocalStorageKeys {
 
 export const useLocalStorage = <T extends any = undefined>(
   key: LocalStorageKeys,
+  options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
   fallbackValue?: any
 ): UseQueryResult<T, Error> => {
   return useQuery({
@@ -33,6 +39,7 @@ export const useLocalStorage = <T extends any = undefined>(
         return fallbackValue;
       }
     },
+    ...options,
   });
 };
 

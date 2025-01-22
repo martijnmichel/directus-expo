@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { UnistylesRegistry, useInitialTheme } from "react-native-unistyles";
 import { lightTheme, darkTheme } from "@/unistyles/theme";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nextProvider } from "react-i18next";
+import { I18nextProvider, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { breakpoints } from "@/unistyles/theme";
 import { PortalProvider } from "@/components/layout/Portal";
@@ -27,6 +27,8 @@ import {
 } from "@expo-google-fonts/inter";
 import { queryClient } from "@/utils/react-query";
 import Toast from "react-native-toast-message";
+import { DateUtils } from "@/utils/dayjs";
+import { useEffect } from "react";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,
@@ -53,9 +55,25 @@ export default function RootLayout() {
 }
 
 const Preload = ({ children }: { children: React.ReactNode }) => {
-  const { data, isLoading } = useLocalStorage<AppSettings>(
-    LocalStorageKeys.APP_SETTINGS
+  const { data, isLoading, refetch } = useLocalStorage<AppSettings>(
+    LocalStorageKeys.APP_SETTINGS,
+    {
+      enabled: false,
+    }
   );
+
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  useEffect(() => {
+    if (data?.locale && !i18n.initializedLanguageOnce) {
+      i18n.changeLanguage(data.locale);
+      DateUtils.setLocale(data?.locale ?? "en");
+    }
+  }, [data?.locale]);
 
   let [fontsLoaded] = useFonts({
     Inter_100Thin,
@@ -69,12 +87,13 @@ const Preload = ({ children }: { children: React.ReactNode }) => {
     Inter_900Black,
   });
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || isLoading) {
     return null;
   }
 
   UnistylesRegistry.addConfig({
     initialTheme: data?.theme ?? "light",
   });
+
   return children;
 };

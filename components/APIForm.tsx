@@ -30,6 +30,7 @@ export const APIForm = ({
 }) => {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
+    undefined,
     []
   );
 
