@@ -29,6 +29,7 @@ interface ColorPickerProps {
   value?: string;
   onValueChange?: (color: string) => void;
   placeholder?: string;
+  required?: boolean;
   disabled?: boolean;
   presets?: Array<{ name: string; color: string }>;
   opacity?: boolean;
@@ -55,6 +56,7 @@ export const ColorPicker = ({
   helper,
   value,
   onValueChange,
+  required,
   placeholder = "Select a color",
   disabled = false,
   presets = DEFAULT_COLORS,
@@ -406,7 +408,7 @@ export const ColorPicker = ({
           ]}
         >
           {label}
-          {label.endsWith("*") ? "" : " *"}
+          {required ? " *" : ""}
         </Text>
       )}
 
