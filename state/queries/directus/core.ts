@@ -36,6 +36,7 @@ import { addPolicy } from "@/state/actions/addPolicy";
 import { removeFile } from "@/state/actions/deleteFile";
 import { removeFiles } from "@/state/actions/deleteFiles";
 import { mutateFile } from "@/state/actions/updateFile";
+import { addUsers } from "@/state/actions/addUsers";
 export const useMe = () => {
   const { directus, user } = useAuth();
   return useQuery({
@@ -199,6 +200,7 @@ export const coreCollections = {
     me: useMe,
     readItem: useUser,
     readItems: useUsers,
+    createItems: addUsers,
     updateItem: mutateUser,
     updateMe: mutateMe,
     removeItem: (id: string) => {
