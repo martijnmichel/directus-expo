@@ -9,7 +9,10 @@ import { router } from "expo-router";
 import { Moon } from "@/components/icons/Moon";
 import { Sun } from "@/components/icons/Sun";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
-import { useServerInfo } from "@/state/queries/directus/server";
+import {
+  useServerHealth,
+  useServerInfo,
+} from "@/state/queries/directus/server";
 import { APISelect } from "@/components/APISelect";
 import { Divider } from "@/components/layout/divider";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
@@ -28,6 +31,7 @@ export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
   const { data: serverInfo } = useServerInfo();
+  const { data: health } = useServerHealth();
   const { directus } = useAuth();
   const { data: api } = useLocalStorage<API>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE
@@ -45,7 +49,15 @@ export default function TabTwoScreen() {
     },
     {
       label: "URL",
-      value: directus?.url.origin,
+      value: health?.serviceId,
+    },
+    {
+      label: "Status",
+      value: health?.status,
+    },
+    {
+      label: "Version",
+      value: health?.releaseId,
     },
     {
       type: "spacing",
