@@ -16,12 +16,8 @@ import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { removeFiles } from "@/state/actions/deleteFiles";
 import { SearchFilter } from "./filters/search-filter-modal";
-interface FileBrowserProps {
-  onSelect?: (files: string | string[]) => void;
-  multiple?: boolean;
-}
 
-export const FileBrowser = ({ onSelect }: FileBrowserProps) => {
+export const FileBrowser = () => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
   const { directus, user } = useAuth();
   const { styles } = useStyles(stylesheet);

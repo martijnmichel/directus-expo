@@ -11,9 +11,11 @@ import { Check } from "../icons";
 import { Image } from "expo-image";
 import { useFiles } from "@/state/queries/directus/core";
 import { formatFileSize } from "@/helpers/formatFileSize";
+
 interface FileSelectProps {
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
+  extensions?: string[];
 }
 
 export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
