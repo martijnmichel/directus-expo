@@ -149,20 +149,7 @@ const ModalContent = ({
               <X size={24} aria-label={t("components.modal.close")} />
             </Button>
           )}
-          <Animated.View
-            entering={
-              ["bottomSheet", "quickView"].includes(variant)
-                ? SlideInDown.duration(200)
-                : FadeIn
-            }
-            exiting={
-              ["bottomSheet", "quickView"].includes(variant)
-                ? SlideOutDown.duration(200)
-                : FadeOut
-            }
-            style={contentStyles}
-            onStartShouldSetResponder={() => true}
-          >
+          <View style={contentStyles} onStartShouldSetResponder={() => true}>
             {variant === "bottomSheet" && (
               <View style={styles.bottomSheetHandle} />
             )}
@@ -177,7 +164,7 @@ const ModalContent = ({
 
             {isOpen &&
               (typeof children === "function" ? children({ close }) : children)}
-          </Animated.View>
+          </View>
         </Animated.View>
       </KeyboardAvoidingView>
     </RNModal>

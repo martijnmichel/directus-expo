@@ -5,6 +5,7 @@ import {
   Pressable,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
@@ -149,12 +150,14 @@ export const ImageInput = ({
                       title="Import from URL"
                     >
                       {({ close }) => (
-                        <FileSelect
-                          onSelect={(v) => {
-                            onChange?.(v);
-                            close();
-                          }}
-                        />
+                        <ScrollView>
+                          <FileSelect
+                            onSelect={(v) => {
+                              onChange?.(v);
+                              close();
+                            }}
+                          />
+                        </ScrollView>
                       )}
                     </Modal.Content>
                   </Modal>
