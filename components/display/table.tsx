@@ -196,6 +196,8 @@ export function Table<T extends Record<string, unknown>>({
               })}
             </Pressable>
           ))}
+
+          <View style={{ height: 80 }} />
         </ScrollView>
       </View>
       {!items.length && (

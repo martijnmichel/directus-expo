@@ -16,7 +16,7 @@ export const useHeaderStyles = (
         : theme.colors.background,
     },
     contentStyle: {
-      paddingTop: 10, // This will add space below the header
+      paddingTop: 14, // This will add space below the header
       backgroundColor: theme.colors.background,
     },
     tabBarStyle: {
