@@ -1,13 +1,4 @@
-import {
-  CoreSchema,
-  createRole,
-  createUsers,
-  DirectusRole,
-  DirectusUser,
-  updateRole,
-  updateUser,
-  updateUsers,
-} from "@directus/sdk";
+import { DirectusUser, updateUsers } from "@directus/sdk";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
@@ -15,7 +6,7 @@ import { useMutation } from "@tanstack/react-query";
 export const mutateUsers = () => {
   const { directus } = useAuth();
   return useMutation({
-    mutationFn: (ids: string[], data: Partial<DirectusUser>) =>
-      directus!.request(updateUsers(ids, data)),
+    mutationFn: (body: { ids: string[]; data: Partial<DirectusUser> }) =>
+      directus!.request(updateUsers(body.ids, body.data)),
   });
 };
