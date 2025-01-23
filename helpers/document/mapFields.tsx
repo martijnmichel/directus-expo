@@ -70,7 +70,11 @@ export const mapFields = ({
       ?.meta.translations?.find((t) => t.language === "nl-NL")?.translation ||
     field;
 
-  return fields
+  const filtered = parent
+    ? fields?.filter((f) => f.meta.group === parent)
+    : fields;
+
+  return filtered
     ?.sort((a, b) => ((a.meta.sort || 0) < (b.meta.sort || 0) ? -1 : 1))
     .map((item) => {
       const canCreate = !!permissions
@@ -119,6 +123,7 @@ export const mapFields = ({
         );
       } else if (
         item.meta.interface &&
+        item.type === "alias" &&
         ["group-raw", "group-detail"].includes(item.meta.interface)
       ) {
         return (
