@@ -108,6 +108,17 @@ export const LoginForm = () => {
     <View style={{ ...styles.form, minWidth: 300 }}>
       <Controller
         control={control}
+        rules={{
+          required: t("form.errors.apiUrlRequired"),
+        }}
+        name="api"
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <APISelect value={value} onChange={onChange} error={error?.message} />
+        )}
+      />
+
+      <Controller
+        control={control}
         rules={{ required: t("form.errors.emailRequired") }}
         name="email"
         render={({ field: { onChange, value } }) => (
@@ -137,17 +148,6 @@ export const LoginForm = () => {
             autoComplete="password"
             secureTextEntry
           />
-        )}
-      />
-
-      <Controller
-        control={control}
-        rules={{
-          required: t("form.errors.apiUrlRequired"),
-        }}
-        name="api"
-        render={({ field: { onChange, value }, fieldState: { error } }) => (
-          <APISelect value={value} onChange={onChange} error={error?.message} />
         )}
       />
 

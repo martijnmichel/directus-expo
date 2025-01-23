@@ -61,7 +61,7 @@ export function APISelect({
               <Plus />
             </Button>
           </Modal.Trigger>
-          <Modal.Content title="Add API">
+          <Modal.Content title={t("components.apiSelect.addApi")}>
             {({ close }) => <APIForm onSuccess={() => close()} />}
           </Modal.Content>
         </Modal>
@@ -74,7 +74,7 @@ export function APISelect({
                   <Edit />
                 </Button>
               </Modal.Trigger>
-              <Modal.Content title={t("components.modal.editApi")}>
+              <Modal.Content title={t("components.apiSelect.editApi")}>
                 {({ close }) => (
                   <APIForm defaultValues={value} onSuccess={() => close()} />
                 )}
@@ -90,7 +90,7 @@ export function APISelect({
 
               <ConfirmDialog.Content
                 title={t("components.confirmDialog.delete")}
-                description={t("components.confirmDialog.confirmDelete")}
+                description={t("components.apiSelect.confirmDelete")}
                 variant="danger"
                 onConfirm={async () => {
                   const isActive = data?.find((api) => api.id === value.id);
