@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import i18n from "@/i18n";
 import { breakpoints } from "@/unistyles/theme";
-import { PortalProvider } from "@/components/layout/Portal";
+import { PortalHost, PortalProvider } from "@/components/layout/Portal";
 import {
   LocalStorageKeys,
   useLocalStorage,
@@ -29,6 +29,7 @@ import { queryClient } from "@/utils/react-query";
 import Toast from "react-native-toast-message";
 import { DateUtils } from "@/utils/dayjs";
 import { useEffect } from "react";
+import { EventProvider } from "react-native-outside-press";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,
@@ -43,7 +44,9 @@ export default function RootLayout() {
           <ConfirmDialogProvider>
             <AuthProvider>
               <PortalProvider>
-                <Slot />
+                <EventProvider>
+                  <Slot />
+                </EventProvider>
                 <Toast />
               </PortalProvider>
             </AuthProvider>

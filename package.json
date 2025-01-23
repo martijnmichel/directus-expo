@@ -79,6 +79,7 @@
     "react-native-get-random-values": "^1.11.0",
     "react-native-mask-input": "^1.2.3",
     "react-native-nitro-modules": "^0.20.1",
+    "react-native-outside-press": "^1.2.2",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",

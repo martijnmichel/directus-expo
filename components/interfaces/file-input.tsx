@@ -1,7 +1,6 @@
 import React, { ReactNode, useState } from "react";
 import {
   View,
-  Text,
   Pressable,
   Platform,
   ActivityIndicator,
@@ -9,6 +8,8 @@ import {
   StyleSheet,
   Modal as RNModal,
   TextInput,
+  TouchableWithoutFeedback,
+  LayoutRectangle,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import * as ImagePicker from "expo-image-picker";
@@ -36,6 +37,9 @@ import { useFile } from "@/state/queries/directus/core";
 import { isImageType } from "@/helpers/document/isImageType";
 import { DirectusFile } from "@directus/sdk";
 import { DirectusIcon } from "../display/directus-icon";
+import { Text } from "../display/typography";
+import { PortalOutlet } from "../layout/Portal";
+import OutsidePressHandler from "react-native-outside-press";
 
 interface ImageInputProps {
   label?: string;
@@ -70,6 +74,12 @@ export const FileInput = ({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
   const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
+  const [inputLayout, setInputLayout] = useState<LayoutRectangle>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
 
   const pickImage = async () => {
     try {
@@ -149,69 +159,99 @@ export const FileInput = ({
   return (
     <View style={[styles.formControl, { position: "relative", zIndex: 1 }]}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <View
-        style={[
-          styles.inputContainer,
-          error && styles.inputError,
-          disabled && styles.inputDisabled,
-        ]}
-      >
-        {prepend && <View style={styles.prepend}>{clonedPrepend}</View>}
-        <Pressable
+      <OutsidePressHandler onOutsidePress={() => setIsOpen(false)}>
+        <View
           style={[
-            styles.input,
-            { display: "flex", flexDirection: "row", alignItems: "center" },
+            styles.inputContainer,
+            error && styles.inputError,
+            disabled && styles.inputDisabled,
           ]}
-          onBlur={() => setTimeout(() => setIsOpen(false), 100)}
-          onFocus={() => setIsOpen(true)}
         >
-          {value ? (
-            <File id={value} />
-          ) : (
-            <Horizontal>
-              <DirectusIcon name="attach_file" />
-              <Text>Select a file</Text>
-            </Horizontal>
+          {prepend && <View style={styles.prepend}>{clonedPrepend}</View>}
+          <Pressable
+            style={[
+              styles.input,
+              { display: "flex", flexDirection: "row", alignItems: "center" },
+            ]}
+            onPress={() => setIsOpen(!isOpen)}
+          >
+            {value ? (
+              <File id={value} />
+            ) : (
+              <Horizontal>
+                <DirectusIcon
+                  name="attach_file"
+                  color={theme.colors.textSecondary}
+                />
+                <Text>Select a file</Text>
+              </Horizontal>
+            )}
+          </Pressable>
+
+          {value && (
+            <Button variant="ghost" rounded onPress={() => onChange?.(null)}>
+              <X />
+            </Button>
           )}
-        </Pressable>
+          {append && <View style={styles.append}>{clonedAppend}</View>}
+        </View>
 
-        {value && (
-          <Button variant="ghost" rounded onPress={() => onChange?.(null)}>
-            <X />
-          </Button>
+        {!disabled && isOpen && (
+          <>
+            <View
+              style={[
+                dropdownStyles.dropdownContainer,
+                {
+                  zIndex: 1000,
+                  position: "absolute",
+                  top: "100%",
+                  left: 0,
+                  right: 0,
+                },
+              ]}
+            >
+              <Vertical spacing="md">
+                {sources.includes("device") && (
+                  <Pressable
+                    style={dropdownStyles.dropdownItem}
+                    onPress={() => {
+                      pickImage();
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Upload color={theme.colors.textSecondary} />
+                    <Text>Upload from device</Text>
+                  </Pressable>
+                )}
+                {sources.includes("url") && (
+                  <Pressable
+                    style={dropdownStyles.dropdownItem}
+                    onPress={() => {
+                      setImportOpen(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Link color={theme.colors.textSecondary} />
+                    <Text>Import from URL</Text>
+                  </Pressable>
+                )}
+                {sources.includes("library") && (
+                  <Pressable
+                    style={dropdownStyles.dropdownItem}
+                    onPress={() => {
+                      setLibraryOpen(true);
+                      setIsOpen(false);
+                    }}
+                  >
+                    <Gallery color={theme.colors.textSecondary} />
+                    <Text>Select from library</Text>
+                  </Pressable>
+                )}
+              </Vertical>
+            </View>
+          </>
         )}
-        {append && <View style={styles.append}>{clonedAppend}</View>}
-      </View>
-
-      {!disabled && isOpen && (
-        <>
-          <View style={dropdownStyles.dropdownContainer}>
-            <Vertical spacing="md">
-              {sources.includes("device") && (
-                <Text style={dropdownStyles.dropdownItem} onPress={pickImage}>
-                  <Upload /> Upload from device
-                </Text>
-              )}
-              {sources.includes("url") && (
-                <Text
-                  style={dropdownStyles.dropdownItem}
-                  onPress={() => setImportOpen(true)}
-                >
-                  <Link /> Import from URL
-                </Text>
-              )}
-              {sources.includes("library") && (
-                <Text
-                  style={dropdownStyles.dropdownItem}
-                  onPress={() => setLibraryOpen(true)}
-                >
-                  <Gallery /> Select from library
-                </Text>
-              )}
-            </Vertical>
-          </View>
-        </>
-      )}
+      </OutsidePressHandler>
 
       {(error || helper) && (
         <Text style={[styles.helperText, error && styles.errorText]}>
@@ -267,11 +307,6 @@ export const FileInput = ({
 const stylesheet = createStyleSheet((theme) => ({
   dropdownContainer: {
     padding: theme.spacing.sm,
-    position: "absolute",
-    zIndex: 1000,
-    left: 0,
-    right: 0,
-    top: "100%",
     backgroundColor: theme.colors.backgroundAlt,
     display: "flex",
     flexDirection: "row",
