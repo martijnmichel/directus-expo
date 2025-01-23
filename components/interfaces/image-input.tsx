@@ -156,8 +156,10 @@ export const ImageInput = ({
                         <ScrollView>
                           <FileSelect
                             onSelect={(v) => {
-                              onChange?.(v);
                               close();
+                              requestAnimationFrame(() => {
+                                onChange?.(v);
+                              });
                             }}
                           />
                         </ScrollView>

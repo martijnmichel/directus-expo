@@ -80,7 +80,7 @@
       "files": "Bestanden"
     },
     "ota": {
-      "updateAvailable": "Er is een nieuwe update beschikbaar, klik op OK om deze te installeren. (LET OP: de app wordt opnieuw geladen!)",
+      "updateAvailable": "Er is een nieuwe update beschikbaar, klik op OK om deze te installeren.",
       "updateAvailableTitle": "Update beschikbaar"
     },
     "shared": {

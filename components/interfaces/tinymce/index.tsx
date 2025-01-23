@@ -72,13 +72,15 @@ export const TinyMCEEditor = ({
 
   const handleImageChange = (image: string) => {
     console.log("image", image);
-    webViewRef.current?.injectJavaScript(`
-        tinymce.activeEditor.insertContent('<img src="${
-          directus!.url
-        }/assets/${image}}" alt="Inserted Image" />');
-        true;
-      `);
+
+    Keyboard.dismiss();
     setFilePickerOpen(false);
+
+    webViewRef.current?.injectJavaScript(
+      `window.tinymce.activeEditor.insertContent('<img src="${
+        directus!.url
+      }/assets/${image}" alt="Inserted Image" />')`
+    );
   };
 
   const escapeContent = (str: string) => {
@@ -115,7 +117,6 @@ export const TinyMCEEditor = ({
       selector: '#${item.field}-${item.collection}',
       menubar: false,
       nowrap: true,
-      mode: 'exact',
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
       content_css: '${themeName}',
       content_style: 'img { max-width: 100%; height: auto; }',
@@ -177,6 +178,7 @@ export const TinyMCEEditor = ({
           key={editorOpen ? "fullscreen" : "normal"}
           originWhitelist={["*"]}
           ref={webViewRef}
+          pullToRefreshEnabled={false}
           source={{ html: TINYMCE_HTML }}
           onMessage={(event) => {
             const data = JSON.parse(event.nativeEvent.data);
@@ -186,16 +188,18 @@ export const TinyMCEEditor = ({
             ) {
               switch (data.name) {
                 case "contentChange":
+                  console.log("contentChange", data.content);
                   handleContentChange(data.content);
                   break;
-                case "setHeight":
-                  console.log("setHeight", data.height);
-                  setEditorHeight(data.height);
-                  break;
+
                 case "openImagePicker":
+                  console.log("openImagePicker");
+                  Keyboard.dismiss();
+                  setEditorOpen(false);
                   setFilePickerOpen(true);
                   break;
                 case "openFullscreen":
+                  console.log("openFullscreen");
                   setEditorOpen(true);
 
                   break;
@@ -274,10 +278,16 @@ export const TinyMCEEditor = ({
         </SafeAreaView>
       </RNModal>
 
-      <Modal open={filePickerOpen} onClose={() => setFilePickerOpen(false)}>
+      <Modal
+        open={filePickerOpen}
+        onClose={() => {
+          setFilePickerOpen(false);
+        }}
+      >
         <Modal.Content>
           <ImageInput
             onChange={(image) => {
+              console.log("close file picker");
               handleImageChange(image as string);
             }}
           />

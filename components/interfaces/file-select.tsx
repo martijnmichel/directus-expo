@@ -43,6 +43,16 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
       ? selectedFiles.some((f) => f.id === file.id)
       : selectedFile?.id === file.id;
 
+  const handleSubmit = () => {
+    if (!onSelect) return;
+
+    if (multiple) {
+      onSelect(selectedFiles.map((f) => f.id));
+    } else if (selectedFile) {
+      onSelect(selectedFile.id);
+    }
+  };
+
   return (
     <>
       <Grid cols={{ xs: 3, sm: 4, md: 5, lg: 6 }} spacing="md">
@@ -83,15 +93,7 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
         <Button
           rounded
           disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
-          onPress={() => {
-            console.log({ selectedFile });
-            onSelect &&
-              onSelect(
-                multiple
-                  ? selectedFiles.map((f) => f.id)
-                  : selectedFile?.id || ""
-              );
-          }}
+          onPress={handleSubmit}
         >
           <Check />
         </Button>
