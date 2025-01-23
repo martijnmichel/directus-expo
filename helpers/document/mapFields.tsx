@@ -45,6 +45,7 @@ import { StyleSheetWithSuperPowers } from "react-native-unistyles/lib/typescript
 import { TagsInput } from "@/components/interfaces/tags-input";
 import { FileInput } from "@/components/interfaces/file-input";
 import { FilesMultiInput } from "@/components/interfaces/files-multi-input";
+import { Slider } from "@/components/interfaces/slider";
 
 export const mapFields = ({
   fields,
@@ -392,6 +393,30 @@ export const mapFields = ({
                         onValueChange={onChange}
                         value={value as string}
                         item={item}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "slider":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <Slider
+                        {...defaultProps}
+                        onChange={onChange}
+                        value={value as number}
+                        min={item.meta.options?.min}
+                        max={item.meta.options?.max}
+                        step={item.meta.options?.step}
                         error={error?.message}
                       />
                     )}

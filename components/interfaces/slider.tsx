@@ -1,0 +1,148 @@
+import React from "react";
+import {
+  View,
+  Text,
+  PanResponder,
+  Animated,
+  LayoutChangeEvent,
+  PanResponderGestureState,
+} from "react-native";
+import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { formStyles } from "./style";
+
+interface SliderProps {
+  label?: string;
+  error?: string;
+  helper?: string;
+  value: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  disabled?: boolean;
+  onChange?: (value: number) => void;
+}
+
+export const Slider: React.FC<SliderProps> = ({
+  label,
+  error,
+  helper,
+  value,
+  min = 0,
+  max = 100,
+  step = 1,
+  disabled = false,
+  onChange,
+}) => {
+  const { styles, theme } = useStyles(sliderStyles);
+  const [sliderWidth, setSliderWidth] = React.useState(0);
+  const [localValue, setLocalValue] = React.useState(value || 0);
+  const position = React.useRef(new Animated.Value(0)).current;
+
+  // Calculate the initial position
+  React.useEffect(() => {
+    const percentage = ((localValue - min) / (max - min)) * 100;
+    position.setValue((percentage / 100) * sliderWidth);
+  }, [localValue, min, max, sliderWidth]);
+
+  const onDrag = (_: any, gestureState: PanResponderGestureState) => {
+    let newX = gestureState.moveX - sliderWidth;
+    newX = Math.max(0, Math.min(newX, sliderWidth));
+    console.log(newX, sliderWidth);
+    position.setValue(newX);
+
+    // Calculate value based on position
+    const percentage = (newX / sliderWidth) * 100;
+    const newValue = min + ((max - min) * percentage) / 100;
+    const steppedValue = Math.round(newValue / step) * step;
+    setLocalValue(Math.min(max, Math.max(min, steppedValue)));
+  };
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => !disabled,
+      onMoveShouldSetPanResponder: () => !disabled,
+      onPanResponderMove: onDrag,
+    })
+  ).current;
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    console.log(event.nativeEvent.layout.width);
+    setSliderWidth(event.nativeEvent.layout.width);
+  };
+
+  return (
+    <View style={styles.formControl}>
+      {label && <Text style={styles.label}>{label}</Text>}
+      <View
+        style={[
+          styles.sliderContainer,
+          error && styles.sliderError,
+          disabled && styles.sliderDisabled,
+        ]}
+        onLayout={onLayout}
+      >
+        <View style={styles.track}>
+          <Animated.View
+            style={[
+              styles.progress,
+              {
+                width: position,
+              },
+            ]}
+          />
+        </View>
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.handle,
+            {
+              transform: [{ translateX: position }],
+            },
+          ]}
+        />
+      </View>
+      {(error || helper) && (
+        <Text style={[styles.helperText, error && styles.errorText]}>
+          {error || helper}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+const sliderStyles = createStyleSheet((theme) => ({
+  ...formStyles(theme),
+  sliderContainer: {
+    height: 44,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.md,
+  },
+  sliderError: {
+    borderColor: theme.colors.error,
+  },
+  sliderDisabled: {
+    backgroundColor: theme.colors.backgroundAlt,
+  },
+  track: {
+    height: 4,
+    backgroundColor: theme.colors.backgroundAlt,
+    borderRadius: theme.borderRadius.full,
+    overflow: "hidden",
+  },
+  progress: {
+    height: "100%",
+    backgroundColor: theme.colors.primary,
+  },
+  handle: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.primary,
+    shadowColor: theme.colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    transform: [{ translateX: -10 }], // Center the handle
+  },
+}));
