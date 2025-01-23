@@ -91,7 +91,7 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
     );
   }
 
-  return doc ? (
+  return doc && file ? (
     <View
       style={[
         styles.listItem,
