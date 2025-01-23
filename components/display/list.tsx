@@ -94,12 +94,12 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
     justifyContent: "flex-start",
     paddingVertical: theme.spacing.sm,
+    fontWeight: "500",
+    fontFamily: theme.typography.body.fontFamily,
     gap: theme.spacing.md,
   },
   text: {
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.body.fontFamily,
-    fontWeight: "500",
+    ...theme.typography.label,
     color: theme.colors.textPrimary,
   },
 }));

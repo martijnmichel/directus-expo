@@ -10,15 +10,21 @@ import { RepeaterDocument } from "@/components/content/RepeaterDocument";
 import { base64ToObject } from "@/helpers/document/docToBase64";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import EventBus from "@/utils/mitt";
+import { useTranslation } from "react-i18next";
 
 const RepeaterModal = () => {
   const { fields, document, item_field, index } = useLocalSearchParams();
   const headerStyle = useHeaderStyles({ isModal: true });
   const defaultValues = base64ToObject(document as string);
-  console.log({ defaultValues, fields });
+  const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>
-      <Stack.Screen options={{ headerTitle: "Repeater", ...headerStyle }} />
+      <Stack.Screen
+        options={{
+          headerTitle: t("pages.modals.repeater.edit"),
+          ...headerStyle,
+        }}
+      />
       <KeyboardAwareScrollView>
         <Container>
           <Section>
