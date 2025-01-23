@@ -38,8 +38,6 @@ export const RepeaterDocument = ({
     onSave?.(data);
   };
 
-  console.log({ context, fields });
-
   const SubmitButton = () => (
     <Button
       rounded

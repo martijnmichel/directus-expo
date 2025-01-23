@@ -8,6 +8,7 @@ import { useThemeToggle } from "@/unistyles/useThemeToggle";
 import { Button } from "@/components/display/button";
 import { Sun } from "@/components/icons/Sun";
 import { Moon } from "@/components/icons/Moon";
+import { LocaleSelect } from "@/components/settings/locale-switch";
 
 export default function Login() {
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -17,6 +18,7 @@ export default function Login() {
       <Container>
         <Center>
           <LoginForm />
+          <LocaleSelect />
           <Button variant="ghost" onPress={toggleTheme}>
             {currentTheme === "dark" ? <Sun /> : <Moon />}
           </Button>

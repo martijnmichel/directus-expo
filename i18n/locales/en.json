@@ -2,16 +2,20 @@
   "form": {
     "email": "Email",
     "password": "Password",
-    "apiUrl": "API URL",
+    "apiUrl": "URL",
     "login": "Login",
     "errors": {
       "emailRequired": "Email is required",
       "passwordRequired": "Password is required",
       "apiUrlRequired": "API URL is required",
       "loginFailed": "Login failed. Please check your credentials.",
-      "invalidApiUrl": "Invalid API URL"
+      "invalidApiUrl": "Invalid API URL",
+      "apiNotHealthy": "API is not online, or incorrect.",
+      "apiNotValid": "API is not valid"
     },
-    "api": "Directus API"
+    "api": "Directus API",
+    "enterUrl": "Enter a URL",
+    "apiName": "Name"
   },
   "navigation": {
     "content": "Content",
@@ -74,6 +78,23 @@
       "settings": "Settings",
       "gallery": "Gallery",
       "files": "Files"
+    },
+    "ota": {
+      "updateAvailable": "A new update is available. Click to install. (The app will be restarted)",
+      "updateAvailableTitle": "Update available"
+    },
+    "shared": {
+      "createNew": "Create new",
+      "addExisting": "Add existing",
+      "selectFile": "Select a file",
+      "uploadFromDevice": "Upload from device",
+      "importFromUrl": "Import from URL",
+      "selectFromLibrary": "Select from library"
+    },
+    "apiSelect": {
+      "editApi": "Edit API",
+      "confirmDelete": "Do you really want to delete this api?",
+      "addApi": "Add api"
     }
   },
   "settings": {

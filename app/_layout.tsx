@@ -30,6 +30,7 @@ import Toast from "react-native-toast-message";
 import { DateUtils } from "@/utils/dayjs";
 import { useEffect } from "react";
 import { EventProvider } from "react-native-outside-press";
+import { OTAUpdate } from "@/components/OTAUpdate";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,
@@ -48,6 +49,7 @@ export default function RootLayout() {
                   <Slot />
                 </EventProvider>
                 <Toast />
+                <OTAUpdate />
               </PortalProvider>
             </AuthProvider>
           </ConfirmDialogProvider>

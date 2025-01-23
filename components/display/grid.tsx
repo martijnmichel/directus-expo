@@ -29,8 +29,6 @@ const GridItem: React.FC<GridItemProps> = ({
   spacing,
   totalColumns,
 }) => {
-  console.log("GridItem width calc:", `${(span / totalColumns) * 100}%`);
-
   return (
     <View
       style={{

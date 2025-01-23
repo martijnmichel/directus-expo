@@ -63,7 +63,7 @@
     "expo-splash-screen": "~0.29.18",
     "expo-status-bar": "~2.0.0",
     "expo-system-ui": "~4.0.6",
-    "expo-updates": "~0.26.12",
+    "expo-updates": "~0.26.13",
     "expo-web-browser": "~14.0.1",
     "imask": "^7.6.1",
     "lodash": "^4.17.21",

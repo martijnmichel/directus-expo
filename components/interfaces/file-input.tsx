@@ -40,6 +40,7 @@ import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { PortalOutlet } from "../layout/Portal";
 import OutsidePressHandler from "react-native-outside-press";
+import { useTranslation } from "react-i18next";
 
 interface ImageInputProps {
   label?: string;
@@ -68,6 +69,8 @@ export const FileInput = ({
   const { styles: dropdownStyles } = useStyles(stylesheet);
   const [imageUrl, setImageUrl] = useState("");
   const { directus } = useAuth();
+
+  const { t } = useTranslation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -183,7 +186,7 @@ export const FileInput = ({
                   name="attach_file"
                   color={theme.colors.textSecondary}
                 />
-                <Text>Select a file</Text>
+                <Text>{t("components.fileInput.selectFile")}</Text>
               </Horizontal>
             )}
           </Pressable>
@@ -220,7 +223,7 @@ export const FileInput = ({
                     }}
                   >
                     <Upload color={theme.colors.textSecondary} />
-                    <Text>Upload from device</Text>
+                    <Text>{t("components.shared.uploadFromDevice")}</Text>
                   </Pressable>
                 )}
                 {sources.includes("url") && (
@@ -232,7 +235,7 @@ export const FileInput = ({
                     }}
                   >
                     <Link color={theme.colors.textSecondary} />
-                    <Text>Import from URL</Text>
+                    <Text>{t("components.shared.importFromUrl")}</Text>
                   </Pressable>
                 )}
                 {sources.includes("library") && (
@@ -244,7 +247,7 @@ export const FileInput = ({
                     }}
                   >
                     <Gallery color={theme.colors.textSecondary} />
-                    <Text>Select from library</Text>
+                    <Text>{t("components.shared.selectFromLibrary")}</Text>
                   </Pressable>
                 )}
               </Vertical>

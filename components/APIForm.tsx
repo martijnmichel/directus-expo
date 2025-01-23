@@ -61,12 +61,13 @@ export const APIForm = ({
     } catch (error) {
       form.setError(
         "url",
-        { message: "API is not valid" },
+        { message: t("form.errors.apiNotValid") },
         { shouldFocus: true }
       );
-      Alert.alert("Error", "API is not working");
     }
   };
+
+  const { t } = useTranslation();
 
   return (
     <Vertical>
@@ -78,6 +79,7 @@ export const APIForm = ({
             onChangeText={onChange}
             value={value}
             error={fieldState?.error?.message}
+            label={t("form.apiName")}
           />
         )}
       />
@@ -91,6 +93,7 @@ export const APIForm = ({
             error={fieldState?.error?.message}
             autoComplete="url"
             autoCapitalize="none"
+            label={t("form.apiUrl")}
           />
         )}
       />

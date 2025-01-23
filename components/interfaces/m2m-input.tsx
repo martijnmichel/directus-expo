@@ -36,6 +36,7 @@ import {
   UniqueIdentifier,
 } from "@mgcrea/react-native-dnd";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useTranslation } from "react-i18next";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -67,6 +68,8 @@ export const M2MInput = ({
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
+
+  const { t } = useTranslation();
 
   const junction = relations?.find(
     (r) =>
@@ -132,8 +135,6 @@ export const M2MInput = ({
     const newOrderIds = newOrder.map((id) => parseInt(id as string));
     props.onChange?.(newOrderIds);
   };
-
-  console.log({ valueProp, relation, junction, item });
 
   return (
     relation &&
@@ -217,7 +218,7 @@ export const M2MInput = ({
                 }}
                 asChild
               >
-                <Button>Add new</Button>
+                <Button>{t("components.shared.createNew")}</Button>
               </Link>
             )}
 
@@ -237,7 +238,7 @@ export const M2MInput = ({
               }}
               asChild
             >
-              <Button>Add existing</Button>
+              <Button>{t("components.shared.addExisting")}</Button>
             </Link>
           </Horizontal>
         )}
