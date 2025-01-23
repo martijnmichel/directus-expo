@@ -2,16 +2,22 @@
   "form": {
     "email": "E-mail",
     "password": "Wachtwoord",
-    "apiUrl": "API URL",
+    "apiUrl": "URL",
     "login": "Inloggen",
     "errors": {
       "emailRequired": "E-mail is verplicht",
       "passwordRequired": "Wachtwoord is verplicht",
       "apiUrlRequired": "API URL is verplicht",
       "loginFailed": "Inloggen mislukt. Controleer uw gegevens.",
-      "invalidApiUrl": "Ongeldige API URL"
+      "invalidApiUrl": "Ongeldige API URL",
+      "apiNotHealthy": "API is niet online of onjuist.",
+      "apiNotValid": "API is niet geldig"
     },
-    "api": "Directus API"
+    "api": "Directus API",
+    "placeholder": {
+      "enterUrl": "Voer een URL in"
+    },
+    "apiName": "Naam"
   },
   "navigation": {
     "content": "Inhoud",
@@ -72,6 +78,23 @@
       "profile": "Profiel",
       "settings": "Instellingen",
       "files": "Bestanden"
+    },
+    "ota": {
+      "updateAvailable": "Er is een nieuwe update beschikbaar, klik op OK om deze te installeren. (LET OP: de app wordt opnieuw geladen!)",
+      "updateAvailableTitle": "Update beschikbaar"
+    },
+    "shared": {
+      "addExisting": "Bestaande toevoegen",
+      "createNew": "Maak nieuw",
+      "selectFile": "Selecteer een bestand",
+      "uploadFromDevice": "Uploaden vanaf apparaat",
+      "importFromUrl": "Importeren vanaf URL",
+      "selectFromLibrary": "Selecteer uit bibliotheek"
+    },
+    "apiSelect": {
+      "confirmDelete": "Wil je deze API echt verwijderen?",
+      "editApi": "API bewerken",
+      "addApi": "API toevoegen"
     }
   },
   "settings": {

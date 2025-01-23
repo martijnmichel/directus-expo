@@ -28,6 +28,7 @@ import { Modal } from "../display/modal";
 import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
 import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
+import { useTranslation } from "react-i18next";
 
 interface ImageInputProps {
   label?: string;
@@ -55,6 +56,8 @@ export const ImageInput = ({
 
   const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
   const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
+
+  const { t } = useTranslation();
 
   const pickImage = async () => {
     try {
@@ -115,11 +118,11 @@ export const ImageInput = ({
                         <Link />
                       </Button>
                     </Modal.Trigger>
-                    <Modal.Content title="Import from URL">
+                    <Modal.Content title={t("components.shared.importFromUrl")}>
                       {({ close }) => (
                         <Vertical>
                           <Input
-                            placeholder="Enter URL"
+                            placeholder={t("form.enterUrl")}
                             value={imageUrl}
                             onChangeText={setImageUrl}
                             style={{ flex: 1 }}
@@ -147,7 +150,7 @@ export const ImageInput = ({
                     </Modal.Trigger>
                     <Modal.Content
                       variant="bottomSheet"
-                      title="Import from URL"
+                      title={t("components.shared.selectFromLibrary")}
                     >
                       {({ close }) => (
                         <ScrollView>

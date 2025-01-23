@@ -40,6 +40,7 @@ import { RelatedFileListItem } from "./related-file-listitem";
 import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
 import { mutateDocuments } from "@/state/actions/updateDocuments";
+import { useTranslation } from "react-i18next";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -79,7 +80,8 @@ export const FilesMultiInput = ({
   );
 
   const sortField = junction?.meta.sort_field;
-  console.log({ sortField });
+
+  const { t } = useTranslation();
 
   const relation = relations?.find(
     (r) => r.field === junction?.meta.junction_field
@@ -129,8 +131,6 @@ export const FilesMultiInput = ({
     const newOrderIds = newOrder.map((id) => parseInt(id as string));
     props.onChange?.(newOrderIds);
   };
-
-  console.log({ valueProp, relation, junction, item });
 
   return (
     relation &&
@@ -206,7 +206,7 @@ export const FilesMultiInput = ({
             {allowCreate && (
               <Modal>
                 <Modal.Trigger>
-                  <Button>Create new</Button>
+                  <Button>{t("components.shared.createNew")}</Button>
                 </Modal.Trigger>
                 <Modal.Content>
                   {({ close }) => (
@@ -224,7 +224,7 @@ export const FilesMultiInput = ({
 
             <Modal>
               <Modal.Trigger>
-                <Button>Add existing</Button>
+                <Button>{t("components.shared.addExisting")}</Button>
               </Modal.Trigger>
               <Modal.Content variant="bottomSheet">
                 {({ close }) => (

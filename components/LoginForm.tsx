@@ -65,11 +65,11 @@ export const LoginForm = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.status !== "ok") {
-            setError("api", { message: "API is not healthy" });
+            setError("api", { message: t("form.errors.apiNotHealthy") });
           }
         })
         .catch(() => {
-          setError("api", { message: "API is not healthy" });
+          setError("api", { message: t("form.errors.apiNotHealthy") });
         });
     }
   }, [url]);
@@ -89,9 +89,9 @@ export const LoginForm = () => {
         data.api.url
       )
     ) {
-      setError("api", { message: "Invalid API URL" });
+      setError("api", { message: t("form.errors.apiNotValid") });
       console.log(data);
-      Alert.alert("Error", "Invalid API URL");
+      Alert.alert("Error", t("form.errors.apiNotValid"));
       return;
     }
     try {
@@ -100,7 +100,7 @@ export const LoginForm = () => {
       mutateApi.mutate(data.api);
       router.push("/");
     } catch (error) {
-      Alert.alert("Error", "Login failed. Please check your credentials.");
+      Alert.alert("Error", t("form.errors.loginFailed"));
     }
   };
 
