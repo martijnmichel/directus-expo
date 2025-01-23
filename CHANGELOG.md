@@ -1,3 +1,10 @@
+## [0.5.1](https://github.com/martijnmichel/directus-expo/compare/v0.5.0...v0.5.1) (2025-01-23)
+
+
+### Bug Fixes
+
+* file-input ([46ba557](https://github.com/martijnmichel/directus-expo/commit/46ba5578d8e094c4ad1f6da7ed791d6282fb469b))
+
 # [0.5.0](https://github.com/martijnmichel/directus-expo/compare/v0.4.0...v0.5.0) (2025-01-22)
 
 
