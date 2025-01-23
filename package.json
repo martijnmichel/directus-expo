@@ -1,7 +1,7 @@
 {
   "name": "directus-expo",
   "main": "expo-router/entry",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
