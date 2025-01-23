@@ -27,7 +27,7 @@ export default () => ({
         backgroundColor: "#ffffff",
       },
       versionCode: buildNumber,
-      package: "com.martijnmichel.directusexpo",
+      package: "com.martijnmichel.directusexpo.app",
       permissions: [
         "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO",

@@ -80,7 +80,7 @@
       "files": "Files"
     },
     "ota": {
-      "updateAvailable": "A new update is available. Click to install. (The app will be restarted)",
+      "updateAvailable": "A new update is available. Click OK to install.",
       "updateAvailableTitle": "Update available"
     },
     "shared": {

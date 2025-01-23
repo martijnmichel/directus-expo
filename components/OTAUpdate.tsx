@@ -6,6 +6,7 @@ import { Text } from "./display/typography";
 import { Divider } from "./layout/divider";
 import { Button } from "./display/button";
 import { useTranslation } from "react-i18next";
+import { Vertical } from "./layout/Stack";
 
 export const OTAUpdate = () => {
   const [updateModal, setUpdateModal] = useState<Updates.UpdateCheckResult>();
@@ -46,11 +47,10 @@ export const OTAUpdate = () => {
   return (
     <Modal open={!!updateModal} onClose={() => setUpdateModal(undefined)}>
       <Modal.Content title={t("components.ota.updateAvailableTitle")}>
-        <Text>{t("components.ota.updateAvailable")}</Text>
-
-        <Divider />
-
-        <Button onPress={() => doUpdate()}>OK</Button>
+        <Vertical>
+          <Text>{t("components.ota.updateAvailable")}</Text>
+          <Button onPress={() => doUpdate()}>OK</Button>
+        </Vertical>
       </Modal.Content>
     </Modal>
   );
