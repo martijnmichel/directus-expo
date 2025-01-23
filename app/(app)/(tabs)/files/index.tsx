@@ -20,11 +20,13 @@ import { usePermissions } from "@/state/queries/directus/core";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { CoreSchema } from "@directus/sdk";
 import { Link, Stack } from "expo-router";
+import { useTranslation } from "react-i18next";
 import { ScrollView, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 import { useStyles } from "react-native-unistyles";
 export default function TabTwoScreen() {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const { styles } = useStyles(ftStyles);
   const { data: permissions } = usePermissions();
 
@@ -35,7 +37,7 @@ export default function TabTwoScreen() {
     <Layout>
       <Stack.Screen
         options={{
-          headerTitle: "Files",
+          headerTitle: t("pages.files.title"),
           headerBackVisible: false,
           ...headerStyles,
           headerRight: () => {

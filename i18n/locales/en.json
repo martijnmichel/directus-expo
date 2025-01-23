@@ -117,5 +117,22 @@
     "actions": {
       "logout": "Logout"
     }
+  },
+  "pages": {
+    "modals": {
+      "repeater": {
+        "edit": "Edit item",
+        "add": "Add item"
+      },
+      "m2m": {
+        "pick": "Pick an item"
+      }
+    },
+    "home": {
+      "title": "Content"
+    },
+    "files": {
+      "title": "Files"
+    }
   }
 }

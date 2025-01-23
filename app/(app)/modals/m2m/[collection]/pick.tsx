@@ -30,6 +30,7 @@ import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { CoreSchemaDocument } from "@/types/directus";
 import { Container } from "@/components/layout/Container";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTranslation } from "react-i18next";
 export default function Collection() {
   const {
     related_collection,
@@ -93,12 +94,12 @@ export default function Collection() {
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
   const { bottom } = useSafeAreaInsets();
-
+  const { t } = useTranslation();
   return (
     <Layout>
       <Stack.Screen
         options={{
-          headerTitle: "Pick an item in " + related_collection,
+          headerTitle: t("pages.modals.m2m.pick"),
           ...headerStyles,
           presentation: "modal",
         }}

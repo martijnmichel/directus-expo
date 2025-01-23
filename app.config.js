@@ -1,5 +1,5 @@
 const packageJson = require("./package.json");
-const buildNumber = 2;
+const buildNumber = 3;
 
 export default () => ({
   expo: {

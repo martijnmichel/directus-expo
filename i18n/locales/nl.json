@@ -117,5 +117,22 @@
     "actions": {
       "logout": "Uitloggen"
     }
+  },
+  "pages": {
+    "modals": {
+      "repeater": {
+        "edit": "Artikel bewerken",
+        "add": "Artikel toevoegen"
+      },
+      "m2m": {
+        "pick": "Kies een artikel"
+      }
+    },
+    "home": {
+      "title": "Inhoud"
+    },
+    "files": {
+      "title": "Bestanden"
+    }
   }
 }
