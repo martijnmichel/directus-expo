@@ -1,3 +1,10 @@
+# [0.5.0](https://github.com/martijnmichel/directus-expo/compare/v0.4.0...v0.5.0) (2025-01-22)
+
+
+### Features
+
+* multi files input m2m ([ed3ce22](https://github.com/martijnmichel/directus-expo/commit/ed3ce2289e046c7a3a3f905f29fa5bea8297eba8))
+
 # [0.4.0](https://github.com/martijnmichel/directus-expo/compare/v0.3.2...v0.4.0) (2025-01-22)
 
 
