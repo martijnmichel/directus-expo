@@ -24,6 +24,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import EventBus from "@/utils/mitt";
 import { useAuth } from "@/contexts/AuthContext";
 import { CoreSchemaDocument } from "@/types/directus";
+import { useTranslation } from "react-i18next";
 export default function Collection() {
   const { collection, item_field } = useLocalSearchParams();
   const id = "+";
@@ -37,7 +38,7 @@ export default function Collection() {
   const { directus } = useAuth();
 
   const headerStyle = useHeaderStyles({ isModal: true });
-
+  const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>
       <Stack.Screen

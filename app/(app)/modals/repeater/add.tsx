@@ -10,14 +10,21 @@ import { RepeaterDocument } from "@/components/content/RepeaterDocument";
 import { base64ToObject } from "@/helpers/document/docToBase64";
 import { EventBus } from "@/utils/mitt";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
+import { useTranslation } from "react-i18next";
 
 const RepeaterModal = () => {
   const { fields, item_field } = useLocalSearchParams();
   const router = useRouter();
   const headerStyle = useHeaderStyles({ isModal: true });
+  const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>
-      <Stack.Screen options={{ headerTitle: "Repeater", ...headerStyle }} />
+      <Stack.Screen
+        options={{
+          headerTitle: t("pages.modals.repeater.add"),
+          ...headerStyle,
+        }}
+      />
       <KeyboardAwareScrollView>
         <Container>
           <Section>
