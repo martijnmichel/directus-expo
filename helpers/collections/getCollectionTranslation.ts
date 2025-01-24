@@ -16,5 +16,5 @@ export const getCollectionTranslation = (
   data: ReadCollectionOutput<CoreSchema> | undefined,
   locale: string
 ) =>
-  data?.meta.translations?.find((t) => t.language.startsWith(locale))
+  data?.meta?.translations?.find((t) => t.language.startsWith(locale))
     ?.translation || data?.collection;

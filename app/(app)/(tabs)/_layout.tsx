@@ -38,7 +38,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs>
-      <TabSlot />
+      <TabSlot style={{ flexShrink: 1 }} />
       <TabList style={styles.tabBar}>
         {/**<Pressable
           style={[styles.item, { paddingBottom: bottom }]}
@@ -91,6 +91,7 @@ export default function TabsLayout() {
 const stylesheet = createStyleSheet((theme) => ({
   tabBar: {
     backgroundColor: theme.colors.backgroundInvert,
+    height: 90,
   },
   item: {
     flex: 1,
@@ -99,7 +100,8 @@ const stylesheet = createStyleSheet((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     gap: 4,
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
     color: "white",
   },
   icon: {

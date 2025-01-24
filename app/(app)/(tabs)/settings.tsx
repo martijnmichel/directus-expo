@@ -27,6 +27,7 @@ import {
 import { View } from "react-native";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useTranslation } from "react-i18next";
+import { ScrollView } from "react-native-gesture-handler";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
@@ -121,49 +122,51 @@ export default function TabTwoScreen() {
 
   return (
     <Layout>
-      <Container>
-        <Section>
-          <Vertical spacing="lg">
+      <ScrollView>
+        <Container>
+          <Section>
             <Vertical spacing="lg">
-              {info.map((item, index) => {
-                switch (item.type) {
-                  case "heading":
-                    return (
-                      <DividerSubtitle
-                        key={`heading-${index}`}
-                        title={item.label!}
-                        icon={item.icon as DirectusIconName}
-                      />
-                    );
-                  case "spacing":
-                    return (
-                      <View key={`space-${index}`} style={{ height: 18 }} />
-                    );
-                  case "component":
-                    return (
-                      <Horizontal
-                        key={`component-${index}`}
-                        style={{ alignItems: "center" }}
-                      >
-                        {item.label && (
+              <Vertical spacing="lg">
+                {info.map((item, index) => {
+                  switch (item.type) {
+                    case "heading":
+                      return (
+                        <DividerSubtitle
+                          key={`heading-${index}`}
+                          title={item.label!}
+                          icon={item.icon as DirectusIconName}
+                        />
+                      );
+                    case "spacing":
+                      return (
+                        <View key={`space-${index}`} style={{ height: 18 }} />
+                      );
+                    case "component":
+                      return (
+                        <Horizontal
+                          key={`component-${index}`}
+                          style={{ alignItems: "center" }}
+                        >
+                          {item.label && (
+                            <Text style={{ flex: 1 }}>{item.label}</Text>
+                          )}
+                          <View style={{ flex: 3 }}>{item.component}</View>
+                        </Horizontal>
+                      );
+                    default:
+                      return !!item.value ? (
+                        <Horizontal key={`default-${index}`}>
                           <Text style={{ flex: 1 }}>{item.label}</Text>
-                        )}
-                        <View style={{ flex: 3 }}>{item.component}</View>
-                      </Horizontal>
-                    );
-                  default:
-                    return !!item.value ? (
-                      <Horizontal key={`default-${index}`}>
-                        <Text style={{ flex: 1 }}>{item.label}</Text>
-                        <Text style={{ flex: 3 }}>{item.value}</Text>
-                      </Horizontal>
-                    ) : null;
-                }
-              })}
+                          <Text style={{ flex: 3 }}>{item.value}</Text>
+                        </Horizontal>
+                      ) : null;
+                  }
+                })}
+              </Vertical>
             </Vertical>
-          </Vertical>
-        </Section>
-      </Container>
+          </Section>
+        </Container>
+      </ScrollView>
     </Layout>
   );
 }
