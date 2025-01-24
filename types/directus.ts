@@ -1,5 +1,5 @@
 export interface CoreSchemaDocument extends Record<string, unknown> {
-  id: string | number;
+  [key: string]: any;
 }
 
 export type DirectusErrorResponse = {

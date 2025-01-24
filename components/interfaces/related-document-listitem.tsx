@@ -5,12 +5,13 @@ import { Trash, Edit, Redo, DragIcon } from "../icons";
 import { Modal } from "../display/modal";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Text } from "../display/typography";
-import { useDocument } from "@/state/queries/directus/collection";
+import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { parseTemplate } from "@/helpers/document/template";
 import { Link } from "expo-router";
 import { Button } from "../display/button";
 import { EventBus } from "@/utils/mitt";
 import { CoreSchemaDocument } from "@/types/directus";
+import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
 
 export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   docId,
@@ -50,6 +51,10 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
     },
   });
 
+  console.log({ doc });
+
+  const { data: fields } = useFields(relation.related_collection as any);
+
   useEffect(() => {
     EventBus.on("m2m:update", (event) => {
       if (
@@ -58,7 +63,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
           doc?.[
             junction.meta.junction_field as keyof typeof doc
           ] as CoreSchemaDocument
-        )?.id === event.docId
+        )?.[getPrimaryKey(fields) as any] === event.docId
       ) {
         refetch();
       }
@@ -99,7 +104,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
           isSortable && { marginLeft: 12 },
         ]}
       >
-        {parseTemplate(template, doc)}
+        {parseTemplate(template, doc, fields)}
       </Text>
 
       <Link
@@ -111,7 +116,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
               doc?.[
                 junction.meta.junction_field as keyof typeof doc
               ] as CoreSchemaDocument
-            )?.id,
+            )?.[getPrimaryKey(fields) as any],
           },
         }}
         asChild

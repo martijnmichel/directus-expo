@@ -11,9 +11,10 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { ChevronDown, X } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-import { useDocument } from "@/state/queries/directus/collection";
+import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 
 interface Schema {
   [key: string]: any;
@@ -40,11 +41,13 @@ export const M2OInput = ({
 }: M2OInputProps) => {
   const { styles, theme } = useStyles(formStyles);
 
+  const { data: fields } = useFields(item.schema.foreign_key_table as any);
+  const pk = getPrimaryKey(fields);
   useEffect(() => {
     EventBus.on("m2o:pick", (data) => {
-      console.log(data);
+      console.log({ data, fields, pk });
       if (data.field === item.field) {
-        onValueChange?.(data.data.id);
+        onValueChange?.(data.data[pk as any]);
       }
     });
 
@@ -53,20 +56,22 @@ export const M2OInput = ({
         console.log(data);
       });
     };
-  }, []);
+  }, [fields, pk]);
 
   const Item = () => {
     const { data } = useDocument({
       collection: item.schema.foreign_key_table as any,
       id: value,
       options: {
-        fields: [`*`],
+        fields: [`*.*`],
       },
     });
 
+    console.log({ data });
+
     return (
       <Text numberOfLines={1}>
-        {parseTemplate(item.meta?.options?.template || "", data)}
+        {parseTemplate(item.meta?.options?.template || "", data, fields)}
       </Text>
     );
   };

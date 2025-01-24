@@ -11,9 +11,10 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { ChevronDown, X } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-import { useDocument } from "@/state/queries/directus/collection";
+import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 
 interface Schema {
   [key: string]: any;
@@ -42,11 +43,16 @@ export const CollectionItemDropdown = ({
 
   const collection = item.meta.options?.selectedCollection as any;
 
+  const { data: fields } = useFields(collection as keyof CoreSchema);
+
   useEffect(() => {
     EventBus.on("m2o:pick", (data) => {
       console.log(data);
       if (data.field === item.field) {
-        onValueChange?.({ key: Number(data.data.id), collection });
+        onValueChange?.({
+          key: Number(data.data[getPrimaryKey(fields) as any]),
+          collection,
+        });
       }
     });
 
@@ -55,7 +61,7 @@ export const CollectionItemDropdown = ({
         console.log(data);
       });
     };
-  }, []);
+  }, [fields]);
 
   const Item = () => {
     const { data } = useDocument({

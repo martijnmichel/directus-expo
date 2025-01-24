@@ -756,7 +756,7 @@ export const mapFields = ({
                       <CollectionItemDropdown
                         {...defaultProps}
                         onValueChange={onChange}
-                        value={value as string}
+                        value={value as { key: number; collection: string }}
                         item={item}
                         error={error?.message}
                       />
