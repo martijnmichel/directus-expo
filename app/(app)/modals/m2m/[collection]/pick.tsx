@@ -31,6 +31,7 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { Container } from "@/components/layout/Container";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 export default function Collection() {
   const {
     related_collection,
@@ -73,23 +74,31 @@ export default function Collection() {
                 },
               ]
             : []),
-          {
-            [`$FOLLOW(${junction_collection},${related_field})`]: {
-              _none: {
-                [junction_field as any]: {
-                  _eq: doc_id,
+          ...(doc_id &&
+          doc_id !== "+" &&
+          junction_collection &&
+          related_field &&
+          junction_field
+            ? [
+                {
+                  [`$FOLLOW(${junction_collection},${related_field})`]: {
+                    _none: {
+                      [junction_field as any]: {
+                        _eq: doc_id,
+                      },
+                    },
+                  },
                 },
-              },
-            },
-          },
+              ]
+            : []),
         ],
       },
     }
   );
 
-  useFocusEffect(() => {
+  useEffect(() => {
     refetch();
-  });
+  }, [current_value]);
 
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
