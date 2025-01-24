@@ -16,6 +16,8 @@ export default function UserCollections() {
   const { data } = useCollections();
   const { t, i18n } = useTranslation();
 
+  console.log({ noMeta: data?.filter((c) => !c.meta) });
+
   const CollectionGroup = ({
     collection,
   }: {
@@ -52,7 +54,8 @@ export default function UserCollections() {
       orderBy(
         filter(
           data,
-          (c) => !c.collection.startsWith("directus_") && !c.meta?.hidden
+          (c) =>
+            !c.collection.startsWith("directus_") && !!c.meta && !c.meta?.hidden
         ),
         (i) => i.meta?.sort
       ),

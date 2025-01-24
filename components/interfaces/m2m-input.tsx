@@ -78,10 +78,11 @@ export const M2MInput = ({
   );
 
   const sortField = junction?.meta.sort_field;
-  console.log({ sortField });
 
   const relation = relations?.find(
-    (r) => r.field === junction?.meta.junction_field
+    (r) =>
+      r.field === junction?.meta.junction_field &&
+      r.collection === junction.meta.many_collection
   );
 
   const junctionPermissions =
@@ -102,6 +103,8 @@ export const M2MInput = ({
     junction?.collection as keyof CoreSchema,
     "+"
   );
+
+  console.log({ item, docId, valueProp, junction, relation });
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
