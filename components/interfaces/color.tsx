@@ -510,23 +510,18 @@ export const ColorPicker = ({
                   onMoveShouldSetResponder={() => true}
                   onResponderGrant={handleHueSelection}
                   onResponderMove={handleHueSelection}
-                  onMouseDown={(e: any) => {
-                    if (Platform.OS === "web") {
+                  onResponderStart={(e: any) => {
+                    handleHueSelection(e);
+                    const handleMouseMove = (e: MouseEvent) => {
+                      e.preventDefault();
                       handleHueSelection(e);
-                      const handleMouseMove = (e: MouseEvent) => {
-                        e.preventDefault();
-                        handleHueSelection(e);
-                      };
-                      const handleMouseUp = () => {
-                        window.removeEventListener(
-                          "mousemove",
-                          handleMouseMove
-                        );
-                        window.removeEventListener("mouseup", handleMouseUp);
-                      };
-                      window.addEventListener("mousemove", handleMouseMove);
-                      window.addEventListener("mouseup", handleMouseUp);
-                    }
+                    };
+                    const handleMouseUp = () => {
+                      window.removeEventListener("mousemove", handleMouseMove);
+                      window.removeEventListener("mouseup", handleMouseUp);
+                    };
+                    window.addEventListener("mousemove", handleMouseMove);
+                    window.addEventListener("mouseup", handleMouseUp);
                   }}
                 />
                 <View style={[styles.hueSelector, { left: huePosition }]} />
@@ -576,21 +571,26 @@ export const ColorPicker = ({
                 onMoveShouldSetResponder={() => true}
                 onResponderGrant={handleColorSelection}
                 onResponderMove={handleColorSelection}
-                onMouseDown={(e: any) => {
-                  if (Platform.OS === "web") {
-                    handleColorSelection(e);
-                    const handleMouseMove = (e: MouseEvent) => {
-                      e.preventDefault();
-                      handleColorSelection(e);
-                    };
-                    const handleMouseUp = () => {
-                      window.removeEventListener("mousemove", handleMouseMove);
-                      window.removeEventListener("mouseup", handleMouseUp);
-                    };
-                    window.addEventListener("mousemove", handleMouseMove);
-                    window.addEventListener("mouseup", handleMouseUp);
-                  }
-                }}
+                {...(Platform.OS === "web"
+                  ? {
+                      onResponderStart: (e: any) => {
+                        handleColorSelection(e);
+                        const handleMouseMove = (e: MouseEvent) => {
+                          e.preventDefault();
+                          handleColorSelection(e);
+                        };
+                        const handleMouseUp = () => {
+                          window.removeEventListener(
+                            "mousemove",
+                            handleMouseMove
+                          );
+                          window.removeEventListener("mouseup", handleMouseUp);
+                        };
+                        window.addEventListener("mousemove", handleMouseMove);
+                        window.addEventListener("mouseup", handleMouseUp);
+                      },
+                    }
+                  : {})}
               />
               <View
                 style={[
@@ -684,11 +684,7 @@ export const ColorPicker = ({
                     draftValue === color && styles.selectedColor,
                   ]}
                   onPress={() => handleColorSelect(color)}
-                >
-                  <View style={styles.colorButtonContent}>
-                    <View style={styles.colorSwatch} />
-                  </View>
-                </Pressable>
+                />
               ))}
             </View>
 
@@ -724,6 +720,18 @@ const colorPickerStyles = createStyleSheet((theme) => ({
     borderColor: theme.colors.border,
     borderRadius: theme.borderRadius.md,
     height: 44,
+  },
+  colorButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.md,
+  },
+  colorSwatch: {
+    width: 20,
+    height: 20,
+    borderRadius: theme.borderRadius.sm,
+    borderWidth: theme.borderWidth.sm,
+    borderColor: theme.colors.border,
   },
   colorPreviewContainer: {
     flexDirection: "row",
@@ -788,7 +796,7 @@ const colorPickerStyles = createStyleSheet((theme) => ({
     marginBottom: theme.spacing.lg,
   },
   previewCircle: {
-    width: 48,
+    width: 44,
     height: 44,
     borderRadius: 24,
     borderWidth: theme.borderWidth.md,

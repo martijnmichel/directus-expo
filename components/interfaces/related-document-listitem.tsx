@@ -92,6 +92,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
     >
       {isSortable && <DragIcon />}
       <Text
+        numberOfLines={1}
         style={[
           styles.content,
           isDeselected && styles.listItemDeselectedText,
