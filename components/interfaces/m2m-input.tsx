@@ -12,7 +12,11 @@ import { RelatedDocumentListItem } from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { useDocument, useFields } from "@/state/queries/directus/collection";
+import {
+  useDocument,
+  useDocuments,
+  useFields,
+} from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { get, map, uniq } from "lodash";
@@ -139,6 +143,24 @@ export const M2MInput = ({
     props.onChange?.(newOrderIds);
   };
 
+  const { data: pickedItems, refetch } = useDocuments(
+    junction?.collection as keyof CoreSchema,
+    {
+      fields: [`*`],
+      filter: {
+        [relation?.schema.foreign_key_column as any]: {
+          _in: valueProp,
+        },
+      },
+    }
+  );
+
+  useEffect(() => {
+    refetch();
+  }, [valueProp, addedDocIds]);
+
+  console.log({ pickedItems });
+
   return (
     relation &&
     junction && (
@@ -233,7 +255,9 @@ export const M2MInput = ({
                   junction_collection: junction.collection,
                   related_collection: relation.related_collection,
                   related_field: relation.field,
-                  current_value: valueProp.join(","),
+                  current_value: pickedItems?.items
+                    ?.map((i: any) => i?.[relation.schema.column as any])
+                    .join(","),
                   junction_field: junction.field,
                   doc_id: docId,
                   item_field: item.field,

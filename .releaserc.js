@@ -14,6 +14,7 @@ module.exports = {
           { type: "style", release: "minor" },
           { type: "docs", release: "minor" },
           { type: "chore", release: "patch" },
+          { type: "build", release: "minor" },
           { scope: "no-release", release: false },
         ],
         parserOpts: {
