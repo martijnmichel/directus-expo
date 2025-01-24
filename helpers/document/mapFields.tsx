@@ -469,7 +469,9 @@ export const mapFields = ({
                         onChangeText={onChange}
                         value={value as string}
                         autoCapitalize="none"
-                        secureTextEntry
+                        autoComplete="new-password"
+                        textContentType="password"
+                        append={<DirectusIcon name="lock" />}
                       />
                     )}
                   />
