@@ -41,8 +41,17 @@ export const Slider: React.FC<SliderProps> = ({
 
   // Calculate the initial position
   React.useEffect(() => {
-    const percentage = ((value - min) / (max - min)) * 100;
-    position.setValue((percentage / 100) * sliderWidth);
+    if (!sliderRef.current) return;
+
+    sliderRef.current.measure((fx, fy, width, height, px, py) => {
+      const maxWidth = width - 20; // Account for handle width
+      const percentage = ((value - min) / (max - min)) * 100;
+      const boundedPosition = Math.max(
+        0,
+        Math.min((percentage / 100) * maxWidth, maxWidth)
+      );
+      position.setValue(boundedPosition);
+    });
   }, [value, min, max, sliderWidth]);
 
   const onLayout = (event: LayoutChangeEvent) => {
