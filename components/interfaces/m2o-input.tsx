@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { CoreSchema, ReadFieldOutput, readItems } from "@directus/sdk";
 import { Select } from "./select";
 import { parseTemplate } from "@/helpers/document/template";
@@ -9,10 +9,11 @@ import { router } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
-import { coreCollections } from "@/state/queries/directus/core";
-import { useDocuments } from "@/state/queries/directus/collection";
-import { createStyleSheet } from "react-native-unistyles";
-import { X } from "../icons";
+import { ChevronDown, X } from "../icons";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { useDocument } from "@/state/queries/directus/collection";
+import { Center } from "../layout/Center";
+import EventBus from "@/utils/mitt";
 
 interface Schema {
   [key: string]: any;
@@ -28,14 +29,6 @@ interface M2OInputProps {
   disabled?: boolean;
 }
 
-const stylesheet = createStyleSheet((theme) => ({
-  text: {
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.body.fontFamily,
-    color: theme.colors.textPrimary,
-  },
-}));
-
 export const M2OInput = ({
   item,
   value,
@@ -45,44 +38,79 @@ export const M2OInput = ({
   helper,
   disabled,
 }: M2OInputProps) => {
-  const { data: options, refetch } = useDocuments(
-    item.schema.foreign_key_table as any,
-    { filter: item.meta.options?.filter || [] }
-  );
+  const { styles, theme } = useStyles(formStyles);
 
-  console.log({ options });
+  useEffect(() => {
+    EventBus.on("m2o:pick", (data) => {
+      console.log(data);
+      onValueChange?.(data.data.id);
+    });
 
-  const selectOptions = options?.items?.map((opt: any) => {
-    return {
-      value: opt[item.schema?.foreign_key_column!] || opt.id || "",
-      text: parseTemplate(item.meta?.options?.template || "", opt),
+    return () => {
+      EventBus.off("m2o:pick", (data) => {
+        console.log(data);
+        onValueChange?.(data.data.id);
+      });
     };
-  });
+  }, []);
 
-  if (!options) return null;
+  const Item = () => {
+    const { data } = useDocument({
+      collection: item.schema.foreign_key_table as any,
+      id: value,
+      options: {
+        fields: [`*`],
+      },
+    });
+
+    return (
+      <Text numberOfLines={1}>
+        {parseTemplate(item.meta?.options?.template || "", data)}
+      </Text>
+    );
+  };
 
   return (
-    <Vertical spacing="xs">
-      <Select
-        label={label}
-        error={error}
-        helper={helper}
-        disabled={disabled}
-        options={selectOptions || []}
-        value={value}
-        onValueChange={onValueChange}
-        append={
-          !disabled && (
-            <Button
-              variant="ghost"
-              rounded
-              onPress={() => onValueChange?.(null)}
-            >
-              <X />
-            </Button>
-          )
-        }
-      />
-    </Vertical>
+    <View style={styles.formControl}>
+      {label && <Text style={styles.label}>{label}</Text>}
+      <View
+        style={[
+          styles.inputContainer,
+          error && styles.inputError,
+          disabled && styles.inputDisabled,
+        ]}
+      >
+        <Pressable
+          style={[
+            styles.input,
+            { display: "flex", flexDirection: "row", alignItems: "center" },
+          ]}
+          disabled={disabled}
+          onPress={() => {
+            router.push({
+              pathname: `/modals/m2o/[collection]/pick`,
+              params: {
+                collection: item.schema.foreign_key_table as string,
+                data: objectToBase64({
+                  field: item.field,
+                  value: value,
+                  filter: item.meta.options?.filter || [],
+                }),
+              },
+            });
+          }}
+        >
+          <Item />
+        </Pressable>
+        <View style={styles.append}>
+          <ChevronDown />
+        </View>
+      </View>
+      {(error || helper) && (
+        <Text style={[styles.helperText, error && styles.errorText]}>
+          {error || helper}
+        </Text>
+      )}
+    </View>
   );
 };
