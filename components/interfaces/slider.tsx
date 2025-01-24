@@ -35,27 +35,40 @@ export const Slider: React.FC<SliderProps> = ({
 }) => {
   const { styles, theme } = useStyles(sliderStyles);
   const [sliderWidth, setSliderWidth] = React.useState(0);
-  const [localValue, setLocalValue] = React.useState(value || 0);
+  const [sliderX, setSliderX] = React.useState(0);
   const position = React.useRef(new Animated.Value(0)).current;
+  const sliderRef = React.useRef<View>(null);
 
   // Calculate the initial position
   React.useEffect(() => {
-    const percentage = ((localValue - min) / (max - min)) * 100;
+    const percentage = ((value - min) / (max - min)) * 100;
     position.setValue((percentage / 100) * sliderWidth);
-  }, [localValue, min, max, sliderWidth]);
+  }, [value, min, max, sliderWidth]);
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    const { width, x } = event.nativeEvent.layout;
+    console.log("onLayout:", { width, x });
+    setSliderWidth(width);
+    setSliderX(x);
+  };
 
   const onDrag = (_: any, gestureState: PanResponderGestureState) => {
-    let newX = gestureState.moveX - sliderWidth;
-    newX = Math.max(0, Math.min(newX, sliderWidth));
-    console.log(newX, sliderWidth);
-    position.setValue(newX);
+    if (!sliderRef.current) return;
 
-    // Calculate value based on position
-    const percentage = (newX / sliderWidth) * 100;
-    const newValue = min + ((max - min) * percentage) / 100;
-    const steppedValue = Math.round(newValue / step) * step;
-    setLocalValue(Math.min(max, Math.max(min, steppedValue)));
+    sliderRef.current.measure((fx, fy, width, height, px, py) => {
+      let newX = gestureState.moveX - px;
+      newX = Math.max(0, Math.min(newX, width));
+      position.setValue(newX);
+
+      // Calculate value based on position
+      const percentage = (newX / width) * 100;
+      const newValue = min + ((max - min) * percentage) / 100;
+      const steppedValue = Math.round(newValue / step) * step;
+      const clampedValue = Math.min(max, Math.max(min, steppedValue));
+      onChange?.(clampedValue);
+    });
   };
+
   const panResponder = React.useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
@@ -64,15 +77,11 @@ export const Slider: React.FC<SliderProps> = ({
     })
   ).current;
 
-  const onLayout = (event: LayoutChangeEvent) => {
-    console.log(event.nativeEvent.layout.width);
-    setSliderWidth(event.nativeEvent.layout.width);
-  };
-
   return (
     <View style={styles.formControl}>
       {label && <Text style={styles.label}>{label}</Text>}
       <View
+        ref={sliderRef}
         style={[
           styles.sliderContainer,
           error && styles.sliderError,
