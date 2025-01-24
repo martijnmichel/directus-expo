@@ -43,13 +43,14 @@ export const M2OInput = ({
   useEffect(() => {
     EventBus.on("m2o:pick", (data) => {
       console.log(data);
-      onValueChange?.(data.data.id);
+      if (data.field === item.field) {
+        onValueChange?.(data.data.id);
+      }
     });
 
     return () => {
       EventBus.off("m2o:pick", (data) => {
         console.log(data);
-        onValueChange?.(data.data.id);
       });
     };
   }, []);
