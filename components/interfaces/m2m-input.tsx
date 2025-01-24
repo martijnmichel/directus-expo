@@ -116,7 +116,8 @@ export const M2MInput = ({
         console.log("m2m:add:received", event);
 
         const data = {
-          [relation?.field as string]: event.data.id,
+          [relation?.field as string]:
+            event.data[relation?.schema.foreign_key_column as any],
         };
         console.log("m2m:add:sending", data);
         mutateOptions(

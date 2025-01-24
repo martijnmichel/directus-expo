@@ -17,8 +17,9 @@ import { getFieldValue } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
-import { usePermissions } from "@/state/queries/directus/core";
+import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
+import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -26,6 +27,8 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   const { data: permissions } = usePermissions();
+
+  const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
 
   const canRead = isActionAllowed(
     collection as keyof CoreSchema,
@@ -95,7 +98,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         }
         onRowPress={(doc) => {
           if (canRead) {
-            router.push(`/content/${collection}/${doc.id}`);
+            router.push(`/content/${collection}/${doc[primaryKey as any]}`);
           }
         }}
         noDataText={t("components.table.noData")}

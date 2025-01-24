@@ -25,6 +25,7 @@ import {
 } from "@/state/queries/directus/collection";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
+import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 export default function Collection() {
   const { collection, id } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -34,6 +35,8 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
+
+  const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
 
   const headerStyles = useHeaderStyles({ isModal: true });
 
@@ -58,7 +61,7 @@ export default function Collection() {
                 console.log({ collection, id });
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
-                  docId: document.id as string,
+                  docId: document[primaryKey as any] as string,
                 });
               }}
             />
