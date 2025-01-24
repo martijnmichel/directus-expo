@@ -66,6 +66,11 @@ export const lightTheme = {
       lineHeight: 16,
       fontFamily: "Inter_400Regular",
     },
+    caption: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontFamily: "Inter_400Regular",
+    },
     heading1: {
       fontSize: 32,
       lineHeight: 40,

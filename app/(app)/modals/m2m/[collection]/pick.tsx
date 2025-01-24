@@ -104,28 +104,30 @@ export default function Collection() {
           presentation: "modal",
         }}
       />
-      <Table
-        headers={reduce(
-          tableFields,
-          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
-          {}
-        )}
-        fields={tableFields}
-        items={(options?.items as Record<string, unknown>[]) || []}
-        widths={preset?.layout_options?.tabular?.widths}
-        renderRow={(doc) =>
-          map(tableFields, (f) => doc[f] as number | string | null)
-        }
-        onRowPress={(doc) => {
-          console.log(doc);
-          router.dismiss();
-          EventBus.emit("m2m:add", {
-            data: doc as CoreSchemaDocument,
-            field: item_field as string,
-          });
-        }}
-      />
-      <View style={{ paddingBottom: bottom }} />
+      <ScrollView>
+        <Table
+          headers={reduce(
+            tableFields,
+            (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
+            {}
+          )}
+          fields={tableFields}
+          items={(options?.items as Record<string, unknown>[]) || []}
+          widths={preset?.layout_options?.tabular?.widths}
+          renderRow={(doc) =>
+            map(tableFields, (f) => doc[f] as number | string | null)
+          }
+          onRowPress={(doc) => {
+            console.log(doc);
+            router.dismiss();
+            EventBus.emit("m2m:add", {
+              data: doc as CoreSchemaDocument,
+              field: item_field as string,
+            });
+          }}
+        />
+        <View style={{ paddingBottom: bottom }} />
+      </ScrollView>
     </Layout>
   );
 }

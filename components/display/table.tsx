@@ -173,7 +173,7 @@ export function Table<T extends Record<string, unknown>>({
           </View>
         )}
 
-        <ScrollView style={styles.bodyContainer}>
+        <View style={styles.bodyContainer}>
           {sortedItems.map((item, rowIndex) => (
             <Pressable
               onPress={() => onRowPress?.(item)}
@@ -196,9 +196,7 @@ export function Table<T extends Record<string, unknown>>({
               })}
             </Pressable>
           ))}
-
-          <View style={{ height: 80 }} />
-        </ScrollView>
+        </View>
       </View>
       {!items.length && (
         <Text style={styles.noData}>
@@ -212,6 +210,7 @@ export function Table<T extends Record<string, unknown>>({
 const stylesheet = createStyleSheet((theme) => ({
   container: {
     width: "100%",
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,

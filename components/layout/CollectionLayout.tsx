@@ -145,9 +145,12 @@ export default function CollectionLayout({
             <DirectusIcon name="msSolarPower" size={24} />
             <Text>{settings?.project_name}</Text>
           </Horizontal>
-          <View style={styles.sideMenuContent}>
-            <UserCollections />
-          </View>
+
+          <ScrollView>
+            <View style={styles.sideMenuContent}>
+              <UserCollections />
+            </View>
+          </ScrollView>
         </Animated.View>
 
         <Animated.View
@@ -166,7 +169,7 @@ export default function CollectionLayout({
             },
           ]}
         >
-          {children}
+          <ScrollView>{children}</ScrollView>
 
           <View style={styles.floatingToolbar}>
             <Horizontal>
