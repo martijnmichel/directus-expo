@@ -22,19 +22,19 @@ export default function UserCollections() {
     collection: ReadCollectionOutput<CoreSchema>;
   }) => {
     const hasChildren =
-      filter(data, (c) => c.meta.group === collection.collection).length > 0;
+      filter(data, (c) => c.meta?.group === collection.collection).length > 0;
 
     return (
       <Collapsible
-        defaultOpen={collection.meta.collapse === "open"}
+        defaultOpen={collection.meta?.collapse === "open"}
         key={`collection-${collection.collection}`}
       >
         <CollapsibleTrigger
-          color={collection.meta.color || ""}
+          color={collection.meta?.color || ""}
           href={`/content/${collection.collection}`}
           prepend={
             <DirectusIcon
-              name={(collection.meta.icon as DirectusIconName) || "msDatabase"}
+              name={(collection.meta?.icon as DirectusIconName) || "msDatabase"}
             />
           }
         >
@@ -54,7 +54,7 @@ export default function UserCollections() {
           data,
           (c) => !c.collection.startsWith("directus_") && !c.meta?.hidden
         ),
-        (i) => i.meta.sort
+        (i) => i.meta?.sort
       ),
       (collection) => {
         if (parent && parent !== collection.meta?.group && collection.schema) {
@@ -73,11 +73,11 @@ export default function UserCollections() {
           (parent &&
             parent === collection.meta?.group &&
             !!collection.schema) ||
-          (!parent && !collection.meta.group)
+          (!parent && !collection.meta?.group)
         ) {
           const hasChildren =
-            filter(data, (c) => c.meta.group === collection.collection).length >
-            0;
+            filter(data, (c) => c.meta?.group === collection.collection)
+              .length > 0;
           return hasChildren ? (
             <CollectionGroup
               collection={collection}
@@ -90,7 +90,7 @@ export default function UserCollections() {
               prepend={
                 <DirectusIcon
                   name={
-                    (collection.meta.icon as DirectusIconName) || "database"
+                    (collection.meta?.icon as DirectusIconName) || "database"
                   }
                 />
               }

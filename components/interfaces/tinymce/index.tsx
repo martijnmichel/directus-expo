@@ -195,7 +195,6 @@ export const TinyMCEEditor = ({
                 case "openImagePicker":
                   console.log("openImagePicker");
                   Keyboard.dismiss();
-                  setEditorOpen(false);
                   setFilePickerOpen(true);
                   break;
                 case "openFullscreen":
@@ -232,6 +231,24 @@ export const TinyMCEEditor = ({
         size: iconSize,
       })
     : null;
+
+  const ImageModal = (
+    <Modal
+      open={filePickerOpen}
+      onClose={() => {
+        setFilePickerOpen(false);
+      }}
+    >
+      <Modal.Content>
+        <ImageInput
+          onChange={(image) => {
+            console.log("close file picker");
+            handleImageChange(image as string);
+          }}
+        />
+      </Modal.Content>
+    </Modal>
+  );
 
   return (
     <Vertical spacing={theme.spacing.xs}>
@@ -276,23 +293,10 @@ export const TinyMCEEditor = ({
             </Button>
           </Horizontal>
         </SafeAreaView>
+        {editorOpen && ImageModal}
       </RNModal>
 
-      <Modal
-        open={filePickerOpen}
-        onClose={() => {
-          setFilePickerOpen(false);
-        }}
-      >
-        <Modal.Content>
-          <ImageInput
-            onChange={(image) => {
-              console.log("close file picker");
-              handleImageChange(image as string);
-            }}
-          />
-        </Modal.Content>
-      </Modal>
+      {!editorOpen && ImageModal}
     </Vertical>
   );
 };
