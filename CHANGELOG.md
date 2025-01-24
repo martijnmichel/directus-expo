@@ -3,6 +3,17 @@
 
 ### Bug Fixes
 
+* editor unresponsive after image insert ([e780713](https://github.com/martijnmichel/directus-expo/commit/e78071307db440e3b8a7f1fdbe274bda0e9e5ba4))
+* file-input ([46ba557](https://github.com/martijnmichel/directus-expo/commit/46ba5578d8e094c4ad1f6da7ed791d6282fb469b))
+* prevent duplicate raw/detail groups ([0c45b2d](https://github.com/martijnmichel/directus-expo/commit/0c45b2df19db717553096303e73a8a5e7c12f296))
+* translated pages ([d7c4045](https://github.com/martijnmichel/directus-expo/commit/d7c40450b7a8f348bfbb290b6c6eb33c25b1a413))
+* translations ([d841119](https://github.com/martijnmichel/directus-expo/commit/d841119165aaf7cb9c25d41156595022bc0b8bcb))
+
+## [0.5.1](https://github.com/martijnmichel/directus-expo/compare/v0.5.0...v0.5.1) (2025-01-23)
+
+
+### Bug Fixes
+
 * file-input ([46ba557](https://github.com/martijnmichel/directus-expo/commit/46ba5578d8e094c4ad1f6da7ed791d6282fb469b))
 * translations ([d841119](https://github.com/martijnmichel/directus-expo/commit/d841119165aaf7cb9c25d41156595022bc0b8bcb))
 
