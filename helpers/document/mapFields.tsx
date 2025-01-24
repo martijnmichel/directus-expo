@@ -46,6 +46,7 @@ import { TagsInput } from "@/components/interfaces/tags-input";
 import { FileInput } from "@/components/interfaces/file-input";
 import { FilesMultiInput } from "@/components/interfaces/files-multi-input";
 import { Slider } from "@/components/interfaces/slider";
+import { CollectionItemDropdown } from "@/components/interfaces/collection-item-dropdown";
 
 export const mapFields = ({
   fields,
@@ -735,6 +736,28 @@ export const mapFields = ({
                         onValueChange={onChange}
                         value={value as (string | number)[]}
                         options={item.meta.options?.choices || []}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "collection-item-dropdown":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <CollectionItemDropdown
+                        {...defaultProps}
+                        onValueChange={onChange}
+                        value={value as string}
+                        item={item}
                         error={error?.message}
                       />
                     )}
