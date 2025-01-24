@@ -56,12 +56,14 @@ export const Slider: React.FC<SliderProps> = ({
     if (!sliderRef.current) return;
 
     sliderRef.current.measure((fx, fy, width, height, px, py) => {
+      // Subtract handle width (20px from styles) to prevent overflow
+      const maxWidth = width - 20;
       let newX = gestureState.moveX - px;
-      newX = Math.max(0, Math.min(newX, width));
+      newX = Math.max(0, Math.min(newX, maxWidth));
       position.setValue(newX);
 
-      // Calculate value based on position
-      const percentage = (newX / width) * 100;
+      // Calculate value based on position using maxWidth
+      const percentage = (newX / maxWidth) * 100;
       const newValue = min + ((max - min) * percentage) / 100;
       const steppedValue = Math.round(newValue / step) * step;
       const clampedValue = Math.min(max, Math.max(min, steppedValue));
@@ -73,6 +75,22 @@ export const Slider: React.FC<SliderProps> = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => !disabled,
       onMoveShouldSetPanResponder: () => !disabled,
+      onPanResponderGrant: (event) => {
+        if (!sliderRef.current) return;
+
+        sliderRef.current.measure((fx, fy, width, height, px, py) => {
+          const maxWidth = width - 20;
+          let newX = event.nativeEvent.pageX - px;
+          newX = Math.max(0, Math.min(newX, maxWidth));
+          position.setValue(newX);
+
+          const percentage = (newX / maxWidth) * 100;
+          const newValue = min + ((max - min) * percentage) / 100;
+          const steppedValue = Math.round(newValue / step) * step;
+          const clampedValue = Math.min(max, Math.max(min, steppedValue));
+          onChange?.(clampedValue);
+        });
+      },
       onPanResponderMove: onDrag,
     })
   ).current;
@@ -82,6 +100,7 @@ export const Slider: React.FC<SliderProps> = ({
       {label && <Text style={styles.label}>{label}</Text>}
       <View
         ref={sliderRef}
+        {...panResponder.panHandlers}
         style={[
           styles.sliderContainer,
           error && styles.sliderError,
@@ -100,11 +119,13 @@ export const Slider: React.FC<SliderProps> = ({
           />
         </View>
         <Animated.View
-          {...panResponder.panHandlers}
           style={[
             styles.handle,
             {
-              transform: [{ translateX: position }],
+              transform: [
+                { translateX: position },
+                { translateX: -10 }, // Offset by half the handle width (20/2)
+              ],
             },
           ]}
         />
@@ -152,6 +173,5 @@ const sliderStyles = createStyleSheet((theme) => ({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    transform: [{ translateX: -10 }], // Center the handle
   },
 }));
