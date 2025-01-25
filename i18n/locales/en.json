@@ -95,6 +95,12 @@
       "editApi": "Edit API",
       "confirmDelete": "Do you really want to delete this api?",
       "addApi": "Add api"
+    },
+    "datetime": {
+      "set_to_now": "Set to now"
+    },
+    "loading": {
+      "text": "Refreshing your session..."
     }
   },
   "settings": {

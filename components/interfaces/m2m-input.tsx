@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import {
   CoreSchema,
   ReadFieldOutput,
@@ -49,6 +49,7 @@ import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
+import { Text } from "../display/typography";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {

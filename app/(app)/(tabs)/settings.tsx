@@ -27,7 +27,7 @@ import {
 import { View } from "react-native";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native-gesture-handler";
+import { ScrollView } from "react-native";
 
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();

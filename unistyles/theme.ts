@@ -11,8 +11,15 @@ export const lightTheme = {
     errorText: "#ea7d8f" as string,
     errorBorder: "#f8d4da" as string,
 
-    success: "#2ECDA7" as string, // Success green
-    warning: "#FFB224" as string, // Warning orange
+    success: "#00b87c" as string, // Richer success green
+    successBackground: "#e6f6f1" as string, // Light green background
+    successText: "#00b87c" as string, // Match success color
+    successBorder: "#ccede4" as string, // Light green border
+
+    warning: "#ff9800" as string, // Warmer warning orange
+    warningBackground: "#fff4e5" as string, // Light orange background
+    warningText: "#ff9800" as string, // Match warning color
+    warningBorder: "#ffe4bc" as string, // Light orange border
 
     // Text colors
     textPrimary: "#172940" as string, // Dark text
@@ -107,6 +114,12 @@ export const darkTheme: AppTheme = {
     primary: "#6644FF", // Keep primary color consistent
     secondary: "#F0F4F9",
 
+    // Warmer, more reddish error colors for dark theme
+    error: "#ff4d6a", // Warmer, more saturated red
+    errorBackground: "#331215", // Warmer dark red background
+    errorText: "#ff4d6a", // Match error color
+    errorBorder: "#471418", // Warmer dark red border
+
     textPrimary: "#FFFFFF",
     textSecondary: "#C8D5E9",
     textTertiary: "#8196AB",
@@ -123,6 +136,16 @@ export const darkTheme: AppTheme = {
     white: "#000000" as string,
     black: "#FFFFFF" as string,
     overlay: "rgba(0, 0, 0, 0.8)",
+
+    success: "#00d691" as string, // Brighter green for dark theme
+    successBackground: "#0a2b22" as string, // Dark green background
+    successText: "#00d691" as string, // Match success color
+    successBorder: "#134237" as string, // Darker green border
+
+    warning: "#ffb74d" as string, // Brighter orange for dark theme
+    warningBackground: "#332618" as string, // Dark orange background
+    warningText: "#ffb74d" as string, // Match warning color
+    warningBorder: "#4d371f" as string, // Darker orange border
   },
 };
 

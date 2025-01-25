@@ -1,6 +1,8 @@
 import { MsIcon } from "material-symbols-react-native";
 import * as msIconDefinition from "@material-symbols-react-native/outlined-400";
 import { MaterialIcons } from "@expo/vector-icons";
+import { useTheme } from "@react-navigation/native";
+import { useStyles } from "react-native-unistyles";
 
 export type DirectusIconName = keyof typeof msIconDefinition;
 type IconMap = typeof MaterialIcons.glyphMap;
@@ -115,6 +117,7 @@ export const DirectusIcon = ({
   color,
   ...props
 }: DirectusIconProps) => {
+  const { theme } = useStyles();
   // Convert directus icon name to material symbols name format
   // e.g., "confirmation_number" -> "msConfirmationNumber"
   // e.g., "timer_3_alt_1" -> "msTimer_3Alt_1"
@@ -150,5 +153,12 @@ export const DirectusIcon = ({
     return null;
   }
 
-  return <MsIcon icon={iconDef} size={size} color={color} {...props} />;
+  return (
+    <MsIcon
+      icon={iconDef}
+      size={size}
+      color={color || theme.colors.textPrimary}
+      {...props}
+    />
+  );
 };

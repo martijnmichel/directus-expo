@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Modal, TextInput } from "react-native";
+import { View, Text, Pressable, TextInput } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import dayjs from "dayjs";
@@ -9,6 +9,9 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import { Calendar, Check, X } from "../icons";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { Button } from "../display/button";
+import { Modal } from "../display/modal";
+import { DirectusIcon } from "../display/directus-icon";
+import { useTranslation } from "react-i18next";
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 
@@ -31,6 +34,7 @@ export const DateTime = ({
   placeholder = "Select date and time",
   disabled = false,
 }: DateTimeProps) => {
+  const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [selectedTime, setSelectedTime] = useState(() => {
@@ -70,11 +74,11 @@ export const DateTime = ({
   const renderCalendarHeader = () => (
     <View style={styles.calendarHeader}>
       <Pressable onPress={previousMonth}>
-        <Text style={styles.navigationButton}>{"<"}</Text>
+        <DirectusIcon name="chevron_left" />
       </Pressable>
       <Text style={styles.monthText}>{currentMonth.format("MMMM YYYY")}</Text>
       <Pressable onPress={nextMonth}>
-        <Text style={styles.navigationButton}>{">"}</Text>
+        <DirectusIcon name="chevron_right" />
       </Pressable>
     </View>
   );
@@ -195,22 +199,11 @@ export const DateTime = ({
         </Text>
       )}
 
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setModalVisible(false)}
-        >
-          <Pressable
-            style={styles.modalContent}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {renderCalendarHeader()}
-            {renderWeekDays()}
+      <Modal open={modalVisible} onClose={() => setModalVisible(false)}>
+        <Modal.Content contentStyle={{ padding: theme.spacing.sm }}>
+          {renderCalendarHeader()}
+          {renderWeekDays()}
+          <Vertical style={{ flexShrink: 1, justifyContent: "flex-start" }}>
             <View style={styles.daysGrid}>
               {daysInMonth().map((date, index) => (
                 <Pressable
@@ -273,12 +266,14 @@ export const DateTime = ({
                 }}
               />
             </View>
-            <Pressable
+
+            <Button
+              variant="ghost"
               style={styles.setNowButton}
               onPress={() => handleDateSelect(dayjs())}
             >
-              <Text style={styles.setNowText}>Set to Now</Text>
-            </Pressable>
+              {t("components.datetime.set_to_now")}
+            </Button>
 
             <Horizontal style={{ justifyContent: "flex-end" }}>
               <Button
@@ -292,8 +287,8 @@ export const DateTime = ({
                 <Check />
               </Button>
             </Horizontal>
-          </Pressable>
-        </Pressable>
+          </Vertical>
+        </Modal.Content>
       </Modal>
     </View>
   );
@@ -320,25 +315,11 @@ const dateTimeStyles = createStyleSheet((theme) => ({
   placeholder: {
     color: theme.colors.textTertiary,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: theme.colors.overlay,
-    justifyContent: "center",
-    padding: theme.spacing.lg,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    width: "90%",
-    maxWidth: 400,
-    marginHorizontal: "auto",
-  },
   calendarHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xs,
   },
   navigationButton: {
     ...theme.typography.body,
@@ -352,7 +333,6 @@ const dateTimeStyles = createStyleSheet((theme) => ({
   weekDaysContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: theme.spacing.md,
   },
   weekDayText: {
     ...theme.typography.body,
@@ -368,6 +348,8 @@ const dateTimeStyles = createStyleSheet((theme) => ({
   },
   dayButton: {
     width: `${100 / 7}%`,
+    height: `100%`,
+
     aspectRatio: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -387,7 +369,6 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: theme.spacing.lg,
     gap: theme.spacing.sm,
   },
   timeInput: {
@@ -398,7 +379,7 @@ const dateTimeStyles = createStyleSheet((theme) => ({
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    width: 45,
+    width: 70,
     textAlign: "center",
   },
   timeText: {
@@ -407,8 +388,7 @@ const dateTimeStyles = createStyleSheet((theme) => ({
   },
   setNowButton: {
     alignItems: "center",
-    marginTop: theme.spacing.lg,
-    padding: theme.spacing.md,
+    padding: theme.spacing.sm,
   },
   setNowText: {
     ...theme.typography.body,
