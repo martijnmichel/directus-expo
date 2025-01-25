@@ -22,6 +22,7 @@ import {
 import { coreCollections } from "./core";
 import { get } from "lodash";
 import { useMemo } from "react";
+import { DirectusErrorResponse } from "@/types/directus";
 
 export const useCollection = (id: string) => {
   const { directus, user } = useAuth();
@@ -74,7 +75,10 @@ export const useDocument = ({
   id?: number | string | "+";
   options?: Query<CoreSchema, any>;
   query?: Omit<UseQueryOptions, "queryKey" | "queryFn">;
-}): UseQueryResult<Record<string, unknown> | undefined, Error> => {
+}): UseQueryResult<
+  Record<string, unknown> | undefined,
+  Error | DirectusErrorResponse
+> => {
   const { directus } = useAuth();
   const { data: collectionData } = useCollection(
     collection as keyof CoreSchema

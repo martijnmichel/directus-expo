@@ -178,8 +178,16 @@ export const M2MInput = ({
     {
       fields: [`*`],
       filter: {
-        [relation?.schema.foreign_key_column as any]: {
-          _in: [...value.update.map((v) => v.id)],
+        [relation?.schema.column as any]: {
+          _in: [
+            ...value.update.map((v) => v.id),
+            ...value.create.map(
+              (v) =>
+                v[relation?.field as any]?.[
+                  relation?.schema.foreign_key_column as any
+                ]
+            ),
+          ],
         },
       },
     }
@@ -187,7 +195,7 @@ export const M2MInput = ({
 
   useEffect(() => {
     refetch();
-  }, [value]);
+  }, [...value.create, ...value.update, ...value.delete]);
 
   console.log({
     item,
@@ -246,6 +254,14 @@ export const M2MInput = ({
                   isDeselected,
                 });
 
+                const text = parseTemplate(
+                  item.meta.options?.template,
+                  {
+                    ...junctionDoc,
+                  },
+                  fields
+                );
+
                 if (isNew) {
                   return (
                     <Draggable
@@ -254,29 +270,26 @@ export const M2MInput = ({
                       disabled={!sortField}
                     >
                       <View
-                        style={[
-                          styles.listItem,
-                          styles.listItemNew,
-                          { paddingRight: 0 },
-                        ]}
+                        style={[styles.listItem, styles.listItemNew]}
                         key={id}
                       >
                         {!!sortField && <DragIcon />}
-                        {parseTemplate(
-                          item.meta.options?.template,
-                          {
-                            ...junctionDoc,
-                          },
-                          fields
-                        ) || (
-                          <Text style={{ color: theme.colors.textMuted }}>
-                            --
-                          </Text>
-                        )}
+
+                        <Text
+                          numberOfLines={1}
+                          style={[
+                            styles.content,
+                            isDeselected && styles.listItemDeselectedText,
+                            !!sortField && { marginLeft: 12 },
+                            !text && { color: theme.colors.textMuted },
+                          ]}
+                        >
+                          {text || "--"}
+                        </Text>
 
                         <Button
                           variant="ghost"
-                          style={{ marginLeft: "auto" }}
+                          rounded
                           onPress={() => {
                             console.log({
                               field: relation.field,

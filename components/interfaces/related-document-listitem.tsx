@@ -10,7 +10,7 @@ import { parseTemplate } from "@/helpers/document/template";
 import { Link } from "expo-router";
 import { Button } from "../display/button";
 import { EventBus } from "@/utils/mitt";
-import { CoreSchemaDocument } from "@/types/directus";
+import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
 
 export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
@@ -82,7 +82,9 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
           isNew && styles.listItemNew,
         ]}
       >
-        <Text>{JSON.stringify(error)}</Text>
+        <Text numberOfLines={1}>
+          {(error as DirectusErrorResponse).errors?.[0].message}
+        </Text>
       </View>
     );
   }
