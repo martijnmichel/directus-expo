@@ -1,7 +1,10 @@
+import { Text } from "@/components/display/typography";
+import { Center } from "@/components/layout/Center";
 import { useAuth } from "@/contexts/AuthContext";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Redirect, Slot, Stack, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { ActivityIndicator } from "react-native";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -9,7 +12,12 @@ export default function TabsLayout() {
   const headerStyle = useHeaderStyles();
   // Add loading check
   if (isLoading) {
-    return null; // or return a loading spinner
+    return (
+      <Center>
+        <ActivityIndicator size="large" />
+        <Text>{t("components.loading.text")}</Text>
+      </Center>
+    );
   }
 
   if (!isAuthenticated) {

@@ -95,6 +95,12 @@
       "confirmDelete": "Wil je deze API echt verwijderen?",
       "editApi": "API bewerken",
       "addApi": "API toevoegen"
+    },
+    "datetime": {
+      "set_to_now": "Instellen op nu"
+    },
+    "loading": {
+      "text": "Uw sessie vernieuwen ..."
     }
   },
   "settings": {
