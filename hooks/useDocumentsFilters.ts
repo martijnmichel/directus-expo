@@ -9,10 +9,10 @@ const defaults = {
 
 export type UseDocumentsFiltersReturn = ReturnType<typeof useDocumentsFilters>;
 
-export const useDocumentsFilters = () => {
-  const [page, setPage] = useState(defaults.page);
-  const [limit, updateLimit] = useState(defaults.limit);
-  const [search, setSearch] = useState(defaults.search);
+export const useDocumentsFilters = (opts?: typeof defaults) => {
+  const [page, setPage] = useState(opts?.page || defaults.page);
+  const [limit, updateLimit] = useState(opts?.limit || defaults.limit);
+  const [search, setSearch] = useState(opts?.search || defaults.search);
   const path = usePathname();
 
   const next = () => {

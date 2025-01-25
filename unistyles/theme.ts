@@ -5,7 +5,12 @@ export const lightTheme = {
     // Main colors
     primary: "#6644FF" as string, // Directus primary purple
     secondary: "#172940" as string, // Dark blue used in secondary elements
-    error: "#E35169" as string, // Error red
+
+    error: "#ea7d8f" as string, // Error red
+    errorBackground: "#fceef0" as string,
+    errorText: "#ea7d8f" as string,
+    errorBorder: "#f8d4da" as string,
+
     success: "#2ECDA7" as string, // Success green
     warning: "#FFB224" as string, // Warning orange
 

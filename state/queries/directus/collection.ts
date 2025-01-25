@@ -20,9 +20,10 @@ import {
   UseQueryResult,
 } from "@tanstack/react-query";
 import { coreCollections } from "./core";
-import { get } from "lodash";
+import { get, unset } from "lodash";
 import { useMemo } from "react";
 import { DirectusErrorResponse } from "@/types/directus";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 
 export const useCollection = (id: string) => {
   const { directus, user } = useAuth();
@@ -34,32 +35,38 @@ export const useCollection = (id: string) => {
 
 export const useDocuments = (
   collection: keyof CoreSchema,
-  query?: Query<CoreSchema, any>
+  query?: Query<CoreSchema, any>,
+  options?: Omit<UseQueryOptions, "queryKey" | "queryFn">
 ) => {
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
-
-  console.log({ collection, query });
-
+  const { data: fields } = useFields(collection);
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
+        ...options,
         queryKey: ["documents", collection, query],
 
         queryFn: async () => {
           const items = await directus?.request(
             readItems(collection as any, query)
           );
+          const aggregateQuery = { ...query };
+          unset(aggregateQuery, ["page", "limit"]);
+          const pk = getPrimaryKey(fields);
           const pagination = await directus?.request(
             aggregate(collection as any, {
-              aggregate: { count: "*" },
-              query,
+              aggregate: { countDistinct: `${pk}` },
+
+              query: aggregateQuery,
             })
           );
 
+          const total = Number(get(pagination, `0.countDistinct.${pk}`));
+
           return {
             items,
-            total: Number(get(pagination, "0.count")),
+            total: !isNaN(total) ? total : 0,
           };
         },
       });
