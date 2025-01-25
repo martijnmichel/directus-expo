@@ -35,7 +35,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   isDeselected?: boolean;
   isSortable?: boolean;
 }) => {
-  const { styles } = useStyles(stylesheet);
+  const { styles } = useStyles(listStyles);
   const [addOpen, setAddOpen] = useState(false);
 
   const {
@@ -141,7 +141,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   ) : null;
 };
 
-const stylesheet = createStyleSheet((theme) => ({
+export const listStyles = createStyleSheet((theme) => ({
   listItem: {
     flexDirection: "row",
     alignItems: "center",

@@ -8,7 +8,10 @@ import {
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import { RelatedDocumentListItem } from "./related-document-listitem";
+import {
+  listStyles,
+  RelatedDocumentListItem,
+} from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -19,7 +22,7 @@ import {
 } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { get, map, uniq } from "lodash";
+import { findIndex, get, map, orderBy, uniq } from "lodash";
 import {
   Link,
   RelativePathString,
@@ -41,12 +44,23 @@ import {
 } from "@mgcrea/react-native-dnd";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
+import { count } from "console";
+import { DragIcon, Trash } from "../icons";
+import { parseTemplate } from "@/helpers/document/template";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+
+type RelatedItem = { id?: number | string; [key: string]: any };
+type RelatedItemState = {
+  create: RelatedItem[];
+  update: RelatedItem[];
+  delete: number[];
+};
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
   docId?: number | string;
-  value: number[];
-  onChange: (value: number[]) => void;
+  value: number[] | RelatedItemState;
+  onChange: (value: RelatedItemState) => void;
   label?: string;
   error?: string;
   helper?: string;
@@ -64,11 +78,8 @@ export const M2MInput = ({
   ...props
 }: M2MInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
-  const { directus } = useAuth();
-  const [value] = useState<number[]>(valueProp);
-  const [createItemOpen, setCreateItemOpen] = useState(false);
-  const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
-
+  const { styles } = useStyles(listStyles);
+  const { theme } = useStyles();
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
@@ -82,6 +93,20 @@ export const M2MInput = ({
   );
 
   const sortField = junction?.meta.sort_field;
+
+  const isInitial = Array.isArray(valueProp);
+  const value = isInitial
+    ? {
+        create: [],
+        update: [
+          ...map(valueProp, (id, index) => ({
+            id,
+            ...(sortField && { [sortField]: index }),
+          })),
+        ],
+        delete: [],
+      }
+    : valueProp;
 
   const relation = relations?.find(
     (r) =>
@@ -108,40 +133,44 @@ export const M2MInput = ({
     "+"
   );
 
-  console.log({ item, docId, valueProp, junction, relation });
-
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
       if (event.field === item.field) {
         console.log("m2m:add:received", event);
 
         const data = {
-          [relation?.field as string]:
-            event.data[relation?.schema.foreign_key_column as any],
+          [relation?.field as string]: event.data,
+          [sortField as string]: [...value.create, ...value.update].length + 1,
         };
-        console.log("m2m:add:sending", data);
-        mutateOptions(
-          data,
-          // @ts-ignore
-          {
-            onSuccess: (newData: any) => {
-              console.log("m2m:add:success", newData);
-              setAddedDocIds([...addedDocIds, newData.id]);
-              props.onChange([...valueProp, newData.id]);
-            },
-          }
-        );
+        const newState = {
+          create: [...value.create, data],
+          update: value.update,
+          delete: value.delete,
+        };
+        props.onChange(newState);
       }
     };
     EventBus.on("m2m:add", addM2M);
     return () => {
       EventBus.off("m2m:add", addM2M);
     };
-  }, [addedDocIds, valueProp, props.onChange, relation, junction]);
+  }, [valueProp, props.onChange, relation, junction, value]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder.map((id) => parseInt(id as string));
-    props.onChange?.(newOrderIds);
+    // props.onChange?.(newOrderIds);
+    console.log({ newOrderIds });
+    props.onChange({
+      create: value.create.map((doc) => ({
+        ...doc,
+        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
+      })),
+      update: value.update.map((doc) => ({
+        ...doc,
+        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
+      })),
+      delete: value.delete,
+    });
   };
 
   const { data: pickedItems, refetch } = useDocuments(
@@ -150,7 +179,7 @@ export const M2MInput = ({
       fields: [`*`],
       filter: {
         [relation?.schema.foreign_key_column as any]: {
-          _in: valueProp,
+          _in: [...value.update.map((v) => v.id)],
         },
       },
     }
@@ -158,9 +187,17 @@ export const M2MInput = ({
 
   useEffect(() => {
     refetch();
-  }, [valueProp, addedDocIds]);
+  }, [value]);
 
-  console.log({ pickedItems });
+  console.log({
+    item,
+    docId,
+    valueProp,
+    value,
+    junction,
+    relation,
+    pickedItems,
+  });
 
   return (
     relation &&
@@ -175,10 +212,94 @@ export const M2MInput = ({
               onOrderChange={onOrderChange}
               style={{ gap: 3 }}
             >
-              {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-                const isDeselected =
-                  value?.includes(id) && !valueProp.includes(id);
-                const isNew = !value?.includes(id);
+              {orderBy(
+                [...value.create, ...value.update, ...value.delete],
+                sortField || relation?.schema.foreign_key_column || "id"
+              ).map((junctionDoc, index) => {
+                if (typeof junctionDoc === "number") {
+                  junctionDoc = { id: junctionDoc };
+                }
+                const primaryKey = relation?.schema.foreign_key_column;
+
+                const relatedDoc =
+                  relation?.field in junctionDoc
+                    ? (junctionDoc as any)[relation?.field]
+                    : junctionDoc;
+                const id: number | string =
+                  typeof relatedDoc === "number" ||
+                  typeof relatedDoc === "string"
+                    ? relatedDoc
+                    : primaryKey in relatedDoc
+                    ? relatedDoc[primaryKey]
+                    : relatedDoc.id;
+
+                const isDeselected = value.delete?.some((doc) => doc === id);
+                const isNew = isInitial ? false : !junctionDoc.id;
+
+                console.log({
+                  junctionDoc,
+                  relatedDoc,
+                  id,
+                  primaryKey,
+                  fk: relation?.schema.foreign_key_column,
+                  isNew,
+                  isDeselected,
+                });
+
+                if (isNew) {
+                  return (
+                    <Draggable
+                      key={id}
+                      id={id?.toString() || index.toString()}
+                      disabled={!sortField}
+                    >
+                      <View
+                        style={[
+                          styles.listItem,
+                          styles.listItemNew,
+                          { paddingRight: 0 },
+                        ]}
+                        key={id}
+                      >
+                        {!!sortField && <DragIcon />}
+                        {parseTemplate(
+                          item.meta.options?.template,
+                          {
+                            ...junctionDoc,
+                          },
+                          fields
+                        ) || (
+                          <Text style={{ color: theme.colors.textMuted }}>
+                            --
+                          </Text>
+                        )}
+
+                        <Button
+                          variant="ghost"
+                          style={{ marginLeft: "auto" }}
+                          onPress={() => {
+                            console.log({
+                              field: relation.field,
+                              primaryKey,
+                              id,
+                              create: value.create.filter(
+                                (v) => v?.[relation.field]?.[primaryKey] !== id
+                              ),
+                            });
+                            props.onChange({
+                              ...value,
+                              create: value.create.filter(
+                                (v) => v?.[relation.field]?.[primaryKey] !== id
+                              ),
+                            });
+                          }}
+                        >
+                          <Trash />
+                        </Button>
+                      </View>
+                    </Draggable>
+                  );
+                }
 
                 const Item = (
                   <RelatedDocumentListItem
@@ -188,20 +309,30 @@ export const M2MInput = ({
                     relation={relation!}
                     template={item.meta.options?.template}
                     isSortable={!!sortField}
-                    onAdd={(item: Record<string, unknown>) => {
-                      setAddedDocIds([...addedDocIds, item.id as number]);
-                      props.onChange([...valueProp, item.id as number]);
+                    onAdd={(item) => {
+                      console.log({ item });
+                      props.onChange({
+                        ...value,
+                        update: [
+                          ...value.update,
+                          {
+                            id: item.id as number,
+                            ...(sortField && {
+                              [sortField]: item[sortField as string],
+                            }),
+                          },
+                        ],
+                        delete: value.delete.filter((v) => v !== id),
+                      });
                     }}
                     onDelete={(item) => {
                       console.log({ item });
-                      setAddedDocIds(
-                        addedDocIds.filter(
-                          (v) =>
-                            v !==
-                            (item[relation.field as keyof typeof item] as any)
-                        )
-                      );
-                      props.onChange(valueProp.filter((v) => v !== id));
+
+                      props.onChange({
+                        ...value,
+                        update: value.update.filter((v) => v?.id !== id),
+                        delete: [...value.delete, id as number],
+                      });
                     }}
                     isNew={isNew}
                     isDeselected={isDeselected}
@@ -210,7 +341,7 @@ export const M2MInput = ({
                 return (
                   <Draggable
                     key={id + "draggable"}
-                    id={id.toString()}
+                    id={id?.toString()}
                     disabled={!sortField}
                   >
                     {Item}
@@ -256,9 +387,11 @@ export const M2MInput = ({
                   junction_collection: junction.collection,
                   related_collection: relation.related_collection,
                   related_field: relation.field,
-                  current_value: pickedItems?.items
-                    ?.map((i: any) => i?.[relation.schema.column as any])
-                    .join(","),
+                  current_value: [
+                    pickedItems?.items?.map(
+                      (i: any) => i?.[relation.schema.column as any]
+                    ),
+                  ].join(","),
                   junction_field: junction.field,
                   doc_id: docId,
                   item_field: item.field,
