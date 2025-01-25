@@ -48,6 +48,7 @@ import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { DirectusIcon } from "../display/directus-icon";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -114,15 +115,8 @@ export const M2MInput = ({
       r.collection === junction.meta.many_collection
   );
 
-  const junctionPermissions =
-    permissions?.[junction?.meta.many_collection as keyof typeof permissions];
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
-
-  const allowJunctionCreate =
-    junctionPermissions?.create.access === "full" ||
-    (junction?.meta.one_field &&
-      junctionPermissions?.create.fields?.includes(junction?.meta.one_field));
 
   const allowCreate =
     relationPermission?.create.access === "full" &&
@@ -158,8 +152,6 @@ export const M2MInput = ({
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder.map((id) => parseInt(id as string));
-    // props.onChange?.(newOrderIds);
-    console.log({ newOrderIds });
     props.onChange({
       create: value.create.map((doc) => ({
         ...doc,
@@ -175,6 +167,7 @@ export const M2MInput = ({
 
   const { data: pickedItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
+
     {
       fields: [`*`],
       filter: {
@@ -190,14 +183,15 @@ export const M2MInput = ({
           ],
         },
       },
-    }
+    },
+    { enabled: !!junction?.collection && !!relation?.schema && !!value }
   );
 
   useEffect(() => {
-    refetch();
+    if (value) refetch();
   }, [...value.create, ...value.update, ...value.delete]);
 
-  console.log({
+  /**console.log({
     item,
     docId,
     valueProp,
@@ -205,7 +199,7 @@ export const M2MInput = ({
     junction,
     relation,
     pickedItems,
-  });
+  }); */
 
   return (
     relation &&
@@ -244,7 +238,7 @@ export const M2MInput = ({
                 const isDeselected = value.delete?.some((doc) => doc === id);
                 const isNew = isInitial ? false : !junctionDoc.id;
 
-                console.log({
+                /** console.log({
                   junctionDoc,
                   relatedDoc,
                   id,
@@ -252,7 +246,7 @@ export const M2MInput = ({
                   fk: relation?.schema.foreign_key_column,
                   isNew,
                   isDeselected,
-                });
+                }); */
 
                 const text = parseTemplate(
                   item.meta.options?.template,
@@ -273,7 +267,7 @@ export const M2MInput = ({
                         style={[styles.listItem, styles.listItemNew]}
                         key={id}
                       >
-                        {!!sortField && <DragIcon />}
+                        {!!sortField && <DirectusIcon name="drag_handle" />}
 
                         <Text
                           numberOfLines={1}
@@ -307,7 +301,7 @@ export const M2MInput = ({
                             });
                           }}
                         >
-                          <Trash />
+                          <DirectusIcon name="delete" />
                         </Button>
                       </View>
                     </Draggable>

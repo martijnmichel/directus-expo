@@ -12,6 +12,7 @@ import { Button } from "../display/button";
 import { EventBus } from "@/utils/mitt";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { DirectusIcon } from "../display/directus-icon";
 
 export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   docId,
@@ -35,7 +36,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   isDeselected?: boolean;
   isSortable?: boolean;
 }) => {
-  const { styles } = useStyles(listStyles);
+  const { styles, theme } = useStyles(listStyles);
   const [addOpen, setAddOpen] = useState(false);
 
   const {
@@ -50,8 +51,6 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
       fields: ["*.*"],
     },
   });
-
-  console.log({ doc });
 
   const { data: fields } = useFields(relation.related_collection as any);
 
@@ -97,7 +96,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
         isNew && styles.listItemNew,
       ]}
     >
-      {isSortable && <DragIcon />}
+      {isSortable && <DirectusIcon name="drag_handle" />}
       <Text
         numberOfLines={1}
         style={[
@@ -124,7 +123,7 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
         asChild
       >
         <Button variant="ghost" rounded>
-          <Edit />
+          <DirectusIcon name="edit_square" />
         </Button>
       </Link>
 
@@ -137,7 +136,11 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
         }
         rounded
       >
-        {isDeselected ? <Redo /> : <Trash />}
+        {isDeselected ? (
+          <DirectusIcon name="settings_backup_restore" />
+        ) : (
+          <DirectusIcon name="close" />
+        )}
       </Button>
     </View>
   ) : null;
@@ -157,12 +160,10 @@ export const listStyles = createStyleSheet((theme) => ({
     maxWidth: 500,
   },
   listItemDeselected: {
-    borderColor: theme.colors.error,
+    borderColor: theme.colors.errorBorder,
+    backgroundColor: theme.colors.errorBackground,
   },
-  listItemDeselectedText: {
-    color: theme.colors.error,
-    textDecorationLine: "line-through",
-  },
+  listItemDeselectedText: {},
   listItemNew: {
     borderColor: theme.colors.primary,
   },

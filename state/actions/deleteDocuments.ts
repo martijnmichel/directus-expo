@@ -20,8 +20,6 @@ export const deleteDocuments = (
   const { data } = useCollection(collection);
   const { removeItems: removeCoreItems } = coreCollections[collection] || {};
 
-  console.log({ data, ids });
-
   return removeCoreItems
     ? removeCoreItems(ids as string[])
     : useMutation({

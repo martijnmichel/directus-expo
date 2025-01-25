@@ -20,8 +20,6 @@ export const mutateDocuments = (
   const { data } = useCollection(collection);
   const { createItems: createCoreItems } = coreCollections[collection] || {};
 
-  console.log({ data, id });
-
   return createCoreItems
     ? createCoreItems()
     : useMutation({

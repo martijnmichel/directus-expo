@@ -32,6 +32,11 @@ import { Container } from "@/components/layout/Container";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
+import { FloatingToolbar } from "@/components/display/floating-toolbar";
+import { Pagination } from "@/components/content/filters/pagination";
+import { SearchFilter } from "@/components/content/filters/search-filter-modal";
 export default function Collection() {
   const {
     related_collection,
@@ -42,6 +47,9 @@ export default function Collection() {
     doc_id,
     item_field,
   } = useLocalSearchParams();
+
+  const pagination = useDocumentsFilters({ limit: 15 });
+  const { page, limit, search } = pagination;
 
   const { data: fields } = useFields(related_collection as keyof CoreSchema);
 
@@ -56,19 +64,22 @@ export default function Collection() {
     fields?.map((f) => f.field) ||
     [];
 
-  const value = (current_value as string)?.split(",");
+  const value = (current_value as string)?.split(",").filter((v) => !!v);
 
-  const { directus } = useAuth();
   const { data: options, refetch } = useDocuments(
     related_collection as keyof CoreSchema,
     {
       fields: [`*`],
+
+      page,
+      limit,
+      search,
       filter: {
         _and: [
           ...(value?.length > 0
             ? [
                 {
-                  id: {
+                  [getPrimaryKey(fields) as any]: {
                     _nin: value,
                   },
                 },
@@ -104,6 +115,7 @@ export default function Collection() {
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
+
   return (
     <Layout>
       <Stack.Screen
@@ -129,14 +141,21 @@ export default function Collection() {
           onRowPress={(doc) => {
             console.log(doc);
             router.dismiss();
-            EventBus.emit("m2m:add", {
-              data: doc as CoreSchemaDocument,
-              field: item_field as string,
+            requestAnimationFrame(() => {
+              EventBus.emit("m2m:add", {
+                data: doc as CoreSchemaDocument,
+                field: item_field as string,
+              });
             });
           }}
         />
-        <View style={{ paddingBottom: bottom }} />
+        <View style={{ paddingBottom: bottom + 80 }} />
       </ScrollView>
+
+      <FloatingToolbar>
+        <Pagination {...pagination} total={options?.total} />
+        <SearchFilter {...pagination} />
+      </FloatingToolbar>
     </Layout>
   );
 }

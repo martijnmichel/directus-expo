@@ -5,15 +5,13 @@ import { PortalHost } from "../layout/Portal";
 import { useTranslation } from "react-i18next";
 import { Horizontal } from "../layout/Stack";
 
-export function FloatingToolbar() {
+export function FloatingToolbar({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
 
   return (
     <Animated.View entering={SlideInDown} style={[styles.toolbar]}>
-      <Horizontal>
-        <PortalHost name="floating-toolbar" />
-      </Horizontal>
+      <Horizontal>{children}</Horizontal>
     </Animated.View>
   );
 }

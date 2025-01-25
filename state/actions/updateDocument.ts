@@ -18,8 +18,6 @@ export const mutateDocument = (
     createItem: createCoreItem,
   } = coreCollections[collection] || {};
 
-  console.log({ data, id });
-
   if ((id === "+" || !id) && !data?.meta.singleton) {
     return createCoreItem
       ? createCoreItem()

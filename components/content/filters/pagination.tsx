@@ -7,8 +7,9 @@ import { UseDocumentsFiltersReturn } from "@/hooks/useDocumentsFilters";
 export const Pagination = (
   context: UseDocumentsFiltersReturn & { total?: number }
 ) => {
-  const { page, limit, next, previous } = context;
-  const totalPages = Math.ceil((context.total || 0) / limit);
+  const { page, limit, total, next, previous } = context;
+  const totalPages = Math.ceil((total || 0) / limit);
+  console.log({ totalPages, limit, page, total });
   return (
     <Horizontal>
       <Button
