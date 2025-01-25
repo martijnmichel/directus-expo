@@ -55,6 +55,7 @@ export default function Collection() {
               key={`${path}-${collection}-${id}`}
               collection={collection as keyof CoreSchema}
               id={id as string}
+              submitType="raw"
               onSave={async (document) => {
                 router.dismiss();
                 EventBus.emit("m2m:add", {

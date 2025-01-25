@@ -39,12 +39,14 @@ export const DocumentEditor = ({
   defaultValues = {},
   onSave,
   onDelete,
+  submitType = "submit",
 }: {
   collection: keyof CoreSchema;
   id?: number | string | "+";
   defaultValues?: Record<string, unknown>;
   onSave?: (doc: Record<string, unknown>) => void;
   onDelete?: () => void;
+  submitType?: "submit" | "raw";
 }) => {
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
@@ -143,32 +145,40 @@ export const DocumentEditor = ({
   const handleSubmit = async (body: Record<string, unknown>) => {
     const data = getDirtyValues(dirtyFields, body);
 
-    await updateDoc(data, {
-      onSuccess: (updatedDoc) => {
-        context.reset(updatedDoc);
+    switch (submitType) {
+      case "raw":
+        onSave?.(data);
+        break;
+      case "submit": {
+        await updateDoc(data, {
+          onSuccess: (updatedDoc) => {
+            context.reset(updatedDoc);
 
-        onSave?.(updatedDoc as Record<string, unknown>);
+            onSave?.(updatedDoc as Record<string, unknown>);
 
-        queryClient.invalidateQueries({
-          queryKey: ["document", collection, id],
+            queryClient.invalidateQueries({
+              queryKey: ["document", collection, id],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["documents", collection],
+            });
+          },
+          onError: (error: any) => {
+            const e = error as DirectusErrorResponse;
+            each(e.errors, (error) => {
+              context.setError(error.extensions.field, {
+                message: error.message,
+              });
+              ToastManager.error({
+                message: "Error updating document",
+                description: error.message,
+              });
+            });
+          },
         });
-        queryClient.invalidateQueries({
-          queryKey: ["documents", collection],
-        });
-      },
-      onError: (error: any) => {
-        const e = error as DirectusErrorResponse;
-        each(e.errors, (error) => {
-          context.setError(error.extensions.field, {
-            message: error.message,
-          });
-          ToastManager.error({
-            message: "Error updating document",
-            description: error.message,
-          });
-        });
-      },
-    });
+        break;
+      }
+    }
   };
 
   const handleDelete = () => {
