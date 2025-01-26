@@ -15,6 +15,7 @@ export default function Layout() {
           presentation: "modal",
           // Optional: add iOS-style modal presentation
           animation: "slide_from_bottom",
+          freezeOnBlur: true,
         }}
       />
 
@@ -25,6 +26,7 @@ export default function Layout() {
           presentation: "modal",
           // Optional: add iOS-style modal presentation
           animation: "slide_from_bottom",
+          freezeOnBlur: true,
         }}
       />
 
@@ -35,6 +37,7 @@ export default function Layout() {
           presentation: "modal",
           // Optional: add iOS-style modal presentation
           animation: "slide_from_bottom",
+          freezeOnBlur: true,
         }}
       />
     </Stack>

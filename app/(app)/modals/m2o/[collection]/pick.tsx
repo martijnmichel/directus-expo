@@ -63,10 +63,6 @@ export default function Collection() {
     }
   );
 
-  useFocusEffect(() => {
-    refetch();
-  });
-
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(collection as keyof CoreSchema);
   const { bottom } = useSafeAreaInsets();

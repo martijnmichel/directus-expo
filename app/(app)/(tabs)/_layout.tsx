@@ -12,7 +12,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import { useTrackedPath, useTrackPath } from "@/hooks/useTrackPath";
 import { Pressable } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Folder } from "@/components/icons/Folder";
@@ -22,10 +21,8 @@ export default function TabsLayout() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { theme } = useStyles();
   const { bottom } = useSafeAreaInsets();
-  const { data } = useTrackedPath();
-  const router = useRouter();
 
-  useTrackPath();
+  const router = useRouter();
 
   // Add loading check
   if (isLoading) {
