@@ -37,6 +37,7 @@ import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { FloatingToolbar } from "@/components/display/floating-toolbar";
 import { Pagination } from "@/components/content/filters/pagination";
 import { SearchFilter } from "@/components/content/filters/search-filter-modal";
+import { Horizontal } from "@/components/layout/Stack";
 export default function Collection() {
   const {
     related_collection,
@@ -151,10 +152,10 @@ export default function Collection() {
         />
       </ScrollView>
 
-      <FloatingToolbar>
+      <Horizontal>
         <Pagination {...pagination} total={options?.total || 0} />
         <SearchFilter {...pagination} />
-      </FloatingToolbar>
+      </Horizontal>
     </Layout>
   );
 }

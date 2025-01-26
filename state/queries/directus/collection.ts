@@ -51,12 +51,11 @@ export const useDocuments = (
             readItems(collection as any, query)
           );
           const aggregateQuery = { ...query };
-          unset(aggregateQuery, ["page", "limit"]);
+          unset(aggregateQuery, ["page"]);
           const pk = getPrimaryKey(fields);
           const pagination = await directus?.request(
             aggregate(collection as any, {
               aggregate: { countDistinct: `${pk}` },
-
               query: aggregateQuery,
             })
           );
