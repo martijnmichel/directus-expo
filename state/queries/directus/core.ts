@@ -109,10 +109,7 @@ export const useUsers = (query?: Query<CoreSchema, any>) => {
     queryKey: ["users", user?.id, query],
     queryFn: async () => {
       const items = await directus?.request(readUsers(query));
-      const pagination = await directus?.request(
-        aggregate("directus_users", { aggregate: { count: "*" } })
-      );
-      return { items, total: Number(get(pagination, "0.count")) };
+      return { items, total: 0 };
     },
   });
 };

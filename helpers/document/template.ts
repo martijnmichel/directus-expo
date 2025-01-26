@@ -24,6 +24,7 @@ export const parseTemplate = <T>(
         ""
       );
     }) ||
+    data?.[pk as any] ||
     data?.id ||
     ""
   );

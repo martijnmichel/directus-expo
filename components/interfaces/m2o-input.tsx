@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { CoreSchema, ReadFieldOutput, readItems } from "@directus/sdk";
 import { Select } from "./select";
 import { parseTemplate } from "@/helpers/document/template";
@@ -15,6 +15,8 @@ import { useDocument, useFields } from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { Text } from "../display/typography";
+import { DirectusIcon } from "../display/directus-icon";
 
 interface Schema {
   [key: string]: any;
@@ -56,7 +58,7 @@ export const M2OInput = ({
         console.log(data);
       });
     };
-  }, [fields, pk]);
+  }, [fields, pk, item.field]);
 
   const Item = () => {
     const { data } = useDocument({
@@ -109,7 +111,7 @@ export const M2OInput = ({
           <Item />
         </Pressable>
         <View style={styles.append}>
-          <ChevronDown />
+          <ChevronDown color={theme.colors.textPrimary} />
         </View>
       </View>
       {(error || helper) && (
