@@ -32,6 +32,11 @@ import { Container } from "@/components/layout/Container";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { base64ToObject } from "@/helpers/document/docToBase64";
+import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
+import { FloatingToolbar } from "@/components/display/floating-toolbar";
+import { Pagination } from "@/components/content/filters/pagination";
+import { SearchFilter } from "@/components/content/filters/search-filter-modal";
+import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 
 type PickModalParams = {
   collection: keyof CoreSchema;
@@ -47,12 +52,9 @@ export default function Collection() {
 
   const { data: presets } = usePresets();
 
+  const pagination = useDocumentsFilters();
+  const { page, limit, search } = pagination;
   const preset = presets?.find((p) => p.collection === collection);
-
-  const tableFields =
-    (preset && preset.layout_query?.tabular?.fields) ||
-    fields?.map((f) => f.field) ||
-    [];
 
   const { directus } = useAuth();
   const { data: options, refetch } = useDocuments(
@@ -60,9 +62,16 @@ export default function Collection() {
     {
       fields: [`*`],
       filter,
+      page,
+      limit,
+      search,
     }
   );
 
+  const tableFields = useCollectionTableFields({
+    collection: collection as keyof CoreSchema,
+    documents: options?.items,
+  });
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(collection as keyof CoreSchema);
   const { bottom } = useSafeAreaInsets();
@@ -90,7 +99,6 @@ export default function Collection() {
             map(tableFields, (f) => doc[f] as number | string | null)
           }
           onRowPress={(doc) => {
-            console.log(doc);
             router.dismiss();
             EventBus.emit("m2o:pick", {
               data: doc as CoreSchemaDocument,
@@ -98,8 +106,13 @@ export default function Collection() {
             });
           }}
         />
-        <View style={{ paddingBottom: bottom }} />
+        <View style={{ paddingBottom: bottom + 80 }} />
       </ScrollView>
+
+      <FloatingToolbar>
+        <Pagination {...pagination} total={options?.total || 0} />
+        <SearchFilter {...pagination} />
+      </FloatingToolbar>
     </Layout>
   );
 }

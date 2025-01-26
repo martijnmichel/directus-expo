@@ -4,13 +4,18 @@ import Animated, { SlideInDown, SlideInUp } from "react-native-reanimated";
 import { PortalHost } from "../layout/Portal";
 import { useTranslation } from "react-i18next";
 import { Horizontal } from "../layout/Stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export function FloatingToolbar({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
+  const { bottom } = useSafeAreaInsets();
 
   return (
-    <Animated.View entering={SlideInDown} style={[styles.toolbar]}>
+    <Animated.View
+      entering={SlideInDown}
+      style={[styles.toolbar, { marginBottom: bottom + 44 }]}
+    >
       <Horizontal>{children}</Horizontal>
     </Animated.View>
   );
@@ -27,7 +32,7 @@ const stylesheet = createStyleSheet((theme) => ({
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
-    padding: theme.spacing.md,
+    padding: theme.spacing.lg,
   },
 }));
 export const ftStyles = stylesheet;

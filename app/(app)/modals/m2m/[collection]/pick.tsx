@@ -38,6 +38,7 @@ import { FloatingToolbar } from "@/components/display/floating-toolbar";
 import { Pagination } from "@/components/content/filters/pagination";
 import { SearchFilter } from "@/components/content/filters/search-filter-modal";
 import { Horizontal } from "@/components/layout/Stack";
+import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 export default function Collection() {
   const {
     related_collection,
@@ -57,13 +58,6 @@ export default function Collection() {
   const { data: presets } = usePresets();
 
   const preset = presets?.find((p) => p.collection === related_collection);
-
-  console.log({ preset });
-
-  const tableFields =
-    (preset && preset.layout_query?.tabular?.fields) ||
-    fields?.map((f) => f.field) ||
-    [];
 
   const value = (current_value as string)?.split(",").filter((v) => !!v);
 
@@ -108,6 +102,11 @@ export default function Collection() {
     }
   );
 
+  const tableFields = useCollectionTableFields({
+    collection: related_collection as keyof CoreSchema,
+    documents: options?.items,
+  });
+
   useEffect(() => {
     refetch();
   }, [current_value]);
@@ -150,12 +149,14 @@ export default function Collection() {
             });
           }}
         />
+
+        <View style={{ height: 80 + bottom }} />
       </ScrollView>
 
-      <Horizontal>
+      <FloatingToolbar>
         <Pagination {...pagination} total={options?.total || 0} />
         <SearchFilter {...pagination} />
-      </Horizontal>
+      </FloatingToolbar>
     </Layout>
   );
 }

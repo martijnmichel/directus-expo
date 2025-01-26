@@ -20,6 +20,7 @@ import { SearchFilter } from "./filters/search-filter-modal";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -54,23 +55,10 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   const preset = presets?.find((p) => p.collection === collection);
 
-  const tableFields =
-    /** headers from presets */
-    (preset && preset.layout_query?.tabular?.fields) ||
-    /** or headers from fields that have values in the documents */
-    (!preset &&
-      fields
-        ?.filter(
-          (f) =>
-            !!some(
-              documents?.items,
-              (doc) => !!doc?.[f.field as keyof typeof doc]
-            )
-        )
-        .map((f) => f.field)) ||
-    /** or headers from all fields */
-    fields?.map((f) => f.field) ||
-    [];
+  const tableFields = useCollectionTableFields({
+    collection: collection as keyof CoreSchema,
+    documents: documents?.items,
+  });
 
   useEffect(() => {
     refetch();
