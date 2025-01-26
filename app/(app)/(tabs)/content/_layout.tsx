@@ -1,5 +1,3 @@
-import { BackButton } from "@/components/layout/BackButton";
-import { useTrackPath } from "@/hooks/useTrackPath";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Stack } from "expo-router";
 

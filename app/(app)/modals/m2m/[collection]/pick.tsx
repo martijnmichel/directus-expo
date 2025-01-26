@@ -48,7 +48,7 @@ export default function Collection() {
     item_field,
   } = useLocalSearchParams();
 
-  const pagination = useDocumentsFilters({ limit: 15 });
+  const pagination = useDocumentsFilters();
   const { page, limit, search } = pagination;
 
   const { data: fields } = useFields(related_collection as keyof CoreSchema);
@@ -153,7 +153,7 @@ export default function Collection() {
       </ScrollView>
 
       <FloatingToolbar>
-        <Pagination {...pagination} total={options?.total} />
+        <Pagination {...pagination} total={options?.total || 0} />
         <SearchFilter {...pagination} />
       </FloatingToolbar>
     </Layout>

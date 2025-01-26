@@ -65,7 +65,7 @@ export const useDocuments = (
           const total = Number(get(pagination, `0.countDistinct.${pk}`));
 
           return {
-            items,
+            items: items || [],
             total: !isNaN(total) ? total : 0,
           };
         },
