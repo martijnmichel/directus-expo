@@ -172,25 +172,27 @@ export const M2MInput = ({
     {
       fields: [`*`],
       filter: {
-        [relation?.schema.column as any]: {
-          _in: [
-            ...value.update.map((v) => v.id),
-            ...value.create.map(
-              (v) =>
-                v[relation?.field as any]?.[
-                  relation?.schema.foreign_key_column as any
-                ]
-            ),
-          ],
-        },
+        ...((!!value.update.length || !!value.create.length) &&
+          !!relation?.schema && {
+            [relation?.schema.column as any]: {
+              _in: [
+                ...value.update.map((v) => v.id),
+                ...value.create.map(
+                  (v) =>
+                    v[relation?.field as any]?.[
+                      relation?.schema.foreign_key_column as any
+                    ]
+                ),
+              ],
+            },
+          }),
       },
-    },
-    { enabled: !!junction?.collection && !!relation?.schema && !!value }
+    }
   );
 
   useEffect(() => {
-    if (value) refetch();
-  }, [...value.create, ...value.update, ...value.delete]);
+    refetch();
+  }, [value.update, value.create, relation, junction, refetch]);
 
   /**console.log({
     item,
