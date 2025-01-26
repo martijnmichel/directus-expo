@@ -1,4 +1,4 @@
-export interface CoreSchemaDocument extends Record<string, unknown> {
+export interface CoreSchemaDocument {
   [key: string]: any;
 }
 
