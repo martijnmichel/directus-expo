@@ -15,6 +15,7 @@ import {
   RequestOptions,
 } from "@directus/sdk";
 import {
+  QueryOptions,
   useQuery,
   UseQueryOptions,
   UseQueryResult,
@@ -36,7 +37,10 @@ export const useCollection = (id: string) => {
 export const useDocuments = (
   collection: keyof CoreSchema,
   query?: Query<CoreSchema, any>,
-  options?: Omit<UseQueryOptions, "queryKey" | "queryFn">
+  options?: Omit<
+    UseQueryOptions<{ items: any[]; total: number }>,
+    "queryKey" | "queryFn"
+  >
 ) => {
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
@@ -44,6 +48,7 @@ export const useDocuments = (
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
+        ...options,
         queryKey: ["documents", collection, query],
 
         queryFn: async () => {
