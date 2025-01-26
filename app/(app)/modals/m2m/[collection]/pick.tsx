@@ -149,7 +149,6 @@ export default function Collection() {
             });
           }}
         />
-        <View style={{ paddingBottom: bottom + 80 }} />
       </ScrollView>
 
       <FloatingToolbar>

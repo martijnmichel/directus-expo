@@ -22,7 +22,7 @@ import {
 import { coreCollections } from "./core";
 import { get, unset } from "lodash";
 import { useMemo } from "react";
-import { DirectusErrorResponse } from "@/types/directus";
+import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 
 export const useCollection = (id: string) => {
@@ -44,7 +44,6 @@ export const useDocuments = (
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        ...options,
         queryKey: ["documents", collection, query],
 
         queryFn: async () => {
