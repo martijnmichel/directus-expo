@@ -1,3 +1,29 @@
+# [0.6.0](https://github.com/martijnmichel/directus-expo/compare/v0.5.0...v0.6.0) (2025-01-25)
+
+
+### Bug Fixes
+
+* editor unresponsive after image insert ([e780713](https://github.com/martijnmichel/directus-expo/commit/e78071307db440e3b8a7f1fdbe274bda0e9e5ba4))
+* file-input ([46ba557](https://github.com/martijnmichel/directus-expo/commit/46ba5578d8e094c4ad1f6da7ed791d6282fb469b))
+* filter m2m based on value ([2238bc0](https://github.com/martijnmichel/directus-expo/commit/2238bc0cd46b13b28b99aa8e88c746e990f6b3c4))
+* hash-input ([694fc97](https://github.com/martijnmichel/directus-expo/commit/694fc9703ea875fe0a16e565280b9c0d11a5331d))
+* layout tabs & crash on no meta collection ([a4b104c](https://github.com/martijnmichel/directus-expo/commit/a4b104ce291165b68b05d3c65f36e71fc5dea54f))
+* m2m correct filter ([6b78e41](https://github.com/martijnmichel/directus-expo/commit/6b78e41ac9ea2962b65c2139d42f2f93fee74da6))
+* m2m relation collection ([db2da22](https://github.com/martijnmichel/directus-expo/commit/db2da2221168c64b059dec8b997d768f1ff99aa8))
+* m2o pick modal ([be5821b](https://github.com/martijnmichel/directus-expo/commit/be5821b8f68339034903295bdb570baf5f6f761f))
+* minors fixes ([a17cfe3](https://github.com/martijnmichel/directus-expo/commit/a17cfe39ffd8c45d4ead4f388f63009219110892))
+* prevent duplicate raw/detail groups ([0c45b2d](https://github.com/martijnmichel/directus-expo/commit/0c45b2df19db717553096303e73a8a5e7c12f296))
+* slider working ([51d3555](https://github.com/martijnmichel/directus-expo/commit/51d355587a95fc1c46b2f2e90f5f55f8c0f027bb))
+* styling m2m ([1d62aed](https://github.com/martijnmichel/directus-expo/commit/1d62aedc47f65ddf20805919685e6cc769cbba00))
+* translated pages ([d7c4045](https://github.com/martijnmichel/directus-expo/commit/d7c40450b7a8f348bfbb290b6c6eb33c25b1a413))
+* translations ([d841119](https://github.com/martijnmichel/directus-expo/commit/d841119165aaf7cb9c25d41156595022bc0b8bcb))
+
+
+### Features
+
+* collection-item-dropdown ([f347b7e](https://github.com/martijnmichel/directus-expo/commit/f347b7e1a4f1696563ab462d7b9e6734b4e26a51))
+* primary key! ([799d595](https://github.com/martijnmichel/directus-expo/commit/799d5957378701a3dba9c92b78fd0b8e74f594c3))
+
 ## [0.5.1](https://github.com/martijnmichel/directus-expo/compare/v0.5.0...v0.5.1) (2025-01-24)
 
 
