@@ -7,7 +7,7 @@ if (!newVersion) {
   process.exit(1);
 }
 
-const appJsonPath = path.join(__dirname, "..", "app.json");
+const appJsonPath = path.join(__dirname, "..", "app.config.js");
 const appJson = JSON.parse(fs.readFileSync(appJsonPath, "utf8"));
 
 appJson.expo.version = newVersion;
