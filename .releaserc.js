@@ -43,12 +43,6 @@ module.exports = {
           "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}",
       },
     ],
-    [
-      "@semantic-release/exec",
-      {
-        prepareCmd: "node scripts/update-app-version.js ${nextRelease.version}",
-      },
-    ],
   ],
   dryRun: false,
   ci: false,
