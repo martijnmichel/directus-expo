@@ -17,7 +17,10 @@
       "channel": "staging"
     },
     "production": {
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "ANDROID_HOME": "/Users/martijnvde/Library/Android/sdk"
+      }
     }
   },
   "submit": {
