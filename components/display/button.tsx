@@ -264,12 +264,12 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
   },
   floating: {
-    shadowColor: theme.colors.backgroundDark,
+    shadowColor: theme.colors.backgroundInvert,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 6, // for Android
   },

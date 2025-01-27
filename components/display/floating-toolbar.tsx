@@ -5,6 +5,7 @@ import { PortalHost } from "../layout/Portal";
 import { useTranslation } from "react-i18next";
 import { Horizontal } from "../layout/Stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View } from "react-native";
 
 export function FloatingToolbar({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
@@ -12,27 +13,18 @@ export function FloatingToolbar({ children }: { children: React.ReactNode }) {
   const { bottom } = useSafeAreaInsets();
 
   return (
-    <Animated.View
-      entering={SlideInDown}
-      style={[styles.toolbar, { marginBottom: bottom + 44 }]}
-    >
+    <View style={[styles.toolbar]}>
       <Horizontal>{children}</Horizontal>
-    </Animated.View>
+    </View>
   );
 }
 
 const stylesheet = createStyleSheet((theme) => ({
   toolbar: {
     position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    width: "100%",
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    padding: theme.spacing.lg,
+    bottom: theme.spacing.md,
+    left: theme.spacing.md,
+    right: theme.spacing.md,
   },
 }));
 export const ftStyles = stylesheet;

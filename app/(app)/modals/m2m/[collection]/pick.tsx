@@ -125,38 +125,36 @@ export default function Collection() {
           presentation: "modal",
         }}
       />
-      <ScrollView>
-        <Table
-          headers={reduce(
-            tableFields,
-            (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
-            {}
-          )}
-          fields={tableFields}
-          items={(options?.items as Record<string, unknown>[]) || []}
-          widths={preset?.layout_options?.tabular?.widths}
-          renderRow={(doc) =>
-            map(tableFields, (f) => doc[f] as number | string | null)
-          }
-          onRowPress={(doc) => {
-            console.log(doc);
-            router.dismiss();
-            requestAnimationFrame(() => {
-              EventBus.emit("m2m:add", {
-                data: doc as CoreSchemaDocument,
-                field: item_field as string,
-              });
+
+      <Table
+        headers={reduce(
+          tableFields,
+          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
+          {}
+        )}
+        toolbarItems={
+          <>
+            <Pagination {...pagination} total={options?.total || 0} />
+            <SearchFilter {...pagination} />
+          </>
+        }
+        fields={tableFields}
+        items={(options?.items as Record<string, unknown>[]) || []}
+        widths={preset?.layout_options?.tabular?.widths}
+        renderRow={(doc) =>
+          map(tableFields, (f) => doc[f] as number | string | null)
+        }
+        onRowPress={(doc) => {
+          console.log(doc);
+          router.dismiss();
+          requestAnimationFrame(() => {
+            EventBus.emit("m2m:add", {
+              data: doc as CoreSchemaDocument,
+              field: item_field as string,
             });
-          }}
-        />
-
-        <View style={{ height: 80 + bottom }} />
-      </ScrollView>
-
-      <FloatingToolbar>
-        <Pagination {...pagination} total={options?.total || 0} />
-        <SearchFilter {...pagination} />
-      </FloatingToolbar>
+          });
+        }}
+      />
     </Layout>
   );
 }

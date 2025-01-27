@@ -85,34 +85,32 @@ export default function Collection() {
           presentation: "modal",
         }}
       />
-      <ScrollView>
-        <Table
-          headers={reduce(
-            tableFields,
-            (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
-            {}
-          )}
-          fields={tableFields}
-          items={(options?.items as Record<string, unknown>[]) || []}
-          widths={preset?.layout_options?.tabular?.widths}
-          renderRow={(doc) =>
-            map(tableFields, (f) => doc[f] as number | string | null)
-          }
-          onRowPress={(doc) => {
-            router.dismiss();
-            EventBus.emit("m2o:pick", {
-              data: doc as CoreSchemaDocument,
-              field: field as string,
-            });
-          }}
-        />
-        <View style={{ paddingBottom: bottom + 80 }} />
-      </ScrollView>
-
-      <FloatingToolbar>
-        <Pagination {...pagination} total={options?.total || 0} />
-        <SearchFilter {...pagination} />
-      </FloatingToolbar>
+      <Table
+        headers={reduce(
+          tableFields,
+          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
+          {}
+        )}
+        toolbarItems={
+          <>
+            <Pagination {...pagination} total={options?.total || 0} />
+            <SearchFilter {...pagination} />
+          </>
+        }
+        fields={tableFields}
+        items={(options?.items as Record<string, unknown>[]) || []}
+        widths={preset?.layout_options?.tabular?.widths}
+        renderRow={(doc) =>
+          map(tableFields, (f) => doc[f] as number | string | null)
+        }
+        onRowPress={(doc) => {
+          router.dismiss();
+          EventBus.emit("m2o:pick", {
+            data: doc as CoreSchemaDocument,
+            field: field as string,
+          });
+        }}
+      />
     </Layout>
   );
 }
