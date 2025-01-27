@@ -169,7 +169,7 @@ export default function CollectionLayout({
             },
           ]}
         >
-          <ScrollView>{children}</ScrollView>
+          {children}
 
           <View style={styles.floatingToolbar}>
             <Horizontal>

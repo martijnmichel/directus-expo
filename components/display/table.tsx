@@ -3,11 +3,14 @@ import React, { useState } from "react";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Dictionary } from "lodash";
 import { useTranslation } from "react-i18next";
+import { Horizontal } from "../layout/Stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface TableProps<T extends Record<string, unknown>> {
   headers?: { [key: string]: string };
   fields: string[];
   items?: T[];
+  toolbarItems?: React.ReactNode;
   renderRow: (item: T) => (React.ReactNode | null)[];
 
   widths?: { [key: string]: number };
@@ -42,6 +45,7 @@ function compareValues(a: any, b: any, direction: "asc" | "desc"): number {
 
 export function Table<T extends Record<string, unknown>>({
   headers,
+  toolbarItems,
   fields,
   items = [],
   renderRow,
@@ -50,6 +54,8 @@ export function Table<T extends Record<string, unknown>>({
   noDataText,
 }: TableProps<T>) {
   const { styles } = useStyles(stylesheet);
+  const { bottom } = useSafeAreaInsets();
+
   const [sort, setSort] = useState<SortConfig | null>(null);
   const { t } = useTranslation();
 
@@ -151,51 +157,61 @@ export function Table<T extends Record<string, unknown>>({
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.tableContainer}>
-        {fields.length > 0 && (
-          <View style={styles.headerRow}>
-            {fields.map((field, index) => (
-              <Pressable
-                key={field}
-                onPress={() => handleSort(index)}
-                style={[
-                  styles.headerCell,
-                  { width: getColumnWidth(field), flexShrink: 0 },
-                ]}
-              >
-                <Text
-                  style={[styles.headerText, styles.truncate]}
-                  numberOfLines={1}
-                >
-                  {headers ? String(headers[field]) : String(field)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-
-        <View style={styles.bodyContainer}>
-          {sortedItems.map((item, rowIndex) => (
-            <Pressable
-              onPress={() => onRowPress?.(item)}
-              key={rowIndex}
-              style={styles.row}
-            >
-              {renderRow(item).map((cell, cellIndex) => {
-                const field = fields[cellIndex];
-                return (
-                  <View
-                    key={cellIndex}
+        <ScrollView stickyHeaderIndices={[0]}>
+          {fields.length > 0 && (
+            <View style={styles.headerContainer}>
+              <View style={styles.headerRow}>
+                {fields.map((field, index) => (
+                  <Pressable
+                    key={field}
+                    onPress={() => handleSort(index)}
                     style={[
-                      styles.cell,
+                      styles.headerCell,
                       { width: getColumnWidth(field), flexShrink: 0 },
                     ]}
                   >
-                    {renderCell(cell)}
-                  </View>
-                );
-              })}
-            </Pressable>
-          ))}
+                    <Text
+                      style={[styles.headerText, styles.truncate]}
+                      numberOfLines={1}
+                    >
+                      {headers ? String(headers[field]) : String(field)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.bodyContainer}>
+            {sortedItems.map((item, rowIndex) => (
+              <Pressable
+                onPress={() => onRowPress?.(item)}
+                key={rowIndex}
+                style={styles.row}
+              >
+                {renderRow(item).map((cell, cellIndex) => {
+                  const field = fields[cellIndex];
+                  return (
+                    <View
+                      key={cellIndex}
+                      style={[
+                        styles.cell,
+                        { width: getColumnWidth(field), flexShrink: 0 },
+                      ]}
+                    >
+                      {renderCell(cell)}
+                    </View>
+                  );
+                })}
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={{ height: 80 + bottom }} />
+        </ScrollView>
+
+        <View style={[styles.floatingToolbar, { marginBottom: bottom + 14 }]}>
+          <Horizontal>{toolbarItems}</Horizontal>
         </View>
       </View>
       {!items.length && (
@@ -218,8 +234,21 @@ const stylesheet = createStyleSheet((theme) => ({
   tableContainer: {
     flex: 1,
     minWidth: "100%",
+    position: "relative",
+  },
+  floatingToolbar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.lg,
+  },
+  headerContainer: {
+    backgroundColor: theme.colors.background,
+    zIndex: 100,
   },
   headerRow: {
+    display: "flex",
     flexDirection: "row",
     borderBottomWidth: theme.borderWidth.md,
     borderBottomColor: theme.colors.border,

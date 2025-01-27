@@ -65,7 +65,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   }, [refetch]);
 
   return (
-    <Vertical>
+    <>
       <Table
         headers={reduce(
           tableFields,
@@ -95,7 +95,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         <Pagination {...filterContext} total={documents?.total} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>
-      <View style={{ height: 80 }} />
-    </Vertical>
+    </>
   );
 }
