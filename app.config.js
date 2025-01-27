@@ -1,5 +1,5 @@
 const packageJson = require("./package.json");
-const buildNumber = 3;
+const buildNumber = 4;
 
 export default () => ({
   expo: {
@@ -57,9 +57,7 @@ export default () => ({
         projectId: "66baa699-7004-4c6a-85ee-941ba6062451",
       },
     },
-    runtimeVersion: {
-      policy: "nativeVersion",
-    },
+    runtimeVersion: `${buildNumber}`,
     updates: {
       url: "https://u.expo.dev/66baa699-7004-4c6a-85ee-941ba6062451",
     },
