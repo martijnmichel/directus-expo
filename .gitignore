@@ -39,3 +39,6 @@ ios
 
 .env.*
 !.env.example
+
+*.ipa
+*.apk

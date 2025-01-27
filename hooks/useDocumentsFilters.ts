@@ -28,6 +28,12 @@ export const useDocumentsFilters = (opts?: typeof defaults) => {
     updateLimit(newLimit);
   };
 
+  const reset = () => {
+    setPage(defaults.page);
+    updateLimit(defaults.limit);
+    setSearch(defaults.search);
+  };
+
   useEffect(() => {
     console.log("path reset filters", path);
     setPage(defaults.page);
@@ -35,5 +41,5 @@ export const useDocumentsFilters = (opts?: typeof defaults) => {
     setSearch(defaults.search);
   }, [path]);
 
-  return { page, limit, next, previous, setLimit, search, setSearch };
+  return { page, limit, next, previous, setLimit, search, setSearch, reset };
 };

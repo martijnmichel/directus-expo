@@ -207,7 +207,7 @@ export function Table<T extends Record<string, unknown>>({
             ))}
           </View>
 
-          <View style={{ height: 140 + bottom }} />
+          <View style={{ height: (toolbarItems ? 140 : 70) + bottom }} />
         </ScrollView>
 
         <View style={[styles.floatingToolbar, { paddingBottom: bottom + 70 }]}>
