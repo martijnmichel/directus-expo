@@ -13,17 +13,17 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface LayoutProps extends ViewProps {
   children: React.ReactNode;
-  useSafeArea?: boolean;
+  safeArea?: boolean;
 }
 
 export const Layout = ({
   children,
-  useSafeArea = true,
+  safeArea = true,
   style,
   ...props
 }: LayoutProps) => {
   const { styles } = useStyles(stylesheet);
-  const Wrapper = useSafeArea ? SafeAreaView : View;
+  const Wrapper = safeArea ? SafeAreaView : View;
 
   return (
     <Wrapper style={[styles.layout, style]} {...props}>

@@ -113,7 +113,7 @@ export const CollectionItemDropdown = ({
           <Item />
         </Pressable>
         <View style={styles.append}>
-          <ChevronDown color={theme.colors.textPrimary} />
+          <ChevronDown size={20} color={theme.colors.textPrimary} />
         </View>
       </View>
       {(error || helper) && (

@@ -157,7 +157,7 @@ export function Table<T extends Record<string, unknown>>({
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.tableContainer}>
-        <ScrollView stickyHeaderIndices={[0]}>
+        <ScrollView stickyHeaderIndices={[0]} style={{ flex: 1 }}>
           {fields.length > 0 && (
             <View style={styles.headerContainer}>
               <View style={styles.headerRow}>
@@ -207,10 +207,10 @@ export function Table<T extends Record<string, unknown>>({
             ))}
           </View>
 
-          <View style={{ height: 80 + bottom }} />
+          <View style={{ height: 140 + bottom }} />
         </ScrollView>
 
-        <View style={[styles.floatingToolbar, { marginBottom: bottom + 14 }]}>
+        <View style={[styles.floatingToolbar, { paddingBottom: bottom + 70 }]}>
           <Horizontal>{toolbarItems}</Horizontal>
         </View>
       </View>

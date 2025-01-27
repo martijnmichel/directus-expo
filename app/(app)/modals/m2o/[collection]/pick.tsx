@@ -77,7 +77,7 @@ export default function Collection() {
   const { bottom } = useSafeAreaInsets();
   const { t } = useTranslation();
   return (
-    <Layout>
+    <Layout safeArea={false}>
       <Stack.Screen
         options={{
           headerTitle: t("pages.modals.m2m.pick"),
