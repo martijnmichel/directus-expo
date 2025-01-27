@@ -1,3 +1,10 @@
+## [0.6.1](https://github.com/martijnmichel/directus-expo/compare/v0.6.0...v0.6.1) (2025-01-27)
+
+
+### Features
+
+* sticky table header & toolbar ([a8f5879](https://github.com/martijnmichel/directus-expo/commit/a8f58799b541b7a055a1f6d6d87225ca3ffc9260))
+
 # [0.6.0](https://github.com/martijnmichel/directus-expo/compare/v0.5.0...v0.6.0) (2025-01-26)
 
 
