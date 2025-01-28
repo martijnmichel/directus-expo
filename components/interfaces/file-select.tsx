@@ -11,6 +11,9 @@ import { Check } from "../icons";
 import { Image } from "expo-image";
 import { useFiles } from "@/state/queries/directus/core";
 import { formatFileSize } from "@/helpers/formatFileSize";
+import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
+import { Pagination } from "../content/filters/pagination";
+import { SearchFilter } from "../content/filters/search-filter-modal";
 
 interface FileSelectProps {
   onSelect?: (files: string | string[]) => void;
@@ -23,7 +26,15 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
   const [selectedFile, setSelectedFile] = useState<DirectusFile | null>(null);
   const { directus, user } = useAuth();
   const { styles } = useStyles(stylesheet);
-  const { data: files } = useFiles();
+
+  const filterContext = useDocumentsFilters();
+  const { page, limit, search, setSearch } = filterContext;
+
+  const { data: files } = useFiles({
+    page,
+    limit,
+    search,
+  });
 
   const handleSelect = (file: DirectusFile) => {
     if (multiple) {
@@ -89,6 +100,12 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
           );
         })}
       </Grid>
+
+      <PortalOutlet name="floating-toolbar">
+        <Pagination {...filterContext} total={files?.total || 0} />
+        <SearchFilter {...filterContext} />
+      </PortalOutlet>
+
       <PortalOutlet name="modal-header">
         <Button
           rounded

@@ -19,12 +19,26 @@ export function FloatingToolbar({ children }: { children: React.ReactNode }) {
   );
 }
 
+export function FloatingToolbarHost() {
+  const { t } = useTranslation();
+  const { styles } = useStyles(stylesheet);
+  const { bottom } = useSafeAreaInsets();
+
+  return (
+    <View style={[styles.toolbar]}>
+      <Horizontal>
+        <PortalHost name="floating-toolbar" />
+      </Horizontal>
+    </View>
+  );
+}
+
 const stylesheet = createStyleSheet((theme) => ({
   toolbar: {
     position: "absolute",
-    bottom: theme.spacing.md,
-    left: theme.spacing.md,
-    right: theme.spacing.md,
+    bottom: theme.spacing.lg,
+    left: theme.spacing.lg,
+    right: theme.spacing.lg,
   },
 }));
 export const ftStyles = stylesheet;

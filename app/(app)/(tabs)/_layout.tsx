@@ -88,7 +88,7 @@ export default function TabsLayout() {
 const stylesheet = createStyleSheet((theme) => ({
   tabBar: {
     backgroundColor: theme.colors.backgroundInvert,
-    height: 90,
+    height: 98,
   },
   item: {
     flex: 1,
@@ -97,7 +97,7 @@ const stylesheet = createStyleSheet((theme) => ({
     justifyContent: "center",
     alignItems: "center",
     gap: 4,
-    paddingTop: 8,
+    paddingTop: 16,
     paddingBottom: 12,
     color: "white",
   },
