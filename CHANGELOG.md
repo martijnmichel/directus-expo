@@ -1,3 +1,15 @@
+## [0.6.2](https://github.com/martijnmichel/directus-expo/compare/v0.6.1...v0.6.2) (2025-01-27)
+
+
+### Bug Fixes
+
+* positioning of toolbar ([1cfef1f](https://github.com/martijnmichel/directus-expo/commit/1cfef1f3ed35880cdc15f1adca36e27506a5cc1b))
+
+
+### Features
+
+* reset button ([63f4173](https://github.com/martijnmichel/directus-expo/commit/63f4173f53d8c7c8517b71d3d0c804506c64c234))
+
 ## [0.6.1](https://github.com/martijnmichel/directus-expo/compare/v0.6.0...v0.6.1) (2025-01-27)
 
 
