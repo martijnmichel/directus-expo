@@ -39,6 +39,10 @@ export default function TabsLayout() {
         name="modals/repeater"
         options={{ presentation: "modal", headerShown: false }}
       />
+      <Stack.Screen
+        name="modals/files"
+        options={{ presentation: "modal", headerShown: false }}
+      />
     </Stack>
   );
 }

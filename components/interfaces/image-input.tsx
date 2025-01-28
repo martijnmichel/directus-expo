@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -29,6 +29,9 @@ import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
 import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
 import { useTranslation } from "react-i18next";
+import { router } from "expo-router";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
+import EventBus from "@/utils/mitt";
 
 interface ImageInputProps {
   label?: string;
@@ -87,6 +90,18 @@ export const ImageInput = ({
       console.error("Error importing image from URL:", error);
     }
   };
+
+  useEffect(() => {
+    EventBus.on("file:pick", (file) => {
+      onChange?.(file.data);
+    });
+
+    return () => {
+      EventBus.off("file:pick", (file) => {
+        onChange?.(file.data);
+      });
+    };
+  }, []);
   return (
     <View style={formStyle.formControl}>
       {label && <Text style={formStyle.label}>{label}</Text>}
@@ -141,7 +156,26 @@ export const ImageInput = ({
                     </Modal.Content>
                   </Modal>
                 )}
+
                 {sources.includes("library") && (
+                  /**
+                  * 
+                  * TO BE DONE AND TESTED
+                  * 
+                  *  <Button
+                    rounded
+                    variant="soft"
+                    onPress={() =>
+                      router.push({
+                        pathname: "/modals/files/pick",
+                        params: { data: objectToBase64({ multiple: false }) },
+                      })
+                    }
+                  >
+                    <Gallery />
+                  </Button>
+                  */
+
                   <Modal>
                     <Modal.Trigger>
                       <Button rounded variant="soft">
