@@ -14,6 +14,7 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { Horizontal } from "../layout/Stack";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
+import { DirectusIcon } from "../display/directus-icon";
 
 export const RelatedFileListItem = <T extends keyof CoreSchema>({
   docId,
@@ -99,7 +100,7 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
         isNew && styles.listItemNew,
       ]}
     >
-      {isSortable && <DragIcon />}
+      {isSortable && <DirectusIcon name="drag_handle" />}
       <Horizontal
         style={[
           styles.content,
@@ -114,7 +115,10 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
         />
         <Text
           numberOfLines={1}
-          style={[isDeselected && styles.listItemDeselectedText]}
+          style={[
+            isDeselected && styles.listItemDeselectedText,
+            { flexShrink: 1 },
+          ]}
         >
           {file?.title || file?.filename_disk}
         </Text>
@@ -135,7 +139,7 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
         asChild
       >
         <Button variant="ghost" rounded>
-          <Edit />
+          <DirectusIcon name="edit_square" />
         </Button>
       </Link>
 
@@ -148,7 +152,11 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
         }
         rounded
       >
-        {isDeselected ? <Redo /> : <Trash />}
+        {isDeselected ? (
+          <DirectusIcon name="settings_backup_restore" />
+        ) : (
+          <DirectusIcon name="close" />
+        )}
       </Button>
     </View>
   ) : null;
@@ -168,12 +176,10 @@ const stylesheet = createStyleSheet((theme) => ({
     maxWidth: 500,
   },
   listItemDeselected: {
-    borderColor: theme.colors.error,
+    borderColor: theme.colors.errorBorder,
+    backgroundColor: theme.colors.errorBackground,
   },
-  listItemDeselectedText: {
-    color: theme.colors.error,
-    textDecorationLine: "line-through",
-  },
+  listItemDeselectedText: {},
   listItemNew: {
     borderColor: theme.colors.primary,
   },

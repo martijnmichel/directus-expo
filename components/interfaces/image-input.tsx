@@ -32,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import EventBus from "@/utils/mitt";
+import { FloatingToolbarHost } from "../display/floating-toolbar";
 
 interface ImageInputProps {
   label?: string;
@@ -187,16 +188,20 @@ export const ImageInput = ({
                       title={t("components.shared.selectFromLibrary")}
                     >
                       {({ close }) => (
-                        <ScrollView>
-                          <FileSelect
-                            onSelect={(v) => {
-                              close();
-                              requestAnimationFrame(() => {
-                                onChange?.(v);
-                              });
-                            }}
-                          />
-                        </ScrollView>
+                        <>
+                          <ScrollView>
+                            <FileSelect
+                              onSelect={(v) => {
+                                close();
+                                requestAnimationFrame(() => {
+                                  onChange?.(v);
+                                });
+                              }}
+                            />
+                            <View style={{ height: 80 }} />
+                          </ScrollView>
+                          <FloatingToolbarHost />
+                        </>
                       )}
                     </Modal.Content>
                   </Modal>

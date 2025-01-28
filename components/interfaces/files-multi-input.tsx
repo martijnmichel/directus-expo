@@ -41,6 +41,7 @@ import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
 import { mutateDocuments } from "@/state/actions/updateDocuments";
 import { useTranslation } from "react-i18next";
+import { FloatingToolbarHost } from "../display/floating-toolbar";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -228,32 +229,36 @@ export const FilesMultiInput = ({
               </Modal.Trigger>
               <Modal.Content variant="bottomSheet">
                 {({ close }) => (
-                  <ScrollView>
-                    <FileSelect
-                      multiple
-                      onSelect={(files) => {
-                        addMultipleFiles(
-                          (files as string[]).map((f) => ({
-                            [relation.field as string]: f,
-                          })),
-                          // @ts-ignore
-                          {
-                            onSuccess: (newData: any[]) => {
-                              setAddedDocIds([
-                                ...addedDocIds,
-                                ...newData.map((d) => d.id),
-                              ]);
-                              props.onChange([
-                                ...valueProp,
-                                ...newData.map((d) => d.id),
-                              ]);
-                            },
-                          }
-                        );
-                        close();
-                      }}
-                    />
-                  </ScrollView>
+                  <>
+                    <ScrollView>
+                      <FileSelect
+                        multiple
+                        onSelect={(files) => {
+                          addMultipleFiles(
+                            (files as string[]).map((f) => ({
+                              [relation.field as string]: f,
+                            })),
+                            // @ts-ignore
+                            {
+                              onSuccess: (newData: any[]) => {
+                                setAddedDocIds([
+                                  ...addedDocIds,
+                                  ...newData.map((d) => d.id),
+                                ]);
+                                props.onChange([
+                                  ...valueProp,
+                                  ...newData.map((d) => d.id),
+                                ]);
+                              },
+                            }
+                          );
+                          close();
+                        }}
+                      />
+                      <View style={{ height: 80 }} />
+                    </ScrollView>
+                    <FloatingToolbarHost />
+                  </>
                 )}
               </Modal.Content>
             </Modal>
