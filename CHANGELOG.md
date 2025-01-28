@@ -1,3 +1,10 @@
+## [0.6.4](https://github.com/martijnmichel/directus-expo/compare/v0.6.3...v0.6.4) (2025-01-28)
+
+
+### Features
+
+* o2m ([0a6eef2](https://github.com/martijnmichel/directus-expo/commit/0a6eef2fab54c0d3e099780e6fb405e617edb87a))
+
 ## [0.6.3](https://github.com/martijnmichel/directus-expo/compare/v0.6.2...v0.6.3) (2025-01-28)
 
 
