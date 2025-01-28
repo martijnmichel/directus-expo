@@ -36,6 +36,10 @@ export default function TabsLayout() {
         options={{ presentation: "modal", headerShown: false }}
       />
       <Stack.Screen
+        name="modals/o2m"
+        options={{ presentation: "modal", headerShown: false }}
+      />
+      <Stack.Screen
         name="modals/repeater"
         options={{ presentation: "modal", headerShown: false }}
       />
