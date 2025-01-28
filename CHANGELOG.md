@@ -1,3 +1,11 @@
+## [0.6.3](https://github.com/martijnmichel/directus-expo/compare/v0.6.2...v0.6.3) (2025-01-28)
+
+
+### Features
+
+* file pick modal ([a05309b](https://github.com/martijnmichel/directus-expo/commit/a05309b85d12630f3c64804c6dd20eb3b77b0de7))
+* pagination @ file select modal ([231d322](https://github.com/martijnmichel/directus-expo/commit/231d3223de28a0a1badd3b10aebcfb1e9b5669aa))
+
 ## [0.6.2](https://github.com/martijnmichel/directus-expo/compare/v0.6.1...v0.6.2) (2025-01-27)
 
 
