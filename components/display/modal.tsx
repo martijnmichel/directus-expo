@@ -195,7 +195,7 @@ const modalStyles = createStyleSheet((theme) => ({
   modalContent: {
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.lg,
-    maxHeight: "80%",
+    maxHeight: "88%",
     width: "90%",
     maxWidth: 500,
     marginHorizontal: "auto",

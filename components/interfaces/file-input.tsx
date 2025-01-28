@@ -41,6 +41,7 @@ import { Text } from "../display/typography";
 import { PortalOutlet } from "../layout/Portal";
 import OutsidePressHandler from "react-native-outside-press";
 import { useTranslation } from "react-i18next";
+import { FloatingToolbarHost } from "../display/floating-toolbar";
 
 interface ImageInputProps {
   label?: string;
@@ -291,14 +292,20 @@ export const FileInput = ({
         <Modal open={libraryOpen} onClose={() => setLibraryOpen(false)}>
           <Modal.Content variant="bottomSheet" title="Import from URL">
             {({ close }) => (
-              <ScrollView>
-                <FileSelect
-                  onSelect={(v) => {
-                    onChange?.(v as string);
-                    close();
-                  }}
-                />
-              </ScrollView>
+              <>
+                <ScrollView>
+                  <FileSelect
+                    onSelect={(v) => {
+                      close();
+                      requestAnimationFrame(() => {
+                        onChange?.(v as string);
+                      });
+                    }}
+                  />
+                  <View style={{ height: 80 }} />
+                </ScrollView>
+                <FloatingToolbarHost />
+              </>
             )}
           </Modal.Content>
         </Modal>
