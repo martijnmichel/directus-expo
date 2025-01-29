@@ -6,6 +6,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "ANDROID_HOME": "/Users/martijnvde/Library/Android/sdk"
+      },
       "channel": "development"
     },
     "preview": {
