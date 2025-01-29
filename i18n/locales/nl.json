@@ -107,7 +107,8 @@
     "sections": {
       "server": "Server",
       "user": "Gebruiker",
-      "options": "Opties"
+      "options": "Opties",
+      "app": "Applicatie"
     },
     "fields": {
       "api": "API",
@@ -118,10 +119,12 @@
       "lastname": "Achternaam",
       "email": "E-mail",
       "locale": "Taal",
-      "darkMode": "Donkere modus"
+      "darkMode": "Donkere modus",
+      "runtime": "Runtime"
     },
     "actions": {
-      "logout": "Uitloggen"
+      "logout": "Uitloggen",
+      "updateAvailable": "Update beschikbaar!"
     }
   },
   "pages": {

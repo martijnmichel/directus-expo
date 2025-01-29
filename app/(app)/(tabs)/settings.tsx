@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { Moon } from "@/components/icons/Moon";
 import { Sun } from "@/components/icons/Sun";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
+import Constants from "expo-constants";
 import {
   useServerHealth,
   useServerInfo,
@@ -28,7 +29,8 @@ import { View } from "react-native";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
-
+import * as Updates from "expo-updates";
+import { useEffect } from "react";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -40,6 +42,13 @@ export default function TabTwoScreen() {
   );
 
   const { t } = useTranslation();
+
+  const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
+    Updates.useUpdates();
+
+  useEffect(() => {
+    Updates.fetchUpdateAsync();
+  }, []);
 
   const info = [
     {
@@ -117,6 +126,37 @@ export default function TabTwoScreen() {
       component: (
         <Toggle value={currentTheme === "dark"} onValueChange={toggleTheme} />
       ),
+    },
+    {
+      type: "spacing",
+    },
+    {
+      label: t("settings.sections.app"),
+      type: "heading",
+      icon: "mobile_friendly",
+    },
+    {
+      label: t("settings.fields.runtime"),
+      value: Constants.expoConfig?.runtimeVersion?.toString(),
+    },
+    {
+      label: t("settings.fields.version"),
+      value: Constants.expoConfig?.version,
+    },
+    ...(isUpdateAvailable
+      ? [
+          {
+            type: "component",
+            component: (
+              <Button onPress={() => Updates.reloadAsync()}>
+                {t("settings.actions.updateAvailable")}
+              </Button>
+            ),
+          },
+        ]
+      : []),
+    {
+      type: "spacing",
     },
   ];
 
