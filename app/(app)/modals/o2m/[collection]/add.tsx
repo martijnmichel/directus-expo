@@ -52,7 +52,6 @@ export default function Collection() {
         <Container>
           <Section>
             <DocumentEditor
-              key={`${path}-${collection}-${id}`}
               collection={collection as keyof CoreSchema}
               id={id as string}
               submitType="raw"
