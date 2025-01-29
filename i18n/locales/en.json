@@ -107,7 +107,8 @@
     "sections": {
       "server": "Server",
       "user": "User",
-      "options": "Options"
+      "options": "Options",
+      "app": "Application"
     },
     "fields": {
       "api": "API",
@@ -118,10 +119,12 @@
       "lastname": "Lastname",
       "email": "Email",
       "locale": "Locale",
-      "darkMode": "Dark Mode"
+      "darkMode": "Dark Mode",
+      "runtime": "Runtime"
     },
     "actions": {
-      "logout": "Logout"
+      "logout": "Logout",
+      "updateAvailable": "Update available!"
     }
   },
   "pages": {
