@@ -376,8 +376,10 @@ export const M2MInput = ({
           <Horizontal spacing="xs">
             {allowCreate && (
               <Link
+                push
                 href={{
                   pathname: `/modals/m2m/[collection]/add`,
+
                   params: {
                     collection: relation.related_collection,
                     item_field: item.field,

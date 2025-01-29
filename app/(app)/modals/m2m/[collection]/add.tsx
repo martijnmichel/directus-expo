@@ -11,6 +11,7 @@ import UserCollections from "@/components/content/UserCollections";
 import {
   router,
   Stack,
+  useFocusEffect,
   useLocalSearchParams,
   useNavigation,
   usePathname,
@@ -25,6 +26,7 @@ import EventBus from "@/utils/mitt";
 import { useAuth } from "@/contexts/AuthContext";
 import { CoreSchemaDocument } from "@/types/directus";
 import { useTranslation } from "react-i18next";
+import { useCallback, useEffect } from "react";
 export default function Collection() {
   const { collection, item_field } = useLocalSearchParams();
   const id = "+";
@@ -39,11 +41,15 @@ export default function Collection() {
 
   const headerStyle = useHeaderStyles({ isModal: true });
   const { t } = useTranslation();
+
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
+        key={`${path}-${collection}-${id}`}
+        getId={() => `${path}-${collection}-${id}`}
         options={{
           headerTitle,
+
           ...headerStyle,
           presentation: "modal",
         }}
@@ -52,7 +58,6 @@ export default function Collection() {
         <Container>
           <Section>
             <DocumentEditor
-              key={`${path}-${collection}-${id}`}
               collection={collection as keyof CoreSchema}
               id={id as string}
               submitType="raw"
