@@ -31,6 +31,7 @@ import { DateUtils } from "@/utils/dayjs";
 import { useEffect } from "react";
 import { EventProvider } from "react-native-outside-press";
 import { OTAUpdate } from "@/components/OTAUpdate";
+import { StatusBar } from "expo-status-bar";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,

@@ -1,15 +1,17 @@
 import { Text } from "@/components/display/typography";
 import { Center } from "@/components/layout/Center";
-import { useAuth } from "@/contexts/AuthContext";
+import { PortalProvider } from "@/components/layout/Portal";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Redirect, Slot, Stack, Tabs } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
+import { UnistylesRuntime, useStyles } from "react-native-unistyles";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { isAuthenticated, isLoading } = useAuth();
-  const headerStyle = useHeaderStyles();
   // Add loading check
   if (isLoading) {
     return (
