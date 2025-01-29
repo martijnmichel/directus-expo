@@ -1,3 +1,16 @@
+## [0.6.5](https://github.com/martijnmichel/directus-expo/compare/v0.6.4...v0.6.5) (2025-01-29)
+
+
+### Bug Fixes
+
+* android tabs ([5b208cb](https://github.com/martijnmichel/directus-expo/commit/5b208cb46e1aed7dac1970a1c1da5262e385968d))
+
+
+### Features
+
+* eas update info ([ddc4baf](https://github.com/martijnmichel/directus-expo/commit/ddc4bafde543fd3acdac3640b7976dedad41a5d7))
+* incepted modals m2m o2m ([a2763c5](https://github.com/martijnmichel/directus-expo/commit/a2763c567a7ed206d96a7a575ea3c4b9233c84c2))
+
 ## [0.6.4](https://github.com/martijnmichel/directus-expo/compare/v0.6.3...v0.6.4) (2025-01-28)
 
 
