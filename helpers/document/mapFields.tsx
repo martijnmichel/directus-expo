@@ -48,6 +48,7 @@ import { FilesMultiInput } from "@/components/interfaces/files-multi-input";
 import { Slider } from "@/components/interfaces/slider";
 import { CollectionItemDropdown } from "@/components/interfaces/collection-item-dropdown";
 import { O2MInput } from "@/components/interfaces/o2m-input";
+import { M2AInput } from "@/components/interfaces/m2a-input";
 
 export const mapFields = ({
   fields,
@@ -623,6 +624,28 @@ export const mapFields = ({
                       fieldState: { error },
                     }) => (
                       <M2MInput
+                        {...defaultProps}
+                        onChange={onChange}
+                        value={value as number[]}
+                        item={item}
+                        docId={docId}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+              case "list-m2a":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <M2AInput
                         {...defaultProps}
                         onChange={onChange}
                         value={value as number[]}

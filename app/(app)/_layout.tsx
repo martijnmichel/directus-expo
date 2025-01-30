@@ -57,6 +57,31 @@ export default function TabsLayout() {
 
       {/**
        *
+       * M2A
+       *
+       */}
+      <Stack.Screen
+        name="modals/m2a/[collection]/add"
+        getId={({ params }) =>
+          `${params?.collection}-${params?.item_field}-add-m2a`
+        }
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="modals/m2a/[collection]/pick"
+        getId={({ params }) =>
+          `${params?.related_collection}-${params?.junction_collection}-${params?.item_field}-pick-m2a`
+        }
+        options={{ presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="modals/m2a/[collection]/[id]/index"
+        getId={({ params }) => `${params?.collection}-${params?.id}-edit-m2a`}
+        options={{ presentation: "modal" }}
+      />
+
+      {/**
+       *
        * M2O
        *
        */}

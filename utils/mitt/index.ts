@@ -4,6 +4,12 @@ import mitt, { Emitter } from "mitt";
 
 // Define your event types here
 export type MittEvents = {
+  "m2a:add": {
+    data: CoreSchemaDocument;
+    field: string;
+    collection: keyof CoreSchema;
+  };
+  "m2a:pick": { data: CoreSchemaDocument; field: string };
   "m2m:add": { data: CoreSchemaDocument; field: string };
   "m2m:remove": { data: CoreSchemaDocument; field: string };
   "m2m:update": { collection: keyof CoreSchema; docId: string | number };

@@ -131,6 +131,14 @@ export const useFields = (collection: keyof CoreSchema) => {
   });
 };
 
+export const useAllFields = () => {
+  const { directus, user } = useAuth();
+  return useQuery({
+    queryKey: ["fields-all", user?.id],
+    queryFn: () => directus?.request(readFields()),
+  });
+};
+
 export const usePresets = () => {
   const { directus, user } = useAuth();
   return useQuery({
