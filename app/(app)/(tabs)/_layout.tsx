@@ -36,10 +36,15 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: "rgba(255, 255, 255, 0.8)",
         popToTopOnBlur: true,
         headerShown: false,
         tabBarIconStyle: {
           height: 36,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          color: "rgba(255, 255, 255, 0.8)",
         },
         tabBarStyle: {
           backgroundColor: theme.colors.backgroundInvert,
