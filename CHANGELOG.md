@@ -1,3 +1,16 @@
+## [0.6.9](https://github.com/martijnmichel/directus-expo/compare/v0.6.8...v0.6.9) (2025-01-31)
+
+
+### Bug Fixes
+
+* sort on m2a new items ([50e12ac](https://github.com/martijnmichel/directus-expo/commit/50e12acf6bdf6d1f03787f8ba4a4cffa002e4db0))
+* sort with new items on m2m ([98ccc49](https://github.com/martijnmichel/directus-expo/commit/98ccc49da733c99e620d49ea4a7d6242de04c8cd))
+
+
+### Features
+
+* filter m2a based on current value ([3b7023d](https://github.com/martijnmichel/directus-expo/commit/3b7023df104ebc13cb4ff20d400624d503f7b206))
+
 ## [0.6.8](https://github.com/martijnmichel/directus-expo/compare/v0.6.7...v0.6.8) (2025-01-31)
 
 ## [0.6.7](https://github.com/martijnmichel/directus-expo/compare/v0.6.6...v0.6.7) (2025-01-31)
