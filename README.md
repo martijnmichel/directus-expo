@@ -23,9 +23,9 @@ Supported interfaces:
 - Radio Buttons
 
 **Relational**
-- file
-- image
-- files
+- File
+- Image
+- Files
 - Builder (M2A)
 - Many to Many
 - One to Many
