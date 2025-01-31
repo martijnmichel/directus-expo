@@ -386,7 +386,7 @@ export const M2AInput = ({
             >
               {orderBy(
                 [...value.create, ...value.update, ...value.delete],
-                sortField
+                sortField || ""
               ).map((junctionDoc, index) => {
                 if (typeof junctionDoc === "number") {
                   junctionDoc = { id: junctionDoc };

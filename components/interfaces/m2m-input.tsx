@@ -150,15 +150,37 @@ export const M2MInput = ({
   }, [valueProp, props.onChange, relation, junction, value]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder.map((id) => parseInt(id as string));
+    const newOrderIds = newOrder;
+    console.log({ newOrderIds });
     props.onChange({
-      create: value.create.map((doc) => ({
-        ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
-      })),
+      create: value.create.map((doc) => {
+        console.log(
+          `${
+            doc?.[relation?.field as any]?.[
+              relation?.schema.foreign_key_column as any
+            ]
+          }new`
+        );
+        return {
+          ...doc,
+          [sortField as string]: findIndex(
+            newOrderIds,
+            (id) =>
+              id ===
+              `${
+                doc?.[relation?.field as any]?.[
+                  relation?.schema.foreign_key_column as any
+                ]
+              }new`
+          ),
+        };
+      }),
       update: value.update.map((doc) => ({
         ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
+        [sortField as string]: findIndex(
+          newOrderIds,
+          (id) => id === `${doc.id}existing`
+        ),
       })),
       delete: value.delete,
     });
@@ -192,7 +214,7 @@ export const M2MInput = ({
     refetch();
   }, [value.update, value.create, relation, junction, refetch]);
 
-  /**console.log({
+  console.log({
     item,
     docId,
     valueProp,
@@ -200,7 +222,7 @@ export const M2MInput = ({
     junction,
     relation,
     pickedItems,
-  }); */
+  });
 
   const Item = <T extends keyof CoreSchema>({
     docId,
@@ -329,7 +351,7 @@ export const M2MInput = ({
             >
               {orderBy(
                 [...value.create, ...value.update, ...value.delete],
-                sortField || relation?.schema.foreign_key_column || "id"
+                sortField || ""
               ).map((junctionDoc, index) => {
                 if (typeof junctionDoc === "number") {
                   junctionDoc = { id: junctionDoc };
@@ -373,7 +395,7 @@ export const M2MInput = ({
                   return (
                     <Draggable
                       key={id}
-                      id={id?.toString() || index.toString()}
+                      id={id?.toString() + "new"}
                       disabled={!sortField}
                     >
                       <RelatedListItem
@@ -415,7 +437,7 @@ export const M2MInput = ({
                 return (
                   <Draggable
                     key={id + "draggable"}
-                    id={id?.toString()}
+                    id={id?.toString() + "existing"}
                     disabled={!sortField}
                   >
                     <Item
