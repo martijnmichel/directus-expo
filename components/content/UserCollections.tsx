@@ -79,8 +79,10 @@ export default function UserCollections() {
           (!parent && !collection.meta?.group)
         ) {
           const hasChildren =
-            filter(data, (c) => c.meta?.group === collection.collection)
-              .length > 0;
+            filter(
+              data,
+              (c) => c.meta?.group === collection.collection && !c.meta?.hidden
+            ).length > 0;
           return hasChildren ? (
             <CollectionGroup
               collection={collection}
