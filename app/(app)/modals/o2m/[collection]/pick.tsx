@@ -69,6 +69,36 @@ export default function Collection() {
       page,
       limit,
       search,
+      filter: {
+        _and: [
+          ...(value?.length > 0
+            ? [
+                {
+                  [getPrimaryKey(fields) as any]: {
+                    _nin: value,
+                  },
+                },
+              ]
+            : []),
+          ...(doc_id &&
+          doc_id !== "+" &&
+          junction_collection &&
+          related_field &&
+          junction_field
+            ? [
+                {
+                  [`$FOLLOW(${junction_collection},${related_field})`]: {
+                    _none: {
+                      [junction_field as any]: {
+                        _eq: doc_id,
+                      },
+                    },
+                  },
+                },
+              ]
+            : []),
+        ],
+      },
     }
   );
 
