@@ -452,9 +452,8 @@ export const O2MInput = ({
                   collection: relation.collection,
                   related_field: relation.field,
                   current_value: [
-                    pickedItems?.items?.map(
-                      (i: any) => i?.[relation.schema.column as any]
-                    ),
+                    ...map(value.update, (v) => v?.[relatedPk]),
+                    ...map(value.create, (v) => v?.[relatedPk]),
                   ].join(","),
                   doc_id: docId,
                   item_field: item.field,
