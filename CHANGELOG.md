@@ -1,3 +1,10 @@
+## [0.6.6](https://github.com/martijnmichel/directus-expo/compare/v0.6.5...v0.6.6) (2025-01-31)
+
+
+### Bug Fixes
+
+* o2m input working with pk ([9f1c1e4](https://github.com/martijnmichel/directus-expo/commit/9f1c1e42022e23403b62c49cf69f9a25a8c4a8ee))
+
 ## [0.6.5](https://github.com/martijnmichel/directus-expo/compare/v0.6.4...v0.6.5) (2025-01-29)
 
 
