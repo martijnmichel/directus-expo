@@ -89,7 +89,8 @@
       "selectFile": "Selecteer een bestand",
       "uploadFromDevice": "Uploaden vanaf apparaat",
       "importFromUrl": "Importeren vanaf URL",
-      "selectFromLibrary": "Selecteer uit bibliotheek"
+      "selectFromLibrary": "Selecteer uit bibliotheek",
+      "chooseCollection": "Kies verzameling"
     },
     "apiSelect": {
       "confirmDelete": "Wil je deze API echt verwijderen?",

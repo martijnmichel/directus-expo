@@ -154,13 +154,15 @@ const ModalContent = ({
               <View style={styles.bottomSheetHandle} />
             )}
 
-            <View style={styles.header}>
-              <View style={styles.headerContent}>
-                {title && <H2>{title}</H2>}
-                <View style={styles.actions}>{actions}</View>
-                <PortalHost name="modal-header" />
+            {(!!title || !!actions) && (
+              <View style={styles.header}>
+                <View style={styles.headerContent}>
+                  {title && <H2>{title}</H2>}
+                  <View style={styles.actions}>{actions}</View>
+                  <PortalHost name="modal-header" />
+                </View>
               </View>
-            </View>
+            )}
 
             {isOpen &&
               (typeof children === "function" ? children({ close }) : children)}
