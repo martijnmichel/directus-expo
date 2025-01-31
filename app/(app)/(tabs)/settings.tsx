@@ -31,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
+import { ExternalLink } from "@/components/ExternalLink";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -143,6 +144,24 @@ export default function TabTwoScreen() {
       label: t("settings.fields.version"),
       value: Constants.expoConfig?.version,
     },
+    {
+      label: t("settings.fields.support"),
+      type: "component",
+      component: (
+        <ExternalLink href="https://github.com/martijnmichel/directus-expo/issues">
+          {t("settings.actions.reportIssue")}
+        </ExternalLink>
+      ),
+    },
+    {
+      label: t("settings.fields.sponsorship"),
+      type: "component",
+      component: (
+        <ExternalLink href="https://github.com/sponsors/martijnmichel">
+          {t("settings.actions.becomeSponsor")}
+        </ExternalLink>
+      ),
+    },
     ...(isUpdateAvailable
       ? [
           {
@@ -188,16 +207,16 @@ export default function TabTwoScreen() {
                           style={{ alignItems: "center" }}
                         >
                           {item.label && (
-                            <Text style={{ flex: 1 }}>{item.label}</Text>
+                            <Text style={{ flex: 2 }}>{item.label}</Text>
                           )}
-                          <View style={{ flex: 3 }}>{item.component}</View>
+                          <View style={{ flex: 5 }}>{item.component}</View>
                         </Horizontal>
                       );
                     default:
                       return !!item.value ? (
                         <Horizontal key={`default-${index}`}>
-                          <Text style={{ flex: 1 }}>{item.label}</Text>
-                          <Text style={{ flex: 3 }}>{item.value}</Text>
+                          <Text style={{ flex: 2 }}>{item.label}</Text>
+                          <Text style={{ flex: 5 }}>{item.value}</Text>
                         </Horizontal>
                       ) : null;
                   }

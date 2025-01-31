@@ -121,11 +121,15 @@
       "email": "E-mail",
       "locale": "Taal",
       "darkMode": "Donkere modus",
-      "runtime": "Runtime"
+      "runtime": "Runtime",
+      "support": "Ondersteuning",
+      "sponsorship": "Sponsoring"
     },
     "actions": {
       "logout": "Uitloggen",
-      "updateAvailable": "Update beschikbaar!"
+      "updateAvailable": "Update beschikbaar!",
+      "reportIssue": "Rapporteer",
+      "becomeSponsor": "Word een sponsor"
     }
   },
   "pages": {

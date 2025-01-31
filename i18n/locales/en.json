@@ -121,11 +121,15 @@
       "email": "Email",
       "locale": "Locale",
       "darkMode": "Dark Mode",
-      "runtime": "Runtime"
+      "runtime": "Runtime",
+      "support": "Support",
+      "sponsorship": "Sponsorship"
     },
     "actions": {
       "logout": "Logout",
-      "updateAvailable": "Update available!"
+      "updateAvailable": "Update available!",
+      "reportIssue": "Report",
+      "becomeSponsor": "Become a sponsor"
     }
   },
   "pages": {
