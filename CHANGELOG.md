@@ -1,3 +1,10 @@
+## [0.6.7](https://github.com/martijnmichel/directus-expo/compare/v0.6.6...v0.6.7) (2025-01-31)
+
+
+### Features
+
+* filter o2m based on current value ([27e6f35](https://github.com/martijnmichel/directus-expo/commit/27e6f35f101b52936a7ad916ad4fab3556ded59f))
+
 ## [0.6.6](https://github.com/martijnmichel/directus-expo/compare/v0.6.5...v0.6.6) (2025-01-31)
 
 
