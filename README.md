@@ -4,7 +4,12 @@
 
 Transform your content management experience with Directus, the powerful open data platform now available on mobile. Access, manage, and control your content with ease, right from your smartphone or tablet.
 
-Supported interfaces:
+App status: Open testing
+
+iOS: https://testflight.apple.com/join/pWYXpQtY
+Android: https://play.google.com/apps/internaltest/4700795225710174745 (optionallymessage me for a promo code)
+
+### Supported interfaces
 
 **Inputs**
 - Text
@@ -46,7 +51,7 @@ _TBD_
 
 ---
 
-Sponsor my work on the Directus Mobile app
+I'm an independent developer dedicated to creating a better mobile experience for Directus through my iOS and Android apps. This project is built with passion and dedication, maintained by me to provide a high-quality, user-friendly mobile solution for the Directus community. Your sponsorship directly supports continued development, maintenance, and innovation of these mobile apps.
 
 ---
 
