@@ -21,7 +21,7 @@ export const RelatedListItem = ({
   isDeselected,
   prepend,
 }: RelatedListItemProps) => {
-  const { styles } = useStyles(listStyles);
+  const { styles, theme } = useStyles(listStyles);
   return (
     <Horizontal
       spacing="md"
@@ -32,14 +32,14 @@ export const RelatedListItem = ({
       ]}
     >
       {isDraggable && <DirectusIcon name="drag_handle" />}
-      {prepend}
+      {prepend && <View>{prepend}</View>}
       <Text
         numberOfLines={1}
         style={[
           styles.content,
           isDeselected && styles.listItemDeselectedText,
-          isDraggable && { marginLeft: 12 },
           isNew && styles.listItemNew,
+          children === "--" && { color: theme.colors.textMuted },
         ]}
       >
         {children}

@@ -452,8 +452,8 @@ export const O2MInput = ({
                   collection: relation.collection,
                   related_field: relation.field,
                   current_value: [
-                    ...map(value.update, (v) => v?.[relatedPk]),
-                    ...map(value.create, (v) => v?.[relatedPk]),
+                    ...map(value.update, (v) => (v as any)?.[relatedPk]),
+                    ...map(value.create, (v) => (v as any)?.[relatedPk]),
                   ].join(","),
                   doc_id: docId,
                   item_field: item.field,

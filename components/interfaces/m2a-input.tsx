@@ -53,6 +53,7 @@ import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { DirectusErrorResponse } from "@/types/directus";
+import { RelatedListItem } from "../display/related-listitem";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -247,40 +248,15 @@ export const M2AInput = ({
 
     if (isNew) {
       return (
-        <Draggable key={id} id={id?.toString()} disabled={!sortField}>
-          <View style={[styles.listItem, styles.listItemNew]} key={id}>
-            {!!sortField && <DirectusIcon name="drag_handle" />}
-
-            <Horizontal>
-              <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
-                {collection?.collection}:
-              </Text>{" "}
-              <Text
-                numberOfLines={1}
-                style={[
-                  styles.content,
-                  isDeselected && styles.listItemDeselectedText,
-                  !!sortField && { marginLeft: 12 },
-                  !text && { color: theme.colors.textMuted },
-                ]}
-              >
-                {text || "--"}
-              </Text>
-            </Horizontal>
-
+        <RelatedListItem
+          isNew
+          isDraggable={!!sortField}
+          append={
             <Button
               variant="ghost"
               rounded
               style={{ marginLeft: "auto" }}
               onPress={() => {
-                console.log({
-                  field: relation.field,
-                  primaryKey,
-                  id,
-                  create: value.create.filter(
-                    (v) => v?.[relation.field]?.[primaryKey] !== id
-                  ),
-                });
                 props.onChange({
                   ...value,
                   create: value.create.filter(
@@ -291,74 +267,63 @@ export const M2AInput = ({
             >
               <DirectusIcon name="delete" />
             </Button>
-          </View>
-        </Draggable>
+          }
+        >
+          {text || "--"}
+        </RelatedListItem>
       );
     }
 
     return junctionDoc ? (
-      <View
-        style={[
-          styles.listItem,
-          isDeselected && styles.listItemDeselected,
-          isNew && styles.listItemNew,
-        ]}
-      >
-        {isSortable && <DirectusIcon name="drag_handle" />}
-
-        <Horizontal>
+      <RelatedListItem
+        isDraggable={!!sortField}
+        isDeselected={isDeselected}
+        prepend={
           <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
             {collection?.collection}:
-          </Text>{" "}
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.content,
-              isDeselected && styles.listItemDeselectedText,
-              isSortable && { marginLeft: 12 },
-            ]}
-          >
-            {text}
           </Text>
-        </Horizontal>
-
-        <Button
-          variant="ghost"
-          style={{ marginLeft: "auto" }}
-          rounded
-          onPress={() => {
-            if (isDeselected) {
-              props.onChange({
-                ...value,
-                update: [
-                  ...value.update,
-                  {
-                    id: id as number,
-                    ...(sortField && {
-                      [sortField]: (
-                        junctionDoc?.item as { [key: string]: any }
-                      )[sortField as string],
-                    }),
-                  },
-                ],
-                delete: value.delete.filter((v) => v !== id),
-              });
-            } else {
-              props.onChange({
-                ...value,
-                update: value.update.filter((v) => v?.id !== id),
-                delete: [...value.delete, id as number],
-              });
-            }
-          }}
-        >
-          {isDeselected ? (
-            <DirectusIcon name="settings_backup_restore" />
-          ) : (
-            <DirectusIcon name="close" />
-          )}
-        </Button>
-      </View>
+        }
+        append={
+          <Button
+            variant="ghost"
+            style={{ marginLeft: "auto" }}
+            rounded
+            onPress={() => {
+              if (isDeselected) {
+                props.onChange({
+                  ...value,
+                  update: [
+                    ...value.update,
+                    {
+                      id: id as number,
+                      ...(sortField && {
+                        [sortField]: (
+                          junctionDoc?.item as { [key: string]: any }
+                        )[sortField as string],
+                      }),
+                    },
+                  ],
+                  delete: value.delete.filter((v) => v !== id),
+                });
+              } else {
+                props.onChange({
+                  ...value,
+                  update: value.update.filter((v) => v?.id !== id),
+                  delete: [...value.delete, id as number],
+                });
+              }
+            }}
+          >
+            {isDeselected ? (
+              <DirectusIcon name="settings_backup_restore" />
+            ) : (
+              <DirectusIcon name="close" />
+            )}
+          </Button>
+        }
+      >
+        {text}
+      </RelatedListItem>
     ) : null;
   };
 
