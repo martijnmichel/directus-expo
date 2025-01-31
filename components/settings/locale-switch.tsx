@@ -27,7 +27,6 @@ export const LocaleSelect = () => {
   return (
     <Select
       value={i18n.language}
-      helper={t("components.localeSwitch.helperText")}
       onValueChange={(value) => {
         i18n.changeLanguage(value as string);
         DateUtils.setLocale(value as string);
