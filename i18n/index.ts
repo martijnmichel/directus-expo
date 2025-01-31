@@ -8,30 +8,30 @@ import { DirectusIconName } from "@/components/display/directus-icon";
 
 i18n.use(initReactI18next).init({
   resources: {
-    en: {
+    "en-US": {
       translation: en,
     },
-    nl: {
+    "nl-NL": {
       translation: nl,
     },
   },
-  lng: "en", // default language
-  fallbackLng: "en",
+  lng: "en-US", // default language
+  fallbackLng: "en-US",
   interpolation: {
     escapeValue: false,
   },
 });
 
-export const Locales = ["en", "nl"];
+export const Locales = ["en-US", "nl-NL"];
 
 export const localeSettings = {
-  en: {
+  "en-US": {
     label: "English",
     icon: "globe",
     flag: "🇬🇧" as DirectusIconName,
     code: "en-US",
   },
-  nl: {
+  "nl-NL": {
     label: "Nederlands",
     icon: "globe",
     flag: "🇳🇱" as DirectusIconName,

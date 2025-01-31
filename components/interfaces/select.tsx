@@ -19,6 +19,7 @@ interface SelectOption {
   value: string | number;
   icon?: DirectusIconName;
   color?: string;
+  append?: ReactNode;
 }
 
 interface SelectProps {
@@ -168,6 +169,7 @@ export const Select = ({
                   >
                     {item.text}
                   </Text>
+                  <View style={styles.optionAppend}>{item.append}</View>
                 </Pressable>
               )}
             />
@@ -237,5 +239,8 @@ const selectStyles = createStyleSheet((theme) => ({
     alignItems: "center",
     justifyContent: "center",
     marginRight: theme.spacing.md,
+  },
+  optionAppend: {
+    marginLeft: "auto",
   },
 }));

@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { serverHealth, serverInfo } from "@directus/sdk";
+import { readItems, serverHealth, serverInfo } from "@directus/sdk";
 import { useQuery } from "@tanstack/react-query";
 
 export const useServerHealth = () => {
@@ -17,6 +17,21 @@ export const useServerInfo = () => {
   return useQuery({
     queryKey: ["serverInfo", directus?.url.origin],
     queryFn: () => directus?.request(serverInfo()),
+    enabled: !!directus,
+  });
+};
+
+export const useLanguages = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["languages", directus?.url.origin],
+
+    queryFn: () =>
+      // @ts-ignore works but is not in the SDK
+      directus?.request(readItems("languages")) as {
+        code: string;
+        name: string;
+      }[],
     enabled: !!directus,
   });
 };

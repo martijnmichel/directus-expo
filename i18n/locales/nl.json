@@ -102,6 +102,10 @@
     },
     "loading": {
       "text": "Uw sessie vernieuwen ..."
+    },
+    "localeSwitch": {
+      "supported": "Ondersteund",
+      "helperText": "* Niet -ondersteunde talen veranderen alleen de vertalingen van uw inhoud."
     }
   },
   "settings": {

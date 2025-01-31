@@ -102,6 +102,10 @@
     },
     "loading": {
       "text": "Refreshing your session..."
+    },
+    "localeSwitch": {
+      "supported": "Supported",
+      "helperText": "* unsupported languages only change the translations of your content."
     }
   },
   "settings": {
