@@ -89,7 +89,8 @@
       "selectFile": "Select a file",
       "uploadFromDevice": "Upload from device",
       "importFromUrl": "Import from URL",
-      "selectFromLibrary": "Select from library"
+      "selectFromLibrary": "Select from library",
+      "chooseCollection": "Choose collection"
     },
     "apiSelect": {
       "editApi": "Edit API",

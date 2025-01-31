@@ -21,6 +21,7 @@ import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { findIndex, get, map, orderBy, uniq } from "lodash";
 import {
+  Href,
   Link,
   RelativePathString,
   router,
@@ -175,6 +176,7 @@ export const M2AInput = ({
     valueProp,
     value,
     junction,
+    sortField,
     relation,
   });
 
@@ -182,15 +184,12 @@ export const M2AInput = ({
     id,
     isNew,
     isDeselected,
-    isSortable,
   }: {
     id: string | number;
     isNew?: boolean;
     isDeselected?: boolean;
-    isSortable?: boolean;
   }) => {
     const { styles, theme } = useStyles();
-    const [addOpen, setAddOpen] = useState(false);
 
     const { data: junctionDoc, error } = useDocument({
       collection: junction?.collection as keyof CoreSchema,
@@ -318,9 +317,11 @@ export const M2AInput = ({
   const CollectionLink = ({
     variant,
     collection,
+    onPress,
   }: {
     variant: "add" | "pick";
     collection: string;
+    onPress: (href: Href) => void;
   }) => {
     const { data: pickedItems, refetch } = useDocuments(
       collection as keyof CoreSchema,
@@ -337,24 +338,26 @@ export const M2AInput = ({
     return (
       !!junction &&
       !!relation && (
-        <Link
-          href={{
-            pathname: `/modals/m2a/[collection]/${variant}`,
-            params: {
-              collection: collection,
-              junction_collection: junction.collection,
-              related_collection: relation.related_collection,
-              related_field: relation.field,
-              current_value: "",
-              junction_field: junction.field,
-              doc_id: docId,
-              item_field: item.field,
-            },
+        <Button
+          variant="ghost"
+          onPress={() => {
+            onPress({
+              pathname: `/modals/m2a/[collection]/${variant}`,
+              params: {
+                collection: collection,
+                junction_collection: junction.collection,
+                related_collection: relation.related_collection,
+                related_field: relation.field,
+                current_value: "",
+                junction_field: junction.field,
+                doc_id: docId,
+                item_field: item.field,
+              },
+            });
           }}
-          asChild
         >
-          <Button variant="ghost">{collection}</Button>
-        </Link>
+          {collection}
+        </Button>
       )
     );
   };
@@ -401,12 +404,7 @@ export const M2AInput = ({
                     id={id?.toString()}
                     disabled={!sortField}
                   >
-                    <Item
-                      id={id}
-                      isNew={isNew}
-                      isDeselected={isDeselected}
-                      isSortable={!!sortField}
-                    />
+                    <Item id={id} isNew={isNew} isDeselected={isDeselected} />
                   </Draggable>
                 );
               })}
@@ -447,7 +445,7 @@ export const M2AInput = ({
               <Modal.Trigger>
                 <Button>{t("components.shared.createNew")}</Button>
               </Modal.Trigger>
-              <Modal.Content>
+              <Modal.Content variant="quickView">
                 {({ close }) => {
                   return (
                     <Vertical>
@@ -456,6 +454,10 @@ export const M2AInput = ({
                         (collection) => (
                           <CollectionLink
                             variant="add"
+                            onPress={(href) => {
+                              router.push(href);
+                              close();
+                            }}
                             collection={collection}
                           />
                         )
@@ -470,7 +472,7 @@ export const M2AInput = ({
               <Modal.Trigger>
                 <Button>{t("components.shared.addExisting")}</Button>
               </Modal.Trigger>
-              <Modal.Content>
+              <Modal.Content variant="quickView">
                 {({ close }) => {
                   return (
                     <Vertical>
@@ -479,6 +481,10 @@ export const M2AInput = ({
                         (collection) => (
                           <CollectionLink
                             variant="pick"
+                            onPress={(href) => {
+                              router.push(href);
+                              close();
+                            }}
                             collection={collection}
                           />
                         )
