@@ -50,6 +50,7 @@ import { parseTemplate } from "@/helpers/document/template";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
+import { RelatedListItem } from "../display/related-listitem";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -266,47 +267,38 @@ export const M2MInput = ({
                       id={id?.toString() || index.toString()}
                       disabled={!sortField}
                     >
-                      <View
-                        style={[styles.listItem, styles.listItemNew]}
-                        key={id}
+                      <RelatedListItem
+                        isNew
+                        isDraggable={!!sortField}
+                        append={
+                          <Button
+                            variant="ghost"
+                            rounded
+                            onPress={() => {
+                              console.log({
+                                field: relation.field,
+                                primaryKey,
+                                id,
+                                create: value.create.filter(
+                                  (v) =>
+                                    v?.[relation.field]?.[primaryKey] !== id
+                                ),
+                              });
+                              props.onChange({
+                                ...value,
+                                create: value.create.filter(
+                                  (v) =>
+                                    v?.[relation.field]?.[primaryKey] !== id
+                                ),
+                              });
+                            }}
+                          >
+                            <DirectusIcon name="delete" />
+                          </Button>
+                        }
                       >
-                        {!!sortField && <DirectusIcon name="drag_handle" />}
-
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.content,
-                            isDeselected && styles.listItemDeselectedText,
-                            !!sortField && { marginLeft: 12 },
-                            !text && { color: theme.colors.textMuted },
-                          ]}
-                        >
-                          {text || "--"}
-                        </Text>
-
-                        <Button
-                          variant="ghost"
-                          rounded
-                          onPress={() => {
-                            console.log({
-                              field: relation.field,
-                              primaryKey,
-                              id,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id
-                              ),
-                            });
-                            props.onChange({
-                              ...value,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id
-                              ),
-                            });
-                          }}
-                        >
-                          <DirectusIcon name="delete" />
-                        </Button>
-                      </View>
+                        {text || "--"}
+                      </RelatedListItem>
                     </Draggable>
                   );
                 }

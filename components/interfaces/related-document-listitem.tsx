@@ -13,6 +13,7 @@ import { EventBus } from "@/utils/mitt";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
+import { RelatedListItem } from "../display/related-listitem";
 
 export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   docId,
@@ -89,60 +90,51 @@ export const RelatedDocumentListItem = <T extends keyof CoreSchema>({
   }
 
   return doc ? (
-    <View
-      style={[
-        styles.listItem,
-        isDeselected && styles.listItemDeselected,
-        isNew && styles.listItemNew,
-      ]}
+    <RelatedListItem
+      isDeselected={isDeselected}
+      isNew={isNew}
+      isDraggable={isSortable}
+      append={
+        <>
+          <Link
+            href={{
+              pathname: `/modals/m2m/[collection]/[id]`,
+              params: {
+                collection: relation.related_collection,
+                id: (
+                  doc?.[
+                    junction.meta.junction_field as keyof typeof doc
+                  ] as CoreSchemaDocument
+                )?.[getPrimaryKey(fields) as any],
+              },
+            }}
+            asChild
+          >
+            <Button variant="ghost" rounded>
+              <DirectusIcon name="edit_square" />
+            </Button>
+          </Link>
+
+          <Button
+            variant="ghost"
+            onPress={() =>
+              isDeselected
+                ? onAdd?.(doc as Record<string, unknown>)
+                : onDelete?.(doc as Record<string, unknown>)
+            }
+            rounded
+          >
+            {isDeselected ? (
+              <DirectusIcon name="settings_backup_restore" />
+            ) : (
+              <DirectusIcon name="close" />
+            )}
+          </Button>
+        </>
+      }
     >
-      {isSortable && <DirectusIcon name="drag_handle" />}
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.content,
-          isDeselected && styles.listItemDeselectedText,
-          isSortable && { marginLeft: 12 },
-        ]}
-      >
-        {parseTemplate(template, doc, fields)}
-      </Text>
-
-      <Link
-        href={{
-          pathname: `/modals/m2m/[collection]/[id]`,
-          params: {
-            collection: relation.related_collection,
-            id: (
-              doc?.[
-                junction.meta.junction_field as keyof typeof doc
-              ] as CoreSchemaDocument
-            )?.[getPrimaryKey(fields) as any],
-          },
-        }}
-        asChild
-      >
-        <Button variant="ghost" rounded>
-          <DirectusIcon name="edit_square" />
-        </Button>
-      </Link>
-
-      <Button
-        variant="ghost"
-        onPress={() =>
-          isDeselected
-            ? onAdd?.(doc as Record<string, unknown>)
-            : onDelete?.(doc as Record<string, unknown>)
-        }
-        rounded
-      >
-        {isDeselected ? (
-          <DirectusIcon name="settings_backup_restore" />
-        ) : (
-          <DirectusIcon name="close" />
-        )}
-      </Button>
-    </View>
+      {parseTemplate(template, doc, fields)}
+    </RelatedListItem>
   ) : null;
 };
 

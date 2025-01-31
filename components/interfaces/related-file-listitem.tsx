@@ -15,6 +15,7 @@ import { Horizontal } from "../layout/Stack";
 import { Image } from "expo-image";
 import { useAuth } from "@/contexts/AuthContext";
 import { DirectusIcon } from "../display/directus-icon";
+import { RelatedListItem } from "../display/related-listitem";
 
 export const RelatedFileListItem = <T extends keyof CoreSchema>({
   docId,
@@ -93,72 +94,57 @@ export const RelatedFileListItem = <T extends keyof CoreSchema>({
   }
 
   return doc && file ? (
-    <View
-      style={[
-        styles.listItem,
-        isDeselected && styles.listItemDeselected,
-        isNew && styles.listItemNew,
-      ]}
-    >
-      {isSortable && <DirectusIcon name="drag_handle" />}
-      <Horizontal
-        style={[
-          styles.content,
-
-          isSortable && { marginLeft: 12 },
-          { flexShrink: 1 },
-        ]}
-      >
+    <RelatedListItem
+      isDraggable={isSortable}
+      isDeselected={isDeselected}
+      isNew={isNew}
+      prepend={
         <Image
           source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
           style={{ width: 28, height: 28, borderRadius: 4 }}
         />
-        <Text
-          numberOfLines={1}
-          style={[
-            isDeselected && styles.listItemDeselectedText,
-            { flexShrink: 1 },
-          ]}
-        >
-          {file?.title || file?.filename_disk}
-        </Text>
-      </Horizontal>
+      }
+      append={
+        <>
+          <Link
+            href={{
+              pathname: `/modals/m2m/[collection]/[id]`,
+              params: {
+                collection: relation.related_collection,
+                id: (
+                  doc?.[
+                    junction.meta.junction_field as keyof typeof doc
+                  ] as CoreSchemaDocument
+                )?.id,
+              },
+            }}
+            asChild
+          >
+            <Button variant="ghost" rounded>
+              <DirectusIcon name="edit_square" />
+            </Button>
+          </Link>
 
-      <Link
-        href={{
-          pathname: `/modals/m2m/[collection]/[id]`,
-          params: {
-            collection: relation.related_collection,
-            id: (
-              doc?.[
-                junction.meta.junction_field as keyof typeof doc
-              ] as CoreSchemaDocument
-            )?.id,
-          },
-        }}
-        asChild
-      >
-        <Button variant="ghost" rounded>
-          <DirectusIcon name="edit_square" />
-        </Button>
-      </Link>
-
-      <Button
-        variant="ghost"
-        onPress={() =>
-          isDeselected
-            ? onAdd?.(doc as Record<string, unknown>)
-            : onDelete?.(doc as Record<string, unknown>)
-        }
-        rounded
-      >
-        {isDeselected ? (
-          <DirectusIcon name="settings_backup_restore" />
-        ) : (
-          <DirectusIcon name="close" />
-        )}
-      </Button>
-    </View>
+          <Button
+            variant="ghost"
+            onPress={() =>
+              isDeselected
+                ? onAdd?.(doc as Record<string, unknown>)
+                : onDelete?.(doc as Record<string, unknown>)
+            }
+            rounded
+          >
+            {isDeselected ? (
+              <DirectusIcon name="settings_backup_restore" />
+            ) : (
+              <DirectusIcon name="close" />
+            )}
+          </Button>
+        </>
+      }
+    >
+      {file.title || file.filename_disk}
+    </RelatedListItem>
   ) : null;
 };
 
