@@ -8,10 +8,7 @@ import {
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import {
-  listStyles,
-  RelatedDocumentListItem,
-} from "./related-document-listitem";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -51,6 +48,8 @@ import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { RelatedListItem } from "../display/related-listitem";
+import { DirectusErrorResponse } from "@/types/directus";
+import { CoreSchemaDocument } from "@/types/directus";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -81,8 +80,6 @@ export const M2MInput = ({
   ...props
 }: M2MInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
-  const { styles } = useStyles(listStyles);
-  const { theme } = useStyles();
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
@@ -205,6 +202,118 @@ export const M2MInput = ({
     pickedItems,
   }); */
 
+  const Item = <T extends keyof CoreSchema>({
+    docId,
+    junction,
+    relation,
+    template,
+    onDelete,
+    onAdd,
+    isNew,
+    isDeselected,
+    isSortable,
+    ...props
+  }: {
+    docId: string | number;
+    junction: ReadRelationOutput<CoreSchema>;
+    relation: ReadRelationOutput<CoreSchema>;
+    template?: string;
+    onDelete?: (doc: Record<string, unknown>) => void;
+    onAdd?: (doc: Record<string, unknown>) => void;
+    isNew?: boolean;
+    isDeselected?: boolean;
+    isSortable?: boolean;
+  }) => {
+    const {
+      data: doc,
+      isLoading,
+      refetch,
+      error,
+    } = useDocument({
+      collection: junction?.meta.many_collection as keyof CoreSchema,
+      id: docId,
+      options: {
+        fields: ["*.*"],
+      },
+    });
+
+    const { data: fields } = useFields(relation.related_collection as any);
+
+    useEffect(() => {
+      EventBus.on("m2m:update", (event) => {
+        if (
+          event.collection === relation.related_collection &&
+          (
+            doc?.[
+              junction.meta.junction_field as keyof typeof doc
+            ] as CoreSchemaDocument
+          )?.[getPrimaryKey(fields) as any] === event.docId
+        ) {
+          refetch();
+        }
+      });
+      return () => {
+        EventBus.off("m2m:update", () => refetch());
+      };
+    }, [refetch, relation.related_collection, doc]);
+
+    if (error) {
+      return (
+        <RelatedListItem>
+          {(error as DirectusErrorResponse).errors?.[0].message}
+        </RelatedListItem>
+      );
+    }
+
+    return doc ? (
+      <RelatedListItem
+        isDeselected={isDeselected}
+        isNew={isNew}
+        isDraggable={isSortable}
+        append={
+          <>
+            <Link
+              href={{
+                pathname: `/modals/m2m/[collection]/[id]`,
+                params: {
+                  collection: relation.related_collection,
+                  id: (
+                    doc?.[
+                      junction.meta.junction_field as keyof typeof doc
+                    ] as CoreSchemaDocument
+                  )?.[getPrimaryKey(fields) as any],
+                },
+              }}
+              asChild
+            >
+              <Button variant="ghost" rounded>
+                <DirectusIcon name="edit_square" />
+              </Button>
+            </Link>
+
+            <Button
+              variant="ghost"
+              onPress={() =>
+                isDeselected
+                  ? onAdd?.(doc as Record<string, unknown>)
+                  : onDelete?.(doc as Record<string, unknown>)
+              }
+              rounded
+            >
+              {isDeselected ? (
+                <DirectusIcon name="settings_backup_restore" />
+              ) : (
+                <DirectusIcon name="close" />
+              )}
+            </Button>
+          </>
+        }
+      >
+        {parseTemplate(template, doc, fields)}
+      </RelatedListItem>
+    ) : null;
+  };
+
   return (
     relation &&
     junction && (
@@ -303,50 +412,47 @@ export const M2MInput = ({
                   );
                 }
 
-                const Item = (
-                  <RelatedDocumentListItem
-                    key={id}
-                    docId={id}
-                    junction={junction!}
-                    relation={relation!}
-                    template={item.meta.options?.template}
-                    isSortable={!!sortField}
-                    onAdd={(item) => {
-                      console.log({ item });
-                      props.onChange({
-                        ...value,
-                        update: [
-                          ...value.update,
-                          {
-                            id: item.id as number,
-                            ...(sortField && {
-                              [sortField]: item[sortField as string],
-                            }),
-                          },
-                        ],
-                        delete: value.delete.filter((v) => v !== id),
-                      });
-                    }}
-                    onDelete={(item) => {
-                      console.log({ item });
-
-                      props.onChange({
-                        ...value,
-                        update: value.update.filter((v) => v?.id !== id),
-                        delete: [...value.delete, id as number],
-                      });
-                    }}
-                    isNew={isNew}
-                    isDeselected={isDeselected}
-                  />
-                );
                 return (
                   <Draggable
                     key={id + "draggable"}
                     id={id?.toString()}
                     disabled={!sortField}
                   >
-                    {Item}
+                    <Item
+                      key={id}
+                      docId={id}
+                      junction={junction!}
+                      relation={relation!}
+                      template={item.meta.options?.template}
+                      isSortable={!!sortField}
+                      onAdd={(item) => {
+                        console.log({ item });
+                        props.onChange({
+                          ...value,
+                          update: [
+                            ...value.update,
+                            {
+                              id: item.id as number,
+                              ...(sortField && {
+                                [sortField]: item[sortField as string],
+                              }),
+                            },
+                          ],
+                          delete: value.delete.filter((v) => v !== id),
+                        });
+                      }}
+                      onDelete={(item) => {
+                        console.log({ item });
+
+                        props.onChange({
+                          ...value,
+                          update: value.update.filter((v) => v?.id !== id),
+                          delete: [...value.delete, id as number],
+                        });
+                      }}
+                      isNew={isNew}
+                      isDeselected={isDeselected}
+                    />
                   </Draggable>
                 );
               })}
