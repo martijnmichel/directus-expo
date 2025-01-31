@@ -1,6 +1,6 @@
 🌟 Supporting Mobile App Development
 
-I'm an independent developer dedicated to creating a better mobile experience for Directus through my iOS and Android apps. This project is built with passion and dedication, maintained by me to provide a high-quality, user-friendly mobile solution for the Directus community. Your sponsorship directly supports continued development, maintenance, and innovation of these mobile apps.
+I'm an independent developer dedicated to creating a better mobile experience for Directus through this iOS and Android app. This project is built with passion and dedication, maintained by me to provide a high-quality, user-friendly mobile solution for the Directus community. Your sponsorship directly supports continued development, maintenance, and innovation of this app.
 
 💝 Why Sponsor?
 
@@ -55,7 +55,7 @@ Monthly Sponsorship Options:
 - My deepest thanks
 
 🥈 $25/month - Silver Advocate
-❤️❤️❤️ I greatly appreciate your generous support of these mobile apps!
+❤️❤️❤️ I greatly appreciate your generous support of the Directus mobile app!
 - My warmest appreciation
 
 🥇 $50/month - Gold Supporter
@@ -64,13 +64,13 @@ Monthly Sponsorship Options:
 
 ⭐️ $100/month - Platinum Backer
 As a Platinum Backer, you'll receive:
-- Your name and GitHub profile link featured in the app's About section
+- Your GitHub avatar link featured in the repository
 - Recognition as an official app backer
 - My eternal appreciation for your significant support
 
 💎 $250/month - Diamond Champion
 As a Diamond Champion, you'll receive:
-- Your name, GitHub avatar, and profile link prominently displayed in the app and repository
+- Your GitHub avatar link prominently displayed in the app and repository
 - Recognition as a champion supporter
 - Priority consideration for feature requests
 - Direct communication channel with me
