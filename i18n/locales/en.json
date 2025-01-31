@@ -105,7 +105,7 @@
     },
     "localeSwitch": {
       "supported": "Supported",
-      "helperText": "* unsupported languages only change the translations of your content."
+      "helperText": "* unsupported languages only translate your content."
     }
   },
   "settings": {
