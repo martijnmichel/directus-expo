@@ -1,3 +1,5 @@
+## [0.6.8](https://github.com/martijnmichel/directus-expo/compare/v0.6.7...v0.6.8) (2025-01-31)
+
 ## [0.6.7](https://github.com/martijnmichel/directus-expo/compare/v0.6.6...v0.6.7) (2025-01-31)
 
 
