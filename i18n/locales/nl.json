@@ -105,7 +105,7 @@
     },
     "localeSwitch": {
       "supported": "Ondersteund",
-      "helperText": "* Niet -ondersteunde talen veranderen alleen de vertalingen van uw inhoud."
+      "helperText": "* Niet -ondersteunde talen vertalen alleen je inhoud."
     }
   },
   "settings": {
