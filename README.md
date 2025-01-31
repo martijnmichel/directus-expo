@@ -52,7 +52,10 @@ _TBD_
 
 ---
 
-I'm an independent developer dedicated to creating a better mobile experience for Directus through my iOS and Android apps. This project is built with passion and dedication, maintained by me to provide a high-quality, user-friendly mobile solution for the Directus community. Your sponsorship directly supports continued development, maintenance, and innovation of these mobile apps.
+### Sponsorship
+I'm an independent developer dedicated to creating a better mobile experience for Directus through this iOS and Android app. 
+
+This project is built with passion and dedication, maintained by me to provide a high-quality, user-friendly mobile solution for the Directus community. Your sponsorship directly supports continued development, maintenance, and innovation of this app.
 
 ---
 
