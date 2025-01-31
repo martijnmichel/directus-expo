@@ -123,7 +123,6 @@ export const M2AInput = ({
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
-    console.log({ newOrderIds });
     props.onChange({
       create: value.create.map((doc) => {
         const pk = getPrimaryKeyFromAllFields(doc.collection as any, fields);
@@ -260,12 +259,6 @@ export const M2AInput = ({
       fields
     );
 
-    const newItemText = parseTemplate(
-      collection?.meta.display_template as string,
-      junctionDoc as { [key: string]: any },
-      fields
-    );
-
     if (error) {
       return (
         <RelatedListItem>
@@ -349,21 +342,6 @@ export const M2AInput = ({
     collection: string;
     onPress: (href: Href) => void;
   }) => {
-    const { data: pickedItems, refetch } = useDocuments(
-      collection as keyof CoreSchema,
-
-      {
-        fields: [`*`],
-      },
-      {
-        enabled: variant === "pick",
-      }
-    );
-
-    useEffect(() => {
-      refetch();
-    }, [value.update, value.create, relation, junction, refetch]);
-
     return (
       !!junction &&
       !!relation && (
