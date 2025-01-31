@@ -8,10 +8,6 @@ import {
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import {
-  listStyles,
-  RelatedDocumentListItem,
-} from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -83,8 +79,6 @@ export const O2MInput = ({
   ...props
 }: O2MInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
-  const { styles } = useStyles(listStyles);
-  const { theme } = useStyles();
   const [initialValue] = useState(valueProp);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
@@ -228,9 +222,6 @@ export const O2MInput = ({
     isDeselected?: boolean;
     isSortable?: boolean;
   }) => {
-    const { styles, theme } = useStyles(listStyles);
-    const [addOpen, setAddOpen] = useState(false);
-
     const {
       data: doc,
       isLoading,

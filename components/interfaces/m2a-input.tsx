@@ -8,10 +8,6 @@ import {
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import {
-  listStyles,
-  RelatedDocumentListItem,
-} from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -84,8 +80,6 @@ export const M2AInput = ({
   ...props
 }: M2AInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
-  const { styles } = useStyles(listStyles);
-  const { theme } = useStyles();
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
@@ -195,10 +189,10 @@ export const M2AInput = ({
     isDeselected?: boolean;
     isSortable?: boolean;
   }) => {
-    const { styles, theme } = useStyles(listStyles);
+    const { styles, theme } = useStyles();
     const [addOpen, setAddOpen] = useState(false);
 
-    const { data: junctionDoc } = useDocument({
+    const { data: junctionDoc, error } = useDocument({
       collection: junction?.collection as keyof CoreSchema,
       id,
       options: {
@@ -221,15 +215,9 @@ export const M2AInput = ({
 
     if (error) {
       return (
-        <View
-          style={[
-            styles.listItem,
-            isDeselected && styles.listItemDeselected,
-            isNew && styles.listItemNew,
-          ]}
-        >
-          <Text numberOfLines={1}>{(error as any).errors?.[0].message}</Text>
-        </View>
+        <RelatedListItem>
+          {(error as DirectusErrorResponse).errors?.[0].message}
+        </RelatedListItem>
       );
     } /**
     console.log({

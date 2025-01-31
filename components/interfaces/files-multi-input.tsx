@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import {
   CoreSchema,
+  DirectusFile,
   ReadFieldOutput,
   ReadRelationOutput,
   createItem,
   readItems,
 } from "@directus/sdk";
 import { Modal } from "../display/modal";
-import { RelatedDocumentListItem } from "./related-document-listitem";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
@@ -36,12 +36,15 @@ import {
   UniqueIdentifier,
 } from "@mgcrea/react-native-dnd";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { RelatedFileListItem } from "./related-file-listitem";
 import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
 import { mutateDocuments } from "@/state/actions/updateDocuments";
 import { useTranslation } from "react-i18next";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
+import { RelatedListItem } from "../display/related-listitem";
+import { DirectusIcon } from "../display/directus-icon";
+import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
+import { Image } from "expo-image";
 
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
@@ -133,6 +136,128 @@ export const FilesMultiInput = ({
     props.onChange?.(newOrderIds);
   };
 
+  const Item = ({
+    docId,
+    junction,
+    relation,
+    template,
+    onDelete,
+    onAdd,
+    isNew,
+    isDeselected,
+    isSortable,
+    ...props
+  }: {
+    docId: string | number;
+    junction: ReadRelationOutput<CoreSchema>;
+    relation: ReadRelationOutput<CoreSchema>;
+    template?: string;
+    onDelete?: (doc: Record<string, unknown>) => void;
+    onAdd?: (doc: Record<string, unknown>) => void;
+    isNew?: boolean;
+    isDeselected?: boolean;
+    isSortable?: boolean;
+  }) => {
+    const {
+      data: doc,
+      isLoading,
+      refetch,
+      error,
+    } = useDocument({
+      collection: junction?.meta.many_collection as keyof CoreSchema,
+      id: docId,
+      options: {
+        fields: ["*.*"],
+      },
+    });
+
+    const { directus } = useAuth();
+
+    const file = doc?.[
+      junction.meta.junction_field as keyof typeof doc
+    ] as unknown as DirectusFile;
+
+    useEffect(() => {
+      EventBus.on("m2m:update", (event) => {
+        if (
+          event.collection === relation.related_collection &&
+          (
+            doc?.[
+              junction.meta.junction_field as keyof typeof doc
+            ] as CoreSchemaDocument
+          )?.id === event.docId
+        ) {
+          refetch();
+        }
+      });
+      return () => {
+        EventBus.off("m2m:update", () => refetch());
+      };
+    }, [refetch, relation.related_collection, doc]);
+
+    if (error) {
+      return (
+        <RelatedListItem>
+          {(error as DirectusErrorResponse).errors?.[0].message}
+        </RelatedListItem>
+      );
+    }
+
+    return doc && file ? (
+      <RelatedListItem
+        isDraggable={isSortable}
+        isDeselected={isDeselected}
+        isNew={isNew}
+        prepend={
+          <Image
+            source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
+            style={{ width: 28, height: 28, borderRadius: 4 }}
+          />
+        }
+        append={
+          <>
+            <Link
+              href={{
+                pathname: `/modals/m2m/[collection]/[id]`,
+                params: {
+                  collection: relation.related_collection,
+                  id: (
+                    doc?.[
+                      junction.meta.junction_field as keyof typeof doc
+                    ] as CoreSchemaDocument
+                  )?.id,
+                },
+              }}
+              asChild
+            >
+              <Button variant="ghost" rounded>
+                <DirectusIcon name="edit_square" />
+              </Button>
+            </Link>
+
+            <Button
+              variant="ghost"
+              onPress={() =>
+                isDeselected
+                  ? onAdd?.(doc as Record<string, unknown>)
+                  : onDelete?.(doc as Record<string, unknown>)
+              }
+              rounded
+            >
+              {isDeselected ? (
+                <DirectusIcon name="settings_backup_restore" />
+              ) : (
+                <DirectusIcon name="close" />
+              )}
+            </Button>
+          </>
+        }
+      >
+        {file.title || file.filename_disk}
+      </RelatedListItem>
+    ) : null;
+  };
+
   return (
     relation &&
     junction && (
@@ -151,40 +276,37 @@ export const FilesMultiInput = ({
                   value?.includes(id) && !valueProp.includes(id);
                 const isNew = !value?.includes(id);
 
-                const Item = (
-                  <RelatedFileListItem
-                    key={id}
-                    docId={id}
-                    junction={junction!}
-                    relation={relation!}
-                    template={item.meta.options?.template}
-                    isSortable={!!sortField}
-                    onAdd={(item: Record<string, unknown>) => {
-                      setAddedDocIds([...addedDocIds, item.id as number]);
-                      props.onChange([...valueProp, item.id as number]);
-                    }}
-                    onDelete={(item) => {
-                      console.log({ item });
-                      setAddedDocIds(
-                        addedDocIds.filter(
-                          (v) =>
-                            v !==
-                            (item[relation.field as keyof typeof item] as any)
-                        )
-                      );
-                      props.onChange(valueProp.filter((v) => v !== id));
-                    }}
-                    isNew={isNew}
-                    isDeselected={isDeselected}
-                  />
-                );
                 return (
                   <Draggable
                     key={id + "draggable"}
                     id={id.toString()}
                     disabled={!sortField}
                   >
-                    {Item}
+                    <Item
+                      key={id}
+                      docId={id}
+                      junction={junction!}
+                      relation={relation!}
+                      template={item.meta.options?.template}
+                      isSortable={!!sortField}
+                      onAdd={(item: Record<string, unknown>) => {
+                        setAddedDocIds([...addedDocIds, item.id as number]);
+                        props.onChange([...valueProp, item.id as number]);
+                      }}
+                      onDelete={(item) => {
+                        console.log({ item });
+                        setAddedDocIds(
+                          addedDocIds.filter(
+                            (v) =>
+                              v !==
+                              (item[relation.field as keyof typeof item] as any)
+                          )
+                        );
+                        props.onChange(valueProp.filter((v) => v !== id));
+                      }}
+                      isNew={isNew}
+                      isDeselected={isDeselected}
+                    />
                   </Draggable>
                 );
               })}
