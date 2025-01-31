@@ -6,17 +6,54 @@ Key Features:
 • Intuitive Content Management: Create, edit and publish content on the go
 • Rich Text Editor: Format your content with a full-featured mobile editor
 • Media Library: Upload and manage images, videos, and documents directly from your device
-• Collection Management: Browse and update your content collections anywhere
-• Role-based Access: Securely manage who can view and edit content
 • Multi-language Support: Work in your preferred language with full internationalization
 • Real-time Updates: See changes instantly across your team
 
 Perfect for:
-• Content managers needing quick updates in the field
 • Marketing teams managing digital content
 • Editors reviewing and publishing articles
 • Digital publishers maintaining multiple content streams
 • Team leaders coordinating content strategies
+
+Supported interfaces:
+
+**Inputs**
+- Text
+- TextArea
+- Wysiwyg
+- Number
+- Code (json)
+
+**Selections**
+- Toggle
+- Datetime
+- Repeater
+- Color
+- Dropdown
+- Dropdown Multiple
+- Radio Buttons
+
+**Relational**
+- File
+- Image
+- Files
+- Builder (M2A)
+- Many to Many
+- One to Many
+- Many to One
+
+**Presentation**
+_TBD_
+
+**Groups**
+- Accordion
+- Detail Group
+- Raw Group
+
+**Other**
+- Collection Item
+- Hash
+- Slider
 
 Whether you're updating a blog post, managing your website content, or coordinating your digital presence, the Directus mobile app provides a streamlined interface to handle your content needs efficiently.
 
