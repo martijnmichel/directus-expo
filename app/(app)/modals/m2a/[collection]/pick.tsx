@@ -71,6 +71,15 @@ export default function Collection() {
       search,
       filter: {
         _and: [
+          ...(value?.length > 0
+            ? [
+                {
+                  [getPrimaryKey(fields) as any]: {
+                    _nin: value,
+                  },
+                },
+              ]
+            : []),
           ...(doc_id &&
           doc_id !== "+" &&
           junction_collection &&
