@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import {
+  useAllFields,
   useCollection,
   useDocument,
   useDocuments,
@@ -45,7 +46,10 @@ import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import {
+  getPrimaryKey,
+  getPrimaryKeyFromAllFields,
+} from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
@@ -81,9 +85,11 @@ export const M2AInput = ({
   ...props
 }: M2AInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
+  const { styles, theme } = useStyles();
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
+  const { data: allFields } = useAllFields();
 
   const { t } = useTranslation();
 
@@ -115,28 +121,26 @@ export const M2AInput = ({
       r.collection === junction.meta.many_collection
   );
 
-  const relationPermission =
-    permissions?.[relation?.related_collection as keyof typeof permissions];
-
-  const allowCreate =
-    relationPermission?.create.access === "full" &&
-    get(item, "meta.options.enableCreate") !== false;
-
-  const { mutate: mutateOptions } = mutateDocument(
-    junction?.collection as keyof CoreSchema,
-    "+"
-  );
-
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder.map((id) => parseInt(id as string));
+    const newOrderIds = newOrder;
+    console.log({ newOrderIds });
     props.onChange({
-      create: value.create.map((doc) => ({
-        ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
-      })),
+      create: value.create.map((doc) => {
+        const pk = getPrimaryKeyFromAllFields(doc.collection as any, fields);
+        return {
+          ...doc,
+          [sortField as string]: findIndex(
+            newOrderIds,
+            (id) => id === `${doc.item?.[pk]}new`
+          ),
+        };
+      }),
       update: value.update.map((doc) => ({
         ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
+        [sortField as string]: findIndex(
+          newOrderIds,
+          (id) => id === `${doc.id}existing`
+        ),
       })),
       delete: value.delete,
     });
@@ -180,6 +184,52 @@ export const M2AInput = ({
     relation,
   });
 
+  const NewItem = ({ collection, item }: { collection: string; item: any }) => {
+    const { data } = useCollection(collection as keyof CoreSchema);
+
+    const { data: fields } = useFields(data?.collection as any);
+
+    const primaryKey = getPrimaryKey(fields);
+    const text = parseTemplate(
+      data?.meta.display_template as string,
+      item as { [key: string]: any },
+      fields
+    );
+
+    return (
+      <RelatedListItem
+        isNew
+        isDraggable={!!sortField}
+        prepend={
+          <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
+            {collection}:
+          </Text>
+        }
+        append={
+          <Button
+            variant="ghost"
+            rounded
+            style={{ marginLeft: "auto" }}
+            onPress={() => {
+              props.onChange({
+                ...value,
+                create: value.create.filter(
+                  (v) =>
+                    v?.[relation?.field as any]?.[primaryKey] !==
+                    item?.[primaryKey]
+                ),
+              });
+            }}
+          >
+            <DirectusIcon name="delete" />
+          </Button>
+        }
+      >
+        {text || "--"}
+      </RelatedListItem>
+    );
+  };
+
   const Item = ({
     id,
     isNew,
@@ -189,8 +239,6 @@ export const M2AInput = ({
     isNew?: boolean;
     isDeselected?: boolean;
   }) => {
-    const { styles, theme } = useStyles();
-
     const { data: junctionDoc, error } = useDocument({
       collection: junction?.collection as keyof CoreSchema,
       id,
@@ -212,13 +260,19 @@ export const M2AInput = ({
       fields
     );
 
+    const newItemText = parseTemplate(
+      collection?.meta.display_template as string,
+      junctionDoc as { [key: string]: any },
+      fields
+    );
+
     if (error) {
       return (
         <RelatedListItem>
           {(error as DirectusErrorResponse).errors?.[0].message}
         </RelatedListItem>
       );
-    } /**
+    }
     console.log({
       junctionDoc,
       id,
@@ -227,38 +281,10 @@ export const M2AInput = ({
       isDeselected,
       collection,
       tmpl: item.meta.display_options?.template.replace(/(?:^|\s):/g, ""),
-    }); */
+    });
 
     if (!relation) {
       return null;
-    }
-
-    if (isNew) {
-      return (
-        <RelatedListItem
-          isNew
-          isDraggable={!!sortField}
-          append={
-            <Button
-              variant="ghost"
-              rounded
-              style={{ marginLeft: "auto" }}
-              onPress={() => {
-                props.onChange({
-                  ...value,
-                  create: value.create.filter(
-                    (v) => v?.[relation.field]?.[primaryKey] !== id
-                  ),
-                });
-              }}
-            >
-              <DirectusIcon name="delete" />
-            </Button>
-          }
-        >
-          {text || "--"}
-        </RelatedListItem>
-      );
     }
 
     return junctionDoc ? (
@@ -328,6 +354,9 @@ export const M2AInput = ({
 
       {
         fields: [`*`],
+      },
+      {
+        enabled: variant === "pick",
       }
     );
 
@@ -348,7 +377,9 @@ export const M2AInput = ({
                 junction_collection: junction.collection,
                 related_collection: relation.related_collection,
                 related_field: relation.field,
-                current_value: "",
+                current_value: [
+                  ...value.create.map((i: any) => i?.item.id),
+                ].join(","),
                 junction_field: junction.field,
                 doc_id: docId,
                 item_field: item.field,
@@ -377,7 +408,7 @@ export const M2AInput = ({
             >
               {orderBy(
                 [...value.create, ...value.update, ...value.delete],
-                sortField || junction?.schema?.foreign_key_column || "id"
+                sortField
               ).map((junctionDoc, index) => {
                 if (typeof junctionDoc === "number") {
                   junctionDoc = { id: junctionDoc };
@@ -398,10 +429,25 @@ export const M2AInput = ({
                 const isDeselected = value.delete?.some((doc) => doc === id);
                 const isNew = isInitial ? false : !junctionDoc.id;
 
+                if (isNew) {
+                  return (
+                    <Draggable
+                      key={id + "draggable"}
+                      id={id?.toString() + "new"}
+                      disabled={!sortField}
+                    >
+                      <NewItem
+                        collection={(junctionDoc as any).collection}
+                        item={(junctionDoc as any).item}
+                      />
+                    </Draggable>
+                  );
+                }
+
                 return (
                   <Draggable
                     key={id + "draggable"}
-                    id={id?.toString()}
+                    id={id?.toString() + "existing"}
                     disabled={!sortField}
                   >
                     <Item id={id} isNew={isNew} isDeselected={isDeselected} />
