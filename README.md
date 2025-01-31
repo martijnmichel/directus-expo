@@ -7,6 +7,7 @@ Transform your content management experience with Directus, the powerful open da
 App status: Open testing
 
 iOS: https://testflight.apple.com/join/pWYXpQtY
+
 Android: https://play.google.com/apps/internaltest/4700795225710174745 (optionallymessage me for a promo code)
 
 ### Supported interfaces
