@@ -47,11 +47,12 @@ import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import React from "react";
+import { RelatedListItem } from "../display/related-listitem";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -84,6 +85,7 @@ export const O2MInput = ({
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(listStyles);
   const { theme } = useStyles();
+  const [initialValue] = useState(valueProp);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item.collection as keyof CoreSchema);
@@ -96,6 +98,8 @@ export const O2MInput = ({
       r.meta.one_field === item.field
   );
 
+  const relatedPk = usePrimaryKey(relation?.collection as any);
+
   const sortField = relation?.meta.sort_field;
 
   const isInitial = Array.isArray(valueProp);
@@ -104,7 +108,7 @@ export const O2MInput = ({
         create: [],
         update: [
           ...map(valueProp, (id, index) => ({
-            id,
+            [relatedPk || ""]: id,
             ...(sortField && { [sortField]: index }),
           })),
         ],
@@ -244,89 +248,73 @@ export const O2MInput = ({
 
     if (error) {
       return (
-        <View
-          style={[
-            styles.listItem,
-            isDeselected && styles.listItemDeselected,
-            isNew && styles.listItemNew,
-          ]}
-        >
-          <Text numberOfLines={1}>
-            {(error as DirectusErrorResponse).errors?.[0].message}
-          </Text>
-        </View>
+        <RelatedListItem>
+          {(error as DirectusErrorResponse).errors?.[0].message}
+        </RelatedListItem>
       );
     }
 
     return doc ? (
-      <View
-        style={[
-          styles.listItem,
-          isDeselected && styles.listItemDeselected,
-          isNew && styles.listItemNew,
-        ]}
+      <RelatedListItem
+        isDraggable={isSortable}
+        isDeselected={isDeselected}
+        append={
+          <>
+            <Link
+              href={{
+                pathname: `/modals/m2m/[collection]/[id]`,
+                params: {
+                  collection: relation?.collection as string,
+                  id: docId,
+                },
+              }}
+              asChild
+            >
+              <Button variant="ghost" rounded>
+                <DirectusIcon name="edit_square" />
+              </Button>
+            </Link>
+
+            <Button
+              variant="ghost"
+              rounded
+              onPress={() => {
+                if (isDeselected) {
+                  props.onChange({
+                    ...value,
+                    update: [
+                      ...value.update,
+                      {
+                        [relatedPk || ""]: docId as number,
+                        ...(sortField && {
+                          [sortField]: doc[sortField as string],
+                        }),
+                      },
+                    ],
+                    delete: value.delete.filter((v) => v !== docId),
+                  });
+                } else {
+                  props.onChange({
+                    ...value,
+                    update: value.update.filter(
+                      (v) => v?.[relatedPk] !== docId
+                    ),
+                    delete: [...value.delete, docId as number],
+                  });
+                }
+              }}
+            >
+              {isDeselected ? (
+                <DirectusIcon name="settings_backup_restore" />
+              ) : (
+                <DirectusIcon name="close" />
+              )}
+            </Button>
+          </>
+        }
       >
-        {isSortable && <DirectusIcon name="drag_handle" />}
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.content,
-            isDeselected && styles.listItemDeselectedText,
-            isSortable && { marginLeft: 12 },
-          ]}
-        >
-          {parseTemplate(item.meta.options?.template, doc, fields)}
-        </Text>
-
-        <Link
-          href={{
-            pathname: `/modals/m2m/[collection]/[id]`,
-            params: {
-              collection: relation?.collection as string,
-              id: docId,
-            },
-          }}
-          asChild
-        >
-          <Button variant="ghost" rounded>
-            <DirectusIcon name="edit_square" />
-          </Button>
-        </Link>
-
-        <Button
-          variant="ghost"
-          rounded
-          onPress={() => {
-            if (isDeselected) {
-              props.onChange({
-                ...value,
-                update: [
-                  ...value.update,
-                  {
-                    id: docId as number,
-                    ...(sortField && {
-                      [sortField]: doc[sortField as string],
-                    }),
-                  },
-                ],
-                delete: value.delete.filter((v) => v !== docId),
-              });
-            } else {
-              props.onChange({
-                ...value,
-                update: value.update.filter((v) => v?.id !== docId),
-                delete: [...value.delete, docId as number],
-              });
-            }
-          }}
-        >
-          {isDeselected ? (
-            <DirectusIcon name="settings_backup_restore" />
-          ) : (
-            <DirectusIcon name="close" />
-          )}
-        </Button>
-      </View>
+        {parseTemplate(item.meta.options?.template, doc, fields)}
+      </RelatedListItem>
     ) : null;
   };
 
@@ -352,20 +340,22 @@ export const O2MInput = ({
                   typeof relatedDoc === "number" ||
                   typeof relatedDoc === "string"
                     ? relatedDoc
-                    : (relatedDoc.id as number);
+                    : (relatedDoc as any)?.[relatedPk || ""];
 
                 const isDeselected = value.delete?.some((doc) => doc === id);
-                const isNew = isInitial ? false : !id;
+                const isNew = isInitial
+                  ? false
+                  : !((initialValue as number[]) || []).includes(id as number);
 
-                /** console.log({
-                  junctionDoc,
+                console.log({
                   relatedDoc,
+                  field: relation.field,
                   id,
                   primaryKey,
                   fk: relation?.schema.foreign_key_column,
                   isNew,
                   isDeselected,
-                }); */
+                });
 
                 const text = parseTemplate<any>(
                   item.meta.options?.template,
@@ -380,47 +370,31 @@ export const O2MInput = ({
                       id={id?.toString() || index.toString()}
                       disabled={!sortField}
                     >
-                      <View
-                        style={[styles.listItem, styles.listItemNew]}
-                        key={id}
+                      <RelatedListItem
+                        isNew
+                        isDraggable={!!sortField}
+                        append={
+                          <Button
+                            variant="ghost"
+                            rounded
+                            onPress={() => {
+                              props.onChange({
+                                ...value,
+                                create: value.create.filter(
+                                  (v) => v?.[relatedPk] !== id
+                                ),
+                                update: value.update.filter(
+                                  (v) => v?.[relatedPk] !== id
+                                ),
+                              });
+                            }}
+                          >
+                            <DirectusIcon name="delete" />
+                          </Button>
+                        }
                       >
-                        {!!sortField && <DirectusIcon name="drag_handle" />}
-
-                        <Text
-                          numberOfLines={1}
-                          style={[
-                            styles.content,
-                            isDeselected && styles.listItemDeselectedText,
-                            !!sortField && { marginLeft: 12 },
-                            !text && { color: theme.colors.textMuted },
-                          ]}
-                        >
-                          {text || "--"}
-                        </Text>
-
-                        <Button
-                          variant="ghost"
-                          rounded
-                          onPress={() => {
-                            console.log({
-                              field: relation.field,
-                              primaryKey,
-                              id,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id
-                              ),
-                            });
-                            props.onChange({
-                              ...value,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id
-                              ),
-                            });
-                          }}
-                        >
-                          <DirectusIcon name="delete" />
-                        </Button>
-                      </View>
+                        {text}
+                      </RelatedListItem>
                     </Draggable>
                   );
                 }
@@ -433,7 +407,7 @@ export const O2MInput = ({
                   >
                     <Item
                       docId={id}
-                      isNew={isNew}
+                      isNew={false}
                       isDeselected={isDeselected}
                       isSortable={!!sortField}
                     />
