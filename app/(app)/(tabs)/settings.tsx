@@ -25,7 +25,7 @@ import {
   DirectusIcon,
   DirectusIconName,
 } from "@/components/display/directus-icon";
-import { View } from "react-native";
+import { Platform, View } from "react-native";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useTranslation } from "react-i18next";
 import { ScrollView } from "react-native";
@@ -48,7 +48,9 @@ export default function TabTwoScreen() {
     Updates.useUpdates();
 
   useEffect(() => {
-    Updates.fetchUpdateAsync();
+    if (Platform.OS !== "web") {
+      Updates.fetchUpdateAsync();
+    }
   }, []);
 
   const info = [
@@ -118,16 +120,17 @@ export default function TabTwoScreen() {
     },
     {
       type: "component",
-      label: t("settings.fields.locale"),
-      component: <LocaleSelect />,
-    },
-    {
-      type: "component",
       label: t("settings.fields.darkMode"),
       component: (
         <Toggle value={currentTheme === "dark"} onValueChange={toggleTheme} />
       ),
     },
+    {
+      type: "component",
+      label: t("settings.fields.locale"),
+      component: <LocaleSelect />,
+    },
+
     {
       type: "spacing",
     },
