@@ -1,3 +1,10 @@
+## [0.6.10](https://github.com/martijnmichel/directus-expo/compare/v0.6.9...v0.6.10) (2025-01-31)
+
+
+### Features
+
+* pick language from directus ([69332f8](https://github.com/martijnmichel/directus-expo/commit/69332f8a277d0bafd7dc5eb1f1c79d6caf576af6))
+
 ## [0.6.9](https://github.com/martijnmichel/directus-expo/compare/v0.6.8...v0.6.9) (2025-01-31)
 
 
