@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View } from "react-native";
 import {
   CoreSchema,
@@ -66,6 +66,7 @@ type RelatedItemState = {
 interface M2AInputProps {
   item: ReadFieldOutput<CoreSchema>;
   docId?: number | string;
+  uuid?: string;
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
   label?: string;
@@ -76,6 +77,7 @@ interface M2AInputProps {
 
 export const M2AInput = ({
   docId,
+  uuid,
   item,
   label,
   error,
@@ -147,7 +149,7 @@ export const M2AInput = ({
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2a:add"]) => {
-      if (event.field === item.field) {
+      if (event.uuid === uuid && event.field === item.field) {
         console.log("m2a:add:received", event);
 
         const data = {
@@ -171,7 +173,7 @@ export const M2AInput = ({
     return () => {
       EventBus.off("m2a:add", addM2M);
     };
-  }, [valueProp, props.onChange, relation, junction, value]);
+  }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
   console.log({
     item,
@@ -296,6 +298,8 @@ export const M2AInput = ({
                 pathname: `/modals/m2a/[collection]/[id]`,
                 params: {
                   collection: junctionDoc?.collection as string,
+                  uuid,
+                  item_field: item.field,
                   id: (junctionDoc.item as any)?.[primaryKey],
                 },
               }}
@@ -378,6 +382,7 @@ export const M2AInput = ({
                 junction_field: junction.field,
                 doc_id: docId,
                 item_field: item.field,
+                uuid,
               },
             });
           }}
@@ -463,6 +468,8 @@ export const M2AInput = ({
           </Text>
         )}
 
+        <Text>{uuid}</Text>
+
         {!disabled && (
           <Horizontal spacing="xs">
             {/**allowCreate && (
@@ -494,6 +501,7 @@ export const M2AInput = ({
                         relation?.meta.one_allowed_collections,
                         (collection) => (
                           <CollectionLink
+                            key={`${collection}-new`}
                             variant="add"
                             onPress={(href) => {
                               router.push(href);
@@ -521,6 +529,7 @@ export const M2AInput = ({
                         relation?.meta.one_allowed_collections,
                         (collection) => (
                           <CollectionLink
+                            key={`${collection}-pick`}
                             variant="pick"
                             onPress={(href) => {
                               router.push(href);

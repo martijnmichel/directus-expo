@@ -28,7 +28,7 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect } from "react";
 export default function Collection() {
-  const { collection, item_field } = useLocalSearchParams();
+  const { collection, uuid, item_field } = useLocalSearchParams();
   const id = "+";
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
@@ -37,7 +37,6 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
-  const { directus } = useAuth();
 
   const headerStyle = useHeaderStyles({ isModal: true });
   const { t } = useTranslation();
@@ -65,6 +64,7 @@ export default function Collection() {
                 router.dismiss();
                 EventBus.emit("m2a:add", {
                   data: document as CoreSchemaDocument,
+                  uuid: uuid as string,
                   field: item_field as string,
                   collection: collection as keyof CoreSchema,
                 });
