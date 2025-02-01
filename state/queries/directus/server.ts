@@ -21,6 +21,13 @@ export const useServerInfo = () => {
   });
 };
 
+/**
+ * Get the languages from the server
+ * @returns
+ *
+ * does not work safely because the languages in Directus are a collection which can be another name, and with another object.
+ * Maybe try to make an app setting, like: "languages_collection_name" and "languages_object_label" and "languages_object_value"
+ */
 export const useLanguages = () => {
   const { directus } = useAuth();
   return useQuery({

@@ -290,42 +290,59 @@ export const M2AInput = ({
           </Text>
         }
         append={
-          <Button
-            variant="ghost"
-            style={{ marginLeft: "auto" }}
-            rounded
-            onPress={() => {
-              if (isDeselected) {
-                props.onChange({
-                  ...value,
-                  update: [
-                    ...value.update,
-                    {
-                      id: id as number,
-                      ...(sortField && {
-                        [sortField]: (
-                          junctionDoc?.item as { [key: string]: any }
-                        )[sortField as string],
-                      }),
-                    },
-                  ],
-                  delete: value.delete.filter((v) => v !== id),
-                });
-              } else {
-                props.onChange({
-                  ...value,
-                  update: value.update.filter((v) => v?.id !== id),
-                  delete: [...value.delete, id as number],
-                });
-              }
-            }}
-          >
-            {isDeselected ? (
-              <DirectusIcon name="settings_backup_restore" />
-            ) : (
-              <DirectusIcon name="close" />
-            )}
-          </Button>
+          <>
+            <Link
+              href={{
+                pathname: `/modals/m2a/[collection]/[id]`,
+                params: {
+                  collection: junctionDoc?.collection as string,
+                  id: (junctionDoc.item as any)?.[primaryKey],
+                },
+              }}
+              asChild
+            >
+              <Button variant="ghost" rounded>
+                <DirectusIcon name="edit_square" />
+              </Button>
+            </Link>
+
+            <Button
+              variant="ghost"
+              style={{ marginLeft: "auto" }}
+              rounded
+              onPress={() => {
+                if (isDeselected) {
+                  props.onChange({
+                    ...value,
+                    update: [
+                      ...value.update,
+                      {
+                        id: id as number,
+                        ...(sortField && {
+                          [sortField]: (
+                            junctionDoc?.item as { [key: string]: any }
+                          )[sortField as string],
+                        }),
+                      },
+                    ],
+                    delete: value.delete.filter((v) => v !== id),
+                  });
+                } else {
+                  props.onChange({
+                    ...value,
+                    update: value.update.filter((v) => v?.id !== id),
+                    delete: [...value.delete, id as number],
+                  });
+                }
+              }}
+            >
+              {isDeselected ? (
+                <DirectusIcon name="settings_backup_restore" />
+              ) : (
+                <DirectusIcon name="close" />
+              )}
+            </Button>
+          </>
         }
       >
         {text}
