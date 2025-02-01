@@ -32,6 +32,7 @@ import { deleteDocument } from "@/state/actions/deleteDocument";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import ToastManager from "@/utils/toast";
+import { useUUID } from "@/hooks/useUUID";
 
 export const DocumentEditor = ({
   collection,
@@ -48,6 +49,7 @@ export const DocumentEditor = ({
   onDelete?: () => void;
   submitType?: "submit" | "raw";
 }) => {
+  const uuid = useUUID();
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   const { data: itemPermissions } = useItemPermissions(
@@ -70,6 +72,7 @@ export const DocumentEditor = ({
     canUpdateItem: itemPermissions?.update.access,
     permissions,
     styles,
+    uuid,
   });
 
   const { t } = useTranslation();

@@ -48,6 +48,7 @@ export default function Collection() {
     junction_field,
     doc_id,
     item_field,
+    uuid,
   } = useLocalSearchParams();
 
   const pagination = useDocumentsFilters();
@@ -150,6 +151,7 @@ export default function Collection() {
           requestAnimationFrame(() => {
             EventBus.emit("m2a:add", {
               data: doc as CoreSchemaDocument,
+              uuid: uuid as string,
               field: item_field as string,
               collection: collection as keyof CoreSchema,
             });

@@ -6,10 +6,15 @@ import mitt, { Emitter } from "mitt";
 export type MittEvents = {
   "m2a:add": {
     data: CoreSchemaDocument;
+    uuid: string;
     field: string;
     collection: keyof CoreSchema;
   };
-  "m2a:pick": { data: CoreSchemaDocument; field: string };
+  "m2a:update": {
+    collection: keyof CoreSchema;
+    uuid: string;
+    docId: string | number;
+  };
   "m2m:add": { data: CoreSchemaDocument; field: string };
   "m2m:remove": { data: CoreSchemaDocument; field: string };
   "m2m:update": { collection: keyof CoreSchema; docId: string | number };

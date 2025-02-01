@@ -58,6 +58,7 @@ export const mapFields = ({
   canUpdateItem = true,
   permissions,
   styles,
+  uuid,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
@@ -66,6 +67,7 @@ export const mapFields = ({
   canUpdateItem?: boolean;
   permissions?: ReadUserPermissionsOutput;
   styles?: any;
+  uuid?: string;
 }): ReactNode => {
   const getLabel = (field: string) =>
     fields
@@ -651,6 +653,7 @@ export const mapFields = ({
                         value={value as number[]}
                         item={item}
                         docId={docId}
+                        uuid={uuid}
                         error={error?.message}
                       />
                     )}

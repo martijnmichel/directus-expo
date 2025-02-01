@@ -27,7 +27,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 export default function Collection() {
-  const { collection, id } = useLocalSearchParams();
+  const { collection, id, uuid } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -53,15 +53,15 @@ export default function Collection() {
         <Container>
           <Section>
             <DocumentEditor
-              key={`${path}-${collection}-${id}`}
               collection={collection as keyof CoreSchema}
               id={id as string}
               onSave={async (document) => {
                 router.dismiss();
                 console.log({ collection, id });
-                EventBus.emit("m2m:update", {
+                EventBus.emit("m2a:update", {
                   collection: collection as keyof CoreSchema,
                   docId: document[primaryKey as any] as string,
+                  uuid: uuid as string,
                 });
               }}
             />
