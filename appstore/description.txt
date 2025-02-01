@@ -30,6 +30,7 @@ Supported interfaces:
 - Repeater
 - Color
 - Dropdown
+- Checkboxes
 - Dropdown Multiple
 - Radio Buttons
 

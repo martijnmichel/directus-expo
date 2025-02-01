@@ -44,7 +44,10 @@ export const RelatedListItem = ({
       >
         {children}
       </Text>
-      <Horizontal style={{ marginLeft: "auto", alignItems: "center" }}>
+      <Horizontal
+        style={{ marginLeft: "auto", alignItems: "center" }}
+        spacing={0}
+      >
         {append}
       </Horizontal>
     </Horizontal>
@@ -56,7 +59,7 @@ export const listStyles = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: theme.spacing.xs,
-    paddingLeft: theme.spacing.md,
+    paddingLeft: theme.spacing.sm,
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.md,
     borderWidth: theme.borderWidth.md,

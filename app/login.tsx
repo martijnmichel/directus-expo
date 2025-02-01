@@ -26,12 +26,9 @@ export default function Login() {
           }}
         >
           <LoginForm />
-          <Horizontal style={{ justifyContent: "space-between" }}>
-            <LocaleSelect />
-            <Button variant="ghost" onPress={toggleTheme}>
-              {currentTheme === "dark" ? <Sun /> : <Moon />}
-            </Button>
-          </Horizontal>
+          <Button variant="ghost" onPress={toggleTheme}>
+            {currentTheme === "dark" ? <Sun /> : <Moon />}
+          </Button>
         </Vertical>
       </Container>
     </KeyboardAwareLayout>
