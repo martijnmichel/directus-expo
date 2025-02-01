@@ -1,3 +1,16 @@
+## [0.6.11](https://github.com/martijnmichel/directus-expo/compare/v0.6.10...v0.6.11) (2025-02-01)
+
+
+### Bug Fixes
+
+* added uuid to all related interfaces ([966709b](https://github.com/martijnmichel/directus-expo/commit/966709bad2883665ca2756d428f2d61fd11e96a0))
+* added uuid to document-editor & m2a ([d2ffe58](https://github.com/martijnmichel/directus-expo/commit/d2ffe5824fc161f81f79f2f02adff8f9ab5ef2c5))
+
+
+### Features
+
+* edit m2a ([475bb77](https://github.com/martijnmichel/directus-expo/commit/475bb77284e7fd7062fe8ce71eab0c7c61e29de7))
+
 ## [0.6.10](https://github.com/martijnmichel/directus-expo/compare/v0.6.9...v0.6.10) (2025-01-31)
 
 
