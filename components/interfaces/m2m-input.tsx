@@ -61,6 +61,7 @@ type RelatedItemState = {
 interface M2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
   docId?: number | string;
+  uuid?: string;
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
   label?: string;
@@ -71,6 +72,7 @@ interface M2MInputProps {
 
 export const M2MInput = ({
   docId,
+  uuid,
   item,
   label,
   error,
@@ -128,7 +130,7 @@ export const M2MInput = ({
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
-      if (event.field === item.field) {
+      if (event.field === item.field && event.uuid === uuid) {
         console.log("m2m:add:received", event);
 
         const data = {
@@ -147,7 +149,7 @@ export const M2MInput = ({
     return () => {
       EventBus.off("m2m:add", addM2M);
     };
-  }, [valueProp, props.onChange, relation, junction, value]);
+  }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
@@ -299,6 +301,7 @@ export const M2MInput = ({
                 pathname: `/modals/m2m/[collection]/[id]`,
                 params: {
                   collection: relation.related_collection,
+                  uuid,
                   id: (
                     doc?.[
                       junction.meta.junction_field as keyof typeof doc
@@ -502,6 +505,7 @@ export const M2MInput = ({
 
                   params: {
                     collection: relation.related_collection,
+                    uuid,
                     item_field: item.field,
                   },
                 }}
@@ -519,6 +523,7 @@ export const M2MInput = ({
                   junction_collection: junction.collection,
                   related_collection: relation.related_collection,
                   related_field: relation.field,
+                  uuid,
                   current_value: [
                     pickedItems?.items?.map(
                       (i: any) => i?.[relation.schema.column as any]

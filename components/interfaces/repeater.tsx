@@ -28,6 +28,7 @@ interface RepeaterInputProps {
   onChange: (value: any[]) => void;
   label?: string;
   error?: string;
+  uuid?: string;
   helper?: string;
   sortable?: boolean;
   disabled?: boolean;
@@ -37,6 +38,7 @@ export const RepeaterInput = ({
   item,
   label,
   error,
+  uuid,
   helper,
   value = [],
   sortable = true,
@@ -65,19 +67,19 @@ export const RepeaterInput = ({
 
   useEffect(() => {
     EventBus.on("repeater:add", (data) => {
-      if (data.field === item.field) {
+      if (data.field === item.field && data.uuid === uuid) {
         onChange([...value, data.data]);
       }
     });
 
     EventBus.on("repeater:edit", (data) => {
-      if (data.field === item.field) {
+      if (data.field === item.field && data.uuid === uuid) {
         const newValue = [...value];
         newValue[data.index] = data.data;
         onChange(newValue);
       }
     });
-  }, [onChange]);
+  }, [onChange, item.field, uuid]);
 
   return (
     <Vertical spacing="xs">
@@ -117,6 +119,7 @@ export const RepeaterInput = ({
                       document: objectToBase64(repeaterItem),
                       fields: objectToBase64(item.meta?.options?.fields || []),
                       item_field: item.field,
+                      uuid,
                       index: index,
                     },
                   }}
@@ -164,6 +167,7 @@ export const RepeaterInput = ({
               params: {
                 fields: objectToBase64(item.meta?.options?.fields || []),
                 item_field: item.field,
+                uuid,
               },
             }}
             asChild

@@ -46,7 +46,7 @@ type PickModalParams = {
 
 export default function Collection() {
   const { data, collection } = useLocalSearchParams();
-  const { field, value, filter } = base64ToObject(data as string);
+  const { field, value, filter, uuid } = base64ToObject(data as string);
 
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
@@ -107,6 +107,7 @@ export default function Collection() {
           router.dismiss();
           EventBus.emit("m2o:pick", {
             data: doc as CoreSchemaDocument,
+            uuid: uuid as string,
             field: field as string,
           });
         }}

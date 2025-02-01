@@ -320,6 +320,7 @@ export const mapFields = ({
                     }) => (
                       <M2OInput
                         {...defaultProps}
+                        uuid={uuid}
                         onValueChange={onChange}
                         value={value as string}
                         item={item}
@@ -400,6 +401,7 @@ export const mapFields = ({
                     }) => (
                       <M2OInput
                         {...defaultProps}
+                        uuid={uuid}
                         onValueChange={onChange}
                         value={value as string}
                         item={item}
@@ -606,6 +608,7 @@ export const mapFields = ({
                     }) => (
                       <M2OInput
                         {...defaultProps}
+                        uuid={uuid}
                         onValueChange={onChange}
                         value={value as string}
                         item={item}
@@ -630,6 +633,7 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as number[]}
                         item={item}
+                        uuid={uuid}
                         docId={docId}
                         error={error?.message}
                       />
@@ -672,6 +676,7 @@ export const mapFields = ({
                     }) => (
                       <O2MInput
                         {...defaultProps}
+                        uuid={uuid}
                         onChange={onChange}
                         value={value as number[]}
                         item={item}
@@ -851,6 +856,7 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as (string | number)[]}
                         item={item}
+                        uuid={uuid}
                         error={error?.message}
                       />
                     )}

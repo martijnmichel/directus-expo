@@ -28,7 +28,7 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect } from "react";
 export default function Collection() {
-  const { collection, item_field } = useLocalSearchParams();
+  const { collection, item_field, uuid } = useLocalSearchParams();
   const id = "+";
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
@@ -66,6 +66,7 @@ export default function Collection() {
                 EventBus.emit("m2m:add", {
                   data: document as CoreSchemaDocument,
                   field: item_field as string,
+                  uuid: uuid as string,
                 });
               }}
             />
