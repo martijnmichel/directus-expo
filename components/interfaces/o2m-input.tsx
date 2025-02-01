@@ -60,6 +60,7 @@ type RelatedItemState = {
 interface O2MInputProps {
   item: ReadFieldOutput<CoreSchema>;
   docId?: number | string;
+  uuid?: string;
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
   label?: string;
@@ -71,6 +72,7 @@ interface O2MInputProps {
 export const O2MInput = ({
   docId,
   item,
+  uuid,
   label,
   error,
   helper,
@@ -119,7 +121,7 @@ export const O2MInput = ({
 
   useEffect(() => {
     const addO2M = (event: MittEvents["o2m:pick"]) => {
-      if (event.field === item.field) {
+      if (event.field === item.field && event.uuid === uuid) {
         console.log("o2m:pick:received", event);
 
         const data = {
@@ -138,11 +140,11 @@ export const O2MInput = ({
     return () => {
       EventBus.off("o2m:pick", addO2M);
     };
-  }, [valueProp, props.onChange, relation, value]);
+  }, [valueProp, props.onChange, relation, value, uuid]);
 
   useEffect(() => {
     const addO2M = (event: MittEvents["o2m:add"]) => {
-      if (event.field === item.field) {
+      if (event.field === item.field && event.uuid === uuid) {
         console.log("o2m:add:received", event);
 
         const newState = {
@@ -157,7 +159,7 @@ export const O2MInput = ({
     return () => {
       EventBus.off("o2m:add", addO2M);
     };
-  }, [valueProp, props.onChange, relation, value]);
+  }, [valueProp, props.onChange, relation, value, uuid]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder.map((id) => parseInt(id as string));
@@ -256,6 +258,7 @@ export const O2MInput = ({
                 pathname: `/modals/m2m/[collection]/[id]`,
                 params: {
                   collection: relation?.collection as string,
+                  uuid,
                   id: docId,
                 },
               }}
@@ -427,6 +430,7 @@ export const O2MInput = ({
                   pathname: `/modals/o2m/[collection]/add`,
                   params: {
                     collection: relation.collection,
+                    uuid,
                     item_field: item.field,
                   },
                 }}
@@ -442,6 +446,7 @@ export const O2MInput = ({
                 params: {
                   collection: relation.collection,
                   related_field: relation.field,
+                  uuid,
                   current_value: [
                     ...map(value.update, (v) => (v as any)?.[relatedPk]),
                     ...map(value.create, (v) => (v as any)?.[relatedPk]),

@@ -25,6 +25,7 @@ interface Schema {
 interface M2OInputProps {
   item: ReadFieldOutput<Schema>;
   value?: string | number;
+  uuid?: string;
   onValueChange?: (value: string | number | null) => void;
   label?: string;
   error?: string;
@@ -35,6 +36,7 @@ interface M2OInputProps {
 export const M2OInput = ({
   item,
   value,
+  uuid,
   onValueChange,
   label,
   error,
@@ -48,7 +50,7 @@ export const M2OInput = ({
   useEffect(() => {
     EventBus.on("m2o:pick", (data) => {
       console.log({ data, fields, pk });
-      if (data.field === item.field) {
+      if (data.field === item.field && data.uuid === uuid) {
         onValueChange?.(data.data[pk as any]);
       }
     });
@@ -58,7 +60,7 @@ export const M2OInput = ({
         console.log(data);
       });
     };
-  }, [fields, pk, item.field]);
+  }, [fields, pk, item.field, uuid]);
 
   const Item = () => {
     const { data } = useDocument({
@@ -102,6 +104,7 @@ export const M2OInput = ({
                 data: objectToBase64({
                   field: item.field,
                   value: value,
+                  uuid: uuid as string,
                   filter: item.meta.options?.filter || [],
                 }),
               },

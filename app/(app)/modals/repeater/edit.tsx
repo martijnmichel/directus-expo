@@ -13,7 +13,7 @@ import EventBus from "@/utils/mitt";
 import { useTranslation } from "react-i18next";
 
 const RepeaterModal = () => {
-  const { fields, document, item_field, index } = useLocalSearchParams();
+  const { fields, document, item_field, index, uuid } = useLocalSearchParams();
   const headerStyle = useHeaderStyles({ isModal: true });
   const defaultValues = base64ToObject(document as string);
   const { t } = useTranslation();
@@ -38,6 +38,7 @@ const RepeaterModal = () => {
                   field: item_field as string,
                   data: doc,
                   index: parseInt(index as string),
+                  uuid: uuid as string,
                 });
               }}
             />

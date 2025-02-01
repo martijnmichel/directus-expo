@@ -6,8 +6,6 @@ import {
 } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
-import { H1 } from "@/components/display/typography";
-import UserCollections from "@/components/content/UserCollections";
 import {
   router,
   Stack,

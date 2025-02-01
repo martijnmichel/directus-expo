@@ -15,15 +15,30 @@ export type MittEvents = {
     uuid: string;
     docId: string | number;
   };
-  "m2m:add": { data: CoreSchemaDocument; field: string };
-  "m2m:remove": { data: CoreSchemaDocument; field: string };
-  "m2m:update": { collection: keyof CoreSchema; docId: string | number };
-  "m2o:pick": { data: CoreSchemaDocument; field: string };
-  "o2m:add": { data: CoreSchemaDocument; field: string };
-  "o2m:pick": { data: CoreSchemaDocument; field: string };
-  "file:pick": { data: string | string[]; multiple: boolean; field: string };
-  "repeater:add": { data: Record<string, any>; field: string };
-  "repeater:edit": { data: Record<string, any>; field: string; index: number };
+  "m2m:add": { data: CoreSchemaDocument; field: string; uuid: string };
+  "m2m:update": {
+    collection: keyof CoreSchema;
+    docId: string | number;
+    uuid: string;
+  };
+  "m2o:pick": { data: CoreSchemaDocument; field: string; uuid: string };
+
+  "o2m:add": { data: CoreSchemaDocument; field: string; uuid: string };
+  "o2m:pick": { data: CoreSchemaDocument; field: string; uuid: string };
+
+  "file:pick": {
+    data: string | string[];
+    multiple: boolean;
+    field: string;
+    uuid: string;
+  };
+  "repeater:add": { data: Record<string, any>; field: string; uuid: string };
+  "repeater:edit": {
+    data: Record<string, any>;
+    field: string;
+    index: number;
+    uuid: string;
+  };
   error: Error;
 };
 

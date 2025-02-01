@@ -48,6 +48,7 @@ export default function Collection() {
     junction_field,
     doc_id,
     item_field,
+    uuid,
   } = useLocalSearchParams();
 
   const pagination = useDocumentsFilters();
@@ -151,6 +152,7 @@ export default function Collection() {
             EventBus.emit("m2m:add", {
               data: doc as CoreSchemaDocument,
               field: item_field as string,
+              uuid: uuid as string,
             });
           });
         }}

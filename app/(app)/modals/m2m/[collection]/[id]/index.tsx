@@ -27,7 +27,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 export default function Collection() {
-  const { collection, id } = useLocalSearchParams();
+  const { collection, id, uuid } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -61,6 +61,7 @@ export default function Collection() {
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
                   docId: document[primaryKey as any] as string,
+                  uuid: uuid as string,
                 });
               }}
             />
