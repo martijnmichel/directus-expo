@@ -377,6 +377,11 @@ export const mapFields = ({
                         onChangeText={onChange}
                         value={value as string}
                         error={error?.message}
+                        min={item.meta.options?.min}
+                        max={item.meta.options?.max}
+                        step={item.meta.options?.step}
+                        float={item.type === "float"}
+                        decimal={item.type === "decimal"}
                       />
                     )}
                   />
