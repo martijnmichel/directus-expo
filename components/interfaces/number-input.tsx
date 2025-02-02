@@ -11,7 +11,15 @@ import { formStyles } from "./style";
 import { Plus, Minus } from "../icons";
 import { InterfaceProps } from ".";
 
-type NumberInputProps = InterfaceProps<TextInputProps>;
+type NumberInputProps = InterfaceProps<
+  TextInputProps & {
+    min?: number;
+    max?: number;
+    step?: number;
+    float?: boolean;
+    decimal?: boolean;
+  }
+>;
 
 export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
   (
@@ -20,24 +28,19 @@ export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
       error,
       helper,
       style,
-      item,
       onChangeText,
       value = "",
+      min,
+      max,
+      step = 1,
+      float,
+      decimal,
       disabled,
       ...props
     },
     ref
   ) => {
-    if (!item) {
-      console.warn(`NumberInput ${label}: item is required`);
-      return null;
-    }
-
     const { styles } = useStyles(formStyles);
-
-    const { min, max, step } = item?.meta?.options || {};
-    const float = item?.type === "float";
-    const decimal = item?.type === "decimal";
 
     const formatNumber = (num: number) => {
       // Use toLocaleString for display, but keep precision
@@ -167,6 +170,14 @@ export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
             placeholderTextColor="#A0A0A0"
             keyboardType={float ? "decimal-pad" : "number-pad"}
             onChangeText={handleChangeText}
+            onBlur={() => {
+              if (max !== undefined && value !== "") {
+                const currentValue = parseLocaleNumber(value);
+                if (currentValue > max) {
+                  updateValue(max);
+                }
+              }
+            }}
             value={value}
             selectTextOnFocus
             returnKeyType="done"
