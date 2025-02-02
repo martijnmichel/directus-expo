@@ -161,15 +161,24 @@ export const O2MInput = ({
   }, [valueProp, props.onChange, relation, value, uuid]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder.map((id) => parseInt(id as string));
+    const newOrderIds = newOrder;
+    console.log({ newOrderIds });
     props.onChange({
-      create: value.create.map((doc) => ({
+      create: value.create.map((doc, index) => {
+        return {
+          ...doc,
+          [sortField as string]: findIndex(
+            newOrderIds,
+            (id) => id === `${JSON.stringify(doc)}`
+          ),
+        };
+      }),
+      update: value.update.map((doc, index) => ({
         ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
-      })),
-      update: value.update.map((doc) => ({
-        ...doc,
-        [sortField as string]: findIndex(newOrderIds, (id) => id === doc.id),
+        [sortField as string]: findIndex(
+          newOrderIds,
+          (id) => id === `${JSON.stringify(doc)}`
+        ),
       })),
       delete: value.delete,
     });
@@ -359,8 +368,8 @@ export const O2MInput = ({
                 if (isNew) {
                   return (
                     <Draggable
-                      key={id}
-                      id={id?.toString() || index.toString()}
+                      key={JSON.stringify(relatedDoc)}
+                      id={JSON.stringify(relatedDoc)}
                       disabled={!sortField}
                     >
                       <RelatedListItem
@@ -394,8 +403,8 @@ export const O2MInput = ({
 
                 return (
                   <Draggable
-                    key={id + "draggable"}
-                    id={id?.toString()}
+                    key={JSON.stringify(relatedDoc)}
+                    id={JSON.stringify(relatedDoc)}
                     disabled={!sortField}
                   >
                     <Item
