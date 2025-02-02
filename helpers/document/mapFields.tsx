@@ -49,6 +49,7 @@ import { Slider } from "@/components/interfaces/slider";
 import { CollectionItemDropdown } from "@/components/interfaces/collection-item-dropdown";
 import { O2MInput } from "@/components/interfaces/o2m-input";
 import { M2AInput } from "@/components/interfaces/m2a-input";
+import { JsonInput } from "@/components/interfaces/json";
 
 export const mapFields = ({
   fields,
@@ -812,6 +813,27 @@ export const mapFields = ({
                         onValueChange={onChange}
                         value={value as { key: number; collection: string }}
                         item={item}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+
+              case "input-code":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <JsonInput
+                        {...defaultProps}
+                        onChangeText={onChange}
+                        value={value as string}
                         error={error?.message}
                       />
                     )}

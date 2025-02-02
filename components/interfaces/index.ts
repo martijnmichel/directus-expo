@@ -1,3 +1,8 @@
+import { CoreSchema } from "@directus/sdk";
+
+import { ReadFieldOutput } from "@directus/sdk";
+import { ReactNode } from "react";
+
 // Interface map defining available Directus interfaces and their configurations
 export const interfaceMap = {
   input: {
@@ -307,3 +312,15 @@ export const typeMap = {
     interfaces: ["oneToMany"],
   },
 };
+
+export type InterfaceProps<T extends any> = {
+  label?: string;
+  error?: string;
+  helper?: string;
+  required?: boolean;
+  item?: ReadFieldOutput<CoreSchema>;
+  uuid?: string;
+  prepend?: ReactNode;
+  append?: ReactNode;
+  disabled?: boolean;
+} & T;
