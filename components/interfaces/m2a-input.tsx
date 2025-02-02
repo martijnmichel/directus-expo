@@ -129,7 +129,7 @@ export const M2AInput = ({
           ...doc,
           [sortField as string]: findIndex(
             newOrderIds,
-            (id) => id === `${doc.item?.[pk]}new`
+            (id) => id === `${JSON.stringify(doc)}new`
           ),
         };
       }),
@@ -429,8 +429,8 @@ export const M2AInput = ({
                 if (isNew) {
                   return (
                     <Draggable
-                      key={id + "draggable"}
-                      id={id?.toString() + "new"}
+                      key={JSON.stringify(junctionDoc) + "new"}
+                      id={JSON.stringify(junctionDoc) + "new"}
                       disabled={!sortField}
                     >
                       <NewItem
@@ -464,8 +464,6 @@ export const M2AInput = ({
             {error || helper}
           </Text>
         )}
-
-        <Text>{uuid}</Text>
 
         {!disabled && (
           <Horizontal spacing="xs">

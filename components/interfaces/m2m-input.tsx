@@ -155,24 +155,12 @@ export const M2MInput = ({
     console.log({ newOrderIds });
     props.onChange({
       create: value.create.map((doc) => {
-        console.log(
-          `${
-            doc?.[relation?.field as any]?.[
-              relation?.schema.foreign_key_column as any
-            ]
-          }new`
-        );
+        console.log(`${JSON.stringify(doc)}new`);
         return {
           ...doc,
           [sortField as string]: findIndex(
             newOrderIds,
-            (id) =>
-              id ===
-              `${
-                doc?.[relation?.field as any]?.[
-                  relation?.schema.foreign_key_column as any
-                ]
-              }new`
+            (id) => id === `${JSON.stringify(doc)}new`
           ),
         };
       }),
@@ -396,8 +384,8 @@ export const M2MInput = ({
                 if (isNew) {
                   return (
                     <Draggable
-                      key={id}
-                      id={id?.toString() + "new"}
+                      key={JSON.stringify(junctionDoc) + "new"}
+                      id={JSON.stringify(junctionDoc) + "new"}
                       disabled={!sortField}
                     >
                       <RelatedListItem
