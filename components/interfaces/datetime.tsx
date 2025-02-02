@@ -12,18 +12,14 @@ import { Button } from "../display/button";
 import { Modal } from "../display/modal";
 import { DirectusIcon } from "../display/directus-icon";
 import { useTranslation } from "react-i18next";
+import { InterfaceProps } from ".";
 dayjs.extend(localizedFormat);
 dayjs.extend(customParseFormat);
 
-interface DateTimeProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type DateTimeProps = InterfaceProps<{
   value?: string;
   onValueChange?: (datetime: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const DateTime = ({
   label,

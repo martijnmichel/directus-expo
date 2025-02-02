@@ -23,9 +23,6 @@ import {
   useLocalSearchParams,
 } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
-import { List, ListItem } from "../display/list";
-import { MutateOptions, useQuery } from "@tanstack/react-query";
-import { DocumentEditor } from "../content/DocumentEditor";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import {
@@ -45,18 +42,12 @@ import { RelatedListItem } from "../display/related-listitem";
 import { DirectusIcon } from "../display/directus-icon";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { Image } from "expo-image";
+import { InterfaceProps } from ".";
 
-interface M2MInputProps {
-  item: ReadFieldOutput<CoreSchema>;
-  docId?: number | string;
-  value: number[];
+type FilesMultiInputProps = InterfaceProps<{
+  value?: number[];
   onChange: (value: number[]) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
-
+}>;
 export const FilesMultiInput = ({
   docId,
   item,
@@ -66,7 +57,7 @@ export const FilesMultiInput = ({
   value: valueProp = [],
   disabled,
   ...props
-}: M2MInputProps) => {
+}: FilesMultiInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
   const { directus } = useAuth();
   const [value] = useState<number[]>(valueProp);
@@ -75,12 +66,12 @@ export const FilesMultiInput = ({
 
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
-  const { data: fields } = useFields(item.collection as keyof CoreSchema);
+  const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
   const junction = relations?.find(
     (r) =>
-      r.related_collection === item.collection &&
-      r.meta.one_field === item.field
+      r.related_collection === item?.collection &&
+      r.meta.one_field === item?.field
   );
 
   const sortField = junction?.meta.sort_field;
@@ -287,7 +278,7 @@ export const FilesMultiInput = ({
                       docId={id}
                       junction={junction!}
                       relation={relation!}
-                      template={item.meta.options?.template}
+                      template={item?.meta.options?.template}
                       isSortable={!!sortField}
                       onAdd={(item: Record<string, unknown>) => {
                         setAddedDocIds([...addedDocIds, item.id as number]);

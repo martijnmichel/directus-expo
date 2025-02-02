@@ -42,18 +42,13 @@ import { PortalOutlet } from "../layout/Portal";
 import OutsidePressHandler from "react-native-outside-press";
 import { useTranslation } from "react-i18next";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
+import { InterfaceProps } from ".";
 
-interface ImageInputProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type FileInputProps = InterfaceProps<{
   value?: string | null;
   onChange?: (value: string | null) => void;
-  prepend?: ReactNode;
-  append?: ReactNode;
-  disabled?: boolean;
   sources?: ("device" | "url" | "library")[];
-}
+}>;
 
 export const FileInput = ({
   label,
@@ -65,7 +60,7 @@ export const FileInput = ({
   onChange,
   disabled,
   sources = ["device", "url", "library"],
-}: ImageInputProps) => {
+}: FileInputProps) => {
   const { styles, theme } = useStyles(formStyles);
   const { styles: dropdownStyles } = useStyles(stylesheet);
   const [imageUrl, setImageUrl] = useState("");

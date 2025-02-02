@@ -14,6 +14,7 @@ import { formStyles } from "./style";
 import { ChevronDown } from "../icons/Chevron";
 import { DirectusIcon } from "../display/directus-icon";
 import { Checkbox } from "./checkbox";
+import { InterfaceProps } from ".";
 
 interface SelectOption {
   text: string;
@@ -22,18 +23,11 @@ interface SelectOption {
   color?: string;
 }
 
-interface SelectProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type SelectMultiProps = InterfaceProps<{
   options: SelectOption[];
   value?: (string | number)[];
-  prepend?: ReactNode;
-  append?: ReactNode;
   onValueChange?: (value: (string | number)[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const SelectMulti = ({
   label,
@@ -46,7 +40,7 @@ export const SelectMulti = ({
   onValueChange,
   placeholder = "Select an option",
   disabled = false,
-}: SelectProps) => {
+}: SelectMultiProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(selectStyles);
   const { styles: formStyle } = useStyles(formStyles);

@@ -49,6 +49,7 @@ import { Text } from "../display/typography";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import React from "react";
 import { RelatedListItem } from "../display/related-listitem";
+import { InterfaceProps } from ".";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -57,17 +58,10 @@ type RelatedItemState = {
   delete: number[];
 };
 
-interface O2MInputProps {
-  item: ReadFieldOutput<CoreSchema>;
-  docId?: number | string;
-  uuid?: string;
+type O2MInputProps = InterfaceProps<{
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const O2MInput = ({
   docId,
@@ -80,6 +74,11 @@ export const O2MInput = ({
   disabled,
   ...props
 }: O2MInputProps) => {
+  if (!item) {
+    console.warn(`O2MInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles: formControlStyles } = useStyles(formStyles);
   const [initialValue] = useState(valueProp);
   const { data: relations } = useRelations();

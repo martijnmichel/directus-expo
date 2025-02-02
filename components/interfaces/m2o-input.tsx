@@ -17,21 +17,16 @@ import EventBus from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { Text } from "../display/typography";
 import { DirectusIcon } from "../display/directus-icon";
+import { InterfaceProps } from ".";
 
 interface Schema {
   [key: string]: any;
 }
 
-interface M2OInputProps {
-  item: ReadFieldOutput<Schema>;
+type M2OInputProps = InterfaceProps<{
   value?: string | number;
-  uuid?: string;
   onValueChange?: (value: string | number | null) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const M2OInput = ({
   item,
@@ -43,6 +38,11 @@ export const M2OInput = ({
   helper,
   disabled,
 }: M2OInputProps) => {
+  if (!item) {
+    console.warn(`M2OInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles, theme } = useStyles(formStyles);
 
   const { data: fields } = useFields(item.schema.foreign_key_table as any);

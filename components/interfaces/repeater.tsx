@@ -21,18 +21,12 @@ import { parseRepeaterTemplate } from "@/helpers/document/template";
 import { runOnJS } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { Alert } from "../display/alert";
+import { InterfaceProps } from ".";
 
-interface RepeaterInputProps {
-  item: ReadFieldOutput<CoreSchema>;
+type RepeaterInputProps = InterfaceProps<{
   value: any[] | undefined;
   onChange: (value: any[]) => void;
-  label?: string;
-  error?: string;
-  uuid?: string;
-  helper?: string;
-  sortable?: boolean;
-  disabled?: boolean;
-}
+}>;
 
 export const RepeaterInput = ({
   item,
@@ -41,10 +35,14 @@ export const RepeaterInput = ({
   uuid,
   helper,
   value = [],
-  sortable = true,
   onChange,
   disabled,
 }: RepeaterInputProps) => {
+  if (!item) {
+    console.warn(`RepeaterInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles } = useStyles(stylesheet);
   const { t } = useTranslation();
@@ -100,7 +98,7 @@ export const RepeaterInput = ({
               <Draggable
                 key={index}
                 id={index.toString()}
-                disabled={!sortable}
+                disabled={!!item.meta?.options?.sortable}
                 data={repeaterItem}
                 style={[styles.listItem, styles.fullWidth]}
               >

@@ -16,20 +16,12 @@ import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { Text } from "../display/typography";
+import { InterfaceProps } from ".";
 
-interface Schema {
-  [key: string]: any;
-}
-
-interface M2OInputProps {
-  item: ReadFieldOutput<Schema>;
+type M2OInputProps = InterfaceProps<{
   value?: { key: number; collection: string };
   onValueChange?: (value: { key: number; collection: string }) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const CollectionItemDropdown = ({
   item,
@@ -42,14 +34,14 @@ export const CollectionItemDropdown = ({
 }: M2OInputProps) => {
   const { styles, theme } = useStyles(formStyles);
 
-  const collection = item.meta.options?.selectedCollection as any;
+  const collection = item?.meta?.options?.selectedCollection as any;
 
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   useEffect(() => {
     EventBus.on("m2o:pick", (data) => {
       console.log(data);
-      if (data.field === item.field) {
+      if (data.field === item?.field) {
         onValueChange?.({
           key: Number(data.data[getPrimaryKey(fields) as any]),
           collection,
@@ -75,7 +67,7 @@ export const CollectionItemDropdown = ({
 
     return (
       <Text numberOfLines={1}>
-        {parseTemplate(item.meta?.options?.template || "", data)}
+        {parseTemplate(item?.meta?.options?.template || "", data)}
       </Text>
     );
   };
@@ -102,9 +94,9 @@ export const CollectionItemDropdown = ({
               params: {
                 collection,
                 data: objectToBase64({
-                  field: item.field,
+                  field: item?.field,
                   value: value,
-                  filter: item.meta.options?.filter || [],
+                  filter: item?.meta?.options?.filter || [],
                 }),
               },
             });

@@ -319,8 +319,10 @@ export type InterfaceProps<T extends any> = {
   helper?: string;
   required?: boolean;
   item?: ReadFieldOutput<CoreSchema>;
+  placeholder?: string;
   uuid?: string;
   prepend?: ReactNode;
   append?: ReactNode;
   disabled?: boolean;
+  docId?: number | string;
 } & T;
