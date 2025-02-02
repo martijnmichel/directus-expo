@@ -1,13 +1,12 @@
 import React, { useState } from "react";
-import { TextInput } from "react-native";
+import { TextInput, TextInputProps } from "react-native";
 import { Input } from "./input";
 import { Pressable } from "react-native";
 import { Eye } from "../icons";
 import { EyeOff } from "../icons";
+import { InterfaceProps } from "./index";
 
-interface InputHashProps extends React.ComponentProps<typeof Input> {
-  // Add any password-specific props here if needed
-}
+type InputHashProps = InterfaceProps<TextInputProps>;
 
 export const InputHash = React.forwardRef<TextInput, InputHashProps>(
   (props, ref) => {

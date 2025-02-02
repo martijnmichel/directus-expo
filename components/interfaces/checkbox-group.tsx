@@ -3,21 +3,18 @@ import { View, Text } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Checkbox } from "./checkbox";
+import { InterfaceProps } from ".";
 
 interface Option {
   text: string;
   value: string | number;
 }
 
-interface CheckboxGroupProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type CheckboxGroupProps = InterfaceProps<{
   options: Option[];
   value?: (string | number)[] | undefined;
   onChange?: (value: (string | number)[]) => void;
-  disabled?: boolean;
-}
+}>;
 
 export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   label,

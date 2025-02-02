@@ -2,16 +2,13 @@ import { View, Text } from "react-native";
 import { useStyles } from "react-native-unistyles";
 import { Pressable } from "react-native";
 import { formStyles } from "./style";
+import { InterfaceProps } from "./index";
 
-interface CheckboxProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type CheckboxProps = InterfaceProps<{
   checked?: boolean;
   onChange?: (checked: boolean) => void;
-  disabled?: boolean;
   text?: string;
-}
+}>;
 
 export const Checkbox = ({
   label,
