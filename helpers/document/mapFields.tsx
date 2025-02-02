@@ -400,9 +400,9 @@ export const mapFields = ({
                       <M2OInput
                         {...defaultProps}
                         uuid={uuid}
+                        item={item}
                         onValueChange={onChange}
                         value={value as string}
-                        item={item}
                         error={error?.message}
                       />
                     )}
