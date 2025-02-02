@@ -9,7 +9,7 @@ type TextAreaInterfaceProps = InterfaceProps<
 >;
 
 export const TextArea = React.forwardRef<TextInput, TextAreaInterfaceProps>(
-  ({ label, error, helper, rows = 4, disabled, ...props }, ref) => {
+  ({ label, error, helper, rows = 4, disabled, required, ...props }, ref) => {
     const { styles, theme } = useStyles(textAreaStyles);
     const { styles: formStyle } = useStyles(formStyles);
 
@@ -18,7 +18,11 @@ export const TextArea = React.forwardRef<TextInput, TextAreaInterfaceProps>(
 
     return (
       <View style={formStyle.formControl}>
-        {label && <Text style={formStyle.label}>{label}</Text>}
+        {label && (
+          <Text style={formStyle.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <View
           style={[
             styles.textareaContainer,

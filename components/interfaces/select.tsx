@@ -40,6 +40,7 @@ export const Select = ({
   onValueChange,
   placeholder = "Select an option",
   disabled = false,
+  required,
 }: SelectProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(selectStyles);
@@ -69,7 +70,7 @@ export const Select = ({
             disabled && { color: theme.colors.textTertiary },
           ]}
         >
-          {label}
+          {label} {required && "*"}
         </Text>
       )}
 

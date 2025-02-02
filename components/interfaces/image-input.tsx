@@ -48,6 +48,7 @@ export const ImageInput = ({
   value,
   onChange,
   disabled,
+  required,
   sources = ["device", "url", "library"],
 }: ImageInputProps) => {
   const { styles, theme } = useStyles(imageStyles);
@@ -102,7 +103,11 @@ export const ImageInput = ({
   }, []);
   return (
     <View style={formStyle.formControl}>
-      {label && <Text style={formStyle.label}>{label}</Text>}
+      {label && (
+        <Text style={formStyle.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
 
       <View style={styles.container}>
         <View style={styles.imagePreview}>

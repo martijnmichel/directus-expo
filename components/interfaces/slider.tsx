@@ -29,6 +29,7 @@ export const Slider: React.FC<SliderProps> = ({
   min = 0,
   max = 100,
   step = 1,
+  required,
 }) => {
   const { styles, theme } = useStyles(sliderStyles);
   const [sliderWidth, setSliderWidth] = React.useState(0);
@@ -103,7 +104,11 @@ export const Slider: React.FC<SliderProps> = ({
 
   return (
     <View style={styles.formControl}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <View
         ref={sliderRef}
         {...panResponder.panHandlers}

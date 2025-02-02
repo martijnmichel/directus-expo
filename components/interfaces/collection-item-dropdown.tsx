@@ -31,6 +31,7 @@ export const CollectionItemDropdown = ({
   error,
   helper,
   disabled,
+  required,
 }: M2OInputProps) => {
   const { styles, theme } = useStyles(formStyles);
 
@@ -74,7 +75,11 @@ export const CollectionItemDropdown = ({
 
   return (
     <View style={styles.formControl}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <View
         style={[
           styles.inputContainer,

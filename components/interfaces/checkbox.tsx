@@ -18,12 +18,17 @@ export const Checkbox = ({
   onChange,
   disabled = false,
   text,
+  required,
 }: CheckboxProps) => {
   const { styles: formStyle, theme } = useStyles(formStyles);
 
   return (
     <View style={formStyle.formControl}>
-      {label && <Text style={formStyle.label}>{label}</Text>}
+      {label && (
+        <Text style={formStyle.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <Pressable
         onPress={() => !disabled && onChange?.(!checked)}
         style={{ flexDirection: "row", alignItems: "center", gap: 8 }}

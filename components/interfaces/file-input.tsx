@@ -59,6 +59,7 @@ export const FileInput = ({
   append,
   onChange,
   disabled,
+  required,
   sources = ["device", "url", "library"],
 }: FileInputProps) => {
   const { styles, theme } = useStyles(formStyles);
@@ -157,7 +158,11 @@ export const FileInput = ({
 
   return (
     <View style={[styles.formControl, { position: "relative", zIndex: 1 }]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <OutsidePressHandler onOutsidePress={() => setIsOpen(false)}>
         <View
           style={[

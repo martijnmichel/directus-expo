@@ -23,6 +23,7 @@ export const TagsInput = React.forwardRef<TextInput, TagsProps>(
       append,
       helper,
       disabled,
+      required,
       value = [],
       presets,
       sortByAlphabet,
@@ -56,7 +57,11 @@ export const TagsInput = React.forwardRef<TextInput, TagsProps>(
 
     return (
       <View style={styles.formControl}>
-        {label && <Text style={styles.label}>{label}</Text>}
+        {label && (
+          <Text style={styles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <View
           style={[
             styles.inputContainer,

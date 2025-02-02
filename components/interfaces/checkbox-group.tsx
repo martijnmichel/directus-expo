@@ -24,6 +24,7 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
   value = [],
   onChange,
   disabled,
+  required,
 }) => {
   const { styles } = useStyles(formStyles);
 
@@ -39,7 +40,11 @@ export const CheckboxGroup: React.FC<CheckboxGroupProps> = ({
 
   return (
     <View style={styles.formControl}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <View style={styles.checkboxGroup}>
         {options.map((option) => (
           <View key={option.value} style={styles.checkboxItem}>

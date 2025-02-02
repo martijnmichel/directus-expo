@@ -40,6 +40,7 @@ export const SelectMulti = ({
   onValueChange,
   placeholder = "Select an option",
   disabled = false,
+  required,
 }: SelectMultiProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(selectStyles);
@@ -71,7 +72,7 @@ export const SelectMulti = ({
             disabled && { color: theme.colors.textTertiary },
           ]}
         >
-          {label}
+          {label} {required && "*"}
         </Text>
       )}
 
