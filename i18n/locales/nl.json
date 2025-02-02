@@ -106,6 +106,9 @@
     "localeSwitch": {
       "supported": "Ondersteund",
       "helperText": "* Niet -ondersteunde talen vertalen alleen je inhoud."
+    },
+    "fileInput": {
+      "selectFile": "Selecteer een bestand"
     }
   },
   "settings": {

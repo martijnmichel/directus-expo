@@ -106,6 +106,9 @@
     "localeSwitch": {
       "supported": "Supported",
       "helperText": "* unsupported languages only translate your content."
+    },
+    "fileInput": {
+      "selectFile": "Select a file"
     }
   },
   "settings": {
