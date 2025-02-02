@@ -264,7 +264,7 @@ export const M2AInput = ({
           {(error as DirectusErrorResponse).errors?.[0].message}
         </RelatedListItem>
       );
-    }
+    } /**
     console.log({
       junctionDoc,
       id,
@@ -273,7 +273,7 @@ export const M2AInput = ({
       isDeselected,
       collection,
       tmpl: item.meta.display_options?.template.replace(/(?:^|\s):/g, ""),
-    });
+    }); */
 
     if (!relation) {
       return null;
