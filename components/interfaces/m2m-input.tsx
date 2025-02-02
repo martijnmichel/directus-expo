@@ -203,7 +203,7 @@ export const M2MInput = ({
     refetch();
   }, [value.update, value.create, relation, junction, refetch]);
 
-  console.log({
+  /**console.log({
     item,
     docId,
     valueProp,
@@ -211,7 +211,7 @@ export const M2MInput = ({
     junction,
     relation,
     pickedItems,
-  });
+  }); */
 
   const Item = <T extends keyof CoreSchema>({
     docId,

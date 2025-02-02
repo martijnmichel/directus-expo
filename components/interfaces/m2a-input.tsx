@@ -172,7 +172,7 @@ export const M2AInput = ({
     };
   }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
-  console.log({
+  /** console.log({
     item,
     docId,
     valueProp,
@@ -180,7 +180,7 @@ export const M2AInput = ({
     junction,
     sortField,
     relation,
-  });
+  }); */
 
   const NewItem = ({ collection, item }: { collection: string; item: any }) => {
     const { data } = useCollection(collection as keyof CoreSchema);
