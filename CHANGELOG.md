@@ -1,3 +1,11 @@
+## [0.6.13](https://github.com/martijnmichel/directus-expo/compare/v0.6.12...v0.6.13) (2025-02-02)
+
+
+### Bug Fixes
+
+* o2m sort ([fc83e31](https://github.com/martijnmichel/directus-expo/commit/fc83e311674f3e80fc26aa27de1c29f2356e6645))
+* sorting ([3a40b22](https://github.com/martijnmichel/directus-expo/commit/3a40b226da424ac8c2f489ae755352425b74f0ef))
+
 ## [0.6.12](https://github.com/martijnmichel/directus-expo/compare/v0.6.11...v0.6.12) (2025-02-02)
 
 ## [0.6.11](https://github.com/martijnmichel/directus-expo/compare/v0.6.10...v0.6.11) (2025-02-01)
