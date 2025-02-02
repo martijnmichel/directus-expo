@@ -50,6 +50,7 @@ import { Text } from "../display/typography";
 import { RelatedListItem } from "../display/related-listitem";
 import { DirectusErrorResponse } from "@/types/directus";
 import { CoreSchemaDocument } from "@/types/directus";
+import { InterfaceProps } from ".";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -58,17 +59,10 @@ type RelatedItemState = {
   delete: number[];
 };
 
-interface M2MInputProps {
-  item: ReadFieldOutput<CoreSchema>;
-  docId?: number | string;
-  uuid?: string;
+type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const M2MInput = ({
   docId,
@@ -81,10 +75,15 @@ export const M2MInput = ({
   disabled,
   ...props
 }: M2MInputProps) => {
+  if (!item) {
+    console.warn(`M2MInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles: formControlStyles } = useStyles(formStyles);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
-  const { data: fields } = useFields(item.collection as keyof CoreSchema);
+  const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
   const { t } = useTranslation();
 

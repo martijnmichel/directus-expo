@@ -21,19 +21,12 @@ import { Horizontal } from "../layout/Stack";
 import { Button } from "../display/button";
 import { GestureResponderEvent } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { InterfaceProps } from ".";
 
-interface ColorPickerProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type ColorPickerProps = InterfaceProps<{
   value?: string;
   onValueChange?: (color: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-  presets?: Array<{ name: string; color: string }>;
-  opacity?: boolean;
-}
+}>;
 
 const DEFAULT_COLORS = [
   { name: "Primary", color: "#6644FF" },
@@ -54,13 +47,12 @@ export const ColorPicker = ({
   label,
   error,
   helper,
+  item,
   value,
   onValueChange,
   required,
   placeholder = "Select a color",
   disabled = false,
-  presets = DEFAULT_COLORS,
-  opacity = false,
 }: ColorPickerProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const { styles, theme } = useStyles(colorPickerStyles);
@@ -647,7 +639,7 @@ export const ColorPicker = ({
                   }}
                 />
               </View>
-              {opacity && (
+              {item?.meta?.options?.opacity && (
                 <View style={styles.rgbInputGroup}>
                   <Text style={styles.rgbLabel}>A</Text>
                   <TextInput
@@ -668,25 +660,29 @@ export const ColorPicker = ({
             </View>
 
             {/* Preset Colors Grid */}
-            <View style={styles.colorsGrid}>
-              {presets.map(({ name, color }) => (
-                <Pressable
-                  key={color}
-                  style={[
-                    styles.colorButton,
-                    {
-                      backgroundColor: color,
-                      opacity:
-                        color.length === 9
-                          ? parseInt(color.slice(7, 9), 16) / 255
-                          : 1,
-                    },
-                    draftValue === color && styles.selectedColor,
-                  ]}
-                  onPress={() => handleColorSelect(color)}
-                />
-              ))}
-            </View>
+            {item?.meta?.options?.presets && (
+              <View style={styles.colorsGrid}>
+                {item?.meta?.options?.presets?.map(
+                  ({ name, color }: { name: string; color: string }) => (
+                    <Pressable
+                      key={color}
+                      style={[
+                        styles.colorButton,
+                        {
+                          backgroundColor: color,
+                          opacity:
+                            color.length === 9
+                              ? parseInt(color.slice(7, 9), 16) / 255
+                              : 1,
+                        },
+                        draftValue === color && styles.selectedColor,
+                      ]}
+                      onPress={() => handleColorSelect(color)}
+                    />
+                  )
+                )}
+              </View>
+            )}
 
             <Horizontal style={{ justifyContent: "flex-end", marginTop: 16 }}>
               <Button

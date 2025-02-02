@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons"; // Assuming you're using Expo
 import { formStyles } from "./style";
 import { ChevronDown } from "../icons/Chevron";
 import { DirectusIcon, DirectusIconName } from "../display/directus-icon";
+import { InterfaceProps } from ".";
 
 interface SelectOption {
   text: string;
@@ -21,17 +22,11 @@ interface SelectOption {
   color?: string;
 }
 
-interface SelectProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type SelectProps = InterfaceProps<{
   options: SelectOption[];
   value?: string | number;
-  prepend?: ReactNode;
   onValueChange?: (value: string | number) => void;
-  placeholder?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const Select = ({
   label,

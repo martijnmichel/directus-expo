@@ -3,21 +3,18 @@ import { View, Text } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { RadioButton } from "./radio-button";
 import { formStyles } from "./style";
+import { InterfaceProps } from ".";
 
 interface RadioOption {
   text: string;
   value: string | number;
 }
 
-interface RadioButtonGroupProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type RadioButtonGroupProps = InterfaceProps<{
   options: RadioOption[];
-  value?: string | number;
+  value: string | number;
   onChange: (value: string | number) => void;
-  disabled?: boolean;
-}
+}>;
 
 export const RadioButtonGroup: React.FC<RadioButtonGroupProps> = ({
   label,

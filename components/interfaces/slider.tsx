@@ -9,29 +9,26 @@ import {
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
+import { InterfaceProps } from ".";
 
-interface SliderProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type SliderProps = InterfaceProps<{
   value: number;
+  onChange?: (value: number) => void;
   min?: number;
   max?: number;
   step?: number;
-  disabled?: boolean;
-  onChange?: (value: number) => void;
-}
+}>;
 
 export const Slider: React.FC<SliderProps> = ({
   label,
   error,
   helper,
   value,
+  disabled = false,
+  onChange,
   min = 0,
   max = 100,
   step = 1,
-  disabled = false,
-  onChange,
 }) => {
   const { styles, theme } = useStyles(sliderStyles);
   const [sliderWidth, setSliderWidth] = React.useState(0);

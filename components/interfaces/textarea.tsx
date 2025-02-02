@@ -2,17 +2,14 @@ import React from "react";
 import { View, TextInput, TextInputProps, Text } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
+import { InterfaceProps } from ".";
 
-interface TextAreaProps extends TextInputProps {
-  label?: string;
-  error?: string;
-  helper?: string;
-  rows?: number;
-  disabled?: boolean;
-}
+type TextAreaInterfaceProps = InterfaceProps<
+  TextInputProps & { rows?: number }
+>;
 
-export const TextArea = React.forwardRef<TextInput, TextAreaProps>(
-  ({ label, error, helper, style, rows = 4, disabled, ...props }, ref) => {
+export const TextArea = React.forwardRef<TextInput, TextAreaInterfaceProps>(
+  ({ label, error, helper, rows = 4, disabled, ...props }, ref) => {
     const { styles, theme } = useStyles(textAreaStyles);
     const { styles: formStyle } = useStyles(formStyles);
 
@@ -31,7 +28,7 @@ export const TextArea = React.forwardRef<TextInput, TextAreaProps>(
         >
           <TextInput
             ref={ref}
-            style={[styles.textarea, { minHeight }, style]}
+            style={[styles.textarea, { minHeight }]}
             multiline
             textAlignVertical="top"
             placeholderTextColor={theme.colors.textTertiary}

@@ -1,16 +1,13 @@
 import React, { useEffect } from "react";
 import { Pressable, View, Text, Animated } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { InterfaceProps } from ".";
 
-interface ToggleProps {
+type ToggleProps = InterfaceProps<{
   value: boolean;
   onValueChange: (value: boolean) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
   info?: string;
-}
+}>;
 
 export const Toggle: React.FC<ToggleProps> = ({
   value,

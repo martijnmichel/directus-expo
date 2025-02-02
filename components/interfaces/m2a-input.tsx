@@ -55,6 +55,7 @@ import { Text } from "../display/typography";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { DirectusErrorResponse } from "@/types/directus";
 import { RelatedListItem } from "../display/related-listitem";
+import { InterfaceProps } from ".";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -63,17 +64,10 @@ type RelatedItemState = {
   delete: number[];
 };
 
-interface M2AInputProps {
-  item: ReadFieldOutput<CoreSchema>;
-  docId?: number | string;
-  uuid?: string;
+type M2AInputProps = InterfaceProps<{
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
-  label?: string;
-  error?: string;
-  helper?: string;
-  disabled?: boolean;
-}
+}>;
 
 export const M2AInput = ({
   docId,
@@ -86,19 +80,22 @@ export const M2AInput = ({
   disabled,
   ...props
 }: M2AInputProps) => {
+  if (!item) {
+    console.warn(`M2AInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles, theme } = useStyles();
   const { data: relations } = useRelations();
-  const { data: permissions } = usePermissions();
-  const { data: fields } = useFields(item.collection as keyof CoreSchema);
-  const { data: allFields } = useAllFields();
+  const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
   const { t } = useTranslation();
 
   const junction = relations?.find(
     (r) =>
-      r.related_collection === item.collection &&
-      r.meta.one_field === item.field
+      r.related_collection === item?.collection &&
+      r.meta.one_field === item?.field
   );
 
   const sortField = junction?.meta.sort_field;

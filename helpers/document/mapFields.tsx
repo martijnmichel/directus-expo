@@ -255,10 +255,9 @@ export const mapFields = ({
                     }) => (
                       <ColorPicker
                         {...defaultProps}
+                        item={item}
                         onValueChange={onChange}
                         value={value as string}
-                        presets={item.meta.options?.presets}
-                        opacity={item.meta.options?.opacity}
                         error={error?.message}
                       />
                     )}
@@ -377,13 +376,6 @@ export const mapFields = ({
                         {...defaultProps}
                         onChangeText={onChange}
                         value={value as string}
-                        autoCapitalize="none"
-                        keyboardType="numeric"
-                        min={item.meta.options?.min}
-                        max={item.meta.options?.max}
-                        step={item.meta.options?.step}
-                        float={item.type === "float"}
-                        decimal={item.type === "decimal"}
                         error={error?.message}
                       />
                     )}
@@ -427,9 +419,9 @@ export const mapFields = ({
                         {...defaultProps}
                         onChange={onChange}
                         value={value as number}
-                        min={item.meta.options?.min}
-                        max={item.meta.options?.max}
-                        step={item.meta.options?.step}
+                        min={item.meta.options?.minValue}
+                        max={item.meta.options?.maxValue}
+                        step={item.meta.options?.stepInterval}
                         error={error?.message}
                       />
                     )}

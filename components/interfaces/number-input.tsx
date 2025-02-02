@@ -9,31 +9,18 @@ import {
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Plus, Minus } from "../icons";
+import { InterfaceProps } from ".";
 
-interface InputProps extends TextInputProps {
-  label?: string;
-  error?: string;
-  helper?: string;
-  min?: number;
-  max?: number;
-  step?: number;
-  float?: boolean;
-  decimal?: boolean;
-  disabled?: boolean;
-}
+type NumberInputProps = InterfaceProps<TextInputProps>;
 
-export const NumberInput = React.forwardRef<TextInput, InputProps>(
+export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
   (
     {
       label,
       error,
       helper,
       style,
-      min,
-      max,
-      step = 1,
-      float = false,
-      decimal = false,
+      item,
       onChangeText,
       value = "",
       disabled,
@@ -41,9 +28,16 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
     },
     ref
   ) => {
+    if (!item) {
+      console.warn(`NumberInput ${label}: item is required`);
+      return null;
+    }
+
     const { styles } = useStyles(formStyles);
 
-    console.log({ float, decimal, label });
+    const { min, max, step } = item?.meta?.options || {};
+    const float = item?.type === "float";
+    const decimal = item?.type === "decimal";
 
     const formatNumber = (num: number) => {
       // Use toLocaleString for display, but keep precision
@@ -176,6 +170,7 @@ export const NumberInput = React.forwardRef<TextInput, InputProps>(
             value={value}
             selectTextOnFocus
             returnKeyType="done"
+            autoCapitalize="none"
             editable={!disabled}
             {...props}
           />

@@ -5,19 +5,14 @@ import { formStyles } from "./style";
 import { Horizontal } from "../layout/Stack";
 import { filter, map, orderBy } from "lodash";
 import { Tag } from "../display/tag";
+import { InterfaceProps } from ".";
 
-interface TagsProps extends Omit<TextInputProps, "onChange" | "value"> {
-  label?: string;
-  error?: string;
-  prepend?: ReactNode;
-  append?: ReactNode;
-  helper?: string;
-  disabled?: boolean;
+type TagsProps = InterfaceProps<{
   value: string[];
   onChange: (value: string[]) => void;
   sortByAlphabet?: boolean;
   presets?: string[];
-}
+}>;
 
 export const TagsInput = React.forwardRef<TextInput, TagsProps>(
   (
@@ -27,7 +22,6 @@ export const TagsInput = React.forwardRef<TextInput, TagsProps>(
       prepend,
       append,
       helper,
-      style,
       disabled,
       value = [],
       presets,
@@ -73,7 +67,7 @@ export const TagsInput = React.forwardRef<TextInput, TagsProps>(
           {prepend && <View style={styles.prepend}>{clonedPrepend}</View>}
           <TextInput
             ref={ref}
-            style={[styles.input, style]}
+            style={[styles.input]}
             placeholderTextColor="#A0A0A0"
             editable={!disabled}
             onChangeText={setLocalValue}

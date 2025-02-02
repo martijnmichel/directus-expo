@@ -33,16 +33,13 @@ import { router } from "expo-router";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import EventBus from "@/utils/mitt";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
+import { InterfaceProps } from ".";
 
-interface ImageInputProps {
-  label?: string;
-  error?: string;
-  helper?: string;
+type ImageInputProps = InterfaceProps<{
   value?: string;
   onChange?: (value: string | string[]) => void;
-  disabled?: boolean;
   sources?: ("device" | "url" | "library")[];
-}
+}>;
 
 export const ImageInput = ({
   label,

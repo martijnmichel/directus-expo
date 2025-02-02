@@ -14,12 +14,13 @@ import { formatFileSize } from "@/helpers/formatFileSize";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "../content/filters/pagination";
 import { SearchFilter } from "../content/filters/search-filter-modal";
+import { InterfaceProps } from ".";
 
-interface FileSelectProps {
+type FileSelectProps = InterfaceProps<{
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
   extensions?: string[];
-}
+}>;
 
 export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
