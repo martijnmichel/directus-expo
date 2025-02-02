@@ -17,6 +17,7 @@ export const Toggle: React.FC<ToggleProps> = ({
   helper,
   disabled,
   info,
+  required,
 }) => {
   const { styles, theme } = useStyles(styleSheet);
   const translateX = new Animated.Value(value ? 20 : 0);
@@ -33,7 +34,11 @@ export const Toggle: React.FC<ToggleProps> = ({
   return (
     <View style={styles.formControl}>
       <View style={styles.headerContainer}>
-        {label && <Text style={styles.label}>{label}</Text>}
+        {label && (
+          <Text style={styles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
       </View>
       <Pressable
         style={{

@@ -37,6 +37,7 @@ export const M2OInput = ({
   error,
   helper,
   disabled,
+  required,
 }: M2OInputProps) => {
   if (!item) {
     console.warn(`M2OInput ${label}: item is required`);
@@ -82,7 +83,11 @@ export const M2OInput = ({
 
   return (
     <View style={styles.formControl}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={styles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
       <View
         style={[
           styles.inputContainer,

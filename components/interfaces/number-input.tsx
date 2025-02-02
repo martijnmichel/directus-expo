@@ -36,6 +36,7 @@ export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
       float,
       decimal,
       disabled,
+      required,
       ...props
     },
     ref
@@ -148,7 +149,11 @@ export const NumberInput = React.forwardRef<TextInput, NumberInputProps>(
 
     return (
       <View style={styles.formControl}>
-        {label && <Text style={styles.label}>{label}</Text>}
+        {label && (
+          <Text style={styles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <View
           style={[
             styles.inputContainer,

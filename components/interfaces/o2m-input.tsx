@@ -72,6 +72,7 @@ export const O2MInput = ({
   helper,
   value: valueProp = [],
   disabled,
+  required,
   ...props
 }: O2MInputProps) => {
   if (!item) {
@@ -323,7 +324,11 @@ export const O2MInput = ({
   return (
     relation && (
       <Vertical spacing="xs">
-        {label && <Text style={formControlStyles.label}>{label}</Text>}
+        {label && (
+          <Text style={formControlStyles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <GestureHandlerRootView>
           <DndProvider>
             <DraggableStack

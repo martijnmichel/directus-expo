@@ -37,6 +37,7 @@ export const RepeaterInput = ({
   value = [],
   onChange,
   disabled,
+  required,
 }: RepeaterInputProps) => {
   if (!item) {
     console.warn(`RepeaterInput ${label}: item is required`);
@@ -81,7 +82,11 @@ export const RepeaterInput = ({
 
   return (
     <Vertical spacing="xs">
-      {label && <Text style={formControlStyles.label}>{label}</Text>}
+      {label && (
+        <Text style={formControlStyles.label}>
+          {label} {required && "*"}
+        </Text>
+      )}
 
       {!value?.length && (
         <Alert message={t("components.repeater.noItems")} status="info" />

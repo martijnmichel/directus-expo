@@ -29,6 +29,7 @@ export const DateTime = ({
   onValueChange,
   placeholder = "Select date and time",
   disabled = false,
+  required,
 }: DateTimeProps) => {
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
@@ -154,7 +155,7 @@ export const DateTime = ({
           ]}
         >
           {label}
-          {label.endsWith("*") ? "" : " *"}
+          {required && "*"}
         </Text>
       )}
 

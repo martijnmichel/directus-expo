@@ -15,7 +15,17 @@ type JsonInputProps = InterfaceProps<TextInputProps>;
 
 export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
   (
-    { label, error, helper, value, onChangeText, style, disabled, ...props },
+    {
+      label,
+      error,
+      helper,
+      value,
+      onChangeText,
+      style,
+      disabled,
+      required,
+      ...props
+    },
     ref
   ) => {
     const { styles, theme } = useStyles(jsonStyles);
@@ -75,7 +85,11 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
 
     return (
       <View style={styles.formControl}>
-        {label && <Text style={styles.label}>{label}</Text>}
+        {label && (
+          <Text style={styles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <View
           style={[
             styles.container,

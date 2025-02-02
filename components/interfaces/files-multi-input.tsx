@@ -56,6 +56,7 @@ export const FilesMultiInput = ({
   helper,
   value: valueProp = [],
   disabled,
+  required,
   ...props
 }: FilesMultiInputProps) => {
   const { styles: formControlStyles } = useStyles(formStyles);
@@ -253,7 +254,11 @@ export const FilesMultiInput = ({
     relation &&
     junction && (
       <Vertical spacing="xs">
-        {label && <Text style={formControlStyles.label}>{label}</Text>}
+        {label && (
+          <Text style={formControlStyles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <GestureHandlerRootView>
           <DndProvider>
             <DraggableStack

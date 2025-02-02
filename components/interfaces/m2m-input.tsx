@@ -73,6 +73,7 @@ export const M2MInput = ({
   helper,
   value: valueProp = [],
   disabled,
+  required,
   ...props
 }: M2MInputProps) => {
   if (!item) {
@@ -330,7 +331,11 @@ export const M2MInput = ({
     relation &&
     junction && (
       <Vertical spacing="xs">
-        {label && <Text style={formControlStyles.label}>{label}</Text>}
+        {label && (
+          <Text style={formControlStyles.label}>
+            {label} {required && "*"}
+          </Text>
+        )}
         <GestureHandlerRootView>
           <DndProvider>
             <DraggableStack
