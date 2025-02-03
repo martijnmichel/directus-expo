@@ -1,3 +1,10 @@
+## [0.6.16](https://github.com/martijnmichel/directus-expo/compare/v0.6.15...v0.6.16) (2025-02-03)
+
+
+### Features
+
+* added website ([f228d84](https://github.com/martijnmichel/directus-expo/commit/f228d846d4f13cee446ce99d2cf3a31a1ab0c0e6))
+
 ## [0.6.15](https://github.com/martijnmichel/directus-expo/compare/v0.6.14...v0.6.15) (2025-02-03)
 
 
