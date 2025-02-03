@@ -1,3 +1,12 @@
+## [0.6.14](https://github.com/martijnmichel/directus-expo/compare/v0.6.13...v0.6.14) (2025-02-03)
+
+
+### Bug Fixes
+
+* added required on all interfaces ([0fb27d0](https://github.com/martijnmichel/directus-expo/commit/0fb27d0d0b3183e63be25a4c41337a9b348eb2c9))
+* drag-drop in scrollview on android ([631b679](https://github.com/martijnmichel/directus-expo/commit/631b67921ead45b0784c0e13eda9377fb34e8ac6))
+* no text on file select ([856b9be](https://github.com/martijnmichel/directus-expo/commit/856b9be73b74accb3d37b4691baa8804dbda5197))
+
 ## [0.6.13](https://github.com/martijnmichel/directus-expo/compare/v0.6.12...v0.6.13) (2025-02-02)
 
 
