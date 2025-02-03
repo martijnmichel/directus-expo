@@ -11,6 +11,11 @@ export const lightTheme = {
     errorText: "#ea7d8f" as string,
     errorBorder: "#f8d4da" as string,
 
+    danger: "#ea7d8f" as string, // Error red
+    dangerBackground: "#fceef0" as string,
+    dangerText: "#ea7d8f" as string,
+    dangerBorder: "#f8d4da" as string,
+
     success: "#00b87c" as string, // Richer success green
     successBackground: "#e6f6f1" as string, // Light green background
     successText: "#00b87c" as string, // Match success color
@@ -20,6 +25,11 @@ export const lightTheme = {
     warningBackground: "#fff4e5" as string, // Light orange background
     warningText: "#ff9800" as string, // Match warning color
     warningBorder: "#ffe4bc" as string, // Light orange border
+
+    info: "#007bff" as string, // Primary blue
+    infoBackground: "#e6f6ff" as string, // Light blue background
+    infoText: "#007bff" as string, // Match info color
+    infoBorder: "#b8daff" as string, // Light blue border
 
     // Text colors
     textPrimary: "#172940" as string, // Dark text
