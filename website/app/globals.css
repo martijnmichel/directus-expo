@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.pattern {
+  background-color: #FFFFFF;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='701' height='84.1' viewBox='0 0 1000 120'%3E%3Cg fill='none' stroke='%23E4E4E4' stroke-width='1.2' %3E%3Cpath d='M-500 75c0 0 125-30 250-30S0 75 0 75s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3Cpath d='M-500 45c0 0 125-30 250-30S0 45 0 45s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3Cpath d='M-500 105c0 0 125-30 250-30S0 105 0 105s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3Cpath d='M-500 15c0 0 125-30 250-30S0 15 0 15s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3Cpath d='M-500-15c0 0 125-30 250-30S0-15 0-15s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3Cpath d='M-500 135c0 0 125-30 250-30S0 135 0 135s125 30 250 30s250-30 250-30s125-30 250-30s250 30 250 30s125 30 250 30s250-30 250-30'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.carousel-container {
+  border-radius: 8px;
+}
+
+.carousel {
+  display: flex;
+  width: 500%;
+  animation: carousel 25s infinite;
+}
+
+.carousel-item {
+  width: 100%;
+  position: relative;
+}
+
+@keyframes carousel {
+
+  0%,
+  16% {
+    transform: translateX(0);
+  }
+
+  20%,
+  36% {
+    transform: translateX(-20%);
+  }
+
+  40%,
+  56% {
+    transform: translateX(-40%);
+  }
+
+  60%,
+  76% {
+    transform: translateX(-60%);
+  }
+
+  80%,
+  96% {
+    transform: translateX(-80%);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Optional: Pause animation on hover */
+.carousel-container:hover .carousel {
+  animation-play-state: paused;
+}
