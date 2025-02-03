@@ -55,14 +55,14 @@ export default function Home() {
         </div>
 
         {/* Image Carousel */}
-        <div className="carousel-container mt-20 w-full max-w-4xl mx-auto h-[400px] overflow-hidden relative">
+        <div className="carousel-container mt-20 w-full  mx-auto h-[400px] md:h-[600px] lg:h-[800px] overflow-hidden relative">
           <div className="carousel h-full">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div className="carousel-item">
+              <div className="carousel-item" key={index + "image"}>
                 <Image
-                  key={index + "image"}
                   src={`/${index + 1}.png`}
                   alt={`Carousel Image ${index + 1}`}
+                  
                   fill
                   className="object-contain h-full w-auto"
                 />
