@@ -50,6 +50,7 @@ import { CollectionItemDropdown } from "@/components/interfaces/collection-item-
 import { O2MInput } from "@/components/interfaces/o2m-input";
 import { M2AInput } from "@/components/interfaces/m2a-input";
 import { JsonInput } from "@/components/interfaces/json";
+import { Alert } from "@/components/display/alert";
 
 export const mapFields = ({
   fields,
@@ -593,6 +594,15 @@ export const mapFields = ({
 
           case "alias":
             switch (item.meta.interface) {
+              case "presentation-notice":
+                return (
+                  <Alert
+                    key={item.field}
+                    icon={item.meta.options?.icon}
+                    status={item.meta.options?.color}
+                    message={item.meta.options?.text}
+                  />
+                );
               case "list-m2o":
                 return (
                   <Controller
