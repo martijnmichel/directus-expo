@@ -400,65 +400,62 @@ export const M2AInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <GestureHandlerRootView>
-          <DndProvider>
-            <DraggableStack
-              key={JSON.stringify(valueProp)}
-              direction="column"
-              onOrderChange={onOrderChange}
-              style={{ gap: 3 }}
-            >
-              {orderBy(
-                [...value.create, ...value.update, ...value.delete],
-                sortField || ""
-              ).map((junctionDoc, index) => {
-                if (typeof junctionDoc === "number") {
-                  junctionDoc = { id: junctionDoc };
-                }
-                const primaryKey = "id";
+        <DndProvider>
+          <DraggableStack
+            key={JSON.stringify(valueProp)}
+            direction="column"
+            onOrderChange={onOrderChange}
+            style={{ gap: 3 }}
+          >
+            {orderBy(
+              [...value.create, ...value.update, ...value.delete],
+              sortField || ""
+            ).map((junctionDoc, index) => {
+              if (typeof junctionDoc === "number") {
+                junctionDoc = { id: junctionDoc };
+              }
+              const primaryKey = "id";
 
-                const relatedDoc =
-                  typeof junctionDoc === "object" &&
-                  relation?.field in junctionDoc
-                    ? (junctionDoc as any)[relation?.field]
-                    : junctionDoc;
-                const id: number | string =
-                  typeof relatedDoc === "number" ||
-                  typeof relatedDoc === "string"
-                    ? relatedDoc
-                    : relatedDoc.id;
+              const relatedDoc =
+                typeof junctionDoc === "object" &&
+                relation?.field in junctionDoc
+                  ? (junctionDoc as any)[relation?.field]
+                  : junctionDoc;
+              const id: number | string =
+                typeof relatedDoc === "number" || typeof relatedDoc === "string"
+                  ? relatedDoc
+                  : relatedDoc.id;
 
-                const isDeselected = value.delete?.some((doc) => doc === id);
-                const isNew = isInitial ? false : !junctionDoc.id;
+              const isDeselected = value.delete?.some((doc) => doc === id);
+              const isNew = isInitial ? false : !junctionDoc.id;
 
-                if (isNew) {
-                  return (
-                    <Draggable
-                      key={JSON.stringify(junctionDoc) + "new"}
-                      id={JSON.stringify(junctionDoc) + "new"}
-                      disabled={!sortField}
-                    >
-                      <NewItem
-                        collection={(junctionDoc as any).collection}
-                        item={(junctionDoc as any).item}
-                      />
-                    </Draggable>
-                  );
-                }
-
+              if (isNew) {
                 return (
                   <Draggable
-                    key={id + "draggable"}
-                    id={id?.toString() + "existing"}
+                    key={JSON.stringify(junctionDoc) + "new"}
+                    id={JSON.stringify(junctionDoc) + "new"}
                     disabled={!sortField}
                   >
-                    <Item id={id} isNew={isNew} isDeselected={isDeselected} />
+                    <NewItem
+                      collection={(junctionDoc as any).collection}
+                      item={(junctionDoc as any).item}
+                    />
                   </Draggable>
                 );
-              })}
-            </DraggableStack>
-          </DndProvider>
-        </GestureHandlerRootView>
+              }
+
+              return (
+                <Draggable
+                  key={id + "draggable"}
+                  id={id?.toString() + "existing"}
+                  disabled={!sortField}
+                >
+                  <Item id={id} isNew={isNew} isDeselected={isDeselected} />
+                </Draggable>
+              );
+            })}
+          </DraggableStack>
+        </DndProvider>
         {(error || helper) && (
           <Text
             style={[

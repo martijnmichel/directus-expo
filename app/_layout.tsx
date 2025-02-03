@@ -32,6 +32,7 @@ import { useEffect } from "react";
 import { EventProvider } from "react-native-outside-press";
 import { OTAUpdate } from "@/components/OTAUpdate";
 import { StatusBar } from "expo-status-bar";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Register your breakpoints
 UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
   light: lightTheme,
@@ -40,23 +41,25 @@ UnistylesRegistry.addBreakpoints(breakpoints).addThemes({
 
 export default function RootLayout() {
   return (
-    <I18nextProvider i18n={i18n}>
-      <QueryClientProvider client={queryClient}>
-        <Preload>
-          <ConfirmDialogProvider>
-            <AuthProvider>
-              <PortalProvider>
-                <EventProvider>
-                  <Slot />
-                </EventProvider>
-                <Toast />
-                <OTAUpdate />
-              </PortalProvider>
-            </AuthProvider>
-          </ConfirmDialogProvider>
-        </Preload>
-      </QueryClientProvider>
-    </I18nextProvider>
+    <GestureHandlerRootView>
+      <I18nextProvider i18n={i18n}>
+        <QueryClientProvider client={queryClient}>
+          <Preload>
+            <ConfirmDialogProvider>
+              <AuthProvider>
+                <PortalProvider>
+                  <EventProvider>
+                    <Slot />
+                  </EventProvider>
+                  <Toast />
+                  <OTAUpdate />
+                </PortalProvider>
+              </AuthProvider>
+            </ConfirmDialogProvider>
+          </Preload>
+        </QueryClientProvider>
+      </I18nextProvider>
+    </GestureHandlerRootView>
   );
 }
 

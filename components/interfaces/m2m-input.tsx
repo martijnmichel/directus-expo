@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, TouchableWithoutFeedback, View } from "react-native";
 import {
   CoreSchema,
   ReadFieldOutput,
@@ -336,39 +336,38 @@ export const M2MInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <GestureHandlerRootView>
-          <DndProvider>
-            <DraggableStack
-              key={JSON.stringify(valueProp)}
-              direction="column"
-              onOrderChange={onOrderChange}
-              style={{ gap: 3 }}
-            >
-              {orderBy(
-                [...value.create, ...value.update, ...value.delete],
-                sortField || ""
-              ).map((junctionDoc, index) => {
-                if (typeof junctionDoc === "number") {
-                  junctionDoc = { id: junctionDoc };
-                }
-                const primaryKey = relation?.schema.foreign_key_column;
 
-                const relatedDoc =
-                  relation?.field in junctionDoc
-                    ? (junctionDoc as any)[relation?.field]
-                    : junctionDoc;
-                const id: number | string =
-                  typeof relatedDoc === "number" ||
-                  typeof relatedDoc === "string"
-                    ? relatedDoc
-                    : primaryKey in relatedDoc
-                    ? relatedDoc[primaryKey]
-                    : relatedDoc.id;
+        <DndProvider minDistance={10}>
+          <DraggableStack
+            key={JSON.stringify(valueProp)}
+            direction="column"
+            onOrderChange={onOrderChange}
+            gap={3}
+          >
+            {orderBy(
+              [...value.create, ...value.update, ...value.delete],
+              sortField || ""
+            ).map((junctionDoc, index) => {
+              if (typeof junctionDoc === "number") {
+                junctionDoc = { id: junctionDoc };
+              }
+              const primaryKey = relation?.schema.foreign_key_column;
 
-                const isDeselected = value.delete?.some((doc) => doc === id);
-                const isNew = isInitial ? false : !junctionDoc.id;
+              const relatedDoc =
+                relation?.field in junctionDoc
+                  ? (junctionDoc as any)[relation?.field]
+                  : junctionDoc;
+              const id: number | string =
+                typeof relatedDoc === "number" || typeof relatedDoc === "string"
+                  ? relatedDoc
+                  : primaryKey in relatedDoc
+                  ? relatedDoc[primaryKey]
+                  : relatedDoc.id;
 
-                /** console.log({
+              const isDeselected = value.delete?.some((doc) => doc === id);
+              const isNew = isInitial ? false : !junctionDoc.id;
+
+              /** console.log({
                   junctionDoc,
                   relatedDoc,
                   id,
@@ -378,104 +377,101 @@ export const M2MInput = ({
                   isDeselected,
                 }); */
 
-                const text = parseTemplate(
-                  item.meta.options?.template,
-                  {
-                    ...junctionDoc,
-                  },
-                  fields
-                );
+              const text = parseTemplate(
+                item.meta.options?.template,
+                {
+                  ...junctionDoc,
+                },
+                fields
+              );
 
-                if (isNew) {
-                  return (
-                    <Draggable
-                      key={JSON.stringify(junctionDoc) + "new"}
-                      id={JSON.stringify(junctionDoc) + "new"}
-                      disabled={!sortField}
-                    >
-                      <RelatedListItem
-                        isNew
-                        isDraggable={!!sortField}
-                        append={
-                          <Button
-                            variant="ghost"
-                            rounded
-                            onPress={() => {
-                              console.log({
-                                field: relation.field,
-                                primaryKey,
-                                id,
-                                create: value.create.filter(
-                                  (v) =>
-                                    v?.[relation.field]?.[primaryKey] !== id
-                                ),
-                              });
-                              props.onChange({
-                                ...value,
-                                create: value.create.filter(
-                                  (v) =>
-                                    v?.[relation.field]?.[primaryKey] !== id
-                                ),
-                              });
-                            }}
-                          >
-                            <DirectusIcon name="delete" />
-                          </Button>
-                        }
-                      >
-                        {text || "--"}
-                      </RelatedListItem>
-                    </Draggable>
-                  );
-                }
-
+              if (isNew) {
                 return (
                   <Draggable
-                    key={id + "draggable"}
-                    id={id?.toString() + "existing"}
+                    key={JSON.stringify(junctionDoc) + "new"}
+                    id={JSON.stringify(junctionDoc) + "new"}
                     disabled={!sortField}
                   >
-                    <Item
-                      key={id}
-                      docId={id}
-                      junction={junction!}
-                      relation={relation!}
-                      template={item.meta.options?.template}
-                      isSortable={!!sortField}
-                      onAdd={(item) => {
-                        console.log({ item });
-                        props.onChange({
-                          ...value,
-                          update: [
-                            ...value.update,
-                            {
-                              id: item.id as number,
-                              ...(sortField && {
-                                [sortField]: item[sortField as string],
-                              }),
-                            },
-                          ],
-                          delete: value.delete.filter((v) => v !== id),
-                        });
-                      }}
-                      onDelete={(item) => {
-                        console.log({ item });
-
-                        props.onChange({
-                          ...value,
-                          update: value.update.filter((v) => v?.id !== id),
-                          delete: [...value.delete, id as number],
-                        });
-                      }}
-                      isNew={isNew}
-                      isDeselected={isDeselected}
-                    />
+                    <RelatedListItem
+                      isNew
+                      isDraggable={!!sortField}
+                      append={
+                        <Button
+                          variant="ghost"
+                          rounded
+                          onPress={() => {
+                            console.log({
+                              field: relation.field,
+                              primaryKey,
+                              id,
+                              create: value.create.filter(
+                                (v) => v?.[relation.field]?.[primaryKey] !== id
+                              ),
+                            });
+                            props.onChange({
+                              ...value,
+                              create: value.create.filter(
+                                (v) => v?.[relation.field]?.[primaryKey] !== id
+                              ),
+                            });
+                          }}
+                        >
+                          <DirectusIcon name="delete" />
+                        </Button>
+                      }
+                    >
+                      {text || "--"}
+                    </RelatedListItem>
                   </Draggable>
                 );
-              })}
-            </DraggableStack>
-          </DndProvider>
-        </GestureHandlerRootView>
+              }
+
+              return (
+                <Draggable
+                  key={id + "draggable"}
+                  id={id?.toString() + "existing"}
+                  disabled={!sortField}
+                >
+                  <Item
+                    key={id}
+                    docId={id}
+                    junction={junction!}
+                    relation={relation!}
+                    template={item.meta.options?.template}
+                    isSortable={!!sortField}
+                    onAdd={(item) => {
+                      console.log({ item });
+                      props.onChange({
+                        ...value,
+                        update: [
+                          ...value.update,
+                          {
+                            id: item.id as number,
+                            ...(sortField && {
+                              [sortField]: item[sortField as string],
+                            }),
+                          },
+                        ],
+                        delete: value.delete.filter((v) => v !== id),
+                      });
+                    }}
+                    onDelete={(item) => {
+                      console.log({ item });
+
+                      props.onChange({
+                        ...value,
+                        update: value.update.filter((v) => v?.id !== id),
+                        delete: [...value.delete, id as number],
+                      });
+                    }}
+                    isNew={isNew}
+                    isDeselected={isDeselected}
+                  />
+                </Draggable>
+              );
+            })}
+          </DraggableStack>
+        </DndProvider>
         {(error || helper) && (
           <Text
             style={[

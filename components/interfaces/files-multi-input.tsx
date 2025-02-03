@@ -259,56 +259,54 @@ export const FilesMultiInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <GestureHandlerRootView>
-          <DndProvider>
-            <DraggableStack
-              key={JSON.stringify(valueProp)}
-              direction="column"
-              onOrderChange={onOrderChange}
-              style={{ gap: 3 }}
-            >
-              {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-                const isDeselected =
-                  value?.includes(id) && !valueProp.includes(id);
-                const isNew = !value?.includes(id);
+        <DndProvider>
+          <DraggableStack
+            key={JSON.stringify(valueProp)}
+            direction="column"
+            onOrderChange={onOrderChange}
+            style={{ gap: 3 }}
+          >
+            {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+              const isDeselected =
+                value?.includes(id) && !valueProp.includes(id);
+              const isNew = !value?.includes(id);
 
-                return (
-                  <Draggable
-                    key={id + "draggable"}
-                    id={id.toString()}
-                    disabled={!sortField}
-                  >
-                    <Item
-                      key={id}
-                      docId={id}
-                      junction={junction!}
-                      relation={relation!}
-                      template={item?.meta.options?.template}
-                      isSortable={!!sortField}
-                      onAdd={(item: Record<string, unknown>) => {
-                        setAddedDocIds([...addedDocIds, item.id as number]);
-                        props.onChange([...valueProp, item.id as number]);
-                      }}
-                      onDelete={(item) => {
-                        console.log({ item });
-                        setAddedDocIds(
-                          addedDocIds.filter(
-                            (v) =>
-                              v !==
-                              (item[relation.field as keyof typeof item] as any)
-                          )
-                        );
-                        props.onChange(valueProp.filter((v) => v !== id));
-                      }}
-                      isNew={isNew}
-                      isDeselected={isDeselected}
-                    />
-                  </Draggable>
-                );
-              })}
-            </DraggableStack>
-          </DndProvider>
-        </GestureHandlerRootView>
+              return (
+                <Draggable
+                  key={id + "draggable"}
+                  id={id.toString()}
+                  disabled={!sortField}
+                >
+                  <Item
+                    key={id}
+                    docId={id}
+                    junction={junction!}
+                    relation={relation!}
+                    template={item?.meta.options?.template}
+                    isSortable={!!sortField}
+                    onAdd={(item: Record<string, unknown>) => {
+                      setAddedDocIds([...addedDocIds, item.id as number]);
+                      props.onChange([...valueProp, item.id as number]);
+                    }}
+                    onDelete={(item) => {
+                      console.log({ item });
+                      setAddedDocIds(
+                        addedDocIds.filter(
+                          (v) =>
+                            v !==
+                            (item[relation.field as keyof typeof item] as any)
+                        )
+                      );
+                      props.onChange(valueProp.filter((v) => v !== id));
+                    }}
+                    isNew={isNew}
+                    isDeselected={isDeselected}
+                  />
+                </Draggable>
+              );
+            })}
+          </DraggableStack>
+        </DndProvider>
         {(error || helper) && (
           <Text
             style={[
