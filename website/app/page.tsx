@@ -56,47 +56,18 @@ export default function Home() {
 
         {/* Image Carousel */}
         <div className="carousel-container mt-20 w-full max-w-4xl mx-auto h-[400px] overflow-hidden relative">
-          <div className="carousel">
-            <div className="carousel-item">
-              <Image
-                src="/carousel-1.jpg"
-                alt="Carousel Image 1"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="carousel-item">
-              <Image
-                src="/carousel-2.jpg"
-                alt="Carousel Image 2"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="carousel-item">
-              <Image
-                src="/carousel-3.jpg"
-                alt="Carousel Image 3"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="carousel-item">
-              <Image
-                src="/carousel-4.jpg"
-                alt="Carousel Image 4"
-                fill
-                className="object-cover"
-              />
-            </div>
-            <div className="carousel-item">
-              <Image
-                src="/carousel-5.jpg"
-                alt="Carousel Image 5"
-                fill
-                className="object-cover"
-              />
-            </div>
+          <div className="carousel h-full">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div className="carousel-item">
+                <Image
+                  key={index + "image"}
+                  src={`/${index + 1}.png`}
+                  alt={`Carousel Image ${index + 1}`}
+                  fill
+                  className="object-contain h-full w-auto"
+                />
+              </div>
+            ))}	
           </div>
         </div>
       </div>

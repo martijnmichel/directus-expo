@@ -14,9 +14,9 @@ export default {
       },
       keyframes: {
         "subtle-spin": {
-          "0%": { transform: "rotate(0deg)" },
-          "50%": { transform: "rotate(2deg)" },
-          "100%": { transform: "rotate(0deg)" },
+          "0%": { transform: "rotate(0deg) scaleX(1)" },
+          "50%": { transform: "rotate(2deg) scaleX(4)" },
+          "100%": { transform: "rotate(0deg) scaleX(1)" },
         },
       },
       animation: {
