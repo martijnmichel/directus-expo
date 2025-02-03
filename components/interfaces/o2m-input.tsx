@@ -329,101 +329,98 @@ export const O2MInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <GestureHandlerRootView>
-          <DndProvider>
-            <DraggableStack
-              key={JSON.stringify(valueProp)}
-              direction="column"
-              onOrderChange={onOrderChange}
-              style={{ gap: 3 }}
-            >
-              {orderBy(
-                [...value.create, ...value.update, ...value.delete],
-                sortField || relation?.schema.foreign_key_column || "id"
-              ).map((relatedDoc, index) => {
-                const primaryKey = relation?.schema.foreign_key_column;
+        <DndProvider>
+          <DraggableStack
+            key={JSON.stringify(valueProp)}
+            direction="column"
+            onOrderChange={onOrderChange}
+            style={{ gap: 3 }}
+          >
+            {orderBy(
+              [...value.create, ...value.update, ...value.delete],
+              sortField || relation?.schema.foreign_key_column || "id"
+            ).map((relatedDoc, index) => {
+              const primaryKey = relation?.schema.foreign_key_column;
 
-                const id: number | string =
-                  typeof relatedDoc === "number" ||
-                  typeof relatedDoc === "string"
-                    ? relatedDoc
-                    : (relatedDoc as any)?.[relatedPk || ""];
+              const id: number | string =
+                typeof relatedDoc === "number" || typeof relatedDoc === "string"
+                  ? relatedDoc
+                  : (relatedDoc as any)?.[relatedPk || ""];
 
-                const isDeselected = value.delete?.some((doc) => doc === id);
-                const isNew = isInitial
-                  ? false
-                  : !((initialValue as number[]) || []).includes(id as number);
+              const isDeselected = value.delete?.some((doc) => doc === id);
+              const isNew = isInitial
+                ? false
+                : !((initialValue as number[]) || []).includes(id as number);
 
-                console.log({
-                  relatedDoc,
-                  field: relation.field,
-                  id,
-                  primaryKey,
-                  fk: relation?.schema.foreign_key_column,
-                  isNew,
-                  isDeselected,
-                });
+              console.log({
+                relatedDoc,
+                field: relation.field,
+                id,
+                primaryKey,
+                fk: relation?.schema.foreign_key_column,
+                isNew,
+                isDeselected,
+              });
 
-                const text = parseTemplate<any>(
-                  item.meta.options?.template,
-                  relatedDoc,
-                  fields
-                );
+              const text = parseTemplate<any>(
+                item.meta.options?.template,
+                relatedDoc,
+                fields
+              );
 
-                if (isNew) {
-                  return (
-                    <Draggable
-                      key={JSON.stringify(relatedDoc)}
-                      id={JSON.stringify(relatedDoc)}
-                      disabled={!sortField}
-                    >
-                      <RelatedListItem
-                        isNew
-                        isDraggable={!!sortField}
-                        append={
-                          <Button
-                            variant="ghost"
-                            rounded
-                            onPress={() => {
-                              props.onChange({
-                                ...value,
-                                create: value.create.filter(
-                                  (v) => v?.[relatedPk] !== id
-                                ),
-                                update: value.update.filter(
-                                  (v) => v?.[relatedPk] !== id
-                                ),
-                              });
-                            }}
-                          >
-                            <DirectusIcon name="delete" />
-                          </Button>
-                        }
-                      >
-                        {text}
-                      </RelatedListItem>
-                    </Draggable>
-                  );
-                }
-
+              if (isNew) {
                 return (
                   <Draggable
                     key={JSON.stringify(relatedDoc)}
                     id={JSON.stringify(relatedDoc)}
                     disabled={!sortField}
                   >
-                    <Item
-                      docId={id}
-                      isNew={false}
-                      isDeselected={isDeselected}
-                      isSortable={!!sortField}
-                    />
+                    <RelatedListItem
+                      isNew
+                      isDraggable={!!sortField}
+                      append={
+                        <Button
+                          variant="ghost"
+                          rounded
+                          onPress={() => {
+                            props.onChange({
+                              ...value,
+                              create: value.create.filter(
+                                (v) => v?.[relatedPk] !== id
+                              ),
+                              update: value.update.filter(
+                                (v) => v?.[relatedPk] !== id
+                              ),
+                            });
+                          }}
+                        >
+                          <DirectusIcon name="delete" />
+                        </Button>
+                      }
+                    >
+                      {text}
+                    </RelatedListItem>
                   </Draggable>
                 );
-              })}
-            </DraggableStack>
-          </DndProvider>
-        </GestureHandlerRootView>
+              }
+
+              return (
+                <Draggable
+                  key={JSON.stringify(relatedDoc)}
+                  id={JSON.stringify(relatedDoc)}
+                  disabled={!sortField}
+                >
+                  <Item
+                    docId={id}
+                    isNew={false}
+                    isDeselected={isDeselected}
+                    isSortable={!!sortField}
+                  />
+                </Draggable>
+              );
+            })}
+          </DraggableStack>
+        </DndProvider>
         {(error || helper) && (
           <Text
             style={[
