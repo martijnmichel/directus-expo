@@ -40,7 +40,7 @@ export default function TabsLayout() {
         getId={({ params }) =>
           `${params?.collection}-${params?.item_field}-${params?.uuid}-add-m2m`
         }
-        options={{ presentation: "modal" }}
+        options={{ presentation: "fullScreenModal" }}
       />
       <Stack.Screen
         name="modals/m2m/[collection]/pick"

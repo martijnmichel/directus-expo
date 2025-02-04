@@ -76,3 +76,23 @@ body {
 .carousel-container:hover .carousel {
   animation-play-state: paused;
 }
+
+h1 {
+  @apply text-5xl md:text-6xl font-bold
+}
+
+h2 {
+  @apply text-3xl md:text-4xl font-bold
+}
+
+h3 {
+  @apply text-2xl md:text-3xl font-bold
+}
+
+p {
+  @apply text-base
+}
+
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent
+}

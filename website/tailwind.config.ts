@@ -20,7 +20,7 @@ export default {
         },
       },
       animation: {
-        "subtle-spin": "subtle-spin 20s ease-in-out infinite",
+        "subtle-spin": "subtle-spin 30s ease-in-out infinite",
       },
     },
   },
