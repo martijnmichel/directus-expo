@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Directus Mobile",
-  description: "Your iOS and Android companion app for Directus",
+  description: "The iOS and Android companion app for your Directus backend",
 };
 
 export default function RootLayout({
