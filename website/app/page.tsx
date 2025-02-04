@@ -1,6 +1,5 @@
 import { StoreButtons } from "@/components/store-buttons";
 import SwiperScreenshots from "@/components/swiper-screenshots";
-import Image from "next/image";
 
 export default function Home() {
   const features = [
