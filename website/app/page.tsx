@@ -1,3 +1,4 @@
+import { StoreButtons } from "@/components/store-buttons";
 import SwiperScreenshots from "@/components/swiper-screenshots";
 import Image from "next/image";
 
@@ -29,7 +30,7 @@ export default function Home() {
     <main className="min-h-screen relative">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background pointer-events-none z-0">
-        <div className="fixed inset-0 pattern opacity-50 animate-subtle-spin z-0" />
+        <div className="fixed inset-0 pattern opacity-70 animate-subtle-spin z-0" />
       </div>
 
       <div className="relative z-10">
@@ -60,25 +61,10 @@ export default function Home() {
             interface.
           </p>
 
+          <p className="mb-4 ">Now available as public beta</p>
+
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <a href="https://apps.apple.com">
-              <Image
-                src="/appstore-black.png"
-                alt="Download for iOS"
-                width={200}
-                height={100}
-              />
-            </a>
-            <a href="https://play.google.com">
-              <Image
-                src="/playstore-black.png"
-                alt="Download for Android"
-                width={200}
-                height={100}
-              />
-            </a>
-          </div>
+          <StoreButtons />
         </section>
 
         <div className="pt-32" />
@@ -96,7 +82,7 @@ export default function Home() {
           {features.map((video, index) => (
             <article
               key={`video-${index}`}
-              className="group/video flex flex-col md:flex-row justify-evenly gap-10 bg-gradient-to-br from-zinc-50 to-white/30 border-2 border-zinc-100 p-20 rounded-lg shadow-xs"
+              className={` max-w-[1200px] mx-auto group/video flex flex-col md:flex-row justify-evenly gap-10 bg-gradient-to-br from-zinc-50 to-white/30 border-2 border-zinc-100 p-20 rounded-lg shadow-xs`}
             >
               <div className="w-full md:w-1/2 flex flex-col gap-4 justify-center text-center md:text-left">
                 <h3 className="relative delay-200">{video.title}</h3>
@@ -117,6 +103,15 @@ export default function Home() {
               </div>
             </article>
           ))}
+        </section>
+
+        <div className="pt-32" />
+
+        <section className="flex flex-col items-center gap-10 justify-center">
+          <h2>
+            <span className="gradient-text">Download</span> the app
+          </h2>
+          <StoreButtons />
         </section>
       </div>
     </main>
