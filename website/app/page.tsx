@@ -1,4 +1,3 @@
-import { AnimatedUnderline } from "@/components/AnimatedUnderline";
 import SwiperScreenshots from "@/components/swiper-screenshots";
 import Image from "next/image";
 
