@@ -110,6 +110,7 @@ export default function Home() {
                   loop
                   muted
                   controls
+                  preload="none"
                   src={video.videoUrl}
                   className="w-auto h-full object-cover bg-white border-2 border-zinc-100 shadow-lg rounded-lg overflow-hidden mx-auto"
                 />
