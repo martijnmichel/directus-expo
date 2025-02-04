@@ -3,14 +3,14 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="min-h-screen relative">
+    <main className="min-h-screen relative">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background pointer-events-none z-0">
         <div className="fixed inset-0 pattern opacity-70 animate-subtle-spin" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center pt-32 px-4 text-center">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-4">
         {/* Announcement banner */}
         <div className="mb-16">
           <a
@@ -35,34 +35,34 @@ export default function Home() {
         {/* Subheading */}
         <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mb-12">
           Built for teams who need seamless access to their Directus content.
-          Manage your data, handle assets, and control permissions — all through
-          an intuitive mobile interface.
+          Manage your data and handle assets — all through an intuitive mobile
+          interface.
         </p>
 
         {/* CTA buttons */}
         <div className="flex flex-col sm:flex-row gap-4 items-center">
-          <a
-            href="https://apps.apple.com"
-            className="bg-foreground text-background px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
-          >
-            Download for iOS
+          <a href="https://apps.apple.com">
+            <Image
+              src="/appstore-black.png"
+              alt="Download for iOS"
+              width={200}
+              height={100}
+            />
           </a>
-          <a
-            href="https://play.google.com"
-            className="bg-black/5 px-6 py-3 rounded-lg font-medium hover:bg-black/10 transition-colors"
-          >
-            Get it on Android
+          <a href="https://play.google.com">
+            <Image
+              src="/playstore-black.png"
+              alt="Download for Android"
+              width={200}
+              height={100}
+            />
           </a>
         </div>
-
       </div>
 
-      <div className="pt-20" />
-        {/* Image Carousel */}
-        <SwiperScreenshots />
-
-        <div className="pt-20" />
-      
-    </div>
+      <div className="pt-32" />
+      {/* Image Carousel */}
+      <SwiperScreenshots />
+    </main>
   );
 }
