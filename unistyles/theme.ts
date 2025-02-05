@@ -6,14 +6,14 @@ export const lightTheme = {
     primary: "#6644FF" as string, // Directus primary purple
     secondary: "#172940" as string, // Dark blue used in secondary elements
 
-    error: "#ea7d8f" as string, // Error red
+    error: "#de4f67" as string, // Error red
     errorBackground: "#fceef0" as string,
-    errorText: "#ea7d8f" as string,
+    errorText: "#de4f67" as string,
     errorBorder: "#f8d4da" as string,
 
-    danger: "#ea7d8f" as string, // Error red
+    danger: "#de4f67" as string, // Error red
     dangerBackground: "#fceef0" as string,
-    dangerText: "#ea7d8f" as string,
+    dangerText: "#de4f67" as string,
     dangerBorder: "#f8d4da" as string,
 
     success: "#00b87c" as string, // Richer success green
@@ -30,6 +30,11 @@ export const lightTheme = {
     infoBackground: "#e6f6ff" as string, // Light blue background
     infoText: "#007bff" as string, // Match info color
     infoBorder: "#b8daff" as string, // Light blue border
+
+    normal: "#C8D5E9" as string,
+    normalBackground: "#F0F4F9" as string,
+    normalText: "#4F5464" as string,
+    normalBorder: "#8196AB" as string,
 
     // Text colors
     textPrimary: "#172940" as string, // Dark text

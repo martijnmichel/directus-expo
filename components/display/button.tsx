@@ -11,7 +11,14 @@ import { useTranslation } from "react-i18next";
 import { cloneElement, isValidElement } from "react";
 
 type ButtonVariant = "ghost" | "soft" | "fill";
-type ButtonColorScheme = "primary" | "error" | "info" | "success" | "warning";
+type ButtonColorScheme =
+  | "primary"
+  | "error"
+  | "danger"
+  | "info"
+  | "success"
+  | "warning"
+  | "normal";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface IconProps {
@@ -81,7 +88,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
         case "ghost":
           return theme.colors[colorScheme];
         case "fill":
-          return colorScheme === "primary" ? "white" : theme.colors.background;
+          return colorScheme === "normal" ? theme.colors.normalText : "white";
         default:
           return "white";
       }
@@ -171,6 +178,12 @@ const stylesheet = createStyleSheet((theme) => ({
   fill_info: {
     backgroundColor: theme.colors.info,
   },
+  fill_normal: {
+    backgroundColor: theme.colors.normalBackground,
+  },
+  fill_danger: {
+    backgroundColor: theme.colors.error,
+  },
 
   soft: {
     borderWidth: 0,
@@ -190,6 +203,12 @@ const stylesheet = createStyleSheet((theme) => ({
   soft_info: {
     backgroundColor: theme.colors.infoBackground,
   },
+  soft_normal: {
+    backgroundColor: theme.colors.normalBackground,
+  },
+  soft_danger: {
+    backgroundColor: theme.colors.errorBackground,
+  },
 
   ghost: {
     backgroundColor: "transparent",
@@ -200,22 +219,30 @@ const stylesheet = createStyleSheet((theme) => ({
   ghost_success: {},
   ghost_warning: {},
   ghost_info: {},
+  ghost_normal: {},
+  ghost_danger: {},
 
   // Text styles for variants
   fill_primaryText: {
     color: "white",
   },
   fill_errorText: {
-    color: theme.colors.background,
+    color: "white",
   },
   fill_successText: {
-    color: theme.colors.background,
+    color: "white",
   },
   fill_warningText: {
-    color: theme.colors.background,
+    color: "white",
   },
   fill_infoText: {
-    color: theme.colors.background,
+    color: "white",
+  },
+  fill_normalText: {
+    color: theme.colors.normalText,
+  },
+  fill_dangerText: {
+    color: "white",
   },
 
   soft_primaryText: {
@@ -233,6 +260,12 @@ const stylesheet = createStyleSheet((theme) => ({
   soft_infoText: {
     color: theme.colors.info,
   },
+  soft_normalText: {
+    color: theme.colors.textMuted,
+  },
+  soft_dangerText: {
+    color: theme.colors.error,
+  },
 
   ghost_primaryText: {
     color: theme.colors.primary,
@@ -248,6 +281,12 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   ghost_infoText: {
     color: theme.colors.info,
+  },
+  ghost_normalText: {
+    color: theme.colors.textMuted,
+  },
+  ghost_dangerText: {
+    color: theme.colors.error,
   },
 
   // Sizes
