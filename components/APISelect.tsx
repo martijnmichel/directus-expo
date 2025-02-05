@@ -91,8 +91,7 @@ export function APISelect({
               <ConfirmDialog.Content
                 title={t("components.confirmDialog.delete")}
                 description={t("components.apiSelect.confirmDelete")}
-                variant="soft"
-                colorScheme="error"
+                variant="danger"
                 onConfirm={async () => {
                   const isActive = data?.find((api) => api.id === value.id);
                   if (isActive) {
