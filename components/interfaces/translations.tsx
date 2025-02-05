@@ -100,15 +100,20 @@ export const Translations = ({
           },
         ],
       },
-    }
+    },
+    { enabled: !!relation && docId !== "+" }
   );
 
   const primaryKey = usePrimaryKey(relation?.collection as keyof CoreSchema);
 
   const getTranslatedDocumentByLanguage = (language: string) => {
-    return find(
-      translatedDocuments?.items,
-      (doc) => doc?.[relation?.field as any] === language
+    return (
+      find(value.create, (doc) => doc?.[relation?.field as any] === language) ||
+      find(value.update, (doc) => doc?.[relation?.field as any] === language) ||
+      find(
+        translatedDocuments?.items,
+        (doc) => doc?.[relation?.field as any] === language
+      )
     );
   };
 
@@ -155,6 +160,7 @@ export const Translations = ({
     translatedDocuments,
     primaryKey,
     value,
+    docId,
   });
 
   return (
@@ -190,7 +196,7 @@ export const Translations = ({
         const color = translated
           ? some(translated, (v) => {
               console.log({ v, empty: isUndefined(v) });
-              return v.length <= 0;
+              return !v || v?.length <= 0;
             })
             ? theme.colors.warning
             : theme.colors.success

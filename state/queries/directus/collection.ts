@@ -48,7 +48,6 @@ export const useDocuments = (
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        ...options,
         queryKey: ["documents", collection, query],
 
         queryFn: async () => {
@@ -72,6 +71,7 @@ export const useDocuments = (
             total: !isNaN(total) ? total : 0,
           };
         },
+        ...options,
       });
 };
 
