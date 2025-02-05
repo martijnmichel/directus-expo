@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { Horizontal } from "../layout/Stack";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { DirectusIcon } from "./directus-icon";
@@ -11,6 +11,7 @@ export type RelatedListItemProps = {
   isDeselected?: boolean;
   isDraggable?: boolean;
   prepend?: React.ReactNode;
+  onPress?: () => void;
 };
 
 export const RelatedListItem = ({
@@ -20,37 +21,41 @@ export const RelatedListItem = ({
   isNew,
   isDeselected,
   prepend,
+  onPress,
 }: RelatedListItemProps) => {
   const { styles, theme } = useStyles(listStyles);
+  const Wrapper = onPress ? TouchableOpacity : View;
   return (
-    <Horizontal
-      spacing="md"
-      style={[
-        styles.listItem,
-        isDeselected && styles.listItemDeselected,
-        isNew && styles.listItemNew,
-      ]}
-    >
-      {isDraggable && <DirectusIcon name="drag_handle" />}
-      {prepend && <View>{prepend}</View>}
-      <Text
-        numberOfLines={1}
+    <Wrapper onPress={onPress}>
+      <Horizontal
+        spacing="md"
         style={[
-          styles.content,
-          isDeselected && styles.listItemDeselectedText,
+          styles.listItem,
+          isDeselected && styles.listItemDeselected,
           isNew && styles.listItemNew,
-          children === "--" && { color: theme.colors.textMuted },
         ]}
       >
-        {children}
-      </Text>
-      <Horizontal
-        style={{ marginLeft: "auto", alignItems: "center" }}
-        spacing={0}
-      >
-        {append}
+        {isDraggable && <DirectusIcon name="drag_handle" />}
+        {prepend && <View>{prepend}</View>}
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.content,
+            isDeselected && styles.listItemDeselectedText,
+            isNew && styles.listItemNew,
+            children === "--" && { color: theme.colors.textMuted },
+          ]}
+        >
+          {children}
+        </Text>
+        <Horizontal
+          style={{ marginLeft: "auto", alignItems: "center" }}
+          spacing={0}
+        >
+          {append}
+        </Horizontal>
       </Horizontal>
-    </Horizontal>
+    </Wrapper>
   );
 };
 

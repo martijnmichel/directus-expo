@@ -11,14 +11,15 @@ import { Pressable } from "react-native";
 import { View } from "react-native";
 import { Text } from "../display/typography";
 import { useEffect, useState } from "react";
-import { ChevronDown } from "../icons";
+import { Check, ChevronDown } from "../icons";
 import { DocumentEditor } from "../content/DocumentEditor";
-import { find, map } from "lodash";
+import { filter, find, isEmpty, isUndefined, map, some } from "lodash";
 import { Link } from "expo-router";
 import { RelatedListItem } from "../display/related-listitem";
 import { Button } from "../display/button";
 import { DirectusIcon } from "../display/directus-icon";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { Horizontal } from "../layout/Stack";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -49,6 +50,7 @@ export const Translations = ({
     return null;
   }
 
+  const [baseLanguage, setBaseLanguage] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const { styles: formStyle, theme } = useStyles(formStyles);
   const { data: relations } = useRelations();
@@ -92,6 +94,13 @@ export const Translations = ({
 
   const primaryKey = usePrimaryKey(relation?.collection as keyof CoreSchema);
 
+  const getTranslatedDocumentByLanguage = (language: string) => {
+    return find(
+      translatedDocuments?.items,
+      (doc) => doc?.[relation?.field as any] === language
+    );
+  };
+
   console.log({
     item,
     junction,
@@ -114,42 +123,97 @@ export const Translations = ({
         </Text>
       )}
 
-      {map(languages?.items, (language) => (
-        <RelatedListItem
-          key={language.code}
-          append={
-            <>
-              <Link
-                href={{
-                  pathname: `/modals/translations/[id]`,
-                  params: {
-                    collection: item.collection,
-                    id:
-                      find(
-                        translatedDocuments?.items,
-                        (doc) =>
-                          doc?.[relation?.meta.many_field as any] ===
-                          language?.[relation?.schema.foreign_key_column as any]
-                      )?.[primaryKey as any] || "+",
-                    uuid,
-                    field: item.field,
-                    base_language: "en-US",
-                    language:
-                      language[relation?.schema.foreign_key_column as any],
-                  },
-                }}
-                asChild
-              >
-                <Button variant="ghost" rounded>
-                  <DirectusIcon name="edit_square" />
+      {map(languages?.items, (language) => {
+        const translated = getTranslatedDocumentByLanguage(
+          language?.[relation?.schema.foreign_key_column as any]
+        );
+        console.log({ translated });
+        const color = translated
+          ? some(translated, (v) => {
+              console.log({ v, empty: isUndefined(v) });
+              return v.length <= 0;
+            })
+            ? theme.colors.warning
+            : theme.colors.success
+          : theme.colors.errorText;
+        return (
+          <RelatedListItem
+            key={language.code}
+            prepend={
+              <Horizontal>
+                <DirectusIcon size={20} name="translate" />
+
+                <View
+                  style={{
+                    width: 14,
+                    height: 14,
+                    backgroundColor: color,
+                    borderRadius: 999,
+                  }}
+                />
+              </Horizontal>
+            }
+            append={
+              <>
+                <Link
+                  href={{
+                    pathname: `/modals/translations/[id]`,
+                    params: {
+                      collection: item.collection,
+                      id:
+                        find(
+                          translatedDocuments?.items,
+                          (doc) =>
+                            doc?.[relation?.meta.many_field as any] ===
+                            language?.[
+                              relation?.schema.foreign_key_column as any
+                            ]
+                        )?.[primaryKey as any] || "+",
+                      uuid,
+                      field: item.field,
+                      base_language: baseLanguage,
+                      language:
+                        language[relation?.schema.foreign_key_column as any],
+                    },
+                  }}
+                  asChild
+                >
+                  <Button variant="ghost" rounded>
+                    <DirectusIcon name="edit_square" />
+                  </Button>
+                </Link>
+
+                <Button
+                  variant="ghost"
+                  rounded
+                  onPress={() => {
+                    setBaseLanguage(
+                      language?.[relation?.schema.foreign_key_column as any]
+                    );
+                  }}
+                >
+                  <DirectusIcon name="compare" />
                 </Button>
-              </Link>
-            </>
-          }
-        >
-          {language?.[relation?.schema.foreign_key_column as any]}
-        </RelatedListItem>
-      ))}
+              </>
+            }
+          >
+            <Horizontal>
+              <Text>
+                {language?.[relation?.schema.foreign_key_column as any]}
+              </Text>
+              {baseLanguage ===
+                language?.[relation?.schema.foreign_key_column as any] && (
+                <Horizontal>
+                  <Text style={{ ...theme.typography.helper }}>
+                    {t("base_language")}
+                  </Text>
+                  <Check size={16} />
+                </Horizontal>
+              )}
+            </Horizontal>
+          </RelatedListItem>
+        );
+      })}
 
       {(error || helper) && (
         <Text style={[formStyle.helperText, error && formStyle.errorText]}>
