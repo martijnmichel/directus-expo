@@ -10,13 +10,8 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
 import { cloneElement, isValidElement } from "react";
 
-type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "outline"
-  | "ghost"
-  | "soft"
-  | "danger";
+type ButtonVariant = "ghost" | "soft" | "fill";
+type ButtonColorScheme = "primary" | "error" | "info" | "success" | "warning";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface IconProps {
@@ -26,6 +21,7 @@ interface IconProps {
 
 export interface ButtonProps extends TouchableOpacityProps {
   variant?: ButtonVariant;
+  colorScheme?: ButtonColorScheme;
   size?: ButtonSize;
   loading?: boolean;
   leftIcon?: React.ReactElement<IconProps>;
@@ -39,7 +35,8 @@ export interface ButtonProps extends TouchableOpacityProps {
 export const Button = React.forwardRef<any, ButtonProps>(
   (
     {
-      variant = "primary",
+      variant = "fill",
+      colorScheme = "primary",
       size = "md",
       loading = false,
       leftIcon,
@@ -60,6 +57,7 @@ export const Button = React.forwardRef<any, ButtonProps>(
     const getContainerStyles = () => [
       styles.base,
       styles[variant],
+      styles[`${variant}_${colorScheme}`],
       styles[size],
       rounded && styles.rounded,
       fullWidth && styles.fullWidth,
@@ -70,20 +68,20 @@ export const Button = React.forwardRef<any, ButtonProps>(
 
     const getTextStyles = () => [
       styles.text,
-      styles[`${variant}Text`],
+      styles[`${variant}_${colorScheme}Text`],
       styles[`${size}Text`],
-      disabled && styles.mutedText,
+      disabled && styles.text,
     ];
 
     const getIconColor = () => {
       if (disabled) return theme.colors.textMuted;
       switch (variant) {
         case "soft":
-          return theme.colors.textSecondary;
+          return theme.colors[colorScheme];
         case "ghost":
-          return theme.colors.textPrimary;
-        case "danger":
-          return theme.colors.error;
+          return theme.colors[colorScheme];
+        case "fill":
+          return colorScheme === "primary" ? "white" : theme.colors.background;
         default:
           return "white";
       }
@@ -154,31 +152,104 @@ const stylesheet = createStyleSheet((theme) => ({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Variants
-  primary: {
+  // Variants with color schemes
+  fill: {
+    borderWidth: 0,
+  },
+  fill_primary: {
     backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+  },
+  fill_error: {
+    backgroundColor: theme.colors.error,
+  },
+  fill_success: {
+    backgroundColor: theme.colors.success,
+  },
+  fill_warning: {
+    backgroundColor: theme.colors.warning,
+  },
+  fill_info: {
+    backgroundColor: theme.colors.info,
   },
 
   soft: {
+    borderWidth: 0,
+  },
+  soft_primary: {
     backgroundColor: theme.colors.backgroundAlt,
   },
-  danger: {
-    backgroundColor: theme.colors.backgroundDark,
+  soft_error: {
+    backgroundColor: theme.colors.errorBackground,
+  },
+  soft_success: {
+    backgroundColor: theme.colors.successBackground,
+  },
+  soft_warning: {
+    backgroundColor: theme.colors.warningBackground,
+  },
+  soft_info: {
+    backgroundColor: theme.colors.infoBackground,
   },
 
-  secondary: {
-    backgroundColor: theme.colors.background,
-    borderColor: theme.colors.border,
-  },
-  outline: {
-    backgroundColor: "transparent",
-    borderColor: theme.colors.primary,
-  },
   ghost: {
     backgroundColor: "transparent",
-    borderColor: "transparent",
+    borderWidth: 0,
   },
+  ghost_primary: {},
+  ghost_error: {},
+  ghost_success: {},
+  ghost_warning: {},
+  ghost_info: {},
+
+  // Text styles for variants
+  fill_primaryText: {
+    color: "white",
+  },
+  fill_errorText: {
+    color: theme.colors.background,
+  },
+  fill_successText: {
+    color: theme.colors.background,
+  },
+  fill_warningText: {
+    color: theme.colors.background,
+  },
+  fill_infoText: {
+    color: theme.colors.background,
+  },
+
+  soft_primaryText: {
+    color: theme.colors.primary,
+  },
+  soft_errorText: {
+    color: theme.colors.error,
+  },
+  soft_successText: {
+    color: theme.colors.success,
+  },
+  soft_warningText: {
+    color: theme.colors.warning,
+  },
+  soft_infoText: {
+    color: theme.colors.info,
+  },
+
+  ghost_primaryText: {
+    color: theme.colors.primary,
+  },
+  ghost_errorText: {
+    color: theme.colors.error,
+  },
+  ghost_successText: {
+    color: theme.colors.success,
+  },
+  ghost_warningText: {
+    color: theme.colors.warning,
+  },
+  ghost_infoText: {
+    color: theme.colors.info,
+  },
+
   // Sizes
   sm: {
     paddingVertical: theme.spacing.xs,
@@ -204,27 +275,6 @@ const stylesheet = createStyleSheet((theme) => ({
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textPrimary,
-  },
-  primaryText: {
-    color: "white",
-  },
-  softText: {
-    color: theme.colors.textPrimary,
-  },
-  secondaryText: {
-    color: theme.colors.textPrimary,
-  },
-  mutedText: {
-    color: theme.colors.textMuted,
-  },
-  outlineText: {
-    color: theme.colors.textPrimary,
-  },
-  ghostText: {
-    color: theme.colors.textSecondary,
-  },
-  dangerText: {
-    color: theme.colors.error,
   },
   smText: {
     fontSize: 14,

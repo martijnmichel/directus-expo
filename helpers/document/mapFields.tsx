@@ -32,7 +32,7 @@ import {
 import { ReadFieldOutput } from "@directus/sdk";
 import { ReactNode } from "react";
 import { Controller, UseFormReturn } from "react-hook-form";
-import { View } from "react-native";
+import { Linking, Pressable, View } from "react-native";
 import { useStyles } from "react-native-unistyles";
 import { getCanCreate, getCanUpdate } from "./fieldPermissions";
 import { isFieldAllowed } from "../permissions/isFieldAllowed";
@@ -52,6 +52,8 @@ import { M2AInput } from "@/components/interfaces/m2a-input";
 import { JsonInput } from "@/components/interfaces/json";
 import { Alert } from "@/components/display/alert";
 import { Translations } from "@/components/interfaces/translations";
+import { Button } from "@/components/display/button";
+import { map } from "lodash";
 
 export const mapFields = ({
   fields,
@@ -595,6 +597,19 @@ export const mapFields = ({
 
           case "alias":
             switch (item.meta.interface) {
+              case "presentation-links":
+                return map(item.meta.options?.links, (link) => (
+                  <Button
+                    key={item.field + link.type + link.label}
+                    color={link.color}
+                    onPress={() => {
+                      Linking.openURL(link.url);
+                    }}
+                  >
+                    <DirectusIcon name={link.icon} />
+                    {link.label}
+                  </Button>
+                ));
               case "presentation-notice":
                 return (
                   <Alert
