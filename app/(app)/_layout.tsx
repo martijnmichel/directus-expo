@@ -32,6 +32,17 @@ export default function TabsLayout() {
 
       {/**
        *
+       * Translations
+       *
+       */}
+      <Stack.Screen
+        name="modals/translations/[id]/index"
+        getId={({ params }) => `${params?.id}--${params?.uuid}-translations`}
+        options={{ presentation: "modal" }}
+      />
+
+      {/**
+       *
        * M2M
        *
        */}

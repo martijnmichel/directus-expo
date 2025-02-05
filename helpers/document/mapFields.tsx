@@ -51,6 +51,7 @@ import { O2MInput } from "@/components/interfaces/o2m-input";
 import { M2AInput } from "@/components/interfaces/m2a-input";
 import { JsonInput } from "@/components/interfaces/json";
 import { Alert } from "@/components/display/alert";
+import { Translations } from "@/components/interfaces/translations";
 
 export const mapFields = ({
   fields,
@@ -619,6 +620,28 @@ export const mapFields = ({
                         uuid={uuid}
                         onValueChange={onChange}
                         value={value as string}
+                        item={item}
+                        error={error?.message}
+                      />
+                    )}
+                  />
+                );
+              case "translations":
+                return (
+                  <Controller
+                    key={item.field}
+                    control={control}
+                    rules={{ required: item.meta.required }}
+                    name={item.field as keyof CoreSchema[keyof CoreSchema]}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <Translations
+                        {...defaultProps}
+                        uuid={uuid}
+                        onChange={onChange}
+                        value={value as number[]}
                         item={item}
                         error={error?.message}
                       />
