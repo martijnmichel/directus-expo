@@ -1,5 +1,11 @@
 import { CoreSchema, ReadFieldOutput, updateItem } from "@directus/sdk";
-import { Controller, Form, FormProvider, useForm } from "react-hook-form";
+import {
+  Controller,
+  Form,
+  FormProvider,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { useStyles } from "react-native-unistyles";
 import { Button } from "../display/button";
 import { Fragment, useContext, useEffect, useState } from "react";
@@ -78,9 +84,13 @@ export const DocumentEditor = ({
     uuid,
   });
 
+  const form = useWatch({ control });
+
   useEffect(() => {
-    onChange?.(watch());
-  }, [watch()]);
+    if (isDirty) {
+      onChange?.(form);
+    }
+  }, [form, isDirty]);
 
   const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);

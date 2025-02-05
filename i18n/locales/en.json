@@ -155,5 +155,6 @@
     "files": {
       "title": "Files"
     }
-  }
+  },
+  "base_language": "base language"
 }

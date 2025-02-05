@@ -5,8 +5,7 @@ import {
 } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
-import { H1 } from "@/components/display/typography";
-import UserCollections from "@/components/content/UserCollections";
+import { useDebounce } from "@uidotdev/usehooks";
 import {
   router,
   Stack,
@@ -15,7 +14,7 @@ import {
   usePathname,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
-import { get, map, uniq } from "lodash";
+import { get, map, set, uniq } from "lodash";
 import { CoreSchema, createItem, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
@@ -33,6 +32,7 @@ import { useState } from "react";
 import { Button } from "@/components/display/button";
 import { View } from "react-native";
 import { Tabs } from "@/components/display/tabs";
+import { Check } from "@/components/icons";
 export default function Collection() {
   const { collection, id, uuid, field, language, base_language } =
     useLocalSearchParams();
@@ -69,12 +69,27 @@ export default function Collection() {
     relation?.collection as keyof CoreSchema,
     {
       filter: {
-        _and: [{ languages_code: { _eq: base_language } }],
+        _and: [{ [relation?.field as any]: { _eq: base_language } }],
       },
-    }
+    },
+    { enabled: !!relation }
   );
 
-  console.log({ document, junction, relation });
+  const [form, setForm] = useState<Record<string, any>[]>([]);
+
+  const debouncedForm = useDebounce(form, 1000);
+
+  console.log({ documents, junction, relation, form: debouncedForm });
+
+  const handleChange = (doc: Record<string, any>, lang: string) => {
+    const index = form.findIndex((i) => i?.[relation?.field as any] === lang);
+    if (!doc?.[relation?.field as any]) {
+      set(doc, relation?.field as any, lang);
+    }
+    const updated = [...form];
+    updated[index >= 0 ? index : form.length] = doc;
+    setForm(updated);
+  };
 
   return (
     <KeyboardAwareLayout>
@@ -83,6 +98,17 @@ export default function Collection() {
           headerTitle,
           ...headerStyles,
           presentation: "modal",
+          headerRight: () => (
+            <Button
+              rounded
+              disabled={!debouncedForm.length}
+              onPress={() => {
+                console.log(debouncedForm);
+              }}
+            >
+              <Check />
+            </Button>
+          ),
         }}
       />
       <KeyboardAwareScrollView>
@@ -104,9 +130,7 @@ export default function Collection() {
                       collection={junction?.collection as keyof CoreSchema}
                       id={(id as string) || "+"}
                       submitType="inline"
-                      onChange={async (document) => {
-                        console.log({ collection, id, document });
-                      }}
+                      onChange={(doc) => handleChange(doc, language as string)}
                     />
                   </Tabs.Content>
 
@@ -116,9 +140,9 @@ export default function Collection() {
                         collection={junction?.collection as keyof CoreSchema}
                         id={(get(documents, "items[0].id") as string) || "+"}
                         submitType="inline"
-                        onChange={async (document) => {
-                          console.log({ collection, id, document });
-                        }}
+                        onChange={(doc) =>
+                          handleChange(doc, base_language as string)
+                        }
                       />
                     </Tabs.Content>
                   )}
