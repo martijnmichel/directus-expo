@@ -32,8 +32,9 @@ import { useState } from "react";
 import { Button } from "@/components/display/button";
 import { View } from "react-native";
 import { Tabs } from "@/components/display/tabs";
-import { Check } from "@/components/icons";
+import { Check, Trash } from "@/components/icons";
 import { base64ToObject } from "@/helpers/document/docToBase64";
+import { deleteDocument } from "@/state/actions/deleteDocument";
 export default function Collection() {
   const {
     collection,
@@ -104,6 +105,11 @@ export default function Collection() {
     setForm(updated);
   };
 
+  const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
+    junction?.collection as keyof CoreSchema,
+    id as string
+  );
+
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
@@ -112,21 +118,37 @@ export default function Collection() {
           ...headerStyles,
           presentation: "modal",
           headerRight: () => (
-            <Button
-              rounded
-              disabled={!debouncedForm.length}
-              onPress={() => {
-                console.log(debouncedForm);
-                router.dismiss();
-                EventBus.emit("translations:edit", {
-                  data: debouncedForm,
-                  field: field as string,
-                  uuid: uuid as string,
-                });
-              }}
-            >
-              <Check />
-            </Button>
+            <>
+              <Button
+                rounded
+                variant="soft"
+                onPress={() => {
+                  deleteDoc(undefined, {
+                    onSuccess: () => {
+                      router.dismiss();
+                    },
+                  });
+                }}
+                loading={isDeleting}
+              >
+                <Trash />
+              </Button>
+              <Button
+                rounded
+                disabled={!debouncedForm.length}
+                onPress={() => {
+                  console.log(debouncedForm);
+                  router.dismiss();
+                  EventBus.emit("translations:edit", {
+                    data: debouncedForm,
+                    field: field as string,
+                    uuid: uuid as string,
+                  });
+                }}
+              >
+                <Check />
+              </Button>
+            </>
           ),
         }}
       />
