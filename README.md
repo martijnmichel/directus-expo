@@ -8,7 +8,7 @@ App status: Open testing
 
 iOS: https://testflight.apple.com/join/pWYXpQtY
 
-Android: https://play.google.com/apps/internaltest/4700795225710174745 (optionally message me for a promo code)
+Android: https://play.google.com/apps/test/RQgSSfgKFg8/ahAO29uNQlJ9cwIZLTd8yKlRwhMAUxQfhP9YpjFZ2x-ZjL9hkbuYhAUfbqrCz_cN0AVHJi0gIcRHPLrJf758Q66sIB
 
 ### Supported interfaces
 
