@@ -123,7 +123,7 @@ export const Translations = ({
                 href={{
                   pathname: `/modals/translations/[id]`,
                   params: {
-                    collection: junction?.collection,
+                    collection: item.collection,
                     id:
                       find(
                         translatedDocuments?.items,
@@ -133,6 +133,7 @@ export const Translations = ({
                       )?.[primaryKey as any] || "+",
                     uuid,
                     field: item.field,
+                    base_language: "en-US",
                     language:
                       language[relation?.schema.foreign_key_column as any],
                   },

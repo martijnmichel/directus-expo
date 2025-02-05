@@ -1,4 +1,3 @@
-import { View, Text, StyleSheet, ScrollView } from "react-native";
 import {
   KeyboardAwareLayout,
   KeyboardAwareScrollView,
@@ -16,7 +15,7 @@ import {
   usePathname,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
-import { map } from "lodash";
+import { get, map } from "lodash";
 import { CoreSchema, createItem, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
@@ -28,9 +27,16 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useRelations } from "@/state/queries/directus/core";
+import { Alert } from "@/components/display/alert";
+import { Horizontal, Vertical } from "@/components/layout/Stack";
+import { useState } from "react";
+import { Button } from "@/components/display/button";
+import { View } from "react-native";
+import { Tabs } from "@/components/display/tabs";
 export default function Collection() {
-  const { collection, id, uuid, field, language } = useLocalSearchParams();
-  const { data } = useCollection(collection as keyof CoreSchema);
+  const { collection, id, uuid, field, language, base_language } =
+    useLocalSearchParams();
+
   const { data: relations } = useRelations();
 
   const junction = relations?.find(
@@ -42,6 +48,13 @@ export default function Collection() {
       r.field === junction?.meta.junction_field &&
       r.collection === junction.meta.many_collection
   );
+
+  const lanuages = [language, base_language];
+  const [open, setOpen] = useState(lanuages[0]);
+
+  const { data } = useCollection(
+    relation?.related_collection as keyof CoreSchema
+  );
   const headerTitle = useDocumentDisplayTemplate({
     collection: collection as keyof CoreSchema,
     docId: id as string,
@@ -51,6 +64,17 @@ export default function Collection() {
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
 
   const headerStyles = useHeaderStyles({ isModal: true });
+
+  const { data: documents } = useDocuments(
+    relation?.collection as keyof CoreSchema,
+    {
+      filter: {
+        _and: [{ languages_code: { _eq: base_language } }],
+      },
+    }
+  );
+
+  console.log({ document, junction, relation });
 
   return (
     <KeyboardAwareLayout>
@@ -62,19 +86,47 @@ export default function Collection() {
         }}
       />
       <KeyboardAwareScrollView>
-        <Container>
-          <Section>
-            <DocumentEditor
-              collection={collection as keyof CoreSchema}
-              id={(id as string) || "+"}
-              submitType="raw"
-              onSave={async (document) => {
-                router.dismiss();
-                console.log({ collection, id });
-              }}
-            />
-          </Section>
-        </Container>
+        {!!junction && (
+          <Container>
+            <Section>
+              <Vertical spacing="xxl">
+                <Tabs variant="underline">
+                  <Tabs.List>
+                    {lanuages.map((l) => (
+                      <Tabs.Trigger key={l as string} value={l as string}>
+                        {l}
+                      </Tabs.Trigger>
+                    ))}
+                  </Tabs.List>
+
+                  <Tabs.Content forceMount value={language as string}>
+                    <DocumentEditor
+                      collection={junction?.collection as keyof CoreSchema}
+                      id={(id as string) || "+"}
+                      submitType="raw"
+                      onSave={async (document) => {
+                        router.dismiss();
+                        console.log({ collection, id, document });
+                      }}
+                    />
+                  </Tabs.Content>
+
+                  <Tabs.Content forceMount value={base_language as string}>
+                    <DocumentEditor
+                      collection={junction?.collection as keyof CoreSchema}
+                      id={(get(documents, "items[0].id") as string) || "+"}
+                      submitType="raw"
+                      onSave={async (document) => {
+                        router.dismiss();
+                        console.log({ collection, id, document });
+                      }}
+                    />
+                  </Tabs.Content>
+                </Tabs>
+              </Vertical>
+            </Section>
+          </Container>
+        )}
       </KeyboardAwareScrollView>
     </KeyboardAwareLayout>
   );
