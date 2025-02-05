@@ -35,7 +35,6 @@ export const useDocumentsFilters = (opts?: typeof defaults) => {
   };
 
   useEffect(() => {
-    console.log("path reset filters", path);
     setPage(defaults.page);
     updateLimit(defaults.limit);
     setSearch(defaults.search);

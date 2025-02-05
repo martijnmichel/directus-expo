@@ -125,7 +125,6 @@ export const Translations = ({
     const addM2M = (event: MittEvents["translations:edit"]) => {
       if (event.field === item.field && event.uuid === uuid) {
         console.log("translations:edit:received", event);
-        console.log({ value });
 
         const newState = {
           create: [
@@ -160,7 +159,7 @@ export const Translations = ({
     };
   }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
-  console.log({
+  /** console.log({
     item,
     junction,
     relation,
@@ -170,7 +169,7 @@ export const Translations = ({
     value,
     docId,
   });
-
+ */
   return (
     <View style={formStyle.formControl}>
       {label && (
@@ -188,7 +187,6 @@ export const Translations = ({
         const translated = getTranslatedDocumentByLanguage(
           language?.[relation?.schema.foreign_key_column as any]
         );
-        console.log({ translated });
 
         const defaultValues =
           value.update.find(
@@ -203,7 +201,6 @@ export const Translations = ({
           );
         const color = translated
           ? some(translated, (v) => {
-              console.log({ v, empty: isUndefined(v) });
               return !v || v?.length <= 0;
             })
             ? theme.colors.warning

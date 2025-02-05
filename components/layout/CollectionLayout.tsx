@@ -67,7 +67,6 @@ export default function CollectionLayout({
   const headerStyles = useHeaderStyles();
   const { data: permissions } = usePermissions();
   const collectionPermissions = permissions?.[collection as keyof CoreSchema];
-  console.log({ collectionPermissions });
   const canCreate = isActionAllowed(
     collection as keyof CoreSchema,
     "create",
@@ -75,7 +74,6 @@ export default function CollectionLayout({
   );
 
   const closeMenu = useCallback(() => {
-    console.log("Closing menu");
     Animated.timing(slideAnim, {
       toValue: 0,
       duration: 300,
@@ -88,7 +86,6 @@ export default function CollectionLayout({
   }, [slideAnim]);
 
   const openMenu = useCallback(() => {
-    console.log("Opening menu");
     setIsMenuOpen(true); // Set this immediately for open
     Animated.timing(slideAnim, {
       toValue: 1,

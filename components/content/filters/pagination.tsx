@@ -9,7 +9,7 @@ export const Pagination = (
 ) => {
   const { page, limit, total, next, previous } = context;
   const totalPages = Math.ceil((total || 0) / limit);
-  console.log({ totalPages, limit, page, total });
+  //console.log({ totalPages, limit, page, total });
   return (
     <Horizontal>
       <Button
