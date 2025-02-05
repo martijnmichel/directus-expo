@@ -39,6 +39,11 @@ export type MittEvents = {
     index: number;
     uuid: string;
   };
+  "translations:edit": {
+    data: Record<string, any>[];
+    field: string;
+    uuid: string;
+  };
   error: Error;
 };
 

@@ -20,6 +20,8 @@ import { Button } from "../display/button";
 import { DirectusIcon } from "../display/directus-icon";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { Horizontal } from "../layout/Stack";
+import EventBus, { MittEvents } from "@/utils/mitt";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -58,6 +60,15 @@ export const Translations = ({
   const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
   const { t } = useTranslation();
+
+  const isInitial = Array.isArray(valueProp);
+  const value = isInitial
+    ? {
+        create: [],
+        update: [],
+        delete: [],
+      }
+    : valueProp;
 
   const junction = relations?.find(
     (r) =>
@@ -101,6 +112,41 @@ export const Translations = ({
     );
   };
 
+  useEffect(() => {
+    const addM2M = (event: MittEvents["translations:edit"]) => {
+      if (event.field === item.field && event.uuid === uuid) {
+        console.log("translations:edit:received", event);
+        console.log({ value });
+
+        const newState = {
+          create: [
+            ...value.create.filter(
+              (d) =>
+                !find(event.data, (o) => o.languages_code === d.languages_code)
+            ),
+            ...filter(event.data, (d) => !d.translations_id),
+          ],
+          update: [
+            ...value.update.filter(
+              (d) =>
+                !find(
+                  event.data,
+                  (o) => o.translations_id === d.translations_id
+                )
+            ),
+            ...filter(event.data, (d) => !!d.translations_id),
+          ],
+          delete: value.delete,
+        };
+        props.onChange(newState);
+      }
+    };
+    EventBus.on("translations:edit", addM2M);
+    return () => {
+      EventBus.off("translations:edit", addM2M);
+    };
+  }, [valueProp, props.onChange, relation, junction, value, uuid]);
+
   console.log({
     item,
     junction,
@@ -108,6 +154,7 @@ export const Translations = ({
     languages,
     translatedDocuments,
     primaryKey,
+    value,
   });
 
   return (
@@ -128,6 +175,18 @@ export const Translations = ({
           language?.[relation?.schema.foreign_key_column as any]
         );
         console.log({ translated });
+
+        const defaultValues =
+          value.update.find(
+            (d) =>
+              d?.[relation?.field as any] ===
+              language?.[relation?.schema.foreign_key_column as any]
+          ) ||
+          value.create.find(
+            (d) =>
+              d?.[relation?.field as any] ===
+              language?.[relation?.schema.foreign_key_column as any]
+          );
         const color = translated
           ? some(translated, (v) => {
               console.log({ v, empty: isUndefined(v) });
@@ -172,6 +231,9 @@ export const Translations = ({
                       uuid,
                       field: item.field,
                       base_language: baseLanguage,
+                      defaultValues: defaultValues
+                        ? objectToBase64(defaultValues)
+                        : "",
                       language:
                         language[relation?.schema.foreign_key_column as any],
                     },
