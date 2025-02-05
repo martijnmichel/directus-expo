@@ -1,3 +1,18 @@
+## [0.6.17](https://github.com/martijnmichel/directus-expo/compare/v0.6.16...v0.6.17) (2025-02-05)
+
+
+### Bug Fixes
+
+* detect filled perc from update/create items ([70d934c](https://github.com/martijnmichel/directus-expo/commit/70d934c79977f617ee5c2bc02dbac3b0ce2b3cd4))
+
+
+### Features
+
+* links to translation modal editor ([ae6a7e2](https://github.com/martijnmichel/directus-expo/commit/ae6a7e2cc515817109b26681556c85d26cbb3316))
+* open translation with compare language ([a7f5407](https://github.com/martijnmichel/directus-expo/commit/a7f54075e141e1433efee4f00f809264525ce3e3))
+* remove translation ([e579238](https://github.com/martijnmichel/directus-expo/commit/e57923873857d9e8ec6d03edc137163391e9a13d))
+* translations! ([474246a](https://github.com/martijnmichel/directus-expo/commit/474246af4885f6bdd9a77bf607f0c27f96775d3c))
+
 ## [0.6.16](https://github.com/martijnmichel/directus-expo/compare/v0.6.15...v0.6.16) (2025-02-03)
 
 
