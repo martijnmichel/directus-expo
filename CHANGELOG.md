@@ -1,3 +1,10 @@
+## [0.6.18](https://github.com/martijnmichel/directus-expo/compare/v0.6.17...v0.6.18) (2025-02-05)
+
+
+### Features
+
+* buttons! ([5588fbf](https://github.com/martijnmichel/directus-expo/commit/5588fbf5ade5bca5cdf8a113766b3f7d9a9b3045))
+
 ## [0.6.17](https://github.com/martijnmichel/directus-expo/compare/v0.6.16...v0.6.17) (2025-02-05)
 
 
