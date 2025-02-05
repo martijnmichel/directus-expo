@@ -30,7 +30,6 @@ export const mutateDocument = (
   }
 
   if (data?.meta.singleton) {
-    console.log("updateSingleton", collection, data);
     return useMutation({
       mutationFn: (data: Record<string, unknown>) =>
         directus!.request(updateSingleton(collection as any, data)),

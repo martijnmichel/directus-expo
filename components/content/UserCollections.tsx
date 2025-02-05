@@ -16,8 +16,6 @@ export default function UserCollections() {
   const { data } = useCollections();
   const { t, i18n } = useTranslation();
 
-  console.log({ noMeta: data?.filter((c) => !c.meta) });
-
   const CollectionGroup = ({
     collection,
   }: {

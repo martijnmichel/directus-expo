@@ -132,7 +132,7 @@ export const DocumentEditor = ({
       context.reset(
         getDocumentFieldValues(document as Record<string, unknown>)
       );
-      console.log("reset", document);
+      //console.log("reset", document);
       setRevision((state) => state + 1);
     }
   }, [document]);
