@@ -7,7 +7,7 @@ import {
 
 export const ResetButton = (context: UseDocumentsFiltersReturn) => {
   return context.search ? (
-    <Button rounded variant="danger" onPress={context.reset}>
+    <Button rounded variant="soft" colorScheme="error" onPress={context.reset}>
       <X />
     </Button>
   ) : null;

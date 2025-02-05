@@ -104,7 +104,8 @@ export default function TabTwoScreen() {
             router.push("/login");
           }}
           leftIcon={<DirectusIcon name="logout" />}
-          variant="danger"
+          variant="soft"
+          colorScheme="error"
         >
           {t("settings.actions.logout")}
         </Button>

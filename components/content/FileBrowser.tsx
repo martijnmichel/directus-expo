@@ -96,7 +96,8 @@ export const FileBrowser = () => {
           <>
             <Button
               rounded
-              variant="danger"
+              variant="soft"
+              colorScheme="error"
               floating
               loading={isPending}
               onPress={() =>
