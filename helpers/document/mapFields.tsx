@@ -598,18 +598,22 @@ export const mapFields = ({
           case "alias":
             switch (item.meta.interface) {
               case "presentation-links":
-                return map(item.meta.options?.links, (link) => (
-                  <Button
-                    key={item.field + link.type + link.label}
-                    color={link.color}
-                    onPress={() => {
-                      Linking.openURL(link.url);
-                    }}
-                  >
-                    <DirectusIcon name={link.icon} />
-                    {link.label}
-                  </Button>
-                ));
+                return (
+                  <Horizontal style={{ flexWrap: "wrap" }} key={item.field}>
+                    {map(item.meta.options?.links, (link) => (
+                      <Button
+                        key={item.field + link.type + link.label}
+                        colorScheme={link.type}
+                        onPress={() => {
+                          Linking.openURL(link.url);
+                        }}
+                        leftIcon={<DirectusIcon name={link.icon} />}
+                      >
+                        {link.label}
+                      </Button>
+                    ))}
+                  </Horizontal>
+                );
               case "presentation-notice":
                 return (
                   <Alert

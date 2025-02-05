@@ -39,6 +39,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: "rgba(255, 255, 255, 0.8)",
         popToTopOnBlur: true,
         headerShown: false,
+
         tabBarIconStyle: {
           height: 36,
         },
@@ -48,6 +49,7 @@ export default function TabsLayout() {
         },
         tabBarStyle: {
           backgroundColor: theme.colors.backgroundInvert,
+          borderTopWidth: 0,
           height: 60 + bottom,
         },
       }}
