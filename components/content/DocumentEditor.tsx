@@ -222,10 +222,10 @@ export const DocumentEditor = ({
   }
   return (
     <FormProvider key={revision + collection + id} {...context}>
-      <Stack.Screen
-        options={{
-          headerRight: () =>
-            submitType !== "inline" && (
+      {submitType !== "inline" && (
+        <Stack.Screen
+          options={{
+            headerRight: () => (
               <Horizontal>
                 {itemPermissions?.delete.access && id !== "+" && (
                   <Button
@@ -247,8 +247,9 @@ export const DocumentEditor = ({
                 </Button>
               </Horizontal>
             ),
-        }}
-      />
+          }}
+        />
+      )}
       {/** <PortalOutlet name="modal-header">
         <Button rounded onPress={handleSave}>
           <Check />
