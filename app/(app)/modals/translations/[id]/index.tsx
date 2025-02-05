@@ -33,9 +33,22 @@ import { Button } from "@/components/display/button";
 import { View } from "react-native";
 import { Tabs } from "@/components/display/tabs";
 import { Check } from "@/components/icons";
+import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const { collection, id, uuid, field, language, base_language } =
-    useLocalSearchParams();
+  const {
+    collection,
+    id,
+    uuid,
+    field,
+    language,
+    base_language,
+    defaultValues: base64DefaultValues,
+  } = useLocalSearchParams();
+
+  const defaultValues = base64DefaultValues
+    ? base64ToObject((base64DefaultValues as string) || "")
+    : undefined;
+  console.log({ defaultValues });
 
   const { data: relations } = useRelations();
 
@@ -104,6 +117,12 @@ export default function Collection() {
               disabled={!debouncedForm.length}
               onPress={() => {
                 console.log(debouncedForm);
+                router.dismiss();
+                EventBus.emit("translations:edit", {
+                  data: debouncedForm,
+                  field: field as string,
+                  uuid: uuid as string,
+                });
               }}
             >
               <Check />
@@ -128,9 +147,10 @@ export default function Collection() {
                   <Tabs.Content forceMount value={language as string}>
                     <DocumentEditor
                       collection={junction?.collection as keyof CoreSchema}
-                      id={(id as string) || "+"}
+                      id={!defaultValues ? (id as string) || "+" : "+"}
                       submitType="inline"
                       onChange={(doc) => handleChange(doc, language as string)}
+                      defaultValues={defaultValues}
                     />
                   </Tabs.Content>
 
