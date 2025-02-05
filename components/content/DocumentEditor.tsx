@@ -60,7 +60,7 @@ export const DocumentEditor = ({
   const { styles } = useStyles(formStyles);
 
   const { data: permissions } = usePermissions();
-  const context = useForm<Record<string, unknown>>();
+  const context = useForm<Record<string, unknown>>({ defaultValues });
   const {
     control,
     formState: { isDirty, isValid, isSubmitting, dirtyFields },
@@ -92,6 +92,9 @@ export const DocumentEditor = ({
   } = useDocument({
     collection: collection as keyof CoreSchema,
     id,
+    query: {
+      enabled: id !== "+",
+    },
   });
 
   const { mutateAsync: updateDoc } = mutateDocument(
