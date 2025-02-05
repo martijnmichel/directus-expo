@@ -44,10 +44,15 @@ export default function Collection() {
     language,
     base_language,
     defaultValues: base64DefaultValues,
+    baseLanguageValues: base64BaseLanguageValues,
   } = useLocalSearchParams();
 
   const defaultValues = base64DefaultValues
     ? base64ToObject((base64DefaultValues as string) || "")
+    : undefined;
+
+  const baseLanguageValues = base64BaseLanguageValues
+    ? base64ToObject((base64BaseLanguageValues as string) || "")
     : undefined;
   console.log({ defaultValues });
 
@@ -180,7 +185,12 @@ export default function Collection() {
                     <Tabs.Content forceMount value={base_language as string}>
                       <DocumentEditor
                         collection={junction?.collection as keyof CoreSchema}
-                        id={(get(documents, "items[0].id") as string) || "+"}
+                        id={
+                          !baseLanguageValues
+                            ? (get(documents, "items[0].id") as string) || "+"
+                            : "+"
+                        }
+                        defaultValues={baseLanguageValues}
                         submitType="inline"
                         onChange={(doc) =>
                           handleChange(doc, base_language as string)

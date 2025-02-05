@@ -117,6 +117,10 @@ export const Translations = ({
     );
   };
 
+  const defaultBaseLanguageValues = getTranslatedDocumentByLanguage(
+    baseLanguage as string
+  );
+
   useEffect(() => {
     const addM2M = (event: MittEvents["translations:edit"]) => {
       if (event.field === item.field && event.uuid === uuid) {
@@ -127,7 +131,11 @@ export const Translations = ({
           create: [
             ...value.create.filter(
               (d) =>
-                !find(event.data, (o) => o.languages_code === d.languages_code)
+                !find(
+                  event.data,
+                  (o) =>
+                    o?.[relation?.field as any] === d?.[relation?.field as any]
+                )
             ),
             ...filter(event.data, (d) => !d.translations_id),
           ],
@@ -239,6 +247,9 @@ export const Translations = ({
                       base_language: baseLanguage,
                       defaultValues: defaultValues
                         ? objectToBase64(defaultValues)
+                        : "",
+                      baseLanguageValues: defaultBaseLanguageValues
+                        ? objectToBase64(defaultBaseLanguageValues)
                         : "",
                       language:
                         language[relation?.schema.foreign_key_column as any],
