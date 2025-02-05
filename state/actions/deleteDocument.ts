@@ -10,6 +10,7 @@ import { updateItem } from "@directus/sdk";
 import { useMutation } from "@tanstack/react-query";
 import { coreCollections } from "../queries/directus/core";
 import { useCollection } from "../queries/directus/collection";
+import { queryClient } from "@/utils/react-query";
 
 export const deleteDocument = (
   collection: keyof CoreSchema,
@@ -24,5 +25,10 @@ export const deleteDocument = (
     : useMutation({
         mutationFn: () =>
           directus!.request(deleteItem(collection as keyof CoreSchema, id)),
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: ["documents", collection],
+          });
+        },
       });
 };
