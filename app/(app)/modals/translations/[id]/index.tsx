@@ -15,7 +15,7 @@ import {
   usePathname,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
-import { get, map } from "lodash";
+import { get, map, uniq } from "lodash";
 import { CoreSchema, createItem, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
@@ -90,9 +90,9 @@ export default function Collection() {
           <Container>
             <Section>
               <Vertical spacing="xxl">
-                <Tabs variant="underline">
+                <Tabs variant="underline" defaultValue={language as string}>
                   <Tabs.List>
-                    {lanuages.map((l) => (
+                    {uniq(lanuages).map((l) => (
                       <Tabs.Trigger key={l as string} value={l as string}>
                         {l}
                       </Tabs.Trigger>
@@ -103,25 +103,25 @@ export default function Collection() {
                     <DocumentEditor
                       collection={junction?.collection as keyof CoreSchema}
                       id={(id as string) || "+"}
-                      submitType="raw"
-                      onSave={async (document) => {
-                        router.dismiss();
+                      submitType="inline"
+                      onChange={async (document) => {
                         console.log({ collection, id, document });
                       }}
                     />
                   </Tabs.Content>
 
-                  <Tabs.Content forceMount value={base_language as string}>
-                    <DocumentEditor
-                      collection={junction?.collection as keyof CoreSchema}
-                      id={(get(documents, "items[0].id") as string) || "+"}
-                      submitType="raw"
-                      onSave={async (document) => {
-                        router.dismiss();
-                        console.log({ collection, id, document });
-                      }}
-                    />
-                  </Tabs.Content>
+                  {base_language !== language && (
+                    <Tabs.Content forceMount value={base_language as string}>
+                      <DocumentEditor
+                        collection={junction?.collection as keyof CoreSchema}
+                        id={(get(documents, "items[0].id") as string) || "+"}
+                        submitType="inline"
+                        onChange={async (document) => {
+                          console.log({ collection, id, document });
+                        }}
+                      />
+                    </Tabs.Content>
+                  )}
                 </Tabs>
               </Vertical>
             </Section>

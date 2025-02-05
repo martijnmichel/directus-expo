@@ -223,7 +223,6 @@ const tabsStyles = createStyleSheet((theme) => ({
   },
   listContent: {
     gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
   },
   trigger: {
     position: "relative",
@@ -252,11 +251,9 @@ const tabsStyles = createStyleSheet((theme) => ({
   triggerTextDisabled: {
     color: theme.colors.textTertiary,
   },
-  content: {
-    paddingHorizontal: theme.spacing.md,
-  },
+  content: {},
   listUnderline: {
-    borderBottomWidth: 1,
+    borderBottomWidth: theme.borderWidth.md,
     borderBottomColor: theme.colors.border,
   },
   triggerPills: {
@@ -268,7 +265,7 @@ const tabsStyles = createStyleSheet((theme) => ({
     borderRadius: 0,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.lg,
-    marginBottom: -1,
+    marginBottom: 0,
   },
   triggerUnderlineActive: {
     borderBottomWidth: 2,
