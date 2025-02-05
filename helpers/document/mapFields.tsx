@@ -643,6 +643,7 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as number[]}
                         item={item}
+                        docId={docId}
                         error={error?.message}
                       />
                     )}
