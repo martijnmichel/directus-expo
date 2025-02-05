@@ -39,6 +39,7 @@ export const DocumentEditor = ({
   id,
   defaultValues = {},
   onSave,
+  onChange,
   onDelete,
   submitType = "submit",
 }: {
@@ -46,8 +47,9 @@ export const DocumentEditor = ({
   id?: number | string | "+";
   defaultValues?: Record<string, unknown>;
   onSave?: (doc: Record<string, unknown>) => void;
+  onChange?: (doc: Record<string, unknown>) => void;
   onDelete?: () => void;
-  submitType?: "submit" | "raw";
+  submitType?: "submit" | "raw" | "inline";
 }) => {
   const uuid = useUUID();
   const { data: fields } = useFields(collection as keyof CoreSchema);
@@ -63,6 +65,7 @@ export const DocumentEditor = ({
   const context = useForm<Record<string, unknown>>({ defaultValues });
   const {
     control,
+    watch,
     formState: { isDirty, isValid, isSubmitting, dirtyFields },
   } = context;
   const fieldComponents = mapFields({
@@ -74,6 +77,10 @@ export const DocumentEditor = ({
     styles,
     uuid,
   });
+
+  useEffect(() => {
+    onChange?.(watch());
+  }, [watch()]);
 
   const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
@@ -207,28 +214,29 @@ export const DocumentEditor = ({
     <FormProvider key={revision + collection + id} {...context}>
       <Stack.Screen
         options={{
-          headerRight: () => (
-            <Horizontal>
-              {itemPermissions?.delete.access && id !== "+" && (
+          headerRight: () =>
+            submitType !== "inline" && (
+              <Horizontal>
+                {itemPermissions?.delete.access && id !== "+" && (
+                  <Button
+                    rounded
+                    variant="soft"
+                    onPress={handleDelete}
+                    loading={isDeleting}
+                  >
+                    <Trash />
+                  </Button>
+                )}
                 <Button
                   rounded
-                  variant="soft"
-                  onPress={handleDelete}
-                  loading={isDeleting}
+                  disabled={!isDirty || !isValid || isSubmitting}
+                  loading={isSubmitting}
+                  onPress={handleSave}
                 >
-                  <Trash />
+                  <Check />
                 </Button>
-              )}
-              <Button
-                rounded
-                disabled={!isDirty || !isValid || isSubmitting}
-                loading={isSubmitting}
-                onPress={handleSave}
-              >
-                <Check />
-              </Button>
-            </Horizontal>
-          ),
+              </Horizontal>
+            ),
         }}
       />
       {/** <PortalOutlet name="modal-header">
