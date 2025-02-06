@@ -3,6 +3,19 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
+import { SoftwareApplication, WithContext } from "schema-dts";
+import { images } from "@/screenshots";
+
+const jsonLd: WithContext<SoftwareApplication> = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Directus Mobile",
+  image: "https://directusmobile.app/app-icon.png",
+  description: "The iOS and Android companion app for your Directus backend",
+  applicationCategory: "MobileApplication",
+  operatingSystem: "iOS, Android",
+  url: "https://directusmobile.app",
+};
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,8 +28,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Directus Mobile",
-  description: "The iOS and Android companion app for your Directus backend",
+  title: "Directus Mobile - iOS and Android app",
+  description:
+    "Manage your Directus CMS on the go with our iOS and Android mobile app. Access and edit content, and handle assets from anywhere. Fast, secure, and user-friendly.",
+  openGraph: {
+    title: "Directus Mobile - iOS and Android app",
+    description:
+      "Manage your Directus CMS on the go with our iOS and Android mobile app. Access and edit content, and handle assets from anywhere. Fast, secure, and user-friendly.",
+    images: [
+      { url: "https://directusmobile.app/app-icon.png" },
+      ...images.map((image) => ({ url: image.src })),
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -29,15 +52,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased py-32`}
       >
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-zinc-100 shadow-xs backdrop-blur-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
             <nav className="flex items-center gap-6 text-zinc-600 text-sm tracking-wide ">
-              <Link href="/">
+              <Link href="/" className="flex items-center gap-2 p-3">
                 <Image
                   src="/icon.png"
-                  alt="Directus Mobile"
-                  width={70}
-                  height={70}
+                  alt="Directus Mobile - ios and android app icon"
+                  width={50}
+                  height={50}
+                  className="rounded"
                 />
               </Link>
               <Link href="/" className="hover:text-pink-500 transition-colors">
