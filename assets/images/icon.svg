@@ -26,8 +26,8 @@
      inkscape:cy="475.68793"
      inkscape:window-width="2152"
      inkscape:window-height="1212"
-     inkscape:window-x="316"
-     inkscape:window-y="100"
+     inkscape:window-x="669"
+     inkscape:window-y="307"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1"><inkscape:page
        x="0"
@@ -53,7 +53,10 @@
        height="512"
        id="page4"
        margin="0"
-       bleed="0" /></sodipodi:namedview><!-- Define color palette --><defs
+       bleed="0"
+       inkscape:export-filename="../../website/public/icon.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" /></sodipodi:namedview><!-- Define color palette --><defs
      id="defs1"><linearGradient
        id="linearGradient5"
        inkscape:collect="always"><stop
