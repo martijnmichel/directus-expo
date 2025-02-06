@@ -1,3 +1,10 @@
+## [0.6.19](https://github.com/martijnmichel/directus-expo/compare/v0.6.18...v0.6.19) (2025-02-06)
+
+
+### Bug Fixes
+
+* auto-select new api in loginform ([73f44be](https://github.com/martijnmichel/directus-expo/commit/73f44bea70fc5ea58a5a8537da502c31433a84db))
+
 ## [0.6.18](https://github.com/martijnmichel/directus-expo/compare/v0.6.17...v0.6.18) (2025-02-05)
 
 
