@@ -62,7 +62,14 @@ export function APISelect({
             </Button>
           </Modal.Trigger>
           <Modal.Content title={t("components.apiSelect.addApi")}>
-            {({ close }) => <APIForm onSuccess={() => close()} />}
+            {({ close }) => (
+              <APIForm
+                onSuccess={(api) => {
+                  close();
+                  onChange?.(api);
+                }}
+              />
+            )}
           </Modal.Content>
         </Modal>
 
