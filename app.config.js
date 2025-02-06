@@ -8,7 +8,7 @@ export default () => ({
     version: packageJson.version,
     orientation: "portrait",
     icon: "./assets/images/icon.png",
-    scheme: "myapp",
+    scheme: "directus",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     splash: {
