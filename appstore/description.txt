@@ -42,9 +42,12 @@ Supported interfaces:
 - Many to Many
 - One to Many
 - Many to One
+- Translations
 
 **Presentation**
-_TBD_
+- Dividers
+- Buttons
+- Notices
 
 **Groups**
 - Accordion
