@@ -25,6 +25,7 @@ Android: https://play.google.com/apps/test/RQgSSfgKFg8/ahAO29uNQlJ9cwIZLTd8yKlRw
 - Repeater
 - Color
 - Dropdown
+- Checkboxes
 - Dropdown Multiple
 - Radio Buttons
 
@@ -36,9 +37,12 @@ Android: https://play.google.com/apps/test/RQgSSfgKFg8/ahAO29uNQlJ9cwIZLTd8yKlRw
 - Many to Many
 - One to Many
 - Many to One
+- Translations
 
 **Presentation**
-_TBD_
+- Dividers
+- Buttons
+- Notices
 
 **Groups**
 - Accordion
