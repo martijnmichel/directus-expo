@@ -28,6 +28,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://directusmobile.app"),
   title: "Directus Mobile - iOS and Android app",
   description:
     "Manage your Directus CMS on the go with our iOS and Android mobile app. Access and edit content, and handle assets from anywhere. Fast, secure, and user-friendly.",
