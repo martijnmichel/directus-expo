@@ -26,7 +26,7 @@ export const APIForm = ({
 }: {
   defaultValues?: API;
   id?: string;
-  onSuccess?: () => void;
+  onSuccess?: (api: API) => void;
 }) => {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
@@ -57,7 +57,7 @@ export const APIForm = ({
       }
       form.reset();
       refetch();
-      onSuccess?.();
+      onSuccess?.(newApi);
     } catch (error) {
       form.setError(
         "url",
