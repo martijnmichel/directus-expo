@@ -1,3 +1,10 @@
+## [0.6.20](https://github.com/martijnmichel/directus-expo/compare/v0.6.19...v0.6.20) (2025-02-08)
+
+
+### Bug Fixes
+
+* better api url error handling and checking ([8db0231](https://github.com/martijnmichel/directus-expo/commit/8db0231564990f37015a9642fa5ef35569eb8642))
+
 ## [0.6.19](https://github.com/martijnmichel/directus-expo/compare/v0.6.18...v0.6.19) (2025-02-06)
 
 
