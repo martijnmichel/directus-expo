@@ -120,7 +120,11 @@ export const TinyMCEEditor = ({
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
       content_css: '${themeName}',
       content_style: 'img { max-width: 100%; height: auto; }',
-      toolbar: '${item.meta.options?.toolbar.join(" ")} customFullscreen',
+      toolbar: '${
+        item.meta.options
+          ? item.meta.options.toolbar.join(" ")
+          : "bold italic underline h1 h2 h3 ol ul removeformat blockquote link image media hr"
+      } customFullscreen',
       toolbar_sticky: true,
       toolbar_location: 'bottom',
       statusbar: false,

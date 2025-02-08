@@ -80,7 +80,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
             const field = fields?.find((fo) => fo.field === f);
 
             return field
-              ? getFieldValue(field, doc)
+              ? getFieldValue(field, doc[f])
               : (doc[f] as number | string | null);
           })
         }

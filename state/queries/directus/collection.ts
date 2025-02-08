@@ -4,6 +4,7 @@ import {
   CoreSchema,
   Query,
   readCollection,
+  readField,
   readFields,
   readFieldsByCollection,
   readItem,
@@ -128,6 +129,14 @@ export const useFields = (collection: keyof CoreSchema) => {
   return useQuery({
     queryKey: ["fields", collection, user?.id],
     queryFn: () => directus?.request(readFieldsByCollection(collection)),
+  });
+};
+
+export const useField = (collection: keyof CoreSchema, field: string) => {
+  const { directus, user } = useAuth();
+  return useQuery({
+    queryKey: ["field", collection, field, user?.id],
+    queryFn: () => directus?.request(readField(collection, field)),
   });
 };
 
