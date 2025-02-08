@@ -9,6 +9,9 @@
       "env": {
         "ANDROID_HOME": "/Users/martijnvde/Library/Android/sdk"
       },
+      "ios": {
+        "simulator": true
+      },
       "channel": "development"
     },
     "preview": {
