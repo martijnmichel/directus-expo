@@ -85,6 +85,8 @@ export const M2OInput = ({
       },
     });
 
+    console.log({ relatedFields, data });
+
     if (isLoading) return null;
 
     return map(relatedFields, (field) => {
