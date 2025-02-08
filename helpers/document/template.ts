@@ -77,7 +77,7 @@ export const getFieldsFromTemplate = (template?: string): FieldTransform[] => {
   let lastIndex = 0;
 
   // Modified regex to be more precise about capturing
-  const regex = /\{\{([^}]+)\}\}/g;
+  const regex = /(\{\{[^}]+\}\})/g; // Capture the entire match including braces
   let match;
 
   while ((match = regex.exec(template)) !== null) {
@@ -90,7 +90,7 @@ export const getFieldsFromTemplate = (template?: string): FieldTransform[] => {
     }
 
     // Process the field transform - only trim the inner content
-    const field = match[1].trim();
+    const field = match[1].replace(/^\{\{|\}\}$/g, "").trim();
     const split = field.split(".");
 
     if (split.length === 1) {
@@ -115,8 +115,7 @@ export const getFieldsFromTemplate = (template?: string): FieldTransform[] => {
       });
     }
 
-    // Use the full match length to preserve spaces
-    lastIndex = match.index + match[0].length;
+    lastIndex = match.index + match[1].length; // Use the exact match length
   }
 
   // Add remaining text after last match if it exists

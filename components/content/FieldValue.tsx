@@ -1,6 +1,7 @@
 import { getFieldValue } from "@/helpers/document/getFieldValue";
 import { FieldTransform } from "@/helpers/document/template";
 import { ReadFieldOutput, CoreSchema } from "@directus/sdk";
+import { Text } from "../display/typography";
 
 export const FieldValue = ({
   field,
@@ -11,7 +12,7 @@ export const FieldValue = ({
   data?: any;
   field?: ReadFieldOutput<CoreSchema>;
 }) => {
-  if (transform?.type === "string") return transform.value;
+  if (transform?.type === "string") return <Text>{transform.value}</Text>;
   else
     return !!field
       ? getFieldValue(
