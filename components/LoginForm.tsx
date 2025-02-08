@@ -72,8 +72,8 @@ export const LoginForm = () => {
   });
 
   const url = watch("api.url");
-  const { data: providers } = useProviders(watch("api"));
-  console.log({ providers });
+  /**const { data: providers } = useProviders(watch("api"));
+  console.log({ providers }); */
   useEffect(() => {
     if (url) {
       clearErrors("api");

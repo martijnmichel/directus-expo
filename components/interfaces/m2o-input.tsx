@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { CoreSchema, ReadFieldOutput, readItems } from "@directus/sdk";
 import { Select } from "./select";
-import { parseTemplate } from "@/helpers/document/template";
+import {
+  getFieldsFromTemplate,
+  parseTemplate,
+} from "@/helpers/document/template";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { router } from "expo-router";
@@ -18,6 +21,8 @@ import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { Text } from "../display/typography";
 import { DirectusIcon } from "../display/directus-icon";
 import { InterfaceProps } from ".";
+import { filter, map } from "lodash";
+import { FieldValue } from "../content/FieldValue";
 
 interface Schema {
   [key: string]: any;
@@ -64,21 +69,35 @@ export const M2OInput = ({
   }, [fields, pk, item.field, uuid]);
 
   const Item = () => {
-    const { data } = useDocument({
+    const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
+    const { data, isLoading } = useDocument({
       collection: item.schema.foreign_key_table as any,
       id: value,
       options: {
-        fields: [`*.*`],
+        fields: map(
+          filter(relatedFields, (f) => f.type === "transform"),
+          (field) => field.name
+        ),
+      },
+      query: {
+        retry: false,
+        enabled: !!value,
       },
     });
 
-    console.log({ data });
+    if (isLoading) return null;
 
-    return (
-      <Text numberOfLines={1}>
-        {parseTemplate(item.meta?.options?.template || "", data, fields)}
-      </Text>
-    );
+    return map(relatedFields, (field) => {
+      return (
+        <FieldValue
+          field={fields?.find(
+            (f) => "name" in field && f.field === field?.name
+          )}
+          transform={field}
+          data={data}
+        />
+      );
+    });
   };
 
   return (

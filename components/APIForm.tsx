@@ -48,7 +48,6 @@ export const APIForm = ({
     try {
       const url = new URL(newApi.url);
       newApi.url = url.href.replace(/\/$/, "");
-      console.log({ newApi, url });
     } catch (error) {
       form.setError("url", { message: "Invalid URL" }, { shouldFocus: true });
       return;
