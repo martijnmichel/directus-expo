@@ -34,7 +34,9 @@ export const APIForm = ({
     []
   );
 
-  const form = useForm<API>({ defaultValues });
+  const form = useForm<API>({
+    defaultValues: defaultValues ?? { url: "https://" },
+  });
 
   const { mutate: mutateApis } = mutateLocalStorage(
     LocalStorageKeys.DIRECTUS_APIS
@@ -42,10 +44,21 @@ export const APIForm = ({
 
   const onSubmit = async (newApi: API) => {
     /** test working api */
+
+    try {
+      const url = new URL(newApi.url);
+      newApi.url = url.href.replace(/\/$/, "");
+      console.log({ newApi, url });
+    } catch (error) {
+      form.setError("url", { message: "Invalid URL" }, { shouldFocus: true });
+      return;
+    }
     try {
       const test = await fetch(`${newApi.url}/server/health`);
       if (!test.ok) {
-        throw new Error("API is not working");
+        throw new Error(
+          "Host is not reachable. There might be something wrong with your config."
+        );
       }
       if (!newApi.id) {
         mutateApis([...(data ?? []), { ...newApi, id: uuidv4() }]);
@@ -59,11 +72,15 @@ export const APIForm = ({
       refetch();
       onSuccess?.(newApi);
     } catch (error) {
-      form.setError(
-        "url",
-        { message: t("form.errors.apiNotValid") },
-        { shouldFocus: true }
-      );
+      if (error instanceof Error) {
+        form.setError(
+          "url",
+          {
+            message: `${error.message}. Check the /server/health path of your instance.`,
+          },
+          { shouldFocus: true }
+        );
+      }
     }
   };
 

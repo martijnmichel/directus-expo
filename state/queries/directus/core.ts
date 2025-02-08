@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   aggregate,
   CoreSchema,
+  createDirectus,
   deletePolicy,
   deleteRole,
   deleteRoles,
@@ -26,6 +27,7 @@ import {
   readUser,
   readUserPermissions,
   readUsers,
+  rest,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
 import { mutateUser } from "@/state/actions/updateUser";
@@ -37,6 +39,7 @@ import { removeFile } from "@/state/actions/deleteFile";
 import { removeFiles } from "@/state/actions/deleteFiles";
 import { mutateFile } from "@/state/actions/updateFile";
 import { addUsers } from "@/state/actions/addUsers";
+import { API } from "@/components/APIForm";
 export const useMe = () => {
   const { directus, user } = useAuth();
   return useQuery({
@@ -154,15 +157,17 @@ export const usePolicies = (query?: Query<CoreSchema, any>) => {
   });
 };
 
-export const useProviders = () => {
-  const { directus, user } = useAuth();
+export const useProviders = (api?: API) => {
+  console.log({ api });
   return useQuery({
-    queryKey: ["providers", user?.id],
+    queryKey: ["providers", api?.url],
     queryFn: async () => {
-      const items = await directus?.request(readProviders());
+      const local = createDirectus(api?.url ?? "").with(rest());
+      const items = await local?.request(readProviders());
 
       return { items, total: 0 };
     },
+    enabled: !!api?.url,
   });
 };
 

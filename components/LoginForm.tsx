@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Text,
   Alert,
+  Linking,
 } from "react-native";
 import { useForm, Controller, Form } from "react-hook-form";
 import { useAuth } from "../contexts/AuthContext";
@@ -22,6 +23,18 @@ import {
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { API } from "./APIForm";
 import { formStyles } from "./interfaces/style";
+import { useProviders } from "@/state/queries/directus/core";
+import { Vertical } from "./layout/Stack";
+import { map } from "lodash";
+import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
+import { ReadProviderOutput } from "@directus/sdk";
+import { useAuthRequest } from "expo-auth-session/build/providers/Google";
+import { useAutoDiscovery } from "expo-auth-session";
+
+WebBrowser.maybeCompleteAuthSession();
+
+const redirectUri = AuthSession.makeRedirectUri();
 
 interface LoginForm {
   email: string;
@@ -35,6 +48,7 @@ export const LoginForm = () => {
   const { data: api } = useLocalStorage<API>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE
   );
+
   const {
     control,
     handleSubmit,
@@ -58,6 +72,8 @@ export const LoginForm = () => {
   });
 
   const url = watch("api.url");
+  const { data: providers } = useProviders(watch("api"));
+  console.log({ providers });
   useEffect(() => {
     if (url) {
       clearErrors("api");
@@ -84,16 +100,6 @@ export const LoginForm = () => {
   const mutateApi = mutateLocalStorage(LocalStorageKeys.DIRECTUS_API_ACTIVE);
 
   const onSubmit = async (data: LoginForm) => {
-    if (
-      !/^https:\/\/[a-zA-Z0-9-_.]+\.[a-zA-Z]{2,}(\/[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]*)?$/.test(
-        data.api.url
-      )
-    ) {
-      setError("api", { message: t("form.errors.apiNotValid") });
-      console.log(data);
-      Alert.alert("Error", t("form.errors.apiNotValid"));
-      return;
-    }
     try {
       console.log({ data });
       await login(data.email, data.password, data.api.url);
@@ -102,6 +108,27 @@ export const LoginForm = () => {
     } catch (error) {
       Alert.alert("Error", t("form.errors.loginFailed"));
     }
+  };
+
+  const ProviderButton = ({ provider }: { provider: ReadProviderOutput }) => {
+    const discovery = useAutoDiscovery(
+      `${watch("api.url")}/auth/login/${provider.name}`
+    );
+    return (
+      <Button
+        key={provider.name}
+        variant="soft"
+        onPress={() => {
+          Linking.openURL(
+            `${watch("api.url")}/auth/login/${
+              provider.name
+            }?redirect=https://directusmobile.app/app-link/auth/login/callback`
+          );
+        }}
+      >
+        Login with {provider.name}
+      </Button>
+    );
   };
 
   return (
@@ -154,6 +181,12 @@ export const LoginForm = () => {
       <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
         {t("form.login")}
       </Button>
+
+      {/** <Vertical>
+        {map(providers?.items, (provider) => (
+          <ProviderButton key={provider.name} provider={provider} />
+        ))}
+      </Vertical> */}
     </View>
   );
 };

@@ -20,6 +20,7 @@ export default () => ({
       supportsTablet: true,
       buildNumber: `${buildNumber}`,
       bundleIdentifier: "com.martijnmichel.directusexpo",
+      associatedDomains: ["applinks:directusmobile.app"],
     },
     android: {
       adaptiveIcon: {
