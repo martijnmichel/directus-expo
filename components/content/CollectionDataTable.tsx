@@ -13,7 +13,7 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { PortalOutlet } from "../layout/Portal";
 import { View } from "react-native";
-import { getFieldValue } from "@/helpers/document/getFieldValue";
+import { useFieldDisplayValue } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
@@ -21,6 +21,7 @@ import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
+import { getFieldsFromTemplate } from "@/helpers/document/template";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   const { data: permissions } = usePermissions();
-
+  const { data: relations } = useRelations();
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
 
   const canRead = isActionAllowed(
@@ -64,6 +65,8 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     refetch();
   }, [refetch]);
 
+  const { parse } = useFieldDisplayValue(collection);
+
   return (
     <>
       <Table
@@ -79,8 +82,15 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           map(tableFields, (f) => {
             const field = fields?.find((fo) => fo.field === f);
 
+            const relatedFields = getFieldsFromTemplate(
+              field?.meta?.display_options?.template
+            );
+
             return field
-              ? getFieldValue(field, doc[f])
+              ? parse({
+                  item: field,
+                  data: doc,
+                })
               : (doc[f] as number | string | null);
           })
         }

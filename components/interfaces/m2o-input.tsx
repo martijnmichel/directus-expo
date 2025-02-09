@@ -70,7 +70,7 @@ export const M2OInput = ({
 
   const Item = () => {
     const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
-    const { data, isLoading } = useDocument({
+    const { data, isLoading, refetch } = useDocument({
       collection: item.schema.foreign_key_table as any,
       id: value,
       options: {
@@ -81,9 +81,15 @@ export const M2OInput = ({
       },
       query: {
         retry: false,
-        enabled: !!value,
+        enabled: false,
       },
     });
+
+    useEffect(() => {
+      if (value) {
+        refetch();
+      }
+    }, [value]);
 
     console.log({ relatedFields, data });
 
