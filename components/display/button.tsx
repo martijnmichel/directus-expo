@@ -19,7 +19,7 @@ type ButtonColorScheme =
   | "success"
   | "warning"
   | "normal";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface IconProps {
   color?: string;
@@ -290,6 +290,12 @@ const stylesheet = createStyleSheet((theme) => ({
   },
 
   // Sizes
+  xs: {
+    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    minHeight: 18,
+    minWidth: 18,
+  },
   sm: {
     paddingVertical: theme.spacing.xs,
     paddingHorizontal: theme.spacing.md,
@@ -314,6 +320,9 @@ const stylesheet = createStyleSheet((theme) => ({
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.body.fontFamily,
     color: theme.colors.textPrimary,
+  },
+  xsText: {
+    fontSize: 12,
   },
   smText: {
     fontSize: 14,

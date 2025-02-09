@@ -53,6 +53,7 @@ export default function RootLayout() {
                   </EventProvider>
                   <Toast />
                   <OTAUpdate />
+                  <PortalHost name="root" />
                 </PortalProvider>
               </AuthProvider>
             </ConfirmDialogProvider>
