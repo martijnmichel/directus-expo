@@ -1,5 +1,5 @@
 import { useCollection, usePresets } from "@/state/queries/directus/collection";
-import { debounce, map, reduce, some } from "lodash";
+import { debounce, first, get, map, reduce, some, tail } from "lodash";
 import { Table } from "../display/table";
 import { Container } from "../layout/Container";
 import { useFields } from "@/state/queries/directus/collection";
@@ -22,6 +22,11 @@ import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 import { getFieldsFromTemplate } from "@/helpers/document/template";
+import { Text } from "../display/typography";
+import {
+  getDisplayTemplateQueryFields,
+  getDisplayTemplateTransformName,
+} from "@/helpers/collections/getDisplayTemplate";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -41,31 +46,74 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const filterContext = useDocumentsFilters();
   const { page, limit, search, setSearch } = filterContext;
 
+  const tableFields = useCollectionTableFields({
+    collection: collection as keyof CoreSchema,
+  });
+
+  const fieldsQuery = map(tableFields, (f) => {
+    const field = fields?.find((fo) => fo.field === f);
+    return getDisplayTemplateQueryFields(field) || f.split(".$")[0];
+  });
+  const { data: presets, isLoading: isPresetsLoading } = usePresets();
+
+  const preset = presets?.find((p) => p.collection === collection);
+
+  console.log({ preset });
+
   const { data: documents, refetch } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema],
     {
       page,
       limit,
       search,
+      fields: [...fieldsQuery, primaryKey],
+    },
+    {
+      enabled: !!fieldsQuery.length,
     }
   );
 
   const { label } = useFieldMeta(collection);
-
-  const { data: presets } = usePresets();
-
-  const preset = presets?.find((p) => p.collection === collection);
-
-  const tableFields = useCollectionTableFields({
-    collection: collection as keyof CoreSchema,
-    documents: documents?.items,
-  });
 
   useEffect(() => {
     refetch();
   }, [refetch]);
 
   const { parse } = useFieldDisplayValue(collection);
+
+  const Col = ({
+    template,
+    document,
+  }: {
+    template?: string;
+    field?: string;
+    document: Record<string, unknown>;
+  }) => {
+    const lookupField = () => {
+      if (!template) return null;
+
+      const parts = template.split(".");
+      const rootField = fields?.find((fo) => fo.field === parts[0]);
+
+      // Handle transforms (parts with $)
+      const transformName = parts.find((p) => p.startsWith("$"))?.substring(1);
+      const fieldPath = parts.filter((p) => !p.startsWith("$")).join(".");
+
+      return {
+        field: rootField,
+        path: fieldPath,
+        transform: transformName,
+      };
+    };
+
+    const fieldInfo = lookupField();
+    const value = fieldInfo ? get(document, fieldInfo.path) : null;
+
+    console.log({ fieldInfo });
+    if (!value) return <Text>-</Text>;
+
+    return <Text>{value?.toString()}</Text>;
+  };
 
   return (
     <>
@@ -80,18 +128,13 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
           map(tableFields, (f) => {
-            const field = fields?.find((fo) => fo.field === f);
-
-            const relatedFields = getFieldsFromTemplate(
-              field?.meta?.display_options?.template
+            return (
+              <Col
+                template={f}
+                document={doc}
+                key={`table-${collection}-column-${f}`}
+              />
             );
-
-            return field
-              ? parse({
-                  item: field,
-                  data: doc,
-                })
-              : (doc[f] as number | string | null);
           })
         }
         onRowPress={(doc) => {
