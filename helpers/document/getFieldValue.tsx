@@ -5,13 +5,13 @@ import { CoreSchema, ReadFieldOutput, ReadRelationOutput } from "@directus/sdk";
 import { Image } from "expo-image";
 import { View } from "react-native";
 import { parseTemplate } from "./template";
-import { map } from "lodash";
+import { get, map } from "lodash";
 import { useRelations } from "@/state/queries/directus/core";
 import { useFields } from "@/state/queries/directus/collection";
 import { Button } from "@/components/display/button";
 import { Text } from "@/components/display/typography";
 import { DropdownMenu } from "@/components/display/dropdown-menu";
-import { Vertical } from "@/components/layout/Stack";
+import { Horizontal, Vertical } from "@/components/layout/Stack";
 
 type InterfaceArgs = {
   value: any;
@@ -54,7 +54,14 @@ const fieldValueMap: {
       return value;
     },
   },
-  default: ({ value }) => <Text>{value}</Text>,
+  default: ({ value }) => {
+    if (!value) return <Text>-</Text>;
+    else if (typeof value === "object") {
+      return <Text>{JSON.stringify(value)}</Text>;
+    } else if (!!value && typeof value === "string")
+      return <Text>{value}</Text>;
+    else return <Text>{value?.toString()}</Text>;
+  },
 } as const;
 
 export const getFieldValue = (
@@ -86,61 +93,71 @@ export const useFieldDisplayValue = (collection: string) => {
   const parse = ({
     item,
     data,
+    template,
   }: {
     item: ReadFieldOutput<CoreSchema>;
     data?: Record<string, any>;
+    template?: string;
   }) => {
+    console.log({ template });
+
     switch (item.type) {
       case "integer":
         switch (item.meta.interface) {
           case "select-dropdown-m2o":
             switch (item.meta.display) {
               case "related-values":
-                return data?.[item.field] ? (
-                  <FieldValue
-                    collection={item.schema.foreign_key_table as string}
-                    id={data?.[item.field]}
-                    template={item.meta.display_options?.template}
-                    item={item}
-                  />
-                ) : null;
+                return data?.[item.field] ? null : null;
             }
         }
 
-      case "alias":
-        switch (item.meta.display) {
-          case "related-values": {
-            const junction = relations?.find(
-              (r) =>
-                r.related_collection === item.collection &&
-                r.meta.one_field === item.field
-            );
-            return !!data?.[item.field].length && junction ? (
-              <DropdownMenu>
-                <DropdownMenu.Trigger>
-                  {data?.[item.field].length} items
-                </DropdownMenu.Trigger>
-                <DropdownMenu.Content>
-                  <Vertical>
-                    {map(data?.[item.field], (id) => {
-                      return (
-                        <FieldValue
-                          collection={junction?.collection as string}
-                          id={id}
-                          item={item}
-                          template={item.meta.display_options?.template}
-                        />
-                      );
-                    })}
-                  </Vertical>
-                </DropdownMenu.Content>
-              </DropdownMenu>
-            ) : null;
+      case "alias": {
+        if (template) {
+          const junction = relations?.find(
+            (r) =>
+              r.related_collection === item.collection &&
+              r.meta.one_field === item.field
+          );
+          return !!data?.[item.field].length && junction ? (
+            <Horizontal>
+              {map(data?.[item.field], (id) => {
+                return get(id, template);
+              })}
+            </Horizontal>
+          ) : null;
+        } else {
+          switch (item.meta.display) {
+            case "related-values": {
+              const junction = relations?.find(
+                (r) =>
+                  r.related_collection === item.collection &&
+                  r.meta.one_field === item.field
+              );
+              return !!data?.[item.field].length && junction ? (
+                <DropdownMenu>
+                  <DropdownMenu.Trigger>
+                    {data?.[item.field].length} items
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Content>
+                    <Vertical>
+                      {map(data?.[item.field], (id) => {
+                        console.log({ id, item, data });
+                        return parseTemplate(
+                          item.meta.display_options?.template,
+                          id
+                        );
+                      })}
+                    </Vertical>
+                  </DropdownMenu.Content>
+                </DropdownMenu>
+              ) : null;
+            }
           }
         }
+      }
 
       default:
-        return getFieldValue(item, data?.[item.field]);
+        return data?.[item.field];
     }
   };
 

@@ -4,18 +4,16 @@ import { CoreSchema, ReadFieldOutput, ReadPresetOutput } from "@directus/sdk";
 import { some } from "lodash";
 
 export const useCollectionTableFields = ({
-  documents,
   collection,
 }: {
   collection: keyof CoreSchema;
-  documents?: CoreSchemaDocument[];
 }) => {
   const { data: presets } = usePresets();
   const { data: fields } = useFields(collection as keyof CoreSchema);
   const preset = presets?.find((p) => p.collection === collection);
   return (
     (preset && preset.layout_query?.tabular?.fields) ||
-    /** or headers from fields that have values in the documents */
+    /** or headers from fields that have values in the documents 
     (!preset &&
       fields
         ?.filter(
