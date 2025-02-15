@@ -21,6 +21,9 @@ export default () => ({
       buildNumber: `${buildNumber}`,
       bundleIdentifier: "com.martijnmichel.directusexpo",
       associatedDomains: ["applinks:directusmobile.app"],
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
     },
     android: {
       adaptiveIcon: {
