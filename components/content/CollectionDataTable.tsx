@@ -13,7 +13,10 @@ import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { PortalOutlet } from "../layout/Portal";
 import { View } from "react-native";
-import { useFieldDisplayValue } from "@/helpers/document/getFieldValue";
+import {
+  fieldValueDefaultComponent,
+  useFieldDisplayValue,
+} from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
 import { SearchFilter } from "./filters/search-filter-modal";
@@ -122,13 +125,11 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           <Horizontal>
             {map(rootValue, (item) => {
               const value = get(item, fieldInfo?.valuePath ?? "");
-              return value ? <Text>{value} </Text> : null;
+              return value ? fieldValueDefaultComponent({ value }) : null;
             })}
           </Horizontal>
         );
-      } else if (typeof rootValue === "object") {
-        return <Text>{JSON.stringify(rootValue)}</Text>;
-      } else return <Text>-</Text>;
+      } else fieldValueDefaultComponent({ value: rootValue });
     } else if (fieldInfo?.field) {
       return parse({
         item: fieldInfo.field,

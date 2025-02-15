@@ -176,7 +176,7 @@ export const useFieldDisplayValue = (collection: string) => {
   return { parse };
 };
 
-const fieldValueDefaultComponent = ({ value }: { value: any }) => {
+export const fieldValueDefaultComponent = ({ value }: { value: any }) => {
   // Handle null/undefined
   if (value == null) {
     return <Text>-</Text>;
