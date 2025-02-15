@@ -38,21 +38,24 @@ const fieldValueMap: {
       ) : (
         value
       ),
+    default: ({ value }) => value,
   },
   dateTime: {
     datetime: ({ value }) => (value ? DateUtils.format(value, "LL") : null),
+    default: ({ value }) => value,
   },
   boolean: {
     boolean: ({ value }) => (value ? "✓" : "✗"),
+    default: ({ value }) => value?.toString(),
   },
   uuid: {
     "file-image": ({ value, transform }) => {
       if (transform === "$thumbnail") {
         return <Thumbnail id={value} style={{ width: 20, height: 20 }} />;
       }
-
       return value;
     },
+    default: ({ value }) => value,
   },
   default: ({ value }) => {
     if (!value) return <Text>-</Text>;
@@ -81,7 +84,7 @@ export const getFieldValue = (
 
   const interfaceHandler =
     typeHandlers[item.meta.interface as keyof typeof typeHandlers] ??
-    typeHandlers.default;
+    (typeHandlers as any).default;
 
   return interfaceHandler({ value, item, transform });
 };
@@ -99,8 +102,6 @@ export const useFieldDisplayValue = (collection: string) => {
     data?: Record<string, any>;
     template?: string;
   }) => {
-    console.log({ template });
-
     switch (item.type) {
       case "integer":
         switch (item.meta.interface) {
@@ -142,9 +143,13 @@ export const useFieldDisplayValue = (collection: string) => {
                     <Vertical>
                       {map(data?.[item.field], (id) => {
                         console.log({ id, item, data });
-                        return parseTemplate(
-                          item.meta.display_options?.template,
-                          id
+                        return (
+                          <Text>
+                            {parseTemplate(
+                              item.meta.display_options?.template,
+                              id
+                            )}
+                          </Text>
                         );
                       })}
                     </Vertical>

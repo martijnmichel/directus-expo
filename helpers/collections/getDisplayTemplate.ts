@@ -18,7 +18,9 @@ export const getDisplayTemplateQueryFields = (
           const match = part.match(/{{(.+?)}}/) || [null, part];
           const value = match[1]?.trim();
           // If brackets were present (match[0] exists), add ${field.field} prefix
-          return match[0] ? `${field.field}.${value}` : value;
+          const fieldPath = match[0] ? `${field.field}.${value}` : value;
+          // Remove everything from .$ onwards
+          return fieldPath.split(".$")[0];
         })
         .filter(Boolean);
 
