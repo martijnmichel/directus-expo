@@ -177,17 +177,60 @@ export const useFieldDisplayValue = (collection: string) => {
 };
 
 const fieldValueDefaultComponent = ({ value }: { value: any }) => {
+  // Handle null/undefined
+  if (value == null) {
+    return <Text>-</Text>;
+  }
+
+  // Handle arrays (including empty arrays)
   if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <Text>-</Text>;
+    }
     return (
       <Horizontal>
-        {map(value, (item) => (
-          <Text>{item} </Text>
+        {map(value, (item, index) => (
+          <Text key={index}>
+            {/* Recursively handle array items */}
+            {fieldValueDefaultComponent({ value: item }).props.children}
+            {index < value.length - 1 ? ", " : ""}
+          </Text>
         ))}
       </Horizontal>
     );
-  } else if (typeof value === "object") {
-    return <Text>{JSON.stringify(value)}</Text>;
-  } else if (!!value && typeof value === "string") {
-    return <Text>{value}</Text>;
-  } else return <Text>-</Text>;
+  }
+
+  // Handle objects (including Date)
+  if (typeof value === "object") {
+    if (value instanceof Date) {
+      return <Text>{value.toISOString()}</Text>;
+    }
+    try {
+      return <Text>{JSON.stringify(value)}</Text>;
+    } catch (e) {
+      return <Text>[Complex Object]</Text>;
+    }
+  }
+
+  // Handle primitives
+  switch (typeof value) {
+    case "string":
+      return <Text>{value}</Text>;
+    case "number":
+      return (
+        <Text>
+          {Number.isFinite(value) ? value.toString() : "Invalid Number"}
+        </Text>
+      );
+    case "boolean":
+      return <Text>{value.toString()}</Text>;
+    case "bigint":
+      return <Text>{value.toString()}n</Text>;
+    case "symbol":
+      return <Text>{value.toString()}</Text>;
+    case "function":
+      return <Text>[Function]</Text>;
+    default:
+      return <Text>-</Text>;
+  }
 };
