@@ -94,25 +94,46 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
       const parts = template.split(".");
       const rootField = fields?.find((fo) => fo.field === parts[0]);
+      const deepField = fields?.find((fo) => fo.field === template);
 
       // Handle transforms (parts with $)
       const transformName = parts.find((p) => p.startsWith("$"))?.substring(1);
       const fieldPath = parts.filter((p) => !p.startsWith("$")).join(".");
+      const valuePath = tail(parts.filter((p) => !p.startsWith("$"))).join(".");
 
       return {
         field: rootField,
+        deepField,
         path: fieldPath,
         transform: transformName,
+        valuePath,
       };
     };
 
     const fieldInfo = lookupField();
+    const rootValue = fieldInfo?.field
+      ? get(document, fieldInfo.field.field)
+      : null;
     const value = fieldInfo ? get(document, fieldInfo.path) : null;
 
-    console.log({ fieldInfo });
-    if (!value) return <Text>-</Text>;
-
-    return <Text>{value?.toString()}</Text>;
+    if (!value && !fieldInfo?.deepField && !!rootValue) {
+      if (Array.isArray(rootValue)) {
+        return (
+          <Horizontal>
+            {map(rootValue, (item) => {
+              const value = get(item, fieldInfo?.valuePath ?? "");
+              return value ? <Text>{value} </Text> : null;
+            })}
+          </Horizontal>
+        );
+      }
+    } else if (fieldInfo?.field) {
+      return parse({
+        item: fieldInfo.field,
+        data: document,
+        valuePath: fieldInfo.valuePath,
+      });
+    } else return <Text>{value?.toString()}</Text>;
   };
 
   return (
