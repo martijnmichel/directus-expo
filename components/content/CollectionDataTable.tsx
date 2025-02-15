@@ -126,12 +126,13 @@ export function CollectionDataTable({ collection }: { collection: string }) {
             })}
           </Horizontal>
         );
-      }
+      } else if (typeof rootValue === "object") {
+        return <Text>{JSON.stringify(rootValue)}</Text>;
+      } else return <Text>-</Text>;
     } else if (fieldInfo?.field) {
       return parse({
         item: fieldInfo.field,
         data: document,
-        valuePath: fieldInfo.valuePath,
       });
     } else return <Text>{value?.toString()}</Text>;
   };
