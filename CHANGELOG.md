@@ -1,3 +1,11 @@
+## [0.6.21](https://github.com/martijnmichel/directus-expo/compare/v0.6.20...v0.6.21) (2025-02-15)
+
+
+### Features
+
+* field value with transform on m20 ([774baf2](https://github.com/martijnmichel/directus-expo/commit/774baf29a0e77c82618c8163b1a0e4619283f21c))
+* FieldValue ([a40fece](https://github.com/martijnmichel/directus-expo/commit/a40fece61d2e57d4d889c511befabf725dbd99ff))
+
 ## [0.6.20](https://github.com/martijnmichel/directus-expo/compare/v0.6.19...v0.6.20) (2025-02-08)
 
 
