@@ -13,9 +13,9 @@ export const getDisplayTemplateQueryFields = (
       // Split by commas and process each template part
       const fields = template
         .split(",")
-        .map((part) => {
+        .map((part: string) => {
           // Match content within {{...}} or take the whole part if no brackets
-          const match = part.match(/{{item:(.+?)}}/) || [null, part];
+          const match = part.match(/{{(.+?)}}/) || [null, part];
           const value = match[1]?.trim();
           // Replace "item:" with "item." in the value
           const normalizedValue = value?.replace(/item:/, "item.");
