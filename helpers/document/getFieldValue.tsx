@@ -119,10 +119,13 @@ export const useFieldDisplayValue = (collection: string) => {
               r.related_collection === item.collection &&
               r.meta.one_field === item.field
           );
+
+          console.log({ junction, value: data?.[item.field], template });
+
           return !!data?.[item.field].length && junction ? (
-            <Horizontal>
+            <Horizontal spacing="xs">
               {map(data?.[item.field], (id) => {
-                return get(id, template);
+                return <Text>{get(id, template) || id},</Text>;
               })}
             </Horizontal>
           ) : null;
@@ -134,6 +137,7 @@ export const useFieldDisplayValue = (collection: string) => {
                   r.related_collection === item.collection &&
                   r.meta.one_field === item.field
               );
+
               return !!data?.[item.field].length && junction ? (
                 <DropdownMenu>
                   <DropdownMenu.Trigger>
@@ -161,10 +165,29 @@ export const useFieldDisplayValue = (collection: string) => {
         }
       }
 
-      default:
-        return data?.[item.field];
+      default: {
+        const value = data?.[item.field];
+
+        return fieldValueDefaultComponent({ value });
+      }
     }
   };
 
   return { parse };
+};
+
+const fieldValueDefaultComponent = ({ value }: { value: any }) => {
+  if (Array.isArray(value)) {
+    return (
+      <Horizontal>
+        {map(value, (item) => (
+          <Text>{item} </Text>
+        ))}
+      </Horizontal>
+    );
+  } else if (typeof value === "object") {
+    return <Text>{JSON.stringify(value)}</Text>;
+  } else if (!!value && typeof value === "string") {
+    return <Text>{value}</Text>;
+  } else return <Text>-</Text>;
 };
