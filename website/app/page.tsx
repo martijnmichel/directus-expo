@@ -122,8 +122,6 @@ export default function Home() {
             interface.
           </p>
 
-          <p className="mb-4 ">Now available as public beta</p>
-
           {/* CTA buttons */}
           <StoreButtons />
         </section>
