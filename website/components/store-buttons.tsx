@@ -5,7 +5,7 @@ export const StoreButtons = () => (
     <a
       target="_blank"
       aria-label="download app on ios"
-      href="https://testflight.apple.com/join/pWYXpQtY"
+      href="https://apps.apple.com/app/directus-mobile/id6740696350"
     >
       <Image
         src="/appstore-black.png"
@@ -17,7 +17,7 @@ export const StoreButtons = () => (
     <a
       target="_blank"
       aria-label="download app on android"
-      href="https://play.google.com/apps/test/RQgSSfgKFg8/ahAO29uNQlJ9cwIZLTd8yKlRwhMAUxQfhP9YpjFZ2x-ZjL9hkbuYhAUfbqrCz_cN0AVHJi0gIcRHPLrJf758Q66sIB"
+      href="https://play.google.com/store/apps/details?id=com.martijnmichel.directusexpo.app"
     >
       <Image
         src="/playstore-black.png"
