@@ -19,7 +19,7 @@ import { SearchFilter } from "./filters/search-filter-modal";
 
 export const FileBrowser = () => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
-  const { directus, user } = useAuth();
+  const { directus, token } = useAuth();
   const { styles } = useStyles(stylesheet);
 
   const { mutate, isPending } = removeFiles();
@@ -60,6 +60,9 @@ export const FileBrowser = () => {
                     style={[styles.image, selected && styles.selected]}
                     source={{
                       uri: `${directus?.url.origin}/assets/${file.id}`,
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
                     }}
                   />
                   <Pressable

@@ -54,7 +54,7 @@ export const ImageInput = ({
   const { styles, theme } = useStyles(imageStyles);
   const { styles: formStyle } = useStyles(formStyles);
   const [imageUrl, setImageUrl] = useState("");
-  const { directus } = useAuth();
+  const { directus, token } = useAuth();
 
   const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
   const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
@@ -112,7 +112,12 @@ export const ImageInput = ({
       <View style={styles.container}>
         <View style={styles.imagePreview}>
           <Image
-            source={{ uri: `${directus?.url}/assets/${value}` }}
+            source={{
+              uri: `${directus?.url}/assets/${value}`,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }}
             style={styles.image}
           />
         </View>

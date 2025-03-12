@@ -25,7 +25,7 @@ type FileSelectProps = InterfaceProps<{
 export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<DirectusFile | null>(null);
-  const { directus, user } = useAuth();
+  const { directus, token } = useAuth();
   const { styles } = useStyles(stylesheet);
 
   const filterContext = useDocumentsFilters();
@@ -79,7 +79,12 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
               <View style={styles.imageWrapper}>
                 <Image
                   style={[styles.image, selected && styles.selected]}
-                  source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
+                  source={{
+                    uri: `${directus?.url.origin}/assets/${file.id}`,
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }}
                 />
                 <View style={styles.radioWrapper}>
                   <RadioButton

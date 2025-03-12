@@ -163,7 +163,7 @@ export const FilesMultiInput = ({
       },
     });
 
-    const { directus } = useAuth();
+    const { directus, token } = useAuth();
 
     const file = doc?.[
       junction.meta.junction_field as keyof typeof doc
@@ -202,7 +202,12 @@ export const FilesMultiInput = ({
         isNew={isNew}
         prepend={
           <Image
-            source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
+            source={{
+              uri: `${directus?.url.origin}/assets/${file.id}`,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }}
             style={{ width: 28, height: 28, borderRadius: 4 }}
           />
         }
