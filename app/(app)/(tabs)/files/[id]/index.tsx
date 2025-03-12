@@ -17,7 +17,7 @@ import { createStyleSheet, useStyles } from "react-native-unistyles";
 export default function File() {
   const { id } = useLocalSearchParams();
   const { data: file } = useFile(id as string, { fields: ["title"] });
-  const { directus } = useAuth();
+  const { directus, token } = useAuth();
   const headerStyles = useHeaderStyles();
   const { styles } = useStyles(stylesheet);
   return (
@@ -35,7 +35,12 @@ export default function File() {
             <Image
               style={styles.image}
               contentFit="contain"
-              source={`${directus!.url}/assets/${id}`}
+              source={{
+                uri: `${directus?.url}/assets/${id}`,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }}
             />
           </View>
           <DocumentEditor

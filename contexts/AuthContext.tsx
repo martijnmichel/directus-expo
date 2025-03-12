@@ -33,6 +33,7 @@ interface AuthContextType {
     | null;
   login: (email: string, password: string, apiUrl: string) => Promise<void>;
   logout: () => Promise<void>;
+  token: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -82,6 +83,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<DirectusUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     initializeDirectus();
@@ -111,6 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           await directus.refresh();
           const user = await directus.request(readMe());
           const settings = await directus.request(readSettings());
+          setToken(token);
           if (settings) {
           }
           setUser(user as DirectusUser);
@@ -135,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const user = await directus.request(readMe());
       setUser(user as DirectusUser);
       await AsyncStorage.setItem("authToken", token || "");
-
+      setToken(token);
       setIsAuthenticated(true);
     } catch (error) {
       throw new Error("Login failed");
@@ -148,6 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await AsyncStorage.removeItem("authToken");
       directus.url = new URL("");
       setIsAuthenticated(false);
+      setToken(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -166,6 +170,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         logout,
         user,
+        token,
       }}
     >
       {children}

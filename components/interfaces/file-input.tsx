@@ -133,14 +133,19 @@ export const FileInput = ({
 
   const File = ({ id }: { id: string }) => {
     const { data } = useFile(id);
-    const { directus } = useAuth();
+    const { directus, token } = useAuth();
     const file = data as unknown as DirectusFile;
     if (!file) return null;
     else if (isImageType(file?.type ?? "")) {
       return (
         <Horizontal style={{ alignItems: "center", width: "100%" }}>
           <Image
-            source={{ uri: `${directus?.url.origin}/assets/${file.id}` }}
+            source={{
+              uri: `${directus?.url.origin}/assets/${file.id}`,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }}
             style={{ width: 28, height: 28, borderRadius: 4 }}
           />
           <Text style={{ flexShrink: 1 }} numberOfLines={1}>
