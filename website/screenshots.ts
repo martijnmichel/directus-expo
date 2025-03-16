@@ -1,52 +1,52 @@
 export const images = [
   {
     src: "/carousel/collection-data-table.png",
-    alt: "Carousel Image 1",
+    alt: "Data table view with collection entries",
     sort: 101,
   },
 
   {
     src: "/carousel/collection-layout.png",
-    alt: "Carousel Image 1",
+    alt: "Collections layout",
   },
 
   {
     src: "/carousel/color-picker.png",
-    alt: "Carousel Image 1",
+    alt: "Interactive color picker interface",
     sort: 100,
   },
   {
     src: "/carousel/content-screen.png",
-    alt: "Carousel Image 1",
+    alt: "Content management dashboard view",
     sort: 1,
   },
   {
     src: "/carousel/date-picker.png",
-    alt: "Carousel Image 1",
+    alt: "Date selection calendar interface",
   },
   {
     src: "/carousel/files-screen.png",
-    alt: "Carousel Image 1",
+    alt: "File management system dashboard",
     sort: 5,
   },
   {
     src: "/carousel/m2a-page.png",
-    alt: "Carousel Image 1",
+    alt: "Many-to-any relationship page",
   },
   {
     src: "/carousel/presentation-notice.png",
-    alt: "Carousel Image 1",
+    alt: "Presentation interface notification display",
   },
   {
     src: "/carousel/related-item-modal.png",
-    alt: "Carousel Image 1",
+    alt: "Modal window for related item editing",
   },
   {
     src: "/carousel/selection-inputs.png",
-    alt: "Carousel Image 1",
+    alt: "Input field selection interface",
   },
   {
     src: "/carousel/settings-screen.png",
-    alt: "Carousel Image 1",
+    alt: "System settings page",
   },
 ];
