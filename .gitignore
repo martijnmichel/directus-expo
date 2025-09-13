@@ -45,3 +45,5 @@ ios
 *.aab
 *.app
 build-*.tar.gz
+
+.env

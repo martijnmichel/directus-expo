@@ -11,11 +11,16 @@
       "loginFailed": "Login failed. Please check your credentials.",
       "invalidApiUrl": "Invalid API URL",
       "apiNotHealthy": "API is not online, or incorrect.",
-      "apiNotValid": "API is not valid"
+      "apiNotValid": "API is not valid",
+      "apiKeyRequired": "Api key is required",
+      "loginTypeRequired": "Login type is required"
     },
     "api": "Directus API",
     "enterUrl": "Enter a URL",
-    "apiName": "Name"
+    "apiName": "Name",
+    "apiKey": "Api key",
+    "loginType": "Login Type",
+    "apiKeyPlaceholder": "123ABC"
   },
   "navigation": {
     "content": "Content",

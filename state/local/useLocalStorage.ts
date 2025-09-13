@@ -1,3 +1,6 @@
+import { API } from "@/components/APIForm";
+import { LoginFormData } from "@/components/LoginForm";
+import { AppSettings } from "@/hooks/useAppSettings";
 import { queryClient } from "@/utils/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -11,8 +14,17 @@ export enum LocalStorageKeys {
   APP_SETTINGS = "@app-settings",
   DIRECTUS_APIS = "@directus-apis",
   DIRECTUS_API_ACTIVE = "@directus-api-active",
+  CURRENT_LOGIN = "@current-login",
   CONTENT_PATH = "@content-path",
 }
+
+export type LocalStorageTyp = {
+  [LocalStorageKeys.APP_SETTINGS]: AppSettings;
+  [LocalStorageKeys.DIRECTUS_APIS]: API[];
+  [LocalStorageKeys.DIRECTUS_API_ACTIVE]: API;
+  [LocalStorageKeys.CURRENT_LOGIN]: LoginFormData;
+  [LocalStorageKeys.CONTENT_PATH]: string;
+};
 
 export const useLocalStorage = <T extends any = undefined>(
   key: LocalStorageKeys,
