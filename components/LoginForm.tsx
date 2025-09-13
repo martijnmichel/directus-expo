@@ -31,8 +31,34 @@ import * as WebBrowser from "expo-web-browser";
 import { ReadProviderOutput } from "@directus/sdk";
 import { useAuthRequest } from "expo-auth-session/build/providers/Google";
 import { useAutoDiscovery } from "expo-auth-session";
+import z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Select } from "./interfaces/select";
 
 WebBrowser.maybeCompleteAuthSession();
+
+// Discriminated union type for different login methods
+
+const apiSchema = z.object({
+  url: z.string().url(),
+  name: z.string(),
+});
+
+const loginSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("email"),
+    email: z.string().email(),
+    password: z.string().min(1),
+    api: apiSchema,
+  }),
+  z.object({
+    type: z.literal("apiKey"),
+    apiKey: z.string().min(1),
+    api: apiSchema,
+  }),
+]);
+
+export type LoginFormData = z.infer<typeof loginSchema>;
 
 const redirectUri = AuthSession.makeRedirectUri();
 
@@ -44,10 +70,12 @@ interface LoginForm {
 
 export const LoginForm = () => {
   const { styles } = useStyles(formStyles);
-  const { login } = useAuth();
+  const { login, setApiKey } = useAuth();
   const { data: api } = useLocalStorage<API>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE
   );
+
+  const apiKey = process.env.EXPO_PUBLIC_DIRECTUS_API_KEY_DEMO;
 
   const {
     control,
@@ -57,16 +85,19 @@ export const LoginForm = () => {
     clearErrors,
     setError,
     formState: { errors, isSubmitting },
-  } = useForm<LoginForm>({
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: __DEV__
       ? {
           email: "martijn.michel@gmail.com",
           password: "CB4i79%jcfCF2q",
+          type: "email",
           api: undefined,
         }
       : {
           email: "",
           password: "",
+          type: "email",
           api: undefined,
         },
   });
@@ -98,15 +129,29 @@ export const LoginForm = () => {
   const { t } = useTranslation();
 
   const mutateApi = mutateLocalStorage(LocalStorageKeys.DIRECTUS_API_ACTIVE);
+  const mutateLogin = mutateLocalStorage(LocalStorageKeys.CURRENT_LOGIN);
 
-  const onSubmit = async (data: LoginForm) => {
-    try {
-      console.log({ data });
-      await login(data.email, data.password, data.api.url);
-      mutateApi.mutate(data.api);
-      router.push("/");
-    } catch (error) {
-      Alert.alert("Error", t("form.errors.loginFailed"));
+  const onSubmit = async (data: LoginFormData) => {
+    if (data.type === "email") {
+      try {
+        console.log({ data });
+        await login(data.email, data.password, data.api.url);
+        mutateApi.mutate(data.api);
+        mutateLogin.mutate(data);
+        router.push("/");
+      } catch (error) {
+        Alert.alert("Error", t("form.errors.loginFailed"));
+      }
+    } else if (data.type === "apiKey") {
+      try {
+        console.log({ data });
+        await setApiKey(data.apiKey, data.api.url);
+        mutateApi.mutate(data.api);
+        mutateLogin.mutate(data);
+        router.push("/");
+      } catch (error) {
+        Alert.alert("Error", t("form.errors.loginFailed"));
+      }
     }
   };
 
@@ -146,37 +191,80 @@ export const LoginForm = () => {
 
       <Controller
         control={control}
-        rules={{ required: t("form.errors.emailRequired") }}
-        name="email"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            onChangeText={onChange}
+        rules={{
+          required: t("form.errors.loginTypeRequired"),
+        }}
+        name="type"
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <Select
+            options={["email", "apiKey"].map((type) => ({
+              value: type,
+              text: type.charAt(0).toUpperCase() + type.slice(1),
+            }))}
+            label={t("form.loginType")}
             value={value}
-            placeholder={t("form.email")}
-            label={t("form.email")}
-            error={errors.email?.message}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
+            onValueChange={(value) => onChange(value as "email" | "apiKey")}
+            error={error?.message}
           />
         )}
       />
-      <Controller
-        control={control}
-        rules={{ required: t("form.errors.passwordRequired") }}
-        name="password"
-        render={({ field: { onChange, value } }) => (
-          <Input
-            onChangeText={onChange}
-            value={value}
-            placeholder={t("form.password")}
-            label={t("form.password")}
-            error={errors.password?.message}
-            autoComplete="password"
-            secureTextEntry
+
+      {watch("type") === "apiKey" && (
+        <>
+          <Controller
+            control={control}
+            rules={{ required: t("form.errors.apiKeyRequired") }}
+            name="apiKey"
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <Input
+                onChangeText={onChange}
+                value={value}
+                placeholder={t("form.apiKeyPlaceholder")}
+                label={t("form.apiKey")}
+                error={error?.message}
+              />
+            )}
           />
-        )}
-      />
+        </>
+      )}
+
+      {watch("type") === "email" && (
+        <>
+          <Controller
+            control={control}
+            rules={{ required: t("form.errors.emailRequired") }}
+            name="email"
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <Input
+                onChangeText={onChange}
+                value={value}
+                placeholder={t("form.email")}
+                label={t("form.email")}
+                error={error?.message}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            rules={{ required: t("form.errors.passwordRequired") }}
+            name="password"
+            render={({ field: { onChange, value }, fieldState: { error } }) => (
+              <Input
+                onChangeText={onChange}
+                value={value}
+                placeholder={t("form.password")}
+                label={t("form.password")}
+                error={error?.message}
+                autoComplete="password"
+                secureTextEntry
+              />
+            )}
+          />
+        </>
+      )}
 
       <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
         {t("form.login")}

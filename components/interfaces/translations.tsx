@@ -185,19 +185,19 @@ export const Translations = ({
 
       {map(languages?.items, (language) => {
         const translated = getTranslatedDocumentByLanguage(
-          language?.[relation?.schema.foreign_key_column as any]
+          language?.[relation?.schema?.foreign_key_column as any]
         );
 
         const defaultValues =
           value.update.find(
             (d) =>
               d?.[relation?.field as any] ===
-              language?.[relation?.schema.foreign_key_column as any]
+              language?.[relation?.schema?.foreign_key_column as any]
           ) ||
           value.create.find(
             (d) =>
               d?.[relation?.field as any] ===
-              language?.[relation?.schema.foreign_key_column as any]
+              language?.[relation?.schema?.foreign_key_column as any]
           );
         const color = translated
           ? some(translated, (v) => {
@@ -236,7 +236,7 @@ export const Translations = ({
                           (doc) =>
                             doc?.[relation?.meta.many_field as any] ===
                             language?.[
-                              relation?.schema.foreign_key_column as any
+                              relation?.schema?.foreign_key_column as any
                             ]
                         )?.[primaryKey as any] || "+",
                       uuid,
@@ -249,7 +249,7 @@ export const Translations = ({
                         ? objectToBase64(defaultBaseLanguageValues)
                         : "",
                       language:
-                        language[relation?.schema.foreign_key_column as any],
+                        language[relation?.schema?.foreign_key_column as any],
                     },
                   }}
                   asChild
@@ -264,7 +264,7 @@ export const Translations = ({
                   rounded
                   onPress={() => {
                     setBaseLanguage(
-                      language?.[relation?.schema.foreign_key_column as any]
+                      language?.[relation?.schema?.foreign_key_column as any]
                     );
                   }}
                 >
@@ -275,10 +275,10 @@ export const Translations = ({
           >
             <Horizontal>
               <Text>
-                {language?.[relation?.schema.foreign_key_column as any]}
+                {language?.[relation?.schema?.foreign_key_column as any]}
               </Text>
               {baseLanguage ===
-                language?.[relation?.schema.foreign_key_column as any] && (
+                language?.[relation?.schema?.foreign_key_column as any] && (
                 <Horizontal>
                   <Text style={{ ...theme.typography.helper }}>
                     {t("base_language")}

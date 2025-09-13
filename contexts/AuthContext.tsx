@@ -21,6 +21,7 @@ import {
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { UnistylesRuntime } from "react-native-unistyles";
+import { LoginFormData } from "@/components/LoginForm";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -34,6 +35,7 @@ interface AuthContextType {
   login: (email: string, password: string, apiUrl: string) => Promise<void>;
   logout: () => Promise<void>;
   token: string | null;
+  setApiKey: (apiKey: string, apiUrl: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -94,33 +96,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const re = await AsyncStorage.getItem(
         LocalStorageKeys.DIRECTUS_API_ACTIVE
       );
+      const currentLoginResponse = await AsyncStorage.getItem(
+        LocalStorageKeys.CURRENT_LOGIN
+      );
+      const currentLogin = JSON.parse(currentLoginResponse || "{}") as LoginFormData;
       if (!re) {
         setIsLoading(false);
         return;
       }
 
-      // Try to refresh the token
-      try {
-        const api = JSON.parse(re);
+      switch (currentLogin?.type) {
+        case "email":
+          // Try to refresh the token
+          try {
+            const api = JSON.parse(re);
 
-        console.log({ api });
+            console.log({ api });
 
-        const directus = initDirectus(api.url);
-        setDirectus(directus);
+            const directus = initDirectus(api.url);
+            setDirectus(directus);
 
-        const token = await AsyncStorage.getItem("authToken");
-        if (token) {
-          await directus.refresh();
-          const user = await directus.request(readMe());
-          const settings = await directus.request(readSettings());
-          setToken(token);
-          if (settings) {
+            const token = await AsyncStorage.getItem("authToken");
+            if (token) {
+              await directus.refresh();
+              const user = await directus.request(readMe());
+              const settings = await directus.request(readSettings());
+              setToken(token);
+              if (settings) {
+              }
+              setUser(user as DirectusUser);
+              setIsAuthenticated(true);
+            }
+          } catch (error) {
+            await AsyncStorage.removeItem("authToken");
           }
-          setUser(user as DirectusUser);
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        await AsyncStorage.removeItem("authToken");
+          break;
+        case "apiKey":
+          await setApiKey(currentLogin.apiKey, currentLogin.api.url);
+          break;
       }
 
       setIsLoading(false);
@@ -145,15 +158,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const setApiKey = async (apiKey: string, apiUrl: string) => {
+    try {
+      const directus = createDirectus(apiUrl).with(authentication()).with(rest());
+      setDirectus(directus);
+      await directus.setToken(apiKey);
+      setToken(apiKey);
+      const user = await directus.request(readMe());
+      setUser(user as DirectusUser);
+      setIsAuthenticated(true);
+    } catch (error) {
+      throw new Error("Login failed");
+    }
+  };
+
   const logout = async () => {
     try {
       await directus?.logout();
       await AsyncStorage.removeItem("authToken");
+      //await AsyncStorage.removeItem(LocalStorageKeys.DIRECTUS_API_ACTIVE);
       directus.url = new URL("");
       setIsAuthenticated(false);
       setToken(null);
     } catch (error) {
       console.error("Logout failed:", error);
+    } finally {
+      await AsyncStorage.removeItem(LocalStorageKeys.CURRENT_LOGIN);
     }
   };
 
@@ -169,6 +199,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         directus,
         login,
         logout,
+        setApiKey,
         user,
         token,
       }}
