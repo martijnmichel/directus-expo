@@ -53,6 +53,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased py-32`}
       >
+        
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-zinc-100 shadow-xs backdrop-blur-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
@@ -100,6 +101,8 @@ export default function RootLayout({
           </div>
         </header>
         {children}
+
+        <script defer src="https://umami.martijnvde.nl/script.js" data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"></script>
       </body>
     </html>
   );
