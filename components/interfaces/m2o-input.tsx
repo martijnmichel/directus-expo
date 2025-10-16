@@ -100,12 +100,7 @@ export const M2OInput = ({
       item.schema.foreign_key_table as any
     );
     const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
-    const displayTemplate = `${
-      item.meta?.display_options?.template || collection?.meta.display_template
-    }`
-      .replace("{{", "")
-      .replace("}}", "")
-      .trim();
+    const displayTemplate = item.meta?.display_options?.template || collection?.meta.display_template;
 
     const { data, isLoading, refetch } = useDocument({
       collection: item.schema.foreign_key_table as any,
@@ -143,36 +138,35 @@ export const M2OInput = ({
     if (isLoading) return null;
 
     if (relatedFields.length) {
-      map(relatedFields, (field) => {
-        return (
-          <FieldValue
-            field={fields?.find(
-              (f) => "name" in field && f.field === field?.name
-            )}
-            transform={field}
-            data={data}
-          />
-        );
-      });
-    } else if ((item.meta.display === "related-values" || collection?.meta.display_template) && displayTemplate) {
       return (
         <Text>
-          {displayTemplate.split(".").map((field, index) => {
-
-            const value = data?.[field];
-            const previousField = displayTemplate.split(".").slice(0, index).join(".");
-            const isArray = Array.isArray(data?.[previousField]);
-            console.log({ data, field, isArray, value, previousField });
-            return isArray ? (
-              <Text>
-                {map(data?.[previousField] as any, (item) => {
-                  return `${item?.[field]}`;
-                }).join(", ")}
-              </Text>
-            ) : (
-              null
-            );
-          })}
+          {map(relatedFields, (field) => {
+            if (field.type === "string") {
+              return field.value;
+            } else {
+              // Handle transform fields
+              const fieldPath = field.name;
+              const value = fieldPath
+                .split(".")
+                .reduce(
+                  (obj: unknown, key: string) => {
+                    if (Array.isArray(obj)) {
+                      // If we hit an array, join all the values from the array
+                      return obj.map(item => (item as Record<string, unknown>)?.[key]).filter(Boolean).join(", ");
+                    }
+                    return (obj as Record<string, unknown>)?.[key];
+                  },
+                  data as unknown
+                );
+              return value || "";
+            }
+          }).join("")}
+        </Text>
+      );
+    } else if ((item.meta.display === "related-values" || item.meta?.options?.template || collection?.meta.display_template) && displayTemplate) {
+      return (
+        <Text>
+          {parseTemplate(displayTemplate, data, fields)}
         </Text>
       );
     } else {
