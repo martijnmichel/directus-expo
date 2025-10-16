@@ -102,7 +102,9 @@ export default function RootLayout({
         </header>
         {children}
 
-        <script defer src="https://umami.martijnvde.nl/script.js" data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"></script>
+        {process.env.NODE_ENV === "production" && (
+          <script defer src="https://umami.martijnvde.nl/script.js" data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"></script>
+        )}
       </body>
     </html>
   );
