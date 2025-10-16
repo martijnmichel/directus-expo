@@ -18,8 +18,13 @@ export const parseTemplate = <T>(
           .trim()
           .split(".")
           .reduce(
-            (obj: unknown, key: string) =>
-              (obj as Record<string, unknown>)?.[key],
+            (obj: unknown, key: string) => {
+              if (Array.isArray(obj)) {
+                // If we hit an array, join all the values from the array
+                return obj.map(item => (item as Record<string, unknown>)?.[key]).filter(Boolean).join(", ");
+              }
+              return (obj as Record<string, unknown>)?.[key];
+            },
             data as unknown
           ) ||
         data?.[pk as any] ||
