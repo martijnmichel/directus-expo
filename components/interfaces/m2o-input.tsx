@@ -15,7 +15,12 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { ChevronDown, X } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-import { useCollection, useDocument, useFields } from "@/state/queries/directus/collection";
+import {
+  useCollection,
+  useDocument,
+  useField,
+  useFields,
+} from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
@@ -69,9 +74,39 @@ export const M2OInput = ({
     };
   }, [fields, pk, item.field, uuid]);
 
+  const TemplateField = ({
+    data,
+    field,
+  }: {
+    data: Record<string, any>;
+    field: string;
+  }) => {
+    const isArray = Array.isArray(data?.[field]);
+    const value = data?.[field];
+    console.log({ data, field, isArray, value });
+    return isArray ? (
+      <Horizontal>
+        {map(data?.[field], (item) => {
+          return <TemplateField data={item} field={field} />;
+        })}
+      </Horizontal>
+    ) : (
+      <Text>{value}</Text>
+    );
+  };
+
   const Item = () => {
+    const { data: collection } = useCollection(
+      item.schema.foreign_key_table as any
+    );
     const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
-    const { data: collection } = useCollection(item.schema.foreign_key_table as any);
+    const displayTemplate = `${
+      item.meta?.display_options?.template || collection?.meta.display_template
+    }`
+      .replace("{{", "")
+      .replace("}}", "")
+      .trim();
+
     const { data, isLoading, refetch } = useDocument({
       collection: item.schema.foreign_key_table as any,
       id: value,
@@ -81,7 +116,7 @@ export const M2OInput = ({
               filter(relatedFields, (f) => f.type === "transform"),
               (field) => field.name
             )
-          : [`*`, collection?.meta.display_template?.replace("{{", "").replace("}}", "").trim()],
+          : [`*`, ...(displayTemplate ? [displayTemplate] : [])],
       },
       query: {
         retry: false,
@@ -98,10 +133,11 @@ export const M2OInput = ({
     console.log({
       relatedFields,
       data,
+      collection,
       pkField: fields?.find((f) => f.schema.is_primary_key),
-      displayTemplate: collection?.meta.display_template,
-      tmpl: parseTemplate(collection?.meta.display_template as string, data, fields),
-      tmpl2: parseRepeaterTemplate(collection?.meta.display_template as string, data as any),
+      displayTemplate,
+      tmpl: parseTemplate(displayTemplate as string, data, fields),
+      tmpl2: parseRepeaterTemplate(displayTemplate as string, data as any),
     });
 
     if (isLoading) return null;
@@ -117,16 +153,39 @@ export const M2OInput = ({
             data={data}
           />
         );
-      })
+      });
+    } else if ((item.meta.display === "related-values" || collection?.meta.display_template) && displayTemplate) {
+      return (
+        <Text>
+          {displayTemplate.split(".").map((field, index) => {
+
+            const value = data?.[field];
+            const previousField = displayTemplate.split(".").slice(0, index).join(".");
+            const isArray = Array.isArray(data?.[previousField]);
+            console.log({ data, field, isArray, value, previousField });
+            return isArray ? (
+              <Text>
+                {map(data?.[previousField] as any, (item) => {
+                  return `${item?.[field]}`;
+                }).join(", ")}
+              </Text>
+            ) : (
+              null
+            );
+          })}
+        </Text>
+      );
     } else {
-      return <Text>
-        {
-          data?.[
-            fields?.find((f) => f.schema.is_primary_key)
-              ?.field as keyof typeof data
-          ] as string
-        }
-      </Text>
+      return (
+        <Text>
+          {
+            data?.[
+              fields?.find((f) => f.schema.is_primary_key)
+                ?.field as keyof typeof data
+            ] as string
+          }
+        </Text>
+      );
     }
   };
 
