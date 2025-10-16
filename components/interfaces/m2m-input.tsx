@@ -204,7 +204,7 @@ export const M2MInput = ({
     refetch();
   }, [value.update, value.create, relation, junction, refetch]);
 
-  /**console.log({
+ /** console.log({
     item,
     docId,
     valueProp,
@@ -212,7 +212,7 @@ export const M2MInput = ({
     junction,
     relation,
     pickedItems,
-  }); */
+  });  */
 
   const Item = <T extends keyof CoreSchema>({
     docId,
@@ -351,7 +351,7 @@ export const M2MInput = ({
               if (typeof junctionDoc === "number") {
                 junctionDoc = { id: junctionDoc };
               }
-              const primaryKey = relation?.schema.foreign_key_column;
+              const primaryKey = relation?.schema?.foreign_key_column;
 
               const relatedDoc =
                 relation?.field in junctionDoc
@@ -514,7 +514,7 @@ export const M2MInput = ({
                   uuid,
                   current_value: [
                     pickedItems?.items?.map(
-                      (i: any) => i?.[relation.schema.column as any]
+                      (i: any) => i?.[relation.schema?.column || relation.meta.many_field as any]
                     ),
                   ].join(","),
                   junction_field: junction.field,

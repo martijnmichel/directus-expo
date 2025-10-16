@@ -122,7 +122,7 @@ export const TinyMCEEditor = ({
       content_style: 'img { max-width: 100%; height: auto; }',
       toolbar: '${
         item.meta.options
-          ? item.meta.options.toolbar.join(" ")
+          ? item.meta.options.toolbar?.join(" ")
           : "bold italic underline h1 h2 h3 ol ul removeformat blockquote link image media hr"
       } customFullscreen',
       toolbar_sticky: true,
@@ -185,7 +185,8 @@ export const TinyMCEEditor = ({
           pullToRefreshEnabled={false}
           source={{ html: TINYMCE_HTML }}
           onMessage={(event) => {
-            const data = JSON.parse(event.nativeEvent.data);
+            console.log("event", event);
+            const data = typeof event.nativeEvent.data === "string" ? JSON.parse(event.nativeEvent.data) : event.nativeEvent.data;
             if (
               item.field === data.field &&
               item.collection === data.collection
