@@ -12,6 +12,7 @@ export const parseTemplate = <T>(
   const pk = getPrimaryKey(fields as any);
   return (
     template?.replace(/\{\{(.*?)\}\}/g, (_, path) => {
+      console.log({ path, data });
       return (
         path
           .trim()
@@ -35,7 +36,7 @@ export const parseRepeaterTemplate = <T>(
   template: string,
   data: T & { id?: string }
 ): string => {
-  return template.replace(/\{\{(.*?)\}\}/g, (_, path) => {
+  return template?.replace(/\{\{(.*?)\}\}/g, (_, path) => {
     return (
       path
         .trim()
