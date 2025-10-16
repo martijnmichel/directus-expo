@@ -74,26 +74,7 @@ export const M2OInput = ({
     };
   }, [fields, pk, item.field, uuid]);
 
-  const TemplateField = ({
-    data,
-    field,
-  }: {
-    data: Record<string, any>;
-    field: string;
-  }) => {
-    const isArray = Array.isArray(data?.[field]);
-    const value = data?.[field];
-    console.log({ data, field, isArray, value });
-    return isArray ? (
-      <Horizontal>
-        {map(data?.[field], (item) => {
-          return <TemplateField data={item} field={field} />;
-        })}
-      </Horizontal>
-    ) : (
-      <Text>{value}</Text>
-    );
-  };
+ 
 
   const Item = () => {
     const { data: collection } = useCollection(
