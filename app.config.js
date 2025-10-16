@@ -65,5 +65,9 @@ export default () => ({
     updates: {
       url: "https://u.expo.dev/66baa699-7004-4c6a-85ee-941ba6062451",
     },
+    plugins: [
+      "expo-web-browser"
+    ]
   },
+  
 });
