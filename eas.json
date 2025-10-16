@@ -7,7 +7,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "ANDROID_HOME": "/Users/martijnvde/Library/Android/sdk"
+        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk",
       },
       "ios": {
         "simulator": true
@@ -25,7 +25,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "ANDROID_HOME": "/Users/martijnvde/Library/Android/sdk"
+        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk",
       }
     }
   },

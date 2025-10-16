@@ -88,13 +88,15 @@ export const Translations = ({
     { enabled: !!relation }
   );
 
+  console.log({ languages });
+
   const { data: translatedDocuments } = useDocuments(
     relation?.collection as keyof CoreSchema,
     {
       filter: {
         _and: [
           {
-            translations_id: {
+            [relation?.meta.junction_field as any]: {
               _eq: docId,
             },
           },
@@ -159,7 +161,7 @@ export const Translations = ({
     };
   }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
-  /** console.log({
+  console.log({
     item,
     junction,
     relation,
@@ -169,7 +171,7 @@ export const Translations = ({
     value,
     docId,
   });
- */
+ 
   return (
     <View style={formStyle.formControl}>
       {label && (
