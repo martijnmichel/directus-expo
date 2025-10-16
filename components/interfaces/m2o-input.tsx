@@ -99,8 +99,10 @@ export const M2OInput = ({
     const { data: collection } = useCollection(
       item.schema.foreign_key_table as any
     );
-    const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
-    const displayTemplate = item.meta?.display_options?.template || collection?.meta.display_template;
+
+    // optionally add the template from Display tab -> related values
+    const relatedFields = getFieldsFromTemplate(item.meta?.options?.template || collection?.meta.display_template);
+   
 
     const { data, isLoading, refetch } = useDocument({
       collection: item.schema.foreign_key_table as any,
@@ -111,7 +113,7 @@ export const M2OInput = ({
               filter(relatedFields, (f) => f.type === "transform"),
               (field) => field.name
             )
-          : [`*`, ...(displayTemplate ? [displayTemplate] : [])],
+          : [`*`],
       },
       query: {
         retry: false,
@@ -130,9 +132,7 @@ export const M2OInput = ({
       data,
       collection,
       pkField: fields?.find((f) => f.schema.is_primary_key),
-      displayTemplate,
-      tmpl: parseTemplate(displayTemplate as string, data, fields),
-      tmpl2: parseRepeaterTemplate(displayTemplate as string, data as any),
+      
     });
 
     if (isLoading) return null;
@@ -161,12 +161,6 @@ export const M2OInput = ({
               return value || "";
             }
           }).join("")}
-        </Text>
-      );
-    } else if ((item.meta.display === "related-values" || item.meta?.options?.template || collection?.meta.display_template) && displayTemplate) {
-      return (
-        <Text>
-          {parseTemplate(displayTemplate, data, fields)}
         </Text>
       );
     } else {
