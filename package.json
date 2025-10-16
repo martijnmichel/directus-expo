@@ -1,7 +1,7 @@
 {
   "name": "directus-expo",
   "main": "expo-router/entry",
-  "version": "0.7.2",
+  "version": "0.7.10",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
@@ -13,7 +13,7 @@
     "start:dev": "EXPO_PUBLIC_ENV=development expo start --clear",
     "start:staging": "EXPO_PUBLIC_ENV=staging expo start --clear",
     "start:prod": "EXPO_PUBLIC_ENV=production expo start --clear",
-    "build:dev:ios": "eas build --profile development --platform ios --local",
+    "build:dev:ios": "eas build --profile development --platform ios",
     "build:staging:ios": "eas build --profile staging --platform ios",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:prod:ios": "eas build --profile production --platform ios",

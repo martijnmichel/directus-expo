@@ -4,6 +4,7 @@ import { CoreSchema, ReadFieldOutput, readItems } from "@directus/sdk";
 import { Select } from "./select";
 import {
   getFieldsFromTemplate,
+  parseRepeaterTemplate,
   parseTemplate,
 } from "@/helpers/document/template";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,7 +15,7 @@ import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
 import { ChevronDown, X } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-import { useDocument, useFields } from "@/state/queries/directus/collection";
+import { useCollection, useDocument, useFields } from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
 import EventBus from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
@@ -70,14 +71,17 @@ export const M2OInput = ({
 
   const Item = () => {
     const relatedFields = getFieldsFromTemplate(item.meta?.options?.template);
+    const { data: collection } = useCollection(item.schema.foreign_key_table as any);
     const { data, isLoading, refetch } = useDocument({
       collection: item.schema.foreign_key_table as any,
       id: value,
       options: {
-        fields: map(
-          filter(relatedFields, (f) => f.type === "transform"),
-          (field) => field.name
-        ),
+        fields: relatedFields.length
+          ? map(
+              filter(relatedFields, (f) => f.type === "transform"),
+              (field) => field.name
+            )
+          : [`*`, collection?.meta.display_template?.replace("{{", "").replace("}}", "").trim()],
       },
       query: {
         retry: false,
@@ -91,22 +95,42 @@ export const M2OInput = ({
       }
     }, [value]);
 
-    console.log({ relatedFields, data });
+    console.log({
+      relatedFields,
+      data,
+      pkField: fields?.find((f) => f.schema.is_primary_key),
+      displayTemplate: collection?.meta.display_template,
+      tmpl: parseTemplate(collection?.meta.display_template as string, data, fields),
+      tmpl2: parseRepeaterTemplate(collection?.meta.display_template as string, data as any),
+    });
 
     if (isLoading) return null;
 
-    return map(relatedFields, (field) => {
-      return (
-        <FieldValue
-          field={fields?.find(
-            (f) => "name" in field && f.field === field?.name
-          )}
-          transform={field}
-          data={data}
-        />
-      );
-    });
+    if (relatedFields.length) {
+      map(relatedFields, (field) => {
+        return (
+          <FieldValue
+            field={fields?.find(
+              (f) => "name" in field && f.field === field?.name
+            )}
+            transform={field}
+            data={data}
+          />
+        );
+      })
+    } else {
+      return <Text>
+        {
+          data?.[
+            fields?.find((f) => f.schema.is_primary_key)
+              ?.field as keyof typeof data
+          ] as string
+        }
+      </Text>
+    }
   };
+
+  console.log({ m2o: item, fields, value });
 
   return (
     <View style={styles.formControl}>
