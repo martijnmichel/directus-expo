@@ -40,6 +40,7 @@ export default function TabTwoScreen() {
           headerTitle: t("pages.files.title"),
           headerBackVisible: false,
           ...headerStyles,
+          
           headerRight: () => {
             return (
               <Horizontal>
