@@ -51,9 +51,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased py-32`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased pt-32`}
       >
-        
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-zinc-100 shadow-xs backdrop-blur-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
@@ -76,6 +75,18 @@ export default function RootLayout({
               >
                 Features
               </Link>
+
+              <a
+                href="https://kurbo.dev/shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Browse Directus Themes"
+                className="flex items-center gap-2 border rounded-md border-zinc-200 px-2 py-1 text-sm hover:text-pink-500 transition-colors hover:bg-pink-50"
+              >
+                Directus Themes
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link-icon lucide-external-link"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+              </a>
             </nav>
 
             <div className="flex items-center gap-2">
@@ -97,14 +108,37 @@ export default function RootLayout({
                   />
                 </svg>
               </a>
+
+              
             </div>
           </div>
         </header>
         {children}
 
         {process.env.NODE_ENV === "production" && (
-          <script defer src="https://umami.martijnvde.nl/script.js" data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"></script>
+          <script
+            defer
+            src="https://umami.martijnvde.nl/script.js"
+            data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"
+          ></script>
         )}
+
+        <footer className="pt-20 pb-10 z-10">
+          <div className="container mx-auto px-4">
+            <p className="text-sm text-zinc-600">
+              &copy; {new Date().getFullYear()}{" "}
+              <a
+                href="https://kurbo.dev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-800 hover:underline"
+              >
+                Kurbo Web Agency & Directus Themes Marketplace
+              </a>
+              .
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   );
