@@ -180,7 +180,7 @@ export const useFieldDisplayValue = (collection: string) => {
       default: {
         const value = data?.[item.field];
 
-        return FieldValueDefaultComponent({ value });
+        return getFieldValueString({ value });
       }
     }
   };
@@ -188,8 +188,7 @@ export const useFieldDisplayValue = (collection: string) => {
   return { parse };
 };
 
-export const FieldValueDefaultComponent = ({ value }: { value: any }) => {
-  const { styles } = useStyles(tableStylesheet);
+export const getFieldValueString = ({ value }: { value: any }): string => {
   // Handle null/undefined
   if (value == null) {
     return "-";
@@ -201,12 +200,8 @@ export const FieldValueDefaultComponent = ({ value }: { value: any }) => {
       return "-";
     }
     return map(value, (item, index) => (
-      <>
-        {/* Recursively handle array items */}
-        <FieldValueDefaultComponent value={item} />
-        {index < value.length - 1 ? ", " : ""}
-      </>
-    ));
+      getFieldValueString({ value: item })
+    )).join(", ");
   }
 
   // Handle objects (including Date)
