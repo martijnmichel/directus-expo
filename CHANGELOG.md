@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/martijnmichel/directus-expo/compare/v0.7.3...v0.8.0) (2026-03-10)
+
+
+### Bug Fixes
+
+* deep nesting related DataTable ([8219628](https://github.com/martijnmichel/directus-expo/commit/82196286340bab01254e06bb1944e200ecf514ed))
+
 ## [0.7.3](https://github.com/martijnmichel/directus-expo/compare/v0.7.2...v0.7.3) (2026-03-10)
 
 
