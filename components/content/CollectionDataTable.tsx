@@ -187,7 +187,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       <Table
         headers={reduce(
           tableFields,
-          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
+          (prev, curr) => ({ ...prev, [curr]: label(curr.split(".")[curr.split(".").length - 1]) || "" }),
           {}
         )}
         fields={tableFields}

@@ -9,10 +9,10 @@ export const useFieldMeta = (collection: string) => {
   } = useTranslation();
 
   const label = (field: string) =>
-    fields
+    (fields
       ?.find((f) => f.field === field)
       ?.meta.translations?.find((t) => t.language.startsWith(language))
-      ?.translation || field;
+      ?.translation || field).replace(/_/g, " ");
 
   return { label };
 };
