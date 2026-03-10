@@ -118,8 +118,8 @@ export default function RootLayout({
         {process.env.NODE_ENV === "production" && (
           <script
             defer
-            src="https://umami.martijnvde.nl/script.js"
-            data-website-id="a6cc600a-7526-412a-bcae-ec9a09319b48"
+            src="https://analytics.kurbo.dev/script.js"
+            data-website-id="d97faf79-d678-40fc-8a24-be82580952be"
           ></script>
         )}
 
