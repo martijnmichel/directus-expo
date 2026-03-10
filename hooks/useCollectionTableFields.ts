@@ -10,6 +10,7 @@ export const useCollectionTableFields = ({
 }) => {
   const { data: presets } = usePresets();
   const { data: fields } = useFields(collection as keyof CoreSchema);
+  console.log({ fields })
   const preset = presets?.find((p) => p.collection === collection);
   return (
     (preset && preset.layout_query?.tabular?.fields) ||
@@ -22,7 +23,7 @@ export const useCollectionTableFields = ({
         )
         .map((f) => f.field)) ||
     /** or headers from all fields */
-    fields?.map((f) => f.field) ||
+    fields?.filter(v => !["group-accordion", "group-detail", "group-raw"].includes(v.meta.interface as string)).map((f) => f.field) ||
     []
   );
 };

@@ -61,7 +61,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   const preset = presets?.find((p) => p.collection === collection);
 
-  console.log({ preset });
 
   const { data: documents, refetch } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema],
@@ -69,12 +68,27 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       page,
       limit,
       search,
-      fields: [...fieldsQuery, primaryKey],
     },
     {
       enabled: !!fieldsQuery.length,
     }
   );
+
+  const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
+    collection as keyof CoreSchema,
+    {
+      page,
+      limit,
+      search,
+      fields: [...fieldsQuery.filter(v => v.includes(".")), primaryKey],
+    },
+    {
+      enabled: !!fieldsQuery.length,
+    }
+  );
+
+
+  console.log({ preset, tableFields, fieldsQuery, documents, relatedDocuments });
 
   const { label } = useFieldMeta(collection);
 
@@ -87,10 +101,12 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const Col = ({
     template,
     document,
+    relatedDocument,
   }: {
     template?: string;
     field?: string;
     document: Record<string, unknown>;
+    relatedDocument?: Record<string, unknown>;
   }) => {
     const lookupField = () => {
       if (!template) return null;
@@ -102,6 +118,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       // Handle transforms (parts with $)
       const transformName = parts.find((p) => p.startsWith("$"))?.substring(1);
       const fieldPath = parts.filter((p) => !p.startsWith("$")).join(".");
+      const parentFieldPath = parts.filter((p) => !p.startsWith("$")).slice(0, -1).join(".");
       const valuePath = tail(parts.filter((p) => !p.startsWith("$"))).join(".");
 
       return {
@@ -110,26 +127,53 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         path: fieldPath,
         transform: transformName,
         valuePath,
+        parentFieldPath,
       };
     };
 
     const fieldInfo = lookupField();
+    
+    
     const rootValue = fieldInfo?.field
       ? get(document, fieldInfo.field.field)
       : null;
     const value = fieldInfo ? get(document, fieldInfo.path) : null;
 
-    if (!value && !fieldInfo?.deepField && !!rootValue) {
-      if (Array.isArray(rootValue)) {
+    if (!value && !fieldInfo?.deepField && relatedDocument) {
+      const valuePath = fieldInfo?.valuePath ?? "";
+      const valuePathParts = valuePath.split(".").filter(Boolean);
+      const pathToArray =
+        valuePathParts.length > 1
+          ? valuePathParts.slice(0, -1).join(".")
+          : "";
+      const lastSegment = valuePathParts[valuePathParts.length - 1] ?? valuePath;
+
+      let relatedValue =
+        pathToArray && pathToArray !== valuePath
+          ? get(relatedDocument, pathToArray)
+          : get(relatedDocument, valuePath);
+      if (!Array.isArray(relatedValue) && fieldInfo?.parentFieldPath) {
+        relatedValue = get(relatedDocument, fieldInfo.parentFieldPath);
+      }
+
+      if (Array.isArray(relatedValue)) {
         return (
-          <Horizontal>
-            {map(rootValue, (item) => {
-              const value = get(item, fieldInfo?.valuePath ?? "");
-              return value ? fieldValueDefaultComponent({ value }) : null;
+          <>
+            {map(relatedValue, (item, index) => {
+              const itemValue =
+                typeof item === "object" && item !== null && lastSegment
+                  ? get(item, lastSegment)
+                  : item;
+              return itemValue != null ? (
+                <Text key={`field-value-${index}-${fieldInfo?.path}`}>{fieldValueDefaultComponent({ value: itemValue })}{index < relatedValue.length - 1 ? ", " : ""}</Text>
+              ) : null;
             })}
-          </Horizontal>
+          </>
         );
-      } else fieldValueDefaultComponent({ value: rootValue });
+      }
+      if (relatedValue != null) {
+        return fieldValueDefaultComponent({ value: relatedValue });
+      }
     } else if (fieldInfo?.field) {
       return parse({
         item: fieldInfo.field,
@@ -149,17 +193,19 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         fields={tableFields}
         items={(documents?.items as Record<string, unknown>[]) || []}
         widths={preset?.layout_options?.tabular?.widths}
-        renderRow={(doc) =>
-          map(tableFields, (f) => {
-            return (
-              <Col
-                template={f}
-                document={doc}
-                key={`table-${collection}-column-${f}`}
-              />
-            );
-          })
-        }
+        renderRow={(doc) => {
+          const relatedDoc = (relatedDocuments?.items as Record<string, unknown>[] | undefined)?.find(
+            (r) => r[primaryKey as string] === doc[primaryKey as string]
+          );
+          return map(tableFields, (f) => (
+            <Col
+              template={f}
+              document={doc}
+              relatedDocument={relatedDoc}
+              key={`table-${collection}-column-${f}`}
+            />
+          ));
+        }}
         onRowPress={(doc) => {
           if (canRead) {
             router.push(`/content/${collection}/${doc[primaryKey as any]}`);
