@@ -1,3 +1,10 @@
+## [0.7.3](https://github.com/martijnmichel/directus-expo/compare/v0.7.2...v0.7.3) (2026-03-10)
+
+
+### Features
+
+* CollectionTable thumbnail ([085ec52](https://github.com/martijnmichel/directus-expo/commit/085ec5207562b9a16ef7ef94842d50c090e9944a))
+
 ## [0.7.2](https://github.com/martijnmichel/directus-expo/compare/v0.7.1...v0.7.2) (2026-03-10)
 
 ## [0.7.1](https://github.com/martijnmichel/directus-expo/compare/v0.7.0...v0.7.1) (2025-02-26)
