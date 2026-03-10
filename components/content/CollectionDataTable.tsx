@@ -1,6 +1,6 @@
 import { useCollection, usePresets } from "@/state/queries/directus/collection";
 import { debounce, first, get, map, reduce, some, tail } from "lodash";
-import { Table } from "../display/table";
+import { Table, tableStylesheet } from "../display/table";
 import { Container } from "../layout/Container";
 import { useFields } from "@/state/queries/directus/collection";
 import { useDocuments } from "@/state/queries/directus/collection";
@@ -14,7 +14,8 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { PortalOutlet } from "../layout/Portal";
 import { View } from "react-native";
 import {
-  fieldValueDefaultComponent,
+    FieldValueDefaultComponent,
+  getFieldValue,
   useFieldDisplayValue,
 } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
@@ -30,12 +31,13 @@ import {
   getDisplayTemplateQueryFields,
   getDisplayTemplateTransformName,
 } from "@/helpers/collections/getDisplayTemplate";
+import { useStyles } from "react-native-unistyles";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
   const { data } = useCollection(collection as keyof CoreSchema);
   const { data: fields } = useFields(collection as keyof CoreSchema);
-
+  const { styles } = useStyles(tableStylesheet);
   const { data: permissions } = usePermissions();
   const { data: relations } = useRelations();
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
@@ -77,9 +79,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
   const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
     collection as keyof CoreSchema,
     {
-      page,
-      limit,
-      search,
       fields: [...fieldsQuery.filter(v => v.includes(".")), primaryKey],
     },
     {
@@ -94,7 +93,8 @@ export function CollectionDataTable({ collection }: { collection: string }) {
 
   useEffect(() => {
     refetch();
-  }, [refetch]);
+    refetchRelatedDocuments();
+  }, [refetch, refetchRelatedDocuments]);
 
   const { parse } = useFieldDisplayValue(collection);
 
@@ -157,28 +157,42 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       }
 
       if (Array.isArray(relatedValue)) {
+        const str = relatedValue
+          .map((item) => {
+            const v =
+              typeof item === "object" && item !== null && lastSegment
+                ? get(item, lastSegment)
+                : item;
+            return v != null ? String(v) : "";
+          })
+          .filter(Boolean)
+          .join(", ");
         return (
-          <>
-            {map(relatedValue, (item, index) => {
-              const itemValue =
-                typeof item === "object" && item !== null && lastSegment
-                  ? get(item, lastSegment)
-                  : item;
-              return itemValue != null ? (
-                <Text key={`field-value-${index}-${fieldInfo?.path}`}>{fieldValueDefaultComponent({ value: itemValue })}{index < relatedValue.length - 1 ? ", " : ""}</Text>
-              ) : null;
-            })}
-          </>
+          <View style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={[styles.cellText, styles.truncate, { width: "100%" }]}
+            >
+              {str}
+            </Text>
+          </View>
         );
       }
       if (relatedValue != null) {
-        return fieldValueDefaultComponent({ value: relatedValue });
+        return <FieldValueDefaultComponent value={relatedValue} />;
       }
-    } else if (fieldInfo?.field) {
-      return parse({
+    } 
+    
+    else if (fieldInfo?.transform && fieldInfo.field) {
+     console.log({ value, fieldInfo, relatedDocument });
+     return getFieldValue(fieldInfo.field, value, fieldInfo.transform);
+    }
+    else if (fieldInfo?.field) {
+      return <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>{parse({
         item: fieldInfo.field,
         data: document,
-      });
+      })}</Text>;
     } else return <Text>{value?.toString()}</Text>;
   };
 

@@ -12,6 +12,8 @@ import { Button } from "@/components/display/button";
 import { Text } from "@/components/display/typography";
 import { DropdownMenu } from "@/components/display/dropdown-menu";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
+import { useStyles } from "react-native-unistyles";
+import { tableStylesheet } from "@/components/display/table";
 
 type InterfaceArgs = {
   value: any;
@@ -50,8 +52,18 @@ const fieldValueMap: {
   },
   uuid: {
     "file-image": ({ value, transform }) => {
-      if (transform === "$thumbnail") {
-        return <Thumbnail id={value} style={{ width: 20, height: 20 }} />;
+      if (transform === "$thumbnail" || transform === "thumbnail") {
+        return (
+          <Thumbnail
+            id={value}
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 5,
+              objectFit: "cover",
+            }}
+          />
+        );
       }
       return value;
     },
@@ -70,7 +82,7 @@ const fieldValueMap: {
 export const getFieldValue = (
   item: ReadFieldOutput<CoreSchema>,
   value: any,
-  transform?: string
+  transform?: string,
 ) => {
   console.log({ item, value, transform });
   if (!item) return;
@@ -117,7 +129,7 @@ export const useFieldDisplayValue = (collection: string) => {
           const junction = relations?.find(
             (r) =>
               r.related_collection === item.collection &&
-              r.meta.one_field === item.field
+              r.meta.one_field === item.field,
           );
 
           console.log({ junction, value: data?.[item.field], template });
@@ -135,7 +147,7 @@ export const useFieldDisplayValue = (collection: string) => {
               const junction = relations?.find(
                 (r) =>
                   r.related_collection === item.collection &&
-                  r.meta.one_field === item.field
+                  r.meta.one_field === item.field,
               );
 
               return !!data?.[item.field].length && junction ? (
@@ -151,7 +163,7 @@ export const useFieldDisplayValue = (collection: string) => {
                           <Text>
                             {parseTemplate(
                               item.meta.display_options?.template,
-                              id
+                              id,
                             )}
                           </Text>
                         );
@@ -168,7 +180,7 @@ export const useFieldDisplayValue = (collection: string) => {
       default: {
         const value = data?.[item.field];
 
-        return fieldValueDefaultComponent({ value });
+        return FieldValueDefaultComponent({ value });
       }
     }
   };
@@ -176,61 +188,55 @@ export const useFieldDisplayValue = (collection: string) => {
   return { parse };
 };
 
-export const fieldValueDefaultComponent = ({ value }: { value: any }) => {
+export const FieldValueDefaultComponent = ({ value }: { value: any }) => {
+  const { styles } = useStyles(tableStylesheet);
   // Handle null/undefined
   if (value == null) {
-    return <Text>-</Text>;
+    return "-";
   }
 
   // Handle arrays (including empty arrays)
   if (Array.isArray(value)) {
     if (value.length === 0) {
-      return <Text>-</Text>;
+      return "-";
     }
-    return (
-      <Horizontal>
-        {map(value, (item, index) => (
-          <Text key={index}>
-            {/* Recursively handle array items */}
-            {fieldValueDefaultComponent({ value: item }).props.children}
-            {index < value.length - 1 ? ", " : ""}
-          </Text>
-        ))}
-      </Horizontal>
-    );
+    return map(value, (item, index) => (
+      <>
+        {/* Recursively handle array items */}
+        <FieldValueDefaultComponent value={item} />
+        {index < value.length - 1 ? ", " : ""}
+      </>
+    ));
   }
 
   // Handle objects (including Date)
   if (typeof value === "object") {
     if (value instanceof Date) {
-      return <Text>{value.toISOString()}</Text>;
+      return value.toISOString();
     }
     try {
-      return <Text>{JSON.stringify(value)}</Text>;
+      return JSON.stringify(value);
     } catch (e) {
-      return <Text>[Complex Object]</Text>;
+      return "[Complex Object]";
     }
   }
 
   // Handle primitives
   switch (typeof value) {
     case "string":
-      return <Text>{value}</Text>;
+      return value.toString();
     case "number":
-      return (
-        <Text>
-          {Number.isFinite(value) ? value.toString() : "Invalid Number"}
-        </Text>
-      );
+      return Number.isFinite(value) ? value.toString() : "Invalid Number";
+
     case "boolean":
-      return <Text>{value.toString()}</Text>;
+      return value.toString();
     case "bigint":
-      return <Text>{value.toString()}n</Text>;
+      return value.toString() + "n";
     case "symbol":
-      return <Text>{value.toString()}</Text>;
+      return value.toString();
     case "function":
-      return <Text>[Function]</Text>;
+      return "[Function]";
     default:
-      return <Text>-</Text>;
+      return "-";
   }
 };

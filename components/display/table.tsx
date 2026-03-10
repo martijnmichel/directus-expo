@@ -1,5 +1,13 @@
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import React, { useState } from "react";
+
+function getComponentName(type: React.ElementType): string {
+  if (typeof type === "string") return type;
+  if (typeof type === "function") {
+    return (type as { displayName?: string }).displayName ?? (type as { name?: string }).name ?? "";
+  }
+  return "";
+}
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { Dictionary } from "lodash";
 import { useTranslation } from "react-i18next";
@@ -83,7 +91,7 @@ export function Table<T extends Record<string, unknown>>({
         ? aValue.toString()
         : React.isValidElement(aValue)
         ? // Try to get textContent from React elements
-          aValue.props.children?.toString() || ""
+          (aValue as React.ReactElement<{ children?: React.ReactNode }>).props.children?.toString() || ""
         : "";
 
     const bContent =
@@ -92,7 +100,7 @@ export function Table<T extends Record<string, unknown>>({
         : typeof bValue === "number"
         ? bValue.toString()
         : React.isValidElement(bValue)
-        ? bValue.props.children?.toString() || ""
+        ? (bValue as React.ReactElement<{ children?: React.ReactNode }>).props.children?.toString() || ""
         : "";
 
     return compareValues(aContent, bContent, sort.direction);
@@ -116,17 +124,7 @@ export function Table<T extends Record<string, unknown>>({
 
     // If it's already a React element, return it
     if (React.isValidElement(cell)) {
-      if (cell.type === Text) {
-        return React.cloneElement(cell as React.ReactElement, {
-          numberOfLines: 1,
-          style: [styles.cellText, styles.truncate, cell.props.style],
-        });
-      }
-      return (
-        <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
-          {cell}
-        </Text>
-      );
+      return cell as React.ReactElement;
     }
 
     // For primitive types
@@ -297,3 +295,5 @@ const stylesheet = createStyleSheet((theme) => ({
     padding: theme.spacing.lg,
   },
 }));
+
+export { stylesheet as tableStylesheet };
