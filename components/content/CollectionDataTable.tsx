@@ -14,8 +14,8 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { PortalOutlet } from "../layout/Portal";
 import { View } from "react-native";
 import {
-    FieldValueDefaultComponent,
   getFieldValue,
+  getFieldValueString,
   useFieldDisplayValue,
 } from "@/helpers/document/getFieldValue";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
@@ -80,6 +80,12 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     collection as keyof CoreSchema,
     {
       fields: [...fieldsQuery.filter(v => v.includes(".")), primaryKey],
+      limit: -1,
+      filter: {
+        [primaryKey]: {
+          _in: map(documents?.items, (doc) => doc[primaryKey as string]),
+        },
+      }
     },
     {
       enabled: !!fieldsQuery.length,
@@ -140,6 +146,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     const value = fieldInfo ? get(document, fieldInfo.path) : null;
 
     if (!value && !fieldInfo?.deepField && relatedDocument) {
+      const path = fieldInfo?.path ?? "";
       const valuePath = fieldInfo?.valuePath ?? "";
       const valuePathParts = valuePath.split(".").filter(Boolean);
       const pathToArray =
@@ -148,22 +155,47 @@ export function CollectionDataTable({ collection }: { collection: string }) {
           : "";
       const lastSegment = valuePathParts[valuePathParts.length - 1] ?? valuePath;
 
-      let relatedValue =
-        pathToArray && pathToArray !== valuePath
-          ? get(relatedDocument, pathToArray)
-          : get(relatedDocument, valuePath);
-      if (!Array.isArray(relatedValue) && fieldInfo?.parentFieldPath) {
+      // Use parentFieldPath first so nested paths (e.g. category.translations) get the right array
+      const pathSegments = path.split(".").filter(Boolean);
+      const isNestedRelationPath = pathSegments.length > 1; // e.g. category.translations.title
+
+      let relatedValue: unknown = null;
+      if (fieldInfo?.parentFieldPath) {
         relatedValue = get(relatedDocument, fieldInfo.parentFieldPath);
+      }
+      // When path goes through a relation (e.g. category.translations.title), do NOT fall back
+      // to pathToArray/valuePath.
+      const skipFallback =
+        isNestedRelationPath &&
+        fieldInfo?.parentFieldPath != null &&
+        (relatedValue === null || relatedValue === undefined);
+
+      if (!skipFallback && !Array.isArray(relatedValue) && pathToArray && pathToArray !== valuePath) {
+        relatedValue = get(relatedDocument, pathToArray);
+      }
+      if (!skipFallback && !Array.isArray(relatedValue)) {
+        relatedValue = get(relatedDocument, valuePath);
+      }
+
+      if (skipFallback && (relatedValue === null || relatedValue === undefined)) {
+        return <Text style={[styles.cellText]}>–</Text>;
       }
 
       if (Array.isArray(relatedValue)) {
+        // Path within each array item (supports any nesting: "title", "meta.label", "a.b.c", etc.)
+        const parentPath = fieldInfo?.parentFieldPath ?? "";
+        const itemPath =
+          parentPath && path.startsWith(parentPath + ".")
+            ? path.slice(parentPath.length + 1)
+            : lastSegment;
+
         const str = relatedValue
-          .map((item) => {
+          .map((item: unknown) => {
             const v =
-              typeof item === "object" && item !== null && lastSegment
-                ? get(item, lastSegment)
+              typeof item === "object" && item !== null && itemPath
+                ? get(item as object, itemPath)
                 : item;
-            return v != null ? String(v) : "";
+            return v != null ? getFieldValueString({ value: v }) : "";
           })
           .filter(Boolean)
           .join(", ");
@@ -180,7 +212,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
         );
       }
       if (relatedValue != null) {
-        return <FieldValueDefaultComponent value={relatedValue} />;
+        return getFieldValueString({ value: relatedValue });
       }
     } 
     
