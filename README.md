@@ -4,11 +4,11 @@
 
 Transform your content management experience with Directus, the powerful open data platform now available on mobile. Access, manage, and control your content with ease, right from your smartphone or tablet.
 
-App status: Open testing
+App status: Production
 
-iOS: https://testflight.apple.com/join/pWYXpQtY
+iOS: https://apps.apple.com/app/directus-mobile/id6740696350
 
-Android: https://play.google.com/apps/test/RQgSSfgKFg8/ahAO29uNQlJ9cwIZLTd8yKlRwhMAUxQfhP9YpjFZ2x-ZjL9hkbuYhAUfbqrCz_cN0AVHJi0gIcRHPLrJf758Q66sIB
+Android: https://play.google.com/store/apps/details?id=com.martijnmichel.directusexpo.app
 
 ### Supported interfaces
 
