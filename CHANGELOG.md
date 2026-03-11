@@ -1,3 +1,10 @@
+## [0.8.5](https://github.com/martijnmichel/directus-expo/compare/v0.8.4...v0.8.5) (2026-03-11)
+
+
+### Bug Fixes
+
+* disable related query when no items ([a94c730](https://github.com/martijnmichel/directus-expo/commit/a94c730168a22b20929957c27e9c91721435e0f4))
+
 ## [0.8.4](https://github.com/martijnmichel/directus-expo/compare/v0.8.3...v0.8.4) (2026-03-11)
 
 
