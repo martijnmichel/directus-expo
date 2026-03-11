@@ -64,6 +64,7 @@ export const mapFields = ({
   permissions,
   styles,
   uuid,
+  fallbackInterface,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
@@ -73,6 +74,7 @@ export const mapFields = ({
   permissions?: ReadUserPermissionsOutput;
   styles?: any;
   uuid?: string;
+  fallbackInterface?: "input"
 }): ReactNode => {
   const getLabel = (field: string) =>
     fields
@@ -160,7 +162,27 @@ export const mapFields = ({
           </Collapsible>
         );
       } else {
+        console.log("fallbackInterface", fallbackInterface);
         // Type-based switch statement from previous code
+        if (!item.type && fallbackInterface === "input") {
+          return (
+            <Controller
+              key={item.field}
+              control={control}
+              rules={{ required: item.meta.required }}
+              name={item.field as keyof CoreSchema[keyof CoreSchema]}
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <Input
+                  {...defaultProps}
+                  onChangeText={onChange}
+                  value={(value as string) || ""}
+                  autoCapitalize="none"
+                  error={error?.message}
+                />
+              )}
+            />
+          );
+        }
         switch (item.type) {
           case "string":
           case "text":

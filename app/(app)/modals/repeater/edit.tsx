@@ -16,6 +16,7 @@ const RepeaterModal = () => {
   const { fields, document, item_field, index, uuid } = useLocalSearchParams();
   const headerStyle = useHeaderStyles({ isModal: true });
   const defaultValues = base64ToObject(document as string);
+  console.log({ fields: base64ToObject(fields as string), document, item_field, index, uuid });
   const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>

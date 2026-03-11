@@ -56,12 +56,15 @@ export const RepeaterInput = ({
       console.log({ newItems });
       onChange?.(newItems);
     },
-    [value, onChange]
+    [value, onChange],
   );
 
+  console.log({ item });
   const getDisplayValue = (repeatItem: any) => {
     const format = item.meta?.display_options?.format;
-    return parseRepeaterTemplate(format, repeatItem);
+    return format
+      ? parseRepeaterTemplate(format, repeatItem)
+      : Object.values(repeatItem).slice(0, 3).map((v: any) => v?.toString()).join(" - ") || "--";
   };
 
   useEffect(() => {
@@ -110,7 +113,7 @@ export const RepeaterInput = ({
                 <DragIcon />
               </View>
 
-              <Text style={styles.content}>
+              <Text numberOfLines={1} style={styles.content}>
                 {getDisplayValue(repeaterItem)}
               </Text>
 
@@ -119,7 +122,16 @@ export const RepeaterInput = ({
                   pathname: `/modals/repeater/edit`,
                   params: {
                     document: objectToBase64(repeaterItem),
-                    fields: objectToBase64(item.meta?.options?.fields || []),
+                    fields: objectToBase64(
+                      item.meta?.options?.fields.map((f: any) => ({
+                        ...f,
+                        type: f.type || "string",
+                        meta: {
+                          ...f.meta,
+                          interface: f.meta?.interface || "input",
+                        },
+                      })) || [],
+                    ),
                     item_field: item.field,
                     uuid,
                     index: index,
@@ -166,7 +178,16 @@ export const RepeaterInput = ({
             href={{
               pathname: `/modals/repeater/add`,
               params: {
-                fields: objectToBase64(item.meta?.options?.fields || []),
+                fields: objectToBase64(
+                  item.meta?.options?.fields.map((f: any) => ({
+                    ...f,
+                    type: f.type || "string",
+                    meta: {
+                      ...f.meta,
+                      interface: f.meta?.interface || "input",
+                    },
+                  })) || [],
+                ),
                 item_field: item.field,
                 uuid,
               },
