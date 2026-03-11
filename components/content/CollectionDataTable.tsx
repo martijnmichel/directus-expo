@@ -32,6 +32,7 @@ import {
   getDisplayTemplateTransformName,
 } from "@/helpers/collections/getDisplayTemplate";
 import { useStyles } from "react-native-unistyles";
+import { DataTableColumn } from "./DataTableColumn";
 
 export function CollectionDataTable({ collection }: { collection: string }) {
   const { t } = useTranslation();
@@ -244,10 +245,11 @@ export function CollectionDataTable({ collection }: { collection: string }) {
             (r) => r[primaryKey as string] === doc[primaryKey as string]
           );
           return map(tableFields, (f) => (
-            <Col
+            <DataTableColumn
               template={f}
               document={doc}
               relatedDocument={relatedDoc}
+              collection={collection as keyof CoreSchema}
               key={`table-${collection}-column-${f}`}
             />
           ));

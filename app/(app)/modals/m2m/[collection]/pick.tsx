@@ -32,13 +32,14 @@ import { Container } from "@/components/layout/Container";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { FloatingToolbar } from "@/components/display/floating-toolbar";
 import { Pagination } from "@/components/content/filters/pagination";
 import { SearchFilter } from "@/components/content/filters/search-filter-modal";
 import { Horizontal } from "@/components/layout/Stack";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
+import { DataTableColumn } from "@/components/content/DataTableColumn";
 export default function Collection() {
   const {
     related_collection,
@@ -50,6 +51,7 @@ export default function Collection() {
     item_field,
     uuid,
   } = useLocalSearchParams();
+  const primaryKey = usePrimaryKey(related_collection as keyof CoreSchema);
 
   const pagination = useDocumentsFilters();
   const { page, limit, search } = pagination;
@@ -61,6 +63,10 @@ export default function Collection() {
   const preset = presets?.find((p) => p.collection === related_collection);
 
   const value = (current_value as string)?.split(",").filter((v) => !!v);
+
+  const tableFields = useCollectionTableFields({
+    collection: related_collection as keyof CoreSchema,
+  });
 
   const { data: options, refetch } = useDocuments(
     related_collection as keyof CoreSchema,
@@ -100,16 +106,27 @@ export default function Collection() {
             : []),
         ],
       },
-    }
+    },
   );
 
-  const tableFields = useCollectionTableFields({
-    collection: related_collection as keyof CoreSchema,
-    documents: options?.items,
-  });
+  const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
+    related_collection as keyof CoreSchema,
+    {
+      fields: [...tableFields.filter((f: string) => f.includes(".")), primaryKey as any],
+      limit: -1,
+      filter: {
+        [primaryKey as any]: {
+          _in: map(options?.items, (doc) => doc[primaryKey as string]),
+        },
+      },
+    },
+  );
+
+ 
 
   useEffect(() => {
     refetch();
+    refetchRelatedDocuments();
   }, [current_value]);
 
   const headerStyles = useHeaderStyles({ isModal: true });
@@ -130,8 +147,11 @@ export default function Collection() {
       <Table
         headers={reduce(
           tableFields,
-          (prev, curr) => ({ ...prev, [curr]: label(curr) || "" }),
-          {}
+          (prev, curr) => ({
+            ...prev,
+            [curr]: label(curr.split(".")[curr.split(".").length - 1]) || "",
+          }),
+          {},
         )}
         toolbarItems={
           <>
@@ -143,7 +163,21 @@ export default function Collection() {
         items={(options?.items as Record<string, unknown>[]) || []}
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
-          map(tableFields, (f) => doc[f] as number | string | null)
+          map(tableFields, (f) => {
+            const relatedDoc = (relatedDocuments?.items as Record<string, unknown>[] | undefined)?.find(
+              (r) => r[primaryKey as string] === doc[primaryKey as string]
+            );
+            console.log({ relatedDoc, doc, primaryKey });
+            return (
+              <DataTableColumn
+                template={f}
+                document={doc}
+                relatedDocument={relatedDoc}
+                collection={related_collection as keyof CoreSchema}
+                key={`table-${related_collection}-column-${f}`}
+              />
+            );
+          })
         }
         onRowPress={(doc) => {
           console.log(doc);
