@@ -54,6 +54,13 @@ export default () => ({
             "The app needs access to your photos to let you select images.",
         },
       ],
+
+      [
+        "expo-local-authentication",
+        {
+          faceIDPermission: "Allow Directus Mobile to use Face ID.",
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
@@ -66,7 +73,6 @@ export default () => ({
     runtimeVersion: `${buildNumber}`,
     updates: {
       url: "https://u.expo.dev/66baa699-7004-4c6a-85ee-941ba6062451",
-    }
+    },
   },
-  
 });
