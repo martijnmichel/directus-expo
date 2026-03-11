@@ -1,3 +1,10 @@
+## [0.8.6](https://github.com/martijnmichel/directus-expo/compare/v0.8.5...v0.8.6) (2026-03-11)
+
+
+### Performance Improvements
+
+* optimize table queries ([fad4dc4](https://github.com/martijnmichel/directus-expo/commit/fad4dc433405340dbf67156c369445b1b0393912))
+
 ## [0.8.5](https://github.com/martijnmichel/directus-expo/compare/v0.8.4...v0.8.5) (2026-03-11)
 
 
