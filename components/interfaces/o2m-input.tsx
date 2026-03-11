@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import {
   CoreSchema,
@@ -40,7 +40,6 @@ import {
 } from "@mgcrea/react-native-dnd";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
-import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
 import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
@@ -62,6 +61,112 @@ type O2MInputProps = InterfaceProps<{
   value: number[] | RelatedItemState;
   onChange: (value: RelatedItemState) => void;
 }>;
+
+type O2MItemRowProps = {
+  collection: string;
+  relatedCollection: string;
+  uuid: string;
+  docId: string | number;
+  isDeselected?: boolean;
+  isSortable?: boolean;
+  value: RelatedItemState;
+  onChange: (value: RelatedItemState) => void;
+  relatedPk: string;
+  sortField?: string;
+  template?: string;
+};
+
+function O2MItemRow({
+  collection,
+  relatedCollection,
+  uuid,
+  docId,
+  isDeselected,
+  isSortable,
+  value,
+  onChange,
+  relatedPk,
+  sortField,
+  template,
+}: O2MItemRowProps) {
+  const {
+    data: doc,
+    error,
+  } = useDocument({
+    collection: collection as keyof CoreSchema,
+    id: docId,
+    options: { fields: ["*.*"] },
+  });
+  const { data: fields } = useFields(relatedCollection as keyof CoreSchema);
+
+  if (error) {
+    return (
+      <RelatedListItem>
+        {(error as DirectusErrorResponse).errors?.[0].message}
+      </RelatedListItem>
+    );
+  }
+  if (!doc) return null;
+
+  return (
+    <RelatedListItem
+      isDraggable={isSortable}
+      isDeselected={isDeselected}
+      append={
+        <>
+          <Link
+            href={{
+              pathname: `/modals/m2m/[collection]/[id]`,
+              params: {
+                collection: collection ?? "",
+                uuid,
+                id: String(docId),
+              },
+            }}
+            asChild
+          >
+            <Button variant="ghost" rounded>
+              <DirectusIcon name="edit_square" />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            rounded
+            onPress={() => {
+              if (isDeselected) {
+                onChange({
+                  ...value,
+                  update: [
+                    ...value.update,
+                    {
+                      [relatedPk]: docId as number,
+                      ...(sortField && { [sortField]: doc[sortField as string] }),
+                    },
+                  ],
+                  delete: value.delete.filter((v) => v !== docId),
+                });
+              } else {
+                onChange({
+                  ...value,
+                  update: value.update.filter((v) => v?.[relatedPk] !== docId),
+                  delete: [...value.delete, docId as number],
+                });
+              }
+            }}
+          >
+            {isDeselected ? (
+              <DirectusIcon name="settings_backup_restore" />
+            ) : (
+              <DirectusIcon name="close" />
+            )}
+          </Button>
+        </>
+      }
+    >
+      {parseTemplate(template, doc, fields)}
+    </RelatedListItem>
+  );
+}
 
 export const O2MInput = ({
   docId,
@@ -185,141 +290,52 @@ export const O2MInput = ({
     });
   };
 
-  const { data: pickedItems, refetch } = useDocuments(
-    relation?.collection as keyof CoreSchema,
-
-    {
-      fields: [`*`],
-      filter: {
-        ...((!!value.update.length || !!value.create.length) &&
-          !!relation?.schema && {
-            [relation?.schema.column as any]: {
-              _in: [
-                ...value.update.map((v) => v.id),
-                ...value.create.map(
-                  (v) =>
-                    v[relation?.field as any]?.[
-                      relation?.schema.foreign_key_column as any
-                    ]
-                ),
-              ],
-            },
-          }),
-      },
-    }
+  const filterIdsKey = useMemo(
+    () =>
+      JSON.stringify({
+        update: value.update
+          .map((v) => (v as any)?.[relatedPk] ?? (v as any)?.id)
+          .filter(Boolean)
+          .sort(),
+        create: value.create
+          .map(
+            (v) =>
+              (v as any)?.[relation?.field as string]?.[
+                relation?.schema?.foreign_key_column as string
+              ]
+          )
+          .filter(Boolean)
+          .sort(),
+      }),
+    [value.update, value.create, relatedPk, relation?.field, relation?.schema]
   );
 
-  useEffect(() => {
-    refetch();
-  }, [value.update, value.create, relation, refetch]);
-
-  console.log({
-    item,
-    docId,
-    valueProp,
-    value,
-    relation,
-    pickedItems,
-  });
-
-  const Item = ({
-    docId,
-    isNew,
-    isDeselected,
-    isSortable,
-  }: {
-    docId: string | number;
-    isNew?: boolean;
-    isDeselected?: boolean;
-    isSortable?: boolean;
-  }) => {
-    const {
-      data: doc,
-      isLoading,
-      refetch,
-      error,
-    } = useDocument({
-      collection: relation?.collection as keyof CoreSchema,
-      id: docId,
-      options: {
-        fields: ["*.*"],
-      },
-    });
-
-    const { data: fields } = useFields(relation?.related_collection as any);
-
-    if (error) {
-      return (
-        <RelatedListItem>
-          {(error as DirectusErrorResponse).errors?.[0].message}
-        </RelatedListItem>
-      );
+  const documentsFilter = useMemo(() => {
+    if (!relation?.schema) return undefined;
+    try {
+      const { update, create } = JSON.parse(filterIdsKey) as {
+        update: (string | number)[];
+        create: (string | number)[];
+      };
+      const ids = [...new Set([...update, ...create])];
+      if (!ids.length) return undefined;
+      return {
+        [relation.schema.column as string]: { _in: ids },
+      };
+    } catch {
+      return undefined;
     }
+  }, [filterIdsKey, relation?.schema]);
 
-    return doc ? (
-      <RelatedListItem
-        isDraggable={isSortable}
-        isDeselected={isDeselected}
-        append={
-          <>
-            <Link
-              href={{
-                pathname: `/modals/m2m/[collection]/[id]`,
-                params: {
-                  collection: relation?.collection as string,
-                  uuid,
-                  id: docId,
-                },
-              }}
-              asChild
-            >
-              <Button variant="ghost" rounded>
-                <DirectusIcon name="edit_square" />
-              </Button>
-            </Link>
+  const documentsQuery = useMemo(
+    () => ({
+      fields: [`*`],
+      ...(documentsFilter && { filter: documentsFilter }),
+    }),
+    [documentsFilter]
+  );
 
-            <Button
-              variant="ghost"
-              rounded
-              onPress={() => {
-                if (isDeselected) {
-                  props.onChange({
-                    ...value,
-                    update: [
-                      ...value.update,
-                      {
-                        [relatedPk || ""]: docId as number,
-                        ...(sortField && {
-                          [sortField]: doc[sortField as string],
-                        }),
-                      },
-                    ],
-                    delete: value.delete.filter((v) => v !== docId),
-                  });
-                } else {
-                  props.onChange({
-                    ...value,
-                    update: value.update.filter(
-                      (v) => v?.[relatedPk] !== docId
-                    ),
-                    delete: [...value.delete, docId as number],
-                  });
-                }
-              }}
-            >
-              {isDeselected ? (
-                <DirectusIcon name="settings_backup_restore" />
-              ) : (
-                <DirectusIcon name="close" />
-              )}
-            </Button>
-          </>
-        }
-      >
-        {parseTemplate(item.meta.options?.template, doc, fields)}
-      </RelatedListItem>
-    ) : null;
-  };
+  useDocuments(relation?.collection as keyof CoreSchema, documentsQuery);
 
   return (
     relation && (
@@ -338,9 +354,9 @@ export const O2MInput = ({
           >
             {orderBy(
               [...value.create, ...value.update, ...value.delete],
-              sortField || relation?.schema.foreign_key_column || "id"
+              sortField || relation?.schema?.foreign_key_column || "id"
             ).map((relatedDoc, index) => {
-              const primaryKey = relation?.schema.foreign_key_column;
+              const primaryKey = relation?.schema?.foreign_key_column;
 
               const id: number | string =
                 typeof relatedDoc === "number" || typeof relatedDoc === "string"
@@ -351,16 +367,6 @@ export const O2MInput = ({
               const isNew = isInitial
                 ? false
                 : !((initialValue as number[]) || []).includes(id as number);
-
-              console.log({
-                relatedDoc,
-                field: relation.field,
-                id,
-                primaryKey,
-                fk: relation?.schema.foreign_key_column,
-                isNew,
-                isDeselected,
-              });
 
               const text = parseTemplate<any>(
                 item.meta.options?.template,
@@ -410,11 +416,18 @@ export const O2MInput = ({
                   id={JSON.stringify(relatedDoc)}
                   disabled={!sortField}
                 >
-                  <Item
+                  <O2MItemRow
+                    collection={relation.collection ?? ""}
+                    relatedCollection={relation.related_collection ?? ""}
+                    uuid={uuid ?? ""}
                     docId={id}
-                    isNew={false}
                     isDeselected={isDeselected}
                     isSortable={!!sortField}
+                    value={value}
+                    onChange={props.onChange}
+                    relatedPk={relatedPk || ""}
+                    sortField={sortField ?? undefined}
+                    template={item.meta.options?.template ?? undefined}
                   />
                 </Draggable>
               );
