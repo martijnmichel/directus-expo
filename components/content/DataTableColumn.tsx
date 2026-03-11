@@ -1,6 +1,19 @@
 import { useFields } from "@/state/queries/directus/collection";
 import { get } from "lodash";
 import { Text } from "../display/typography";
+
+/** Get all leaf values at path, expanding arrays at any level (e.g. items.faq_id.translations.question). */
+function getValuesAtPath(obj: unknown, path: string): unknown[] {
+  if (obj == null || !path) return [];
+  const segments = path.split(".").filter(Boolean);
+  if (segments.length === 0) return [obj];
+  const [key, ...rest] = segments;
+  const restPath = rest.join(".");
+  const val = typeof obj === "object" && obj !== null && key in obj ? (obj as Record<string, unknown>)[key] : undefined;
+  if (rest.length === 0) return val != null ? [val] : [];
+  if (Array.isArray(val)) return val.flatMap((item) => getValuesAtPath(item, restPath));
+  return getValuesAtPath(val, restPath);
+}
 import { View } from "react-native";
 import {
   getFieldValueString,
@@ -71,16 +84,36 @@ export const DataTableColumn = ({
       valuePathParts.length > 1 ? valuePathParts.slice(0, -1).join(".") : "";
     const lastSegment = valuePathParts[valuePathParts.length - 1] ?? valuePath;
 
-    // Use parentFieldPath first so nested paths (e.g. category.translations) get the right array
     const pathSegments = path.split(".").filter(Boolean);
-    const isNestedRelationPath = pathSegments.length > 1; // e.g. category.translations.title
+    const isNestedRelationPath = pathSegments.length > 1;
+
+    // Paths that cross multiple arrays (e.g. items.faq_id.translations.question) need
+    // getValuesAtPath; lodash get doesn't traverse into array elements.
+    const valuesFromPath = getValuesAtPath(relatedDocument, path);
+    const flattened = Array.isArray(valuesFromPath) ? valuesFromPath : [valuesFromPath];
+    const leafValues = flattened.filter((v) => v != null && typeof v !== "object");
+    if (leafValues.length > 0) {
+      const str = leafValues
+        .map((v) => getFieldValueString({ value: v }))
+        .filter(Boolean)
+        .join(", ");
+      return (
+        <View style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[styles.cellText, styles.truncate, { width: "100%" }]}
+          >
+            {str}
+          </Text>
+        </View>
+      );
+    }
 
     let relatedValue: unknown = null;
     if (fieldInfo?.parentFieldPath) {
       relatedValue = get(relatedDocument, fieldInfo.parentFieldPath);
     }
-    // When path goes through a relation (e.g. category.translations.title), do NOT fall back
-    // to pathToArray/valuePath.
     const skipFallback =
       isNestedRelationPath &&
       fieldInfo?.parentFieldPath != null &&
@@ -103,7 +136,6 @@ export const DataTableColumn = ({
     }
 
     if (Array.isArray(relatedValue)) {
-      // Path within each array item (supports any nesting: "title", "meta.label", "a.b.c", etc.)
       const parentPath = fieldInfo?.parentFieldPath ?? "";
       const itemPath =
         parentPath && path.startsWith(parentPath + ".")
@@ -136,7 +168,6 @@ export const DataTableColumn = ({
       return getFieldValueString({ value: relatedValue });
     }
   } else if (fieldInfo?.transform && fieldInfo.field) {
-    console.log({ value, fieldInfo, relatedDocument });
     return getFieldValue(fieldInfo.field, value, fieldInfo.transform);
   } else if (fieldInfo?.field) {
     return (

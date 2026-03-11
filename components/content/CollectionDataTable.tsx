@@ -91,9 +91,9 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     () => ({
       fields: [...fieldsQuery.filter((v) => v.includes(".")), primaryKey],
       limit: -1,
-      filter: {
+      filter: documentIds?.length ? {
         [primaryKey]: { _in: documentIds },
-      },
+      } : {},
     }),
     [fieldsQuery, primaryKey, documentIds]
   );
@@ -103,12 +103,9 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       collection as keyof CoreSchema,
       relatedDocumentsQuery,
       {
-        enabled: !!fieldsQuery.length && !!documents?.items?.length,
+        enabled: !!fieldsQuery.length && !!documentIds?.length,
       }
     );
-
-
-  console.log({ preset, tableFields, fieldsQuery, documents, relatedDocuments });
 
   const { label } = useFieldMeta(collection);
 
