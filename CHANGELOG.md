@@ -1,3 +1,10 @@
+## [0.8.3](https://github.com/martijnmichel/directus-expo/compare/v0.8.2...v0.8.3) (2026-03-11)
+
+
+### Features
+
+* related datatable column m2m pick ([e588ec1](https://github.com/martijnmichel/directus-expo/commit/e588ec1e7a8115d3f2b82cf7a3574112cd108eb2))
+
 ## [0.8.2](https://github.com/martijnmichel/directus-expo/compare/v0.8.1...v0.8.2) (2026-03-11)
 
 
