@@ -1,19 +1,7 @@
 import { useFields } from "@/state/queries/directus/collection";
+import { getValuesAtPath } from "@/helpers/document/template";
 import { get } from "lodash";
 import { Text } from "../display/typography";
-
-/** Get all leaf values at path, expanding arrays at any level (e.g. items.faq_id.translations.question). */
-function getValuesAtPath(obj: unknown, path: string): unknown[] {
-  if (obj == null || !path) return [];
-  const segments = path.split(".").filter(Boolean);
-  if (segments.length === 0) return [obj];
-  const [key, ...rest] = segments;
-  const restPath = rest.join(".");
-  const val = typeof obj === "object" && obj !== null && key in obj ? (obj as Record<string, unknown>)[key] : undefined;
-  if (rest.length === 0) return val != null ? [val] : [];
-  if (Array.isArray(val)) return val.flatMap((item) => getValuesAtPath(item, restPath));
-  return getValuesAtPath(val, restPath);
-}
 import { View } from "react-native";
 import {
   getFieldValueString,
@@ -170,11 +158,14 @@ export const DataTableColumn = ({
   } else if (fieldInfo?.transform && fieldInfo.field) {
     return getFieldValue(fieldInfo.field, value, fieldInfo.transform);
   } else if (fieldInfo?.field) {
+    const isRelatedValuesAlias =
+      fieldInfo.field.type === "alias" &&
+      fieldInfo.field.meta?.display === "related-values";
     return (
       <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
         {parse({
           item: fieldInfo.field,
-          data: document,
+          data: (isRelatedValuesAlias ? relatedDocument ?? document : document) as Record<string, unknown>,
         })}
       </Text>
     );
