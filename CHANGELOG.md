@@ -1,3 +1,10 @@
+## [0.8.7](https://github.com/martijnmichel/directus-expo/compare/v0.8.6...v0.8.7) (2026-03-11)
+
+
+### Features
+
+* deep nested related value on Table Col ([8c0ac2e](https://github.com/martijnmichel/directus-expo/commit/8c0ac2edc132e02000b0add6ccca36505cabb7e7))
+
 ## [0.8.6](https://github.com/martijnmichel/directus-expo/compare/v0.8.5...v0.8.6) (2026-03-11)
 
 
