@@ -4,7 +4,7 @@ import { DateUtils } from "@/utils/dayjs";
 import { CoreSchema, ReadFieldOutput, ReadRelationOutput } from "@directus/sdk";
 import { Image } from "expo-image";
 import { View } from "react-native";
-import { parseTemplate } from "./template";
+import { getPathFromTemplate, getValuesAtPath, parseTemplate } from "./template";
 import { get, map } from "lodash";
 import { useRelations } from "@/state/queries/directus/core";
 import { useFields } from "@/state/queries/directus/collection";
@@ -130,12 +130,36 @@ export const useFieldDisplayValue = (collection: string) => {
               r.related_collection === item.collection &&
               r.meta.one_field === item.field,
           );
+          const templatePath = getPathFromTemplate(template);
+
+          const formatEntry = (entry: unknown): string => {
+            if (
+              entry != null &&
+              typeof entry === "object" &&
+              templatePath
+            ) {
+              const values = getValuesAtPath(entry, templatePath);
+              const flattened = Array.isArray(values) ? values : [values];
+              const leafValues = flattened.filter(
+                (v) => v != null && typeof v !== "object"
+              );
+              if (leafValues.length > 0) {
+                return leafValues
+                  .map((v) => getFieldValueString({ value: v }))
+                  .filter(Boolean)
+                  .join(", ");
+              }
+            }
+            return get(entry, templatePath || template) ?? String(entry ?? "");
+          };
 
           return !!data?.[item.field].length && junction ? (
             <Horizontal spacing="xs">
-              {map(data?.[item.field], (id) => {
-                return <Text>{get(id, template) || id},</Text>;
-              })}
+              {map(data?.[item.field], (entry) => (
+                <Text key={String(entry && typeof entry === "object" ? (entry as any).id ?? "" : entry)}>
+                  {formatEntry(entry)},
+                </Text>
+              ))}
             </Horizontal>
           ) : null;
         } else {
@@ -146,6 +170,30 @@ export const useFieldDisplayValue = (collection: string) => {
                   r.related_collection === item.collection &&
                   r.meta.one_field === item.field,
               );
+              const template = item.meta.display_options?.template;
+              const templatePath = getPathFromTemplate(template);
+
+              const formatEntry = (entry: unknown): string => {
+                if (
+                  entry != null &&
+                  typeof entry === "object" &&
+                  templatePath
+                ) {
+                  const values = getValuesAtPath(entry, templatePath);
+                  const flattened =
+                    Array.isArray(values) ? values : [values];
+                  const leafValues = flattened.filter(
+                    (v) => v != null && typeof v !== "object"
+                  );
+                  if (leafValues.length > 0) {
+                    return leafValues
+                      .map((v) => getFieldValueString({ value: v }))
+                      .filter(Boolean)
+                      .join(", ");
+                  }
+                }
+                return parseTemplate(template, entry as Record<string, unknown>, fields) ?? "";
+              };
 
               return !!data?.[item.field].length && junction ? (
                 <DropdownMenu>
@@ -153,17 +201,12 @@ export const useFieldDisplayValue = (collection: string) => {
                     {data?.[item.field].length} items
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content>
-                      <Vertical>
-                      {map(data?.[item.field], (id) => {
-                        return (
-                          <Text>
-                            {parseTemplate(
-                              item.meta.display_options?.template,
-                              id,
-                            )}
-                          </Text>
-                        );
-                      })}
+                    <Vertical>
+                      {map(data?.[item.field], (entry) => (
+                        <Text key={String(entry && typeof entry === "object" ? (entry as any).id ?? JSON.stringify(entry) : entry)}>
+                          {formatEntry(entry)}
+                        </Text>
+                      ))}
                     </Vertical>
                   </DropdownMenu.Content>
                 </DropdownMenu>

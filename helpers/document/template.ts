@@ -4,6 +4,31 @@ import { CoreSchema } from "@directus/sdk";
 import { ReadFieldOutput } from "@directus/sdk";
 import { map } from "lodash";
 
+/** Get all leaf values at path, expanding arrays at any level (e.g. items.faq_id.translations.question). */
+export function getValuesAtPath(obj: unknown, path: string): unknown[] {
+  if (obj == null || !path) return [];
+  const segments = path.split(".").filter(Boolean);
+  if (segments.length === 0) return [obj];
+  const [key, ...rest] = segments;
+  const restPath = rest.join(".");
+  const val =
+    typeof obj === "object" && obj !== null && key in obj
+      ? (obj as Record<string, unknown>)[key]
+      : undefined;
+  if (rest.length === 0) return val != null ? [val] : [];
+  if (Array.isArray(val))
+    return val.flatMap((item) => getValuesAtPath(item, restPath));
+  return getValuesAtPath(val, restPath);
+}
+
+/** Extract dot path from template string e.g. "{{ item.xy.z }}" or "{{ xy.z }}" -> "xy.z" */
+export function getPathFromTemplate(template?: string): string {
+  if (!template) return "";
+  const match = template.match(/\{\{\s*(.+?)\s*\}\}/);
+  const path = match?.[1]?.trim() ?? "";
+  return path.replace(/^item\./, "");
+}
+
 export const parseTemplate = <T>(
   template?: string,
   data?: T & { [key: string]: any },
