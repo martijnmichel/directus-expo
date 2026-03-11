@@ -89,7 +89,11 @@ export default function Collection() {
           _in: map(options?.items, (doc) => doc[primaryKey as string]),
         },
       },
-    });
+    },
+    {
+      enabled: !!options?.items?.length ,
+    }
+  );
 
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(collection as keyof CoreSchema);

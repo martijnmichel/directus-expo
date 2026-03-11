@@ -120,6 +120,9 @@ export default function Collection() {
         },
       },
     },
+    {
+      enabled: !!options?.items?.length ,
+    }
   );
 
  
