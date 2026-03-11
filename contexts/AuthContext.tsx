@@ -33,17 +33,22 @@ interface AuthContextType {
   logout: () => Promise<void>;
   token: string | null;
   setApiKey: (apiKey: string, apiUrl: string) => Promise<void>;
-  refreshSession: (overrideApi?: { url: string }) => Promise<boolean>;
+  refreshSession: (overrideApi?: { url: string }) => Promise<{
+    ok: boolean;
+    authType?: "email" | "apiKey";
+  }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const getSessionStorageKey = (apiUrl?: string) => {
-    // Per-instance key so multiple Directus instances don't clobber each other
     const keyPart = apiUrl ? encodeURIComponent(apiUrl) : "default";
     return `directus_session_token:${keyPart}`;
   };
+
+  const getApiKeyStorageKey = (apiUrl: string) =>
+    `directus_api_key:${encodeURIComponent(apiUrl)}`;
 
   const initDirectus = (url?: string) => {
     const sessionKey = getSessionStorageKey(url);
@@ -149,10 +154,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           break;
         case "apiKey": {
-          // API key is intentionally not persisted in AsyncStorage for security.
-          // We still initialize the client for the active API, but require re-auth.
-          const directus = initDirectus(activeApi.url);
-          setDirectus(directus);
+          try {
+            const storedKey = await AsyncStorage.getItem(
+              getApiKeyStorageKey(activeApi.url!)
+            );
+            if (!storedKey) break;
+
+            const directus = initDirectus(activeApi.url);
+            setDirectus(directus);
+            await directus.setToken(storedKey);
+            const user = await directus.request(readMe());
+            const token = await directus.getToken();
+            if (!token) break;
+
+            setToken(token);
+            setUser(user as DirectusUser);
+            setIsAuthenticated(true);
+          } catch {
+            try {
+              await AsyncStorage.removeItem(
+                getApiKeyStorageKey(activeApi?.url!)
+              );
+            } catch (e) {
+              // ignore
+            }
+          }
           break;
         }
         default: {
@@ -191,41 +217,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const activeApiRaw = await AsyncStorage.getItem(
           LocalStorageKeys.DIRECTUS_API_ACTIVE
         );
-        if (!activeApiRaw) return false;
+        if (!activeApiRaw) return { ok: false };
         const activeApi = JSON.parse(activeApiRaw) as { url?: string };
-        if (!activeApi?.url) return false;
+        if (!activeApi?.url) return { ok: false };
         return refreshSessionForUrl(activeApi.url);
       }
       return refreshSessionForUrl(apiUrl);
     } catch (e) {
-      return false;
+      return { ok: false };
     }
   };
 
-  const refreshSessionForUrl = async (apiUrl: string) => {
+  const refreshSessionForUrl = async (
+    apiUrl: string
+  ): Promise<{ ok: boolean; authType?: "email" | "apiKey" }> => {
     try {
       const sessionRaw = await AsyncStorage.getItem(
         getSessionStorageKey(apiUrl)
       );
-      if (!sessionRaw) return false;
+      const session = sessionRaw
+        ? (JSON.parse(sessionRaw) as AuthenticationData | null)
+        : null;
 
-      const session = JSON.parse(sessionRaw) as AuthenticationData | null;
-      if (!session?.refresh_token) return false;
+      if (session?.refresh_token) {
+        const client = initDirectus(apiUrl);
+        setDirectus(client);
+        await client.refresh();
+        const freshToken = await client.getToken();
+        if (freshToken) {
+          const me = await client.request(readMe());
+          setUser(me as DirectusUser);
+          setToken(freshToken);
+          setIsAuthenticated(true);
+          return { ok: true, authType: "email" };
+        }
+      }
 
-      const client = initDirectus(apiUrl);
-      setDirectus(client);
+      const storedApiKey = await AsyncStorage.getItem(
+        getApiKeyStorageKey(apiUrl)
+      );
+      if (storedApiKey) {
+        const client = initDirectus(apiUrl);
+        setDirectus(client);
+        await client.setToken(storedApiKey);
+        const token = await client.getToken();
+        if (token) {
+          const me = await client.request(readMe());
+          setUser(me as DirectusUser);
+          setToken(token);
+          setIsAuthenticated(true);
+          return { ok: true, authType: "apiKey" };
+        }
+      }
 
-      await client.refresh();
-      const freshToken = await client.getToken();
-      if (!freshToken) return false;
-
-      const me = await client.request(readMe());
-      setUser(me as DirectusUser);
-      setToken(freshToken);
-      setIsAuthenticated(true);
-      return true;
+      return { ok: false };
     } catch (e) {
-      return false;
+      return { ok: false };
     }
   };
 
@@ -234,10 +281,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const directus = createDirectus(apiUrl).with(authentication()).with(rest());
       setDirectus(directus);
       await directus.setToken(apiKey);
-      setToken(apiKey);
       const user = await directus.request(readMe());
+      setToken(apiKey);
       setUser(user as DirectusUser);
       setIsAuthenticated(true);
+      await AsyncStorage.setItem(getApiKeyStorageKey(apiUrl), apiKey);
     } catch (error) {
       throw new Error("Login failed");
     }
@@ -245,7 +293,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     try {
-      // Clear the per-instance session blob the SDK uses for refresh
       const activeApi = await AsyncStorage.getItem(
         LocalStorageKeys.DIRECTUS_API_ACTIVE
       );
@@ -253,6 +300,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const api = JSON.parse(activeApi) as { url?: string };
           await AsyncStorage.removeItem(getSessionStorageKey(api?.url));
+          if (api?.url) {
+            await AsyncStorage.removeItem(getApiKeyStorageKey(api.url));
+          }
         } catch (e) {
           // ignore parsing errors
         }
