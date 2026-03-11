@@ -1,5 +1,6 @@
 import { useFields } from "@/state/queries/directus/collection";
 import { getValuesAtPath } from "@/helpers/document/template";
+import { toM2AReadPath } from "@/helpers/collections/getDisplayTemplate";
 import { get } from "lodash";
 import { Text } from "../display/typography";
 import { View } from "react-native";
@@ -65,8 +66,11 @@ export const DataTableColumn = ({
   const value = fieldInfo ? get(document, fieldInfo.path) : null;
 
   if (!value && !fieldInfo?.deepField && relatedDocument) {
-    const path = fieldInfo?.path ?? "";
-    const valuePath = fieldInfo?.valuePath ?? "";
+    let path = fieldInfo?.path ?? "";
+    // Normalize Directus M2A colon syntax to dots so path reads work (e.g. items.item:block_card.x → items.item.block_card.x)
+    const norm = (p: string) => p.replace(/(\w+):/g, "$1.");
+    path = norm(path);
+    const valuePath = norm(fieldInfo?.valuePath ?? "");
     const valuePathParts = valuePath.split(".").filter(Boolean);
     const pathToArray =
       valuePathParts.length > 1 ? valuePathParts.slice(0, -1).join(".") : "";
@@ -77,7 +81,13 @@ export const DataTableColumn = ({
 
     // Paths that cross multiple arrays (e.g. items.faq_id.translations.question) need
     // getValuesAtPath; lodash get doesn't traverse into array elements.
-    const valuesFromPath = getValuesAtPath(relatedDocument, path);
+    // M2A API returns items[].<junctionField> = { ... } without collection key; try read path without that segment.
+    let valuesFromPath = getValuesAtPath(relatedDocument, path);
+    const pathSegs = path.split(".").filter(Boolean);
+    const isM2AStylePath = pathSegs.length >= 4;
+    if (isM2AStylePath && (Array.isArray(valuesFromPath) ? valuesFromPath : [valuesFromPath]).every((v) => v == null || typeof v === "object")) {
+      valuesFromPath = getValuesAtPath(relatedDocument, toM2AReadPath(path));
+    }
     const flattened = Array.isArray(valuesFromPath) ? valuesFromPath : [valuesFromPath];
     const leafValues = flattened.filter((v) => v != null && typeof v !== "object");
     if (leafValues.length > 0) {
@@ -99,21 +109,23 @@ export const DataTableColumn = ({
     }
 
     let relatedValue: unknown = null;
-    if (fieldInfo?.parentFieldPath) {
-      relatedValue = get(relatedDocument, fieldInfo.parentFieldPath);
+    const parentFieldPathNorm = fieldInfo?.parentFieldPath ? norm(fieldInfo.parentFieldPath) : undefined;
+    if (parentFieldPathNorm) {
+      relatedValue = get(relatedDocument, parentFieldPathNorm);
     }
     const skipFallback =
       isNestedRelationPath &&
-      fieldInfo?.parentFieldPath != null &&
+      parentFieldPathNorm != null &&
       (relatedValue === null || relatedValue === undefined);
 
+    const pathToArrayNorm = pathToArray ? norm(pathToArray) : "";
     if (
       !skipFallback &&
       !Array.isArray(relatedValue) &&
-      pathToArray &&
-      pathToArray !== valuePath
+      pathToArrayNorm &&
+      pathToArrayNorm !== valuePath
     ) {
-      relatedValue = get(relatedDocument, pathToArray);
+      relatedValue = get(relatedDocument, pathToArrayNorm);
     }
     if (!skipFallback && !Array.isArray(relatedValue)) {
       relatedValue = get(relatedDocument, valuePath);
@@ -124,7 +136,7 @@ export const DataTableColumn = ({
     }
 
     if (Array.isArray(relatedValue)) {
-      const parentPath = fieldInfo?.parentFieldPath ?? "";
+      const parentPath = parentFieldPathNorm ?? "";
       const itemPath =
         parentPath && path.startsWith(parentPath + ".")
           ? path.slice(parentPath.length + 1)

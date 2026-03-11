@@ -4,10 +4,11 @@ import { DateUtils } from "@/utils/dayjs";
 import { CoreSchema, ReadFieldOutput, ReadRelationOutput } from "@directus/sdk";
 import { Image } from "expo-image";
 import { View } from "react-native";
-import { getPathFromTemplate, getValuesAtPath, parseTemplate } from "./template";
+import { toM2AReadPath, toM2AReadPathEntryRelative } from "@/helpers/collections/getDisplayTemplate";
+import { getAllPathsFromTemplate, getPathFromTemplate, getValuesAtPath, parseTemplate } from "./template";
 import { get, map } from "lodash";
 import { useRelations } from "@/state/queries/directus/core";
-import { useFields } from "@/state/queries/directus/collection";
+import { useCollection, useFields } from "@/state/queries/directus/collection";
 import { Button } from "@/components/display/button";
 import { Text } from "@/components/display/typography";
 import { DropdownMenu } from "@/components/display/dropdown-menu";
@@ -103,6 +104,7 @@ export const getFieldValue = (
 export const useFieldDisplayValue = (collection: string) => {
   const { data: relations } = useRelations();
   const { data: fields } = useFields(collection as keyof CoreSchema);
+  const { data: collectionMeta } = useCollection(collection);
 
   const parse = ({
     item,
@@ -130,27 +132,48 @@ export const useFieldDisplayValue = (collection: string) => {
               r.related_collection === item.collection &&
               r.meta.one_field === item.field,
           );
-          const templatePath = getPathFromTemplate(template);
+          const templatePathsRaw = getAllPathsFromTemplate(template);
+          const templatePaths = (
+            templatePathsRaw.length > 0
+              ? templatePathsRaw
+              : [getPathFromTemplate(template).replace(/(\w+):/g, "$1.")].filter(Boolean)
+          ).sort((a, b) => b.split(".").length - a.split(".").length);
 
           const formatEntry = (entry: unknown): string => {
-            if (
-              entry != null &&
-              typeof entry === "object" &&
-              templatePath
-            ) {
-              const values = getValuesAtPath(entry, templatePath);
-              const flattened = Array.isArray(values) ? values : [values];
-              const leafValues = flattened.filter(
-                (v) => v != null && typeof v !== "object"
-              );
-              if (leafValues.length > 0) {
-                return leafValues
-                  .map((v) => getFieldValueString({ value: v }))
-                  .filter(Boolean)
-                  .join(", ");
+            const prefix = item.field + ".";
+
+            if (entry != null && typeof entry === "object") {
+              for (const templatePath of templatePaths) {
+                if (!templatePath) continue;
+                const pathForEntry = templatePath.startsWith(prefix)
+                  ? templatePath.slice(prefix.length)
+                  : templatePath;
+
+                let values = getValuesAtPath(entry, pathForEntry);
+                let flattened = Array.isArray(values) ? values : [values];
+                let leafValues = flattened.filter(
+                  (v) => v != null && typeof v !== "object"
+                );
+                if (leafValues.length === 0 && pathForEntry.split(".").length >= 3) {
+                  values = getValuesAtPath(entry, toM2AReadPathEntryRelative(pathForEntry));
+                  flattened = Array.isArray(values) ? values : [values];
+                  leafValues = flattened.filter(
+                    (v) => v != null && typeof v !== "object"
+                  );
+                }
+                if (leafValues.length > 0) {
+                  return leafValues
+                    .map((v) => getFieldValueString({ value: v }))
+                    .filter(Boolean)
+                    .join(", ");
+                }
               }
+              const pathForEntry = templatePaths[0]?.startsWith(prefix)
+                ? templatePaths[0].slice(prefix.length)
+                : templatePaths[0];
+              return get(entry, pathForEntry || template) ?? String(entry ?? "");
             }
-            return get(entry, templatePath || template) ?? String(entry ?? "");
+            return String(entry ?? "");
           };
 
           return !!data?.[item.field].length && junction ? (
@@ -170,26 +193,45 @@ export const useFieldDisplayValue = (collection: string) => {
                   r.related_collection === item.collection &&
                   r.meta.one_field === item.field,
               );
-              const template = item.meta.display_options?.template;
-              const templatePath = getPathFromTemplate(template);
+              const template =
+                item.meta.display_options?.template ??
+                (collectionMeta?.meta?.display_template as string | undefined);
+              const templatePathsRaw = getAllPathsFromTemplate(template);
+              const templatePaths = (
+                templatePathsRaw.length > 0
+                  ? templatePathsRaw
+                  : [getPathFromTemplate(template).replace(/(\w+):/g, "$1.")].filter(Boolean)
+              ).sort((a, b) => b.split(".").length - a.split(".").length);
 
               const formatEntry = (entry: unknown): string => {
-                if (
-                  entry != null &&
-                  typeof entry === "object" &&
-                  templatePath
-                ) {
-                  const values = getValuesAtPath(entry, templatePath);
-                  const flattened =
-                    Array.isArray(values) ? values : [values];
-                  const leafValues = flattened.filter(
-                    (v) => v != null && typeof v !== "object"
-                  );
-                  if (leafValues.length > 0) {
-                    return leafValues
-                      .map((v) => getFieldValueString({ value: v }))
-                      .filter(Boolean)
-                      .join(", ");
+                if (entry != null && typeof entry === "object") {
+                  const prefix = item.field + ".";
+
+                  for (const templatePath of templatePaths) {
+                    if (!templatePath) continue;
+                    const pathForEntry = templatePath.startsWith(prefix)
+                      ? templatePath.slice(prefix.length)
+                      : templatePath;
+
+                    let values = getValuesAtPath(entry, pathForEntry);
+                    let flattened = Array.isArray(values) ? values : [values];
+                    let leafValues = flattened.filter(
+                      (v) => v != null && typeof v !== "object"
+                    );
+                    if (leafValues.length === 0 && pathForEntry.split(".").length >= 3) {
+                      const entryRelativePath = toM2AReadPathEntryRelative(pathForEntry);
+                      values = getValuesAtPath(entry, entryRelativePath);
+                      flattened = Array.isArray(values) ? values : [values];
+                      leafValues = flattened.filter(
+                        (v) => v != null && typeof v !== "object"
+                      );
+                    }
+                    if (leafValues.length > 0) {
+                      return leafValues
+                        .map((v) => getFieldValueString({ value: v }))
+                        .filter(Boolean)
+                        .join(", ");
+                    }
                   }
                 }
                 return parseTemplate(template, entry as Record<string, unknown>, fields) ?? "";
