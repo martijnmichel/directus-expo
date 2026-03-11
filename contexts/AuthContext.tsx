@@ -33,7 +33,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   token: string | null;
   setApiKey: (apiKey: string, apiUrl: string) => Promise<void>;
-  refreshSession: () => Promise<boolean>;
+  refreshSession: (overrideApi?: { url: string }) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -184,25 +184,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const refreshSession = async () => {
+  const refreshSession = async (overrideApi?: { url: string }) => {
     try {
-      const activeApiRaw = await AsyncStorage.getItem(
-        LocalStorageKeys.DIRECTUS_API_ACTIVE
-      );
-      if (!activeApiRaw) return false;
+      const apiUrl = overrideApi?.url;
+      if (!apiUrl) {
+        const activeApiRaw = await AsyncStorage.getItem(
+          LocalStorageKeys.DIRECTUS_API_ACTIVE
+        );
+        if (!activeApiRaw) return false;
+        const activeApi = JSON.parse(activeApiRaw) as { url?: string };
+        if (!activeApi?.url) return false;
+        return refreshSessionForUrl(activeApi.url);
+      }
+      return refreshSessionForUrl(apiUrl);
+    } catch (e) {
+      return false;
+    }
+  };
 
-      const activeApi = JSON.parse(activeApiRaw) as { url?: string };
-      if (!activeApi?.url) return false;
-
+  const refreshSessionForUrl = async (apiUrl: string) => {
+    try {
       const sessionRaw = await AsyncStorage.getItem(
-        getSessionStorageKey(activeApi.url)
+        getSessionStorageKey(apiUrl)
       );
       if (!sessionRaw) return false;
 
       const session = JSON.parse(sessionRaw) as AuthenticationData | null;
       if (!session?.refresh_token) return false;
 
-      const client = initDirectus(activeApi.url);
+      const client = initDirectus(apiUrl);
       setDirectus(client);
 
       await client.refresh();

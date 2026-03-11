@@ -129,7 +129,9 @@ export const LoginForm = () => {
           const key = `directus_session_token:${encodeURIComponent(url)}`;
           const raw = await AsyncStorage.getItem(key);
           if (!raw) return setHasRefreshToken(false);
-          const session = JSON.parse(raw) as { refresh_token?: string | null } | null;
+          const session = JSON.parse(raw) as {
+            refresh_token?: string | null;
+          } | null;
           console.log({ session });
           setHasRefreshToken(!!session?.refresh_token);
         } catch {
@@ -278,33 +280,36 @@ export const LoginForm = () => {
         </>
       )}
 
-      <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
-        {t("form.login")}
-      </Button>
-
-      {hasRefreshToken && (
-        <Button
-          onPress={() => {
-            refreshSession()
-              .then((ok) => {
-                if (ok) {
-                  Alert.alert("Success", "Session refreshed");
-                  router.push("/");
-                } else {
-                  Alert.alert(
-                    "Cannot refresh",
-                    "No refresh token found for the selected API. Please login again."
-                  );
-                }
-              })
-              .catch(() => {
-                Alert.alert("Error", "Failed to refresh session");
-              });
-          }}
-        >
-          Refresh
+      <Vertical>
+        <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          {t("form.login")}
         </Button>
-      )}
+
+        {hasRefreshToken && (
+          <Button
+            variant="soft"
+            onPress={() => {
+              refreshSession()
+                .then((ok) => {
+                  if (ok) {
+                    Alert.alert("Success", "Session refreshed");
+                    router.push("/");
+                  } else {
+                    Alert.alert(
+                      "Cannot refresh",
+                      "No refresh token found for the selected API. Please login again.",
+                    );
+                  }
+                })
+                .catch(() => {
+                  Alert.alert("Error", "Failed to refresh session");
+                });
+            }}
+          >
+            Refresh
+          </Button>
+        )}
+      </Vertical>
 
       {/** <Vertical>
         {map(providers?.items, (provider) => (

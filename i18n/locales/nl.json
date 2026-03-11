@@ -130,7 +130,8 @@
       "darkMode": "Donkere modus",
       "runtime": "Runtime",
       "support": "Ondersteuning",
-      "sponsorship": "Sponsoring"
+      "sponsorship": "Sponsoring",
+      "apiSwitch": "Verander van server"
     },
     "actions": {
       "logout": "Uitloggen",
