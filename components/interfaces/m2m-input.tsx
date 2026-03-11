@@ -43,7 +43,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
-import { parseTemplate } from "@/helpers/document/template";
+import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
@@ -176,33 +176,30 @@ export const M2MInput = ({
     });
   };
 
+  const junctionParentIdField = junction?.field;
   const { data: pickedItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
-
     {
       fields: [`*`],
-      filter: {
-        ...((!!value.update.length || !!value.create.length) &&
-          !!relation?.schema && {
-            [relation?.schema.column as any]: {
-              _in: [
-                ...value.update.map((v) => v.id),
-                ...value.create.map(
-                  (v) =>
-                    v[relation?.field as any]?.[
-                      relation?.schema.foreign_key_column as any
-                    ]
-                ),
-              ],
-            },
-          }),
-      },
+      filter:
+        docId != null &&
+        docId !== "+" &&
+        junctionParentIdField
+          ? { [junctionParentIdField]: { _eq: docId } }
+          : undefined,
+    },
+    {
+      enabled:
+        !!junction &&
+        docId != null &&
+        docId !== "+" &&
+        !!junctionParentIdField,
     }
   );
 
   useEffect(() => {
     refetch();
-  }, [value.update, value.create, relation, junction, refetch]);
+  }, [docId, junction?.collection, refetch]);
 
  /** console.log({
     item,
@@ -236,6 +233,12 @@ export const M2MInput = ({
     isDeselected?: boolean;
     isSortable?: boolean;
   }) => {
+    const { data: fields } = useFields(relation.related_collection as any);
+    const pk = getPrimaryKey(fields);
+    const templatePaths = getFieldPathsFromTemplate(template);
+    const requestFields =
+      templatePaths.length > 0 ? [pk, ...templatePaths] : ["*.*"];
+
     const {
       data: doc,
       isLoading,
@@ -245,11 +248,9 @@ export const M2MInput = ({
       collection: junction?.meta.many_collection as keyof CoreSchema,
       id: docId,
       options: {
-        fields: ["*.*"],
+        fields: requestFields as any,
       },
     });
-
-    const { data: fields } = useFields(relation.related_collection as any);
 
     useEffect(() => {
       EventBus.on("m2m:update", (event) => {
@@ -514,7 +515,7 @@ export const M2MInput = ({
                   uuid,
                   current_value: [
                     pickedItems?.items?.map(
-                      (i: any) => i?.[relation.schema?.column || relation.meta.many_field as any]
+                      (i: any) => i?.[junction.meta.junction_field as string]
                     ),
                   ].join(","),
                   junction_field: junction.field,

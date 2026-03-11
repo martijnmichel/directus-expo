@@ -100,6 +100,14 @@ type FieldValueTransform = FieldValueBase & {
 
 export type FieldTransform = FieldValueString | FieldValueTransform;
 
+/** Return dot paths to request for a template (e.g. ["translations.title"]). */
+export function getFieldPathsFromTemplate(template?: string): string[] {
+  return getFieldsFromTemplate(template)
+    .filter((s): s is FieldValueTransform => s.type === "transform")
+    .map((s) => s.path || s.name)
+    .filter(Boolean);
+}
+
 export const getFieldsFromTemplate = (template?: string): FieldTransform[] => {
   if (!template) return [];
 
