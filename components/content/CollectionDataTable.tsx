@@ -4,7 +4,7 @@ import { Table, tableStylesheet } from "../display/table";
 import { Container } from "../layout/Container";
 import { useFields } from "@/state/queries/directus/collection";
 import { useDocuments } from "@/state/queries/directus/collection";
-import { CoreSchema } from "@directus/sdk";
+import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router, usePathname } from "expo-router";
@@ -25,12 +25,39 @@ import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
-import { getFieldsFromTemplate } from "@/helpers/document/template";
+import { getAllPathsFromTemplate, getFieldsFromTemplate } from "@/helpers/document/template";
 import { Text } from "../display/typography";
 import {
   getDisplayTemplateQueryFields,
   getDisplayTemplateTransformName,
+  toM2AQueryField,
 } from "@/helpers/collections/getDisplayTemplate";
+import type { ReadRelationOutput } from "@directus/sdk";
+
+/** Only convert path to M2A query syntax when the alias field is M2A (many-side relation has related_collection === null). */
+function toQueryField(
+  path: string,
+  collection: string,
+  fields: ReadFieldOutput<CoreSchema>[] | undefined,
+  relations: ReadRelationOutput<CoreSchema>[] | undefined
+): string {
+  if (!path.includes(".") || !relations?.length) return path;
+  const rootFieldName = path.split(".")[0];
+  const junction = relations.find(
+    (r) =>
+      r.related_collection === collection &&
+      r.meta?.one_field === rootFieldName
+  );
+  if (!junction?.collection || junction.meta?.junction_field == null)
+    return path;
+  const manySideRelation = relations.find(
+    (r) =>
+      r.collection === junction.collection &&
+      r.field === junction.meta?.junction_field
+  );
+  const isM2A = manySideRelation?.related_collection == null;
+  return isM2A ? toM2AQueryField(path) : path;
+}
 import { useStyles } from "react-native-unistyles";
 import { DataTableColumn } from "./DataTableColumn";
 
@@ -87,16 +114,64 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     [documents?.items, primaryKey]
   );
 
-  const relatedDocumentsQuery = useMemo(
-    () => ({
-      fields: [...fieldsQuery.filter((v) => v.includes(".")), primaryKey],
+  const relatedDocumentsQuery = useMemo(() => {
+    const rootFields = fieldsQuery.filter((v) => !v.includes("."));
+    const nestedFields = fieldsQuery
+      .filter((v) => v.includes("."))
+      .map((f) => toQueryField(f, collection, fields, relations ?? undefined));
+    const m2aExpansionFields: string[] = [];
+    const displayTemplate = data?.meta?.display_template as string | undefined;
+    if (displayTemplate && relations?.length && fields?.length) {
+      const templatePaths = getAllPathsFromTemplate(displayTemplate);
+      for (const tableField of tableFields) {
+        const field = fields.find((fo) => fo.field === tableField);
+        if (!field || field.type !== "alias") continue;
+        const junction = relations.find(
+          (r) =>
+            r.related_collection === collection &&
+            r.meta?.one_field === tableField
+        );
+        if (!junction?.collection || junction.meta?.junction_field == null)
+          continue;
+        const manySide = relations.find(
+          (r) =>
+            r.collection === junction.collection &&
+            r.field === junction.meta?.junction_field
+        );
+        if (manySide?.related_collection != null) continue;
+        const prefix = tableField + ".";
+        for (const p of templatePaths) {
+          if (!p.startsWith(prefix)) continue;
+          // Omit transform (e.g. .$thumbnail) so we don't request it on directus_files
+          const pathWithoutTransform = p.includes(".$")
+            ? p.split(".$")[0]
+            : p;
+          if (pathWithoutTransform) m2aExpansionFields.push(toM2AQueryField(pathWithoutTransform));
+        }
+      }
+    }
+    return {
+      fields: [
+        ...rootFields,
+        ...nestedFields,
+        ...m2aExpansionFields,
+        primaryKey,
+      ],
       limit: -1,
-      filter: documentIds?.length ? {
-        [primaryKey]: { _in: documentIds },
-      } : {},
-    }),
-    [fieldsQuery, primaryKey, documentIds]
-  );
+      filter: documentIds?.length
+        ? { [primaryKey]: { _in: documentIds } }
+        : {},
+    };
+  }, [
+    fieldsQuery,
+    primaryKey,
+    documentIds,
+    collection,
+    fields,
+    relations,
+    data?.meta?.display_template,
+    tableFields,
+  ]);
 
   const { data: relatedDocuments, refetch: refetchRelatedDocuments } =
     useDocuments(

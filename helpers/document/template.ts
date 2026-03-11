@@ -29,6 +29,16 @@ export function getPathFromTemplate(template?: string): string {
   return path.replace(/^item\./, "");
 }
 
+/** Extract all paths from template (every {{ ... }}), normalized (junctionField: -> junctionField.). For M2A templates with multiple placeholders (e.g. items.collection, items.item:block_card.translations.title). */
+export function getAllPathsFromTemplate(template?: string): string[] {
+  if (!template) return [];
+  const matches = [...template.matchAll(/\{\{\s*(.+?)\s*\}\}/g)];
+  return matches
+    .map((m) => m[1]?.trim() ?? "")
+    .filter(Boolean)
+    .map((p) => p.replace(/(\w+):/g, "$1."));
+}
+
 export const parseTemplate = <T>(
   template?: string,
   data?: T & { [key: string]: any },

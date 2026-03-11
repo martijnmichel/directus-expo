@@ -45,7 +45,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
-import { parseTemplate } from "@/helpers/document/template";
+import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
 import {
   getPrimaryKey,
   getPrimaryKeyFromAllFields,
@@ -100,6 +100,7 @@ export const M2AInput = ({
   );
 
   const sortField = junction?.meta.sort_field;
+  const junctionItemField = (junction?.meta?.junction_field as string) ?? "item";
 
   const isInitial = Array.isArray(valueProp);
   const value = isInitial
@@ -120,6 +121,31 @@ export const M2AInput = ({
       r.field === junction?.meta.junction_field &&
       r.collection === junction.meta.many_collection
   );
+
+  const junctionParentIdField = junction?.field;
+  const { data: pickedItems, refetch } = useDocuments(
+    junction?.collection as keyof CoreSchema,
+    {
+      fields: ["*"],
+      filter:
+        docId != null &&
+        docId !== "+" &&
+        junctionParentIdField
+          ? { [junctionParentIdField]: { _eq: docId } }
+          : undefined,
+    },
+    {
+      enabled:
+        !!junction &&
+        docId != null &&
+        docId !== "+" &&
+        !!junctionParentIdField,
+    }
+  );
+
+  useEffect(() => {
+    refetch();
+  }, [docId, junction?.collection, refetch]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
@@ -238,26 +264,55 @@ export const M2AInput = ({
     isNew?: boolean;
     isDeselected?: boolean;
   }) => {
-    const { data: junctionDoc, error } = useDocument({
+    const { data: junctionDocMinimal, error: errorMinimal } = useDocument({
       collection: junction?.collection as keyof CoreSchema,
       id,
-      options: {
-        fields: ["*", "item.*"],
-      },
+      options: { fields: ["*", junctionItemField] },
     });
 
     const { data: collection } = useCollection(
-      junctionDoc?.collection as keyof CoreSchema
+      junctionDocMinimal?.collection as keyof CoreSchema
     );
+
+    const displayTemplate = collection?.meta?.display_template as string | undefined;
+    const templatePaths = getFieldPathsFromTemplate(displayTemplate);
+    const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.["collection"] as string | undefined;
+    const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[junctionItemField];
+    const itemId =
+      rawItem != null && typeof rawItem === "object" && "id" in rawItem
+        ? (rawItem as { id: string | number }).id
+        : rawItem;
 
     const { data: fields } = useFields(collection?.collection as any);
-
     const primaryKey = getPrimaryKey(fields);
-    const text = parseTemplate(
-      collection?.meta.display_template as string,
-      junctionDoc?.item as { [key: string]: any },
+    const relatedFields =
+      templatePaths.length > 0
+        ? [primaryKey, ...templatePaths.map((p) => (p.includes(".$") ? p.split(".$")[0] : p)).filter(Boolean)]
+        : [primaryKey, "*"];
+
+    const { data: relatedDoc } = useDocument({
+      collection: (relatedCollection ?? "") as keyof CoreSchema,
+      id: itemId as string | number,
+      options: { fields: relatedFields as any },
+      query: { enabled: !!relatedCollection && itemId != null && itemId !== "" },
+    });
+
+    const junctionDoc = junctionDocMinimal;
+    const error = errorMinimal;
+    const itemData = (relatedDoc ?? (junctionDoc != null ? (junctionDoc as Record<string, unknown>)?.[junctionItemField] : undefined)) as Record<string, unknown> | undefined;
+    let text = parseTemplate(
+      displayTemplate,
+      itemData as { [key: string]: any },
       fields
     );
+    if (!text || (typeof text === "string" && !text.trim())) {
+      text =
+        itemId != null
+          ? String(itemId)
+          : (junctionDoc as Record<string, unknown>)?.["id"] != null
+            ? String((junctionDoc as Record<string, unknown>).id)
+            : String(id);
+    }
 
     if (error) {
       return (
@@ -295,10 +350,15 @@ export const M2AInput = ({
               href={{
                 pathname: `/modals/m2a/[collection]/[id]`,
                 params: {
-                  collection: junctionDoc?.collection as string,
+                  collection: (junctionDoc as Record<string, unknown>)?.collection as string,
                   uuid,
                   item_field: item.field,
-                  id: (junctionDoc.item as any)?.[primaryKey],
+                  id: (() => {
+                    const raw = (junctionDoc as Record<string, unknown>)?.[junctionItemField];
+                    return (typeof raw === "object" && raw != null && primaryKey in raw
+                      ? (raw as Record<string, unknown>)[primaryKey]
+                      : raw) as string | number;
+                  })(),
                 },
               }}
               asChild
@@ -322,8 +382,8 @@ export const M2AInput = ({
                         id: id as number,
                         ...(sortField && {
                           [sortField]: (
-                            junctionDoc?.item as { [key: string]: any }
-                          )[sortField as string],
+                            (junctionDoc as Record<string, unknown>)?.[junctionItemField] as { [key: string]: any }
+                          )?.[sortField as string],
                         }),
                       },
                     ],
@@ -375,8 +435,21 @@ export const M2AInput = ({
                 related_collection: relation.related_collection,
                 related_field: relation.field,
                 current_value: [
-                  ...value.create.map((i: any) => i?.item.id),
-                ].join(","),
+                  ...(pickedItems?.items?.map((i: any) => {
+                    const raw = i?.[junction.meta.junction_field as string];
+                    if (raw == null) return undefined;
+                    return typeof raw === "object" && raw !== null && "id" in raw
+                      ? (raw as { id: string | number }).id
+                      : raw;
+                  }) ?? []),
+                  ...value.create.map((i: any) => {
+                    const v = i?.[junctionItemField];
+                    return typeof v === "object" && v != null && "id" in v ? (v as { id?: unknown }).id : v;
+                  }),
+                ]
+                  .filter(Boolean)
+                  .map(String)
+                  .join(","),
                 junction_field: junction.field,
                 doc_id: docId,
                 item_field: item.field,
@@ -438,7 +511,7 @@ export const M2AInput = ({
                   >
                     <NewItem
                       collection={(junctionDoc as any).collection}
-                      item={(junctionDoc as any).item}
+                      item={(junctionDoc as any)[junctionItemField]}
                     />
                   </Draggable>
                 );
