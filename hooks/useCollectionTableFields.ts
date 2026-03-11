@@ -2,6 +2,7 @@ import { useFields, usePresets } from "@/state/queries/directus/collection";
 import { CoreSchemaDocument } from "@/types/directus";
 import { CoreSchema, ReadFieldOutput, ReadPresetOutput } from "@directus/sdk";
 import { some } from "lodash";
+import { useMemo } from "react";
 
 export const useCollectionTableFields = ({
   collection,
@@ -10,10 +11,10 @@ export const useCollectionTableFields = ({
 }) => {
   const { data: presets } = usePresets();
   const { data: fields } = useFields(collection as keyof CoreSchema);
-  console.log({ fields })
   const preset = presets?.find((p) => p.collection === collection);
-  return (
-    (preset && preset.layout_query?.tabular?.fields) ||
+  return useMemo(
+    () =>
+      (preset && preset.layout_query?.tabular?.fields) ||
     /** or headers from fields that have values in the documents 
     (!preset &&
       fields
@@ -24,6 +25,7 @@ export const useCollectionTableFields = ({
         .map((f) => f.field)) ||
     /** or headers from all fields */
     fields?.filter(v => !["group-accordion", "group-detail", "group-raw"].includes(v.meta.interface as string)).map((f) => f.field) ||
-    []
+    [],
+    [preset?.layout_query?.tabular?.fields, fields]
   );
 };

@@ -28,7 +28,7 @@ import { usePrimaryKey } from "@/hooks/usePrimaryKey";
 import { useRelations } from "@/state/queries/directus/core";
 import { Alert } from "@/components/display/alert";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/display/button";
 import { View } from "react-native";
 import { Tabs } from "@/components/display/tabs";
@@ -54,7 +54,6 @@ export default function Collection() {
   const baseLanguageValues = base64BaseLanguageValues
     ? base64ToObject((base64BaseLanguageValues as string) || "")
     : undefined;
-  console.log({ defaultValues });
 
   const { data: relations } = useRelations();
 
@@ -84,21 +83,26 @@ export default function Collection() {
 
   const headerStyles = useHeaderStyles({ isModal: true });
 
+  const documentsQuery = useMemo(
+    () => ({
+      filter: {
+        _and: [
+          { [relation?.field as string]: { _eq: base_language as string } },
+        ],
+      },
+    }),
+    [relation?.field, base_language]
+  );
+
   const { data: documents } = useDocuments(
     relation?.collection as keyof CoreSchema,
-    {
-      filter: {
-        _and: [{ [relation?.field as any]: { _eq: base_language } }],
-      },
-    },
+    documentsQuery,
     { enabled: !!relation }
   );
 
   const [form, setForm] = useState<Record<string, any>[]>([]);
 
   const debouncedForm = useDebounce(form, 1000);
-
-  console.log({ documents, junction, relation, form: debouncedForm });
 
   const handleChange = (doc: Record<string, any>, lang: string) => {
     const index = form.findIndex((i) => i?.[relation?.field as any] === lang);
@@ -142,7 +146,6 @@ export default function Collection() {
                 rounded
                 disabled={!debouncedForm.length}
                 onPress={() => {
-                  console.log(debouncedForm);
                   router.dismiss();
                   EventBus.emit("translations:edit", {
                     data: debouncedForm,

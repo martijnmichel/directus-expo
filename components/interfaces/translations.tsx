@@ -10,7 +10,7 @@ import { Modal } from "react-native";
 import { Pressable } from "react-native";
 import { View } from "react-native";
 import { Text } from "../display/typography";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, ChevronDown } from "../icons";
 import { DocumentEditor } from "../content/DocumentEditor";
 import { filter, find, isEmpty, isUndefined, map, some } from "lodash";
@@ -82,27 +82,30 @@ export const Translations = ({
       r.collection === junction.meta.many_collection
   );
 
+  const languagesQuery = useMemo(() => ({}), []);
+
   const { data: languages } = useDocuments(
     relation?.related_collection as keyof CoreSchema,
-    {},
+    languagesQuery,
     { enabled: !!relation }
   );
 
-  console.log({ languages });
-
-  const { data: translatedDocuments } = useDocuments(
-    relation?.collection as keyof CoreSchema,
-    {
+  const translatedDocumentsQuery = useMemo(
+    () => ({
       filter: {
         _and: [
           {
-            [relation?.meta.junction_field as any]: {
-              _eq: docId,
-            },
+            [relation?.meta.junction_field as string]: { _eq: docId },
           },
         ],
       },
-    },
+    }),
+    [relation?.meta.junction_field, docId]
+  );
+
+  const { data: translatedDocuments } = useDocuments(
+    relation?.collection as keyof CoreSchema,
+    translatedDocumentsQuery,
     { enabled: !!relation && docId !== "+" }
   );
 
@@ -126,8 +129,6 @@ export const Translations = ({
   useEffect(() => {
     const addM2M = (event: MittEvents["translations:edit"]) => {
       if (event.field === item.field && event.uuid === uuid) {
-        console.log("translations:edit:received", event);
-
         const newState = {
           create: [
             ...value.create.filter(
@@ -161,17 +162,6 @@ export const Translations = ({
     };
   }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
-  console.log({
-    item,
-    junction,
-    relation,
-    languages,
-    translatedDocuments,
-    primaryKey,
-    value,
-    docId,
-  });
- 
   return (
     <View style={formStyle.formControl}>
       {label && (

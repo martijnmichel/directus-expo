@@ -12,7 +12,6 @@ export const parseTemplate = <T>(
   const pk = getPrimaryKey(fields as any);
   return (
     template?.replace(/\{\{(.*?)\}\}/g, (_, path) => {
-      console.log({ path, data });
       return (
         path
           .trim()
