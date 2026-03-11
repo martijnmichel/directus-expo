@@ -47,8 +47,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return `directus_session_token:${keyPart}`;
   };
 
-  const getApiKeyStorageKey = (apiUrl: string) =>
-    `directus_api_key:${encodeURIComponent(apiUrl)}`;
+  const getApiKeyStorageKey = (apiUrl?: string) =>
+    apiUrl
+      ? `directus_api_key:${encodeURIComponent(apiUrl)}`
+      : "directus_api_key";
 
   const initDirectus = (url?: string) => {
     const sessionKey = getSessionStorageKey(url);
@@ -61,9 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             get: async () => {
               try {
                 return JSON.parse(
-                  (await AsyncStorage.getItem(
-                    sessionKey
-                  )) as string
+                  (await AsyncStorage.getItem(sessionKey)) as string,
                 ) as AuthenticationData;
               } catch (e) {
                 console.error(e);
@@ -71,12 +71,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }
             },
             set: async (value) =>
-              await AsyncStorage.setItem(
-                sessionKey,
-                JSON.stringify(value)
-              ),
+              await AsyncStorage.setItem(sessionKey, JSON.stringify(value)),
           },
-        })
+        }),
       )
       .with(
         rest({
@@ -88,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
             return response;
           },
-        })
+        }),
       );
   };
   const [directus, setDirectus] = useState(initDirectus());
@@ -104,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const initializeDirectus = async () => {
     try {
       const re = await AsyncStorage.getItem(
-        LocalStorageKeys.DIRECTUS_API_ACTIVE
+        LocalStorageKeys.DIRECTUS_API_ACTIVE,
       );
       if (!re) {
         setIsLoading(false);
@@ -127,7 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             // Email/password sessions are persisted by the Directus SDK in the per-instance
             // `directus_session_token:<apiUrl>` storage key.
             const sessionRaw = await AsyncStorage.getItem(
-              getSessionStorageKey(activeApi.url)
+              getSessionStorageKey(activeApi.url),
             );
             if (!sessionRaw) break;
 
@@ -147,7 +144,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } catch (error) {
             // Session is invalid/expired; clear it for the active instance
             try {
-              await AsyncStorage.removeItem(getSessionStorageKey(activeApi?.url));
+              await AsyncStorage.removeItem(
+                getSessionStorageKey(activeApi?.url),
+              );
             } catch (e) {
               // ignore
             }
@@ -156,7 +155,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case "apiKey": {
           try {
             const storedKey = await AsyncStorage.getItem(
-              getApiKeyStorageKey(activeApi.url!)
+              getApiKeyStorageKey(activeApi.url!),
             );
             if (!storedKey) break;
 
@@ -173,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } catch {
             try {
               await AsyncStorage.removeItem(
-                getApiKeyStorageKey(activeApi?.url!)
+                getApiKeyStorageKey(activeApi?.url!),
               );
             } catch (e) {
               // ignore
@@ -215,7 +214,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const apiUrl = overrideApi?.url;
       if (!apiUrl) {
         const activeApiRaw = await AsyncStorage.getItem(
-          LocalStorageKeys.DIRECTUS_API_ACTIVE
+          LocalStorageKeys.DIRECTUS_API_ACTIVE,
         );
         if (!activeApiRaw) return { ok: false };
         const activeApi = JSON.parse(activeApiRaw) as { url?: string };
@@ -229,11 +228,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshSessionForUrl = async (
-    apiUrl: string
+    apiUrl: string,
   ): Promise<{ ok: boolean; authType?: "email" | "apiKey" }> => {
     try {
       const sessionRaw = await AsyncStorage.getItem(
-        getSessionStorageKey(apiUrl)
+        getSessionStorageKey(apiUrl),
       );
       const session = sessionRaw
         ? (JSON.parse(sessionRaw) as AuthenticationData | null)
@@ -254,7 +253,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const storedApiKey = await AsyncStorage.getItem(
-        getApiKeyStorageKey(apiUrl)
+        getApiKeyStorageKey(apiUrl),
       );
       if (storedApiKey) {
         const client = initDirectus(apiUrl);
@@ -278,7 +277,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setApiKey = async (apiKey: string, apiUrl: string) => {
     try {
-      const directus = createDirectus(apiUrl).with(authentication()).with(rest());
+      const directus = createDirectus(apiUrl)
+        .with(authentication())
+        .with(rest());
       setDirectus(directus);
       await directus.setToken(apiKey);
       const user = await directus.request(readMe());
@@ -294,21 +295,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     try {
       const activeApi = await AsyncStorage.getItem(
-        LocalStorageKeys.DIRECTUS_API_ACTIVE
+        LocalStorageKeys.DIRECTUS_API_ACTIVE,
       );
+
       if (activeApi) {
         try {
-          const api = JSON.parse(activeApi) as { url?: string };
-          await AsyncStorage.removeItem(getSessionStorageKey(api?.url));
-          if (api?.url) {
-            await AsyncStorage.removeItem(getApiKeyStorageKey(api.url));
+          const api = JSON.parse(activeApi) as {
+            url?: string;
+            authType?: "email" | "apiKey";
+          };
+          if (api?.authType === "email") {
+            await directus?.logout();
           }
+          
+          await AsyncStorage.removeItem(getSessionStorageKey(api?.url));
+
+          await AsyncStorage.removeItem(getApiKeyStorageKey(api.url));
         } catch (e) {
           // ignore parsing errors
         }
       }
 
-      await directus?.logout();
       //await AsyncStorage.removeItem(LocalStorageKeys.DIRECTUS_API_ACTIVE);
       setDirectus(initDirectus());
       setIsAuthenticated(false);
