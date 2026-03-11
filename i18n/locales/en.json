@@ -135,7 +135,8 @@
       "darkMode": "Dark Mode",
       "runtime": "Runtime",
       "support": "Support",
-      "sponsorship": "Sponsorship"
+      "sponsorship": "Sponsorship",
+      "apiSwitch": "Change server"
     },
     "actions": {
       "logout": "Logout",

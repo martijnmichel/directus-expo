@@ -32,6 +32,7 @@ import { ScrollView } from "react-native";
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
 import { ExternalLink } from "@/components/ExternalLink";
+import { ApiSwitch } from "@/components/SessionSwitch";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -39,7 +40,7 @@ export default function TabTwoScreen() {
   const { data: health } = useServerHealth();
   const { directus } = useAuth();
   const { data: api } = useLocalStorage<API>(
-    LocalStorageKeys.DIRECTUS_API_ACTIVE
+    LocalStorageKeys.DIRECTUS_API_ACTIVE,
   );
 
   const { t } = useTranslation();
@@ -109,6 +110,17 @@ export default function TabTwoScreen() {
         >
           {t("settings.actions.logout")}
         </Button>
+      ),
+    },
+    {
+      type: "component",
+      component: (
+        <Horizontal style={{ alignItems: "center" }}>
+          <Text style={{ flex: 2 }}>{t("settings.fields.apiSwitch")}</Text>
+          <View style={{ flex: 5 }}>
+            <ApiSwitch />
+          </View>
+        </Horizontal>
       ),
     },
     {
