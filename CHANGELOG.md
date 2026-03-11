@@ -1,3 +1,10 @@
+## [0.8.2](https://github.com/martijnmichel/directus-expo/compare/v0.8.1...v0.8.2) (2026-03-11)
+
+
+### Bug Fixes
+
+* light mode css on tinymce ([105f206](https://github.com/martijnmichel/directus-expo/commit/105f20680a2c18d4ee46c8f7b1ed52218580ae04))
+
 ## [0.8.1](https://github.com/martijnmichel/directus-expo/compare/v0.8.0...v0.8.1) (2026-03-11)
 
 
