@@ -41,7 +41,13 @@ export function APISelect({
   return (
     <Vertical>
       <Select
-        onValueChange={(_, index) => onChange && onChange(data?.[index])}
+        onValueChange={(_, index) => {
+          const selected = data?.[index];
+          if (selected) {
+            onChange?.(selected);
+            mutateApi.mutate(selected);
+          }
+        }}
         options={
           data?.map((api) => ({
             value: api.url,

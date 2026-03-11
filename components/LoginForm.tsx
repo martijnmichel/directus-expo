@@ -34,6 +34,8 @@ import { useAutoDiscovery } from "expo-auth-session";
 import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select } from "./interfaces/select";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useState } from "react";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -70,10 +72,11 @@ interface LoginForm {
 
 export const LoginForm = () => {
   const { styles } = useStyles(formStyles);
-  const { login, setApiKey } = useAuth();
+  const { login, setApiKey, refreshSession } = useAuth();
   const { data: api } = useLocalStorage<API>(
-    LocalStorageKeys.DIRECTUS_API_ACTIVE
+    LocalStorageKeys.DIRECTUS_API_ACTIVE,
   );
+  const [hasRefreshToken, setHasRefreshToken] = useState(false);
 
   const apiKey = process.env.EXPO_PUBLIC_DIRECTUS_API_KEY_DEMO;
 
@@ -87,19 +90,12 @@ export const LoginForm = () => {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: __DEV__
-      ? {
-          email: "martijn.michel@gmail.com",
-          password: "CB4i79%jcfCF2q",
-          type: "email",
-          api: undefined,
-        }
-      : {
-          email: "",
-          password: "",
-          type: "email",
-          api: undefined,
-        },
+    defaultValues: {
+      email: "",
+      password: "",
+      type: "email",
+      api: undefined,
+    },
   });
 
   const url = watch("api.url");
@@ -122,22 +118,39 @@ export const LoginForm = () => {
   }, [url]);
 
   useEffect(() => {
+    console.log({ api });
     if (api) {
       setValue("api", api);
+
+      const check = async () => {
+        try {
+          const url = api?.url;
+          if (!url) return setHasRefreshToken(false);
+          const key = `directus_session_token:${encodeURIComponent(url)}`;
+          const raw = await AsyncStorage.getItem(key);
+          if (!raw) return setHasRefreshToken(false);
+          const session = JSON.parse(raw) as { refresh_token?: string | null } | null;
+          console.log({ session });
+          setHasRefreshToken(!!session?.refresh_token);
+        } catch {
+          setHasRefreshToken(false);
+        }
+      };
+      check();
+    } else {
+      setHasRefreshToken(false);
     }
-  }, [api]);
+  }, [api?.url]);
   const { t } = useTranslation();
 
   const mutateApi = mutateLocalStorage(LocalStorageKeys.DIRECTUS_API_ACTIVE);
-  const mutateLogin = mutateLocalStorage(LocalStorageKeys.CURRENT_LOGIN);
 
   const onSubmit = async (data: LoginFormData) => {
     if (data.type === "email") {
       try {
         console.log({ data });
         await login(data.email, data.password, data.api.url);
-        mutateApi.mutate(data.api);
-        mutateLogin.mutate(data);
+        mutateApi.mutate({ ...data.api, authType: "email" });
         router.push("/");
       } catch (error) {
         Alert.alert("Error", t("form.errors.loginFailed"));
@@ -146,8 +159,7 @@ export const LoginForm = () => {
       try {
         console.log({ data });
         await setApiKey(data.apiKey, data.api.url);
-        mutateApi.mutate(data.api);
-        mutateLogin.mutate(data);
+        mutateApi.mutate({ ...data.api, authType: "apiKey" });
         router.push("/");
       } catch (error) {
         Alert.alert("Error", t("form.errors.loginFailed"));
@@ -157,7 +169,7 @@ export const LoginForm = () => {
 
   const ProviderButton = ({ provider }: { provider: ReadProviderOutput }) => {
     const discovery = useAutoDiscovery(
-      `${watch("api.url")}/auth/login/${provider.name}`
+      `${watch("api.url")}/auth/login/${provider.name}`,
     );
     return (
       <Button
@@ -167,7 +179,7 @@ export const LoginForm = () => {
           Linking.openURL(
             `${watch("api.url")}/auth/login/${
               provider.name
-            }?redirect=https://directusmobile.app/app-link/auth/login/callback`
+            }?redirect=https://directusmobile.app/app-link/auth/login/callback`,
           );
         }}
       >
@@ -269,6 +281,30 @@ export const LoginForm = () => {
       <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
         {t("form.login")}
       </Button>
+
+      {hasRefreshToken && (
+        <Button
+          onPress={() => {
+            refreshSession()
+              .then((ok) => {
+                if (ok) {
+                  Alert.alert("Success", "Session refreshed");
+                  router.push("/");
+                } else {
+                  Alert.alert(
+                    "Cannot refresh",
+                    "No refresh token found for the selected API. Please login again."
+                  );
+                }
+              })
+              .catch(() => {
+                Alert.alert("Error", "Failed to refresh session");
+              });
+          }}
+        >
+          Refresh
+        </Button>
+      )}
 
       {/** <Vertical>
         {map(providers?.items, (provider) => (
