@@ -14,15 +14,13 @@ export enum LocalStorageKeys {
   APP_SETTINGS = "@app-settings",
   DIRECTUS_APIS = "@directus-apis",
   DIRECTUS_API_ACTIVE = "@directus-api-active",
-  CURRENT_LOGIN = "@current-login",
   CONTENT_PATH = "@content-path",
 }
 
 export type LocalStorageTyp = {
   [LocalStorageKeys.APP_SETTINGS]: AppSettings;
   [LocalStorageKeys.DIRECTUS_APIS]: API[];
-  [LocalStorageKeys.DIRECTUS_API_ACTIVE]: API;
-  [LocalStorageKeys.CURRENT_LOGIN]: LoginFormData;
+  [LocalStorageKeys.DIRECTUS_API_ACTIVE]: API & { authType?: "email" | "apiKey" };
   [LocalStorageKeys.CONTENT_PATH]: string;
 };
 
