@@ -1,3 +1,10 @@
+## [0.8.8](https://github.com/martijnmichel/directus-expo/compare/v0.8.7...v0.8.8) (2026-03-11)
+
+
+### Features
+
+* m2a nested data in Table and Interface ([58c0bd8](https://github.com/martijnmichel/directus-expo/commit/58c0bd8c381ab607bfad741ab03f5c2689eec1cf))
+
 ## [0.8.7](https://github.com/martijnmichel/directus-expo/compare/v0.8.6...v0.8.7) (2026-03-11)
 
 
