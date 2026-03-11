@@ -1,3 +1,15 @@
+## [0.8.4](https://github.com/martijnmichel/directus-expo/compare/v0.8.3...v0.8.4) (2026-03-11)
+
+
+### Features
+
+* m2o relational ([d52fa28](https://github.com/martijnmichel/directus-expo/commit/d52fa28ac408458ad68840c6b78f12566fe14afa))
+
+
+### Performance Improvements
+
+* rewrite o2m input ([55354d4](https://github.com/martijnmichel/directus-expo/commit/55354d4018e0217ebae7696722577599e3828dfa))
+
 ## [0.8.3](https://github.com/martijnmichel/directus-expo/compare/v0.8.2...v0.8.3) (2026-03-11)
 
 
