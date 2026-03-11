@@ -290,8 +290,8 @@ export const LoginForm = () => {
             variant="soft"
             onPress={() => {
               refreshSession()
-                .then((ok) => {
-                  if (ok) {
+                .then((result) => {
+                  if (result.ok) {
                     Alert.alert("Success", "Session refreshed");
                     router.push("/");
                   } else {

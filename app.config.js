@@ -55,12 +55,7 @@ export default () => ({
         },
       ],
 
-      [
-        "expo-local-authentication",
-        {
-          faceIDPermission: "Allow Directus Mobile to use Face ID.",
-        },
-      ],
+     
     ],
     experiments: {
       typedRoutes: true,

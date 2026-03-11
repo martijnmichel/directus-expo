@@ -28,9 +28,16 @@ export function ApiSwitch() {
       onValueChange={(value) => {
         const selected = apis?.find((api) => api.url === value);
         if (!selected) return;
-        refreshSession(selected).then((ok) => {
-          mutateApi.mutate(selected);
-          if (!ok) router.push("/login");
+        refreshSession(selected).then((result) => {
+          if (result.ok) {
+            mutateApi.mutate({
+              ...selected,
+              authType: result.authType,
+            });
+          } else {
+            mutateApi.mutate(selected);
+            router.push("/login");
+          }
         });
       }}
     />

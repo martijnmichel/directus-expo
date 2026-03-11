@@ -14,6 +14,7 @@
     "start:staging": "EXPO_PUBLIC_ENV=staging expo start --clear",
     "start:prod": "EXPO_PUBLIC_ENV=production expo start --clear",
     "build:dev:ios": "eas build --profile development --platform ios",
+    
     "build:staging:ios": "eas build --profile staging --platform ios",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:prod:ios": "eas build --profile production --platform ios",
@@ -62,7 +63,6 @@
     "expo-image-picker": "~17.0.8",
     "expo-linear-gradient": "~15.0.7",
     "expo-linking": "~8.0.8",
-    "expo-local-authentication": "~17.0.8",
     "expo-router": "~6.0.12",
     "expo-splash-screen": "^31.0.10",
     "expo-status-bar": "~3.0.8",
