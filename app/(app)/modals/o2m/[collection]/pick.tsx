@@ -105,7 +105,6 @@ export default function Collection() {
 
   const tableFields = useCollectionTableFields({
     collection: collection as keyof CoreSchema,
-    documents: options?.items,
   });
 
   useEffect(() => {
