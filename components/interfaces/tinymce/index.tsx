@@ -118,7 +118,7 @@ export const TinyMCEEditor = ({
       menubar: false,
       nowrap: true,
       skin: '${themeName === "dark" ? "oxide-dark" : "oxide"}',
-      content_css: '${themeName}',
+      content_css: '${themeName === "dark" ? "dark" : "default"}',
       content_style: 'img { max-width: 100%; height: auto; }',
       toolbar: '${
         item.meta.options
