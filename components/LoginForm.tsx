@@ -292,7 +292,7 @@ export const LoginForm = () => {
               refreshSession()
                 .then((result) => {
                   if (result.ok) {
-                    Alert.alert("Success", "Session refreshed");
+                   // Alert.alert("Success", "Session refreshed");
                     router.push("/");
                   } else {
                     Alert.alert(
