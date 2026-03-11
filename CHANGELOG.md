@@ -1,3 +1,10 @@
+## [0.8.9](https://github.com/martijnmichel/directus-expo/compare/v0.8.8...v0.8.9) (2026-03-11)
+
+
+### Bug Fixes
+
+* repeater items without type & interface selected ([bb19b4d](https://github.com/martijnmichel/directus-expo/commit/bb19b4d9b80860cecb11d6d451decb3a96543500))
+
 ## [0.8.8](https://github.com/martijnmichel/directus-expo/compare/v0.8.7...v0.8.8) (2026-03-11)
 
 
