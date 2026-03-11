@@ -1,3 +1,16 @@
+## [0.8.1](https://github.com/martijnmichel/directus-expo/compare/v0.8.0...v0.8.1) (2026-03-11)
+
+
+### Bug Fixes
+
+* logout before remove storage ([1f878ad](https://github.com/martijnmichel/directus-expo/commit/1f878ad3f04a07ec2322e0decf6c4b1589fc29b8))
+
+
+### Features
+
+* api key refresh ([34c9873](https://github.com/martijnmichel/directus-expo/commit/34c98732cdd68cdd8a81cc4d787ca0115171b9e2))
+* instance switch ([6057eb4](https://github.com/martijnmichel/directus-expo/commit/6057eb40b0955e1b4c546e0f9ab684ded8061bfb))
+
 # [0.8.0](https://github.com/martijnmichel/directus-expo/compare/v0.7.3...v0.8.0) (2026-03-10)
 
 
