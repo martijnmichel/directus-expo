@@ -8,7 +8,7 @@ import { CoreSchema } from "@directus/sdk";
 import { useTranslation } from "react-i18next";
 import { useFieldMeta } from "@/helpers/document/fieldLabel";
 import { router, usePathname } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { UseQueryResult } from "@tanstack/react-query";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { PortalOutlet } from "../layout/Portal";
@@ -56,45 +56,59 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     collection: collection as keyof CoreSchema,
   });
 
-  const fieldsQuery = map(tableFields, (f) => {
-    const field = fields?.find((fo) => fo.field === f);
-    return getDisplayTemplateQueryFields(field) || f.split(".$")[0];
-  });
+  const fieldsQuery = useMemo(
+    () =>
+      map(tableFields, (f) => {
+        const field = fields?.find((fo) => fo.field === f);
+        return getDisplayTemplateQueryFields(field) || f.split(".$")[0];
+      }),
+    [tableFields, fields]
+  );
+
   const { data: presets, isLoading: isPresetsLoading } = usePresets();
 
   const preset = presets?.find((p) => p.collection === collection);
 
+  const documentsQuery = useMemo(
+    () => ({ page, limit, search }),
+    [page, limit, search]
+  );
 
   const { data: documents, refetch } = useDocuments(
     collection as keyof CoreSchema[keyof CoreSchema],
-    {
-      page,
-      limit,
-      search,
-    },
+    documentsQuery,
     {
       enabled: !!fieldsQuery.length,
     }
   );
 
-  const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
-    collection as keyof CoreSchema,
-    {
-      fields: [...fieldsQuery.filter(v => v.includes(".")), primaryKey],
-      limit: -1,
-      filter: {
-        [primaryKey]: {
-          _in: map(documents?.items, (doc) => doc[primaryKey as string]),
-        },
-      }
-    },
-    {
-      enabled: !!fieldsQuery.length && !!documents?.items?.length,
-    }
+  const documentIds = useMemo(
+    () => map(documents?.items, (doc) => doc[primaryKey as string]),
+    [documents?.items, primaryKey]
   );
 
+  const relatedDocumentsQuery = useMemo(
+    () => ({
+      fields: [...fieldsQuery.filter((v) => v.includes(".")), primaryKey],
+      limit: -1,
+      filter: {
+        [primaryKey]: { _in: documentIds },
+      },
+    }),
+    [fieldsQuery, primaryKey, documentIds]
+  );
 
-  console.log({ preset, tableFields, fieldsQuery, documents, relatedDocuments });
+  const { data: relatedDocuments, refetch: refetchRelatedDocuments } =
+    useDocuments(
+      collection as keyof CoreSchema,
+      relatedDocumentsQuery,
+      {
+        enabled: !!fieldsQuery.length && !!documents?.items?.length,
+      }
+    );
+
+
+ // console.log({ preset, tableFields, fieldsQuery, documents, relatedDocuments });
 
   const { label } = useFieldMeta(collection);
 
@@ -218,7 +232,6 @@ export function CollectionDataTable({ collection }: { collection: string }) {
     } 
     
     else if (fieldInfo?.transform && fieldInfo.field) {
-     console.log({ value, fieldInfo, relatedDocument });
      return getFieldValue(fieldInfo.field, value, fieldInfo.transform);
     }
     else if (fieldInfo?.field) {

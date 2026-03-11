@@ -84,7 +84,6 @@ export const getFieldValue = (
   value: any,
   transform?: string,
 ) => {
-  console.log({ item, value, transform });
   if (!item) return;
   const typeHandlers =
     fieldValueMap[item.type as keyof typeof fieldValueMap] ??
@@ -132,8 +131,6 @@ export const useFieldDisplayValue = (collection: string) => {
               r.meta.one_field === item.field,
           );
 
-          console.log({ junction, value: data?.[item.field], template });
-
           return !!data?.[item.field].length && junction ? (
             <Horizontal spacing="xs">
               {map(data?.[item.field], (id) => {
@@ -156,9 +153,8 @@ export const useFieldDisplayValue = (collection: string) => {
                     {data?.[item.field].length} items
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Content>
-                    <Vertical>
+                      <Vertical>
                       {map(data?.[item.field], (id) => {
-                        console.log({ id, item, data });
                         return (
                           <Text>
                             {parseTemplate(
