@@ -89,7 +89,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       }
     },
     {
-      enabled: !!fieldsQuery.length,
+      enabled: !!fieldsQuery.length && !!documents?.items?.length,
     }
   );
 
