@@ -65,6 +65,7 @@ export const RepeaterDocument = ({
           fields,
           control,
           styles,
+          fallbackInterface: "input",
         })}
       </View>
     </FormProvider>
