@@ -20,4 +20,6 @@ export interface AppPushDeviceRecord {
   token: string;
   platform: PushPlatform;
   subscriptions: PushSubscriptionEntry[];
+  /** Directus user who owns this device (per-server, per-user). */
+  user_id?: string | null;
 }

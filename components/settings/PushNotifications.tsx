@@ -8,8 +8,9 @@ import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { usePushToken } from "@/hooks/usePushToken";
 import {
+  useCanManagePushSetup,
   usePushCollectionExists,
-  type PushSetupState,
+  usePushAccessOnly,
 } from "@/state/push/usePushCollection";
 import { useInstallPushSchema } from "@/state/push/installPushSchema";
 import { usePushDevice, useUpsertPushDevice } from "@/state/push/usePushDevice";
@@ -26,7 +27,6 @@ import { DirectusIcon } from "@/components/display/directus-icon";
 import { Modal } from "@/components/display/modal";
 import { Input } from "@/components/interfaces/input";
 import { SelectMulti } from "@/components/interfaces/select-multi";
-import { KeyboardAwareScrollView } from "../layout/Layout";
 import { ScrollView } from "react-native-gesture-handler";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
@@ -48,11 +48,18 @@ function mergeSubscriptions(
 export function PushNotifications() {
   const { t, i18n } = useTranslation();
   const { token, loading: requestingPermission, requestToken } = usePushToken();
+  const { data: canManageSetup, isLoading: loadingCanManage } =
+    useCanManagePushSetup();
+  const runFullSetupCheck = canManageSetup === true;
   const {
     data: setup,
     isLoading: loadingExists,
     isError: setupError,
-  } = usePushCollectionExists();
+  } = usePushCollectionExists(runFullSetupCheck);
+  const { data: accessOnly, isLoading: loadingAccessOnly } =
+    usePushAccessOnly(!runFullSetupCheck);
+  const deviceAccess =
+    runFullSetupCheck ? setup?.deviceAccess : accessOnly?.deviceAccess;
   const installMutation = useInstallPushSchema();
   const { data: device, isLoading: loadingDevice } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
@@ -99,7 +106,6 @@ export function PushNotifications() {
     key: "create" | "update" | "delete",
     value: boolean
   ) => {
-    console.log("updateEntry", collection, key, value);
     setSubscriptions((prev) =>
       prev.map((s) =>
         s.collection === collection ? { ...s, [key]: value } : s
@@ -110,7 +116,7 @@ export function PushNotifications() {
   // Auto-save subscriptions on every change (debounced).
   useEffect(() => {
     if (!token) return;
-    if (setup?.deviceAccess !== "ok") return;
+    if (deviceAccess !== "ok") return;
 
     const json = JSON.stringify(subscriptions ?? []);
     if (json === lastSavedJsonRef.current) return;
@@ -132,10 +138,15 @@ export function PushNotifications() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [subscriptions, token, setup?.deviceAccess, upsertMutation, t]);
+  }, [subscriptions, token, deviceAccess, upsertMutation, t]);
 
-  // While we don't know yet if the schema exists, just show a basic loading state
-  if (loadingExists) {
+  const loading =
+    loadingCanManage ||
+    (runFullSetupCheck && loadingExists) ||
+    (!runFullSetupCheck && loadingAccessOnly);
+
+  // While we don't know yet (admin: schema/flow; non-admin: device access), show loading
+  if (loading) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle
@@ -147,8 +158,8 @@ export function PushNotifications() {
     );
   }
 
-  // If setup query itself failed, show a simple message rather than breaking the screen.
-  if (setupError && !setup) {
+  // If full setup check ran and failed (admin path only), show error.
+  if (runFullSetupCheck && setupError && !setup) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
@@ -164,8 +175,8 @@ export function PushNotifications() {
 
   const haveSchema = setup?.collectionExists && setup?.flowExists;
 
-  // 1) Schema not installed yet → static API key input + role select + Install button
-  if (!haveSchema) {
+  // 1) Admin only: schema not installed yet → static API key + role select + Install button
+  if (runFullSetupCheck && !haveSchema) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />

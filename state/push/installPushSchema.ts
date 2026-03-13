@@ -50,6 +50,16 @@ const PUSH_FIELDS: Array<{
     type: "json",
     meta: { interface: "input-code", options: { language: "json" } },
   },
+  {
+    field: "user_id",
+    type: "uuid",
+    meta: {
+      interface: "select-dropdown-m2o",
+      special: ["directus_users"],
+      required: true,
+      note: "Owner of this device (set by app; used for multi-user per server).",
+    },
+  },
 ];
 
 /**
@@ -213,17 +223,28 @@ export function useInstallPushSchema() {
           }
         }
 
-        // Create a policy with RUD (+ create) permissions for app_push_devices and assign to selected roles
+        // Create a policy with RUD (+ create) permissions for app_push_devices and assign to selected roles.
+        // Item-level filter ensures each user only sees/updates their own device row(s); preset sets user_id on create.
         if (roleIds.length > 0) {
           const actions = ["create", "read", "update", "delete"] as const;
-          const permissionsPayload = actions.map((action) => ({
-            collection: APP_PUSH_DEVICES_COLLECTION,
-            action,
-            permissions: {},
-            validation: {},
-            presets: {},
-            fields: ["token", "platform", "subscriptions"],
-          }));
+          const permissionsPayload = actions.map((action) => {
+            const base = {
+              collection: APP_PUSH_DEVICES_COLLECTION,
+              action,
+              validation: {},
+              fields: ["token", "platform", "subscriptions", "user_id"],
+            } as Record<string, unknown>;
+            if (action === "create") {
+              base.presets = { user_id: "$CURRENT_USER" };
+              base.permissions = {};
+            } else {
+              base.permissions = {
+                _and: [{ user_id: { _eq: "$CURRENT_USER" } }],
+              };
+              base.presets = {};
+            }
+            return base;
+          });
 
           const policy = await directus.request(
             createPolicy({

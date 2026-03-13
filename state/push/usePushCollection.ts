@@ -32,6 +32,10 @@ export type PushSetupState = {
   >;
 };
 
+export type PushAccessOnlyState = {
+  deviceAccess: "ok" | "forbidden" | "unknown";
+};
+
 function isForbiddenError(error: unknown): boolean {
   const anyErr = error as any;
   const status =
@@ -44,18 +48,71 @@ function isForbiddenError(error: unknown): boolean {
 }
 
 /**
- * Returns details about the push setup:
- * - whether the app_push_devices collection exists
- * - whether the push flow exists
- * - whether the current role can read from app_push_devices
+ * Returns whether the current user can run admin-only setup checks
+ * (readCollections / readFlows). Used to avoid 403s for non-admins.
  */
-export function usePushCollectionExists() {
-  const { directus } = useAuth();
-  return useQuery<PushSetupState>({
-    queryKey: ["pushCollectionExists"],
-    staleTime: 1,
+export function useCanManagePushSetup() {
+  const { directus, user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery<boolean>({
+    queryKey: ["pushCanManageSetup", userId],
+    staleTime: 5 * 60 * 1000,
     refetchOnMount: true,
     enabled: !!directus,
+    queryFn: async () => {
+      try {
+        await directus!.request(readCollections());
+        return true;
+      } catch (error) {
+        if (isForbiddenError(error)) return false;
+        throw error;
+      }
+    },
+  });
+}
+
+/**
+ * Minimal check for non-admins: only tests read access to app_push_devices.
+ * Use when we don't run the full schema/flow check (e.g. user is not admin).
+ */
+export function usePushAccessOnly(enabled: boolean = true) {
+  const { directus, user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery<PushAccessOnlyState>({
+    queryKey: ["pushAccessOnly", userId],
+    staleTime: 1,
+    refetchOnMount: true,
+    enabled: !!directus && enabled,
+    queryFn: async () => {
+      try {
+        await directus!.request(
+          readItems(APP_PUSH_DEVICES_COLLECTION as any, {
+            limit: 1,
+          }) as RestCommand<unknown, any>
+        );
+        return { deviceAccess: "ok" as const };
+      } catch (error) {
+        if (isForbiddenError(error)) {
+          return { deviceAccess: "forbidden" as const };
+        }
+        return { deviceAccess: "unknown" as const };
+      }
+    },
+  });
+}
+
+/**
+ * Returns details about the push setup (collection + flow + device access).
+ * Only run when the user can manage setup (admin); otherwise use usePushAccessOnly.
+ */
+export function usePushCollectionExists(enabled: boolean = true) {
+  const { directus, user } = useAuth();
+  const userId = user?.id ?? null;
+  return useQuery<PushSetupState>({
+    queryKey: ["pushCollectionExists", userId],
+    staleTime: 1,
+    refetchOnMount: true,
+    enabled: !!directus && enabled,
     queryFn: async () => {
       const [collections, flows] = await Promise.all([
         directus!.request(readCollections()),
@@ -82,7 +139,6 @@ export function usePushCollectionExists() {
       let deviceAccess: PushSetupState["deviceAccess"] = "unknown";
       if (collectionExists) {
         try {
-          // Try a minimal read to infer permissions for this role.
           await directus!.request(
             readItems(APP_PUSH_DEVICES_COLLECTION as any, {
               limit: 1,
@@ -97,8 +153,6 @@ export function usePushCollectionExists() {
           }
         }
       }
-
-      //10SUHb2IfuHk0s0lsLw7L_K_-abHHzGv
 
       const issues: PushSetupState["issues"] = [];
       if (!collectionExists) issues.push("missing_collection");

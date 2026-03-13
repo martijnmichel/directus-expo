@@ -15,17 +15,21 @@ function getPlatform(): "ios" | "android" {
 }
 
 /**
- * Fetches the current device record from app_push_devices by token, if it exists.
+ * Fetches the current user's device record from app_push_devices by token and user.
+ * Scoped by user so multiple logins on the same device (same token) don't share one row.
  */
 export function usePushDevice(pushToken: string | null) {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
+  const userId = user?.id ?? null;
   return useQuery({
-    queryKey: ["pushDevice", pushToken],
+    queryKey: ["pushDevice", userId, pushToken],
     queryFn: async (): Promise<AppPushDeviceRecord | null> => {
       if (!directus || !pushToken) return null;
+      const filter: Record<string, unknown> = { token: { _eq: pushToken } };
+      if (userId) filter.user_id = { _eq: userId };
       const result = await directus.request(
         readItems(APP_PUSH_DEVICES_COLLECTION as any, {
-          filter: { token: { _eq: pushToken } },
+          filter,
           limit: 1,
         }) as RestCommand<AppPushDeviceRecord[], any>
       );
@@ -38,11 +42,13 @@ export function usePushDevice(pushToken: string | null) {
 }
 
 /**
- * Registers or updates this device in app_push_devices (create or update by token).
+ * Registers or updates this device in app_push_devices (create or update by token + user).
+ * Scoped by current user so multi-user on the same device keeps separate rows per server/user.
  */
 export function useUpsertPushDevice() {
-  const { directus } = useAuth();
+  const { directus, user } = useAuth();
   const queryClient = useQueryClient();
+  const userId = user?.id ?? null;
 
   return useMutation({
     mutationFn: async (params: {
@@ -51,9 +57,11 @@ export function useUpsertPushDevice() {
     }) => {
       if (!directus) throw new Error("Not authenticated");
       const platform = getPlatform();
+      const filter: Record<string, unknown> = { token: { _eq: params.token } };
+      if (userId) filter.user_id = { _eq: userId };
       const result = await directus.request(
         readItems(APP_PUSH_DEVICES_COLLECTION as any, {
-          filter: { token: { _eq: params.token } },
+          filter,
           limit: 1,
         }) as RestCommand<AppPushDeviceRecord[], any>
       );
@@ -69,17 +77,23 @@ export function useUpsertPushDevice() {
             { subscriptions: params.subscriptions }
           ) as RestCommand<unknown, any>
         );
-        await queryClient.invalidateQueries({ queryKey: ["pushDevice", params.token] });
+        await queryClient.invalidateQueries({
+          queryKey: ["pushDevice", userId, params.token],
+        });
         return { created: false };
       } else {
+        const payload: Record<string, unknown> = {
+          token: params.token,
+          platform,
+          subscriptions: params.subscriptions,
+        };
+        if (userId) payload.user_id = userId;
         await directus.request(
-          createItem(APP_PUSH_DEVICES_COLLECTION as any, {
-            token: params.token,
-            platform,
-            subscriptions: params.subscriptions,
-          }) as RestCommand<unknown, any>
+          createItem(APP_PUSH_DEVICES_COLLECTION as any, payload) as RestCommand<unknown, any>
         );
-        await queryClient.invalidateQueries({ queryKey: ["pushDevice", params.token] });
+        await queryClient.invalidateQueries({
+          queryKey: ["pushDevice", userId, params.token],
+        });
         return { created: true };
       }
     },
