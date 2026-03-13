@@ -10,7 +10,7 @@ const buildNumber = 6;
 
 export default () => ({
   expo: {
-    name: "directus-expo",
+    name: "Directus Mobile",
     slug: "directus-expo",
     version: packageJson.version,
     orientation: "portrait",
