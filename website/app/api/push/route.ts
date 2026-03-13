@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
   const filtered = filterDevicesForEvent(
     devices,
     body.collection,
-    body.action
+    body.action as PushAction
   );
   const { ios, android } = splitByPlatform(filtered);
 
