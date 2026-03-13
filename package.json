@@ -15,7 +15,7 @@
     "start:prod": "EXPO_PUBLIC_ENV=production expo start --clear",
     "build:sim:ios": "eas build --profile simulator --platform ios --local",
     "build:dev:ios": "eas build --profile development --platform ios",
-    "build:dev:android": "eas build --profile development --platform android",
+    "build:dev:android": "eas build --profile development --platform android --local",
     "build:staging:ios": "eas build --profile staging --platform ios",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:prod:ios": "eas build --profile production --platform ios",
