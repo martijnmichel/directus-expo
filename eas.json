@@ -3,15 +3,25 @@
     "version": ">= 5.9.1"
   },
   "build": {
+    "simulator": {
+        "developmentClient": true,
+        "distribution": "internal",
+        "env": {
+          "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk"
+        },
+        "channel": "development",
+        "ios": {
+          "simulator": true
+        }
+      
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk",
+        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk"
       },
-      "ios": {
-        "simulator": true
-      },
+
       "channel": "development"
     },
     "preview": {
@@ -25,7 +35,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk",
+        "ANDROID_SDK_ROOT": "/Volumes/Samsung990PRO/Android/sdk"
       }
     }
   },
