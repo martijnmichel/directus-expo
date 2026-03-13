@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@directus/sdk": "^18.0.3",
+    "apn": "^2.2.0",
+    "firebase-admin": "^13.0.2",
     "next": "^16.0.7",
     "preact": "^10.25.4",
     "react": "^19.0.0",

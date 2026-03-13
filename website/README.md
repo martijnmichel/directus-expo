@@ -20,6 +20,14 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+### Push API (`/api/push`)
+
+The push endpoint receives webhooks from Directus Flows and sends push notifications via APNs (iOS) and FCM (Android). Required environment variables:
+
+- **`PUSH_SECRET`** – Shared secret for request auth (`Authorization: Bearer <secret>` or `X-Push-Secret` header).
+- **APNs (iOS):** `APNS_KEY_BASE64` or `APNS_KEY_PATH`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_BUNDLE_ID` (defaults to `com.martijnmichel.directusexpo`).
+- **FCM (Android):** `FCM_SERVICE_ACCOUNT_JSON` (JSON string) or `GOOGLE_APPLICATION_CREDENTIALS` (path to service account JSON).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
