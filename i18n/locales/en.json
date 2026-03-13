@@ -57,7 +57,9 @@
     "onUpdate": "On update",
     "onDelete": "On delete",
     "saved": "Subscriptions saved.",
-    "saveError": "Failed to save subscriptions"
+    "saveError": "Failed to save subscriptions",
+    "permissionDeniedTitle": "Notifications disabled",
+    "permissionDeniedBody": "Enable notifications for this app in the system settings to receive push notifications."
   },
   "layout": {
     "noData": "No data available",

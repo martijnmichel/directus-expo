@@ -15,7 +15,7 @@ import { getCollectionTranslation } from "@/helpers/collections/getCollectionTra
 import type { PushSubscriptionEntry } from "@/constants/push";
 import { Toggle } from "@/components/interfaces/toggle";
 import Toast from "react-native-toast-message";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, Linking } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import {
   BottomSheetModal,
@@ -167,7 +167,25 @@ export function PushNotifications() {
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
         <Muted>{t("push.unavailable")}</Muted>
         <Button
-          onPress={() => requestToken()}
+          onPress={async () => {
+            const newToken = await requestToken();
+            if (!newToken) {
+              Toast.show({
+                type: "info",
+                text1: t("push.permissionDeniedTitle", "Notifications disabled"),
+                text2: t(
+                  "push.permissionDeniedBody",
+                  "Enable notifications for this app in the system settings to receive push notifications."
+                ),
+              });
+              // Try to open the app's system settings so the user can enable notifications.
+              try {
+                await Linking.openSettings();
+              } catch {
+                // Ignore if not supported on this platform.
+              }
+            }
+          }}
           disabled={requestingPermission}
         >
           {requestingPermission
