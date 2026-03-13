@@ -4,7 +4,7 @@ import {
   rest,
   staticToken,
 } from "@directus/sdk";
-import apn from "apn";
+import { ApnsClient, Notification as ApnsNotification } from "apns2";
 import { getApps, cert, type App } from "firebase-admin/app";
 import { getMessaging, type Messaging } from "firebase-admin/messaging";
 import { initializeApp, type ServiceAccount } from "firebase-admin";
@@ -151,34 +151,44 @@ function buildDeepLink(collection: string, key: string): string {
   return `directus://content/${encodeURIComponent(collection)}/${encodeURIComponent(key)}`;
 }
 
-// --- APNs ---
+// --- APNs (apns2: HTTP/2 + JWT, no legacy OpenSSL) ---
 
-let apnProvider: apn.Provider | null = null;
+let apnsClient: ApnsClient | null = null;
 
-function getApnProvider(): apn.Provider | null {
-  if (apnProvider) return apnProvider;
+async function getApnsClient(): Promise<ApnsClient | null> {
+  if (apnsClient) return apnsClient;
   const keyBase64 = process.env.APNS_KEY_BASE64;
   const keyPath = process.env.APNS_KEY_PATH;
   const keyId = process.env.APNS_KEY_ID;
   const teamId = process.env.APNS_TEAM_ID;
   const bundleId = process.env.APNS_BUNDLE_ID;
   if (!bundleId || !keyId || !teamId) return null;
-  let key: Buffer | string | undefined;
+  let signingKey: Buffer | undefined;
   if (keyBase64) {
     try {
-      key = Buffer.from(keyBase64, "base64");
+      const cleaned = keyBase64.replace(/[^A-Za-z0-9+/=]/g, "");
+      signingKey = Buffer.from(cleaned, "base64");
     } catch {
-      key = undefined;
+      signingKey = undefined;
     }
   } else if (keyPath) {
-    key = keyPath;
+    try {
+      const fs = await import("fs");
+      signingKey = fs.readFileSync(keyPath);
+    } catch {
+      signingKey = undefined;
+    }
   }
-  if (!key) return null;
-  apnProvider = new apn.Provider({
-    token: { key, keyId, teamId },
-    production: process.env.NODE_ENV === "production",
+  if (!signingKey || signingKey.length === 0) return null;
+  const production = process.env.NODE_ENV === "production";
+  apnsClient = new ApnsClient({
+    team: teamId,
+    keyId,
+    signingKey,
+    defaultTopic: bundleId,
+    host: production ? "api.push.apple.com" : "api.sandbox.push.apple.com",
   });
-  return apnProvider;
+  return apnsClient;
 }
 
 async function sendApns(
@@ -189,20 +199,26 @@ async function sendApns(
   bundleId: string
 ): Promise<{ sent: number; failed: number }> {
   if (tokens.length === 0) return { sent: 0, failed: 0 };
-  const provider = getApnProvider();
-  if (!provider) {
+  const client = await getApnsClient();
+  if (!client) {
     return { sent: 0, failed: tokens.length };
   }
-  const notification = new apn.Notification();
-  notification.topic = bundleId;
-  notification.alert = { title, body };
-  notification.sound = "default";
-  notification.payload = { deepLink };
-  const result = await provider.send(notification, tokens);
-  return {
-    sent: result.sent.length,
-    failed: result.failed.length,
-  };
+  let sent = 0;
+  let failed = 0;
+  for (const deviceToken of tokens) {
+    try {
+      const notification = new ApnsNotification(deviceToken, {
+        alert: { title, body },
+        sound: "default",
+        data: { deepLink },
+      });
+      await client.send(notification);
+      sent += 1;
+    } catch {
+      failed += 1;
+    }
+  }
+  return { sent, failed };
 }
 
 // --- FCM ---
