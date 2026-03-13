@@ -5,9 +5,8 @@ import {
   staticToken,
 } from "@directus/sdk";
 import { ApnsClient, Notification as ApnsNotification, ApnsError } from "apns2";
-import { getApps, cert, type App } from "firebase-admin/app";
-import { getMessaging, type Messaging } from "firebase-admin/messaging";
-import { initializeApp, type ServiceAccount } from "firebase-admin";
+import admin from "firebase-admin";
+import type { Messaging } from "firebase-admin/messaging";
 import fs from "fs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -256,13 +255,13 @@ function normalizeCredentialsPath(raw: string | undefined): string | null {
  * Normalize parsed service account JSON so cert() accepts it.
  * - Replaces literal \n in private_key with real newlines (common when stored in env or file).
  */
-function normalizeServiceAccount(raw: Record<string, unknown>): ServiceAccount {
+function normalizeServiceAccount(raw: Record<string, unknown>): admin.ServiceAccount {
   const out = { ...raw };
   const key = out.private_key ?? out.privateKey;
   if (typeof key === "string") {
     out.private_key = key.replace(/\\n/g, "\n");
   }
-  return out as ServiceAccount;
+  return out as admin.ServiceAccount;
 }
 
 function getFcmMessaging(): {
@@ -270,23 +269,18 @@ function getFcmMessaging(): {
   configError?: string;
 } {
   try {
-    const existing = getApps().find(
-      (a): a is App => (a as App).name === "push-fcm"
-    );
-    if (existing) return { messaging: getMessaging(existing) };
+    const existing = admin.app("push-fcm");
+    if (existing) return { messaging: admin.messaging(existing) };
   } catch {
-    // ignore
+    // push-fcm not initialized yet
   }
   const creds = process.env.FCM_SERVICE_ACCOUNT_JSON;
   const path = normalizeCredentialsPath(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   if (creds) {
     try {
       const parsed = normalizeServiceAccount(JSON.parse(creds) as Record<string, unknown>);
-      const app = initializeApp(
-        { credential: cert(parsed) },
-        "push-fcm"
-      ) as App;
-      return { messaging: getMessaging(app) };
+      admin.initializeApp({ credential: admin.credential.cert(parsed) }, "push-fcm");
+      return { messaging: admin.messaging(admin.app("push-fcm")) };
     } catch (err) {
       return {
         messaging: null,
@@ -298,22 +292,16 @@ function getFcmMessaging(): {
   if (path) {
     let lastErr: string | undefined;
     try {
-      const app = initializeApp(
-        { credential: cert(path) },
-        "push-fcm"
-      ) as App;
-      return { messaging: getMessaging(app) };
+      admin.initializeApp({ credential: admin.credential.cert(path) }, "push-fcm");
+      return { messaging: admin.messaging(admin.app("push-fcm")) };
     } catch (err) {
       lastErr = err instanceof Error ? err.message : String(err);
     }
     try {
       const json = fs.readFileSync(path, "utf8");
       const parsed = normalizeServiceAccount(JSON.parse(json) as Record<string, unknown>);
-      const app = initializeApp(
-        { credential: cert(parsed) },
-        "push-fcm"
-      ) as App;
-      return { messaging: getMessaging(app) };
+      admin.initializeApp({ credential: admin.credential.cert(parsed) }, "push-fcm");
+      return { messaging: admin.messaging(admin.app("push-fcm")) };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return {
