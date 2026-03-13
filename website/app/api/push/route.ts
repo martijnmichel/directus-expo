@@ -252,6 +252,19 @@ function normalizeCredentialsPath(raw: string | undefined): string | null {
   return unquoted.length > 0 ? unquoted : null;
 }
 
+/**
+ * Normalize parsed service account JSON so cert() accepts it.
+ * - Replaces literal \n in private_key with real newlines (common when stored in env or file).
+ */
+function normalizeServiceAccount(raw: Record<string, unknown>): ServiceAccount {
+  const out = { ...raw };
+  const key = out.private_key ?? out.privateKey;
+  if (typeof key === "string") {
+    out.private_key = key.replace(/\\n/g, "\n");
+  }
+  return out as ServiceAccount;
+}
+
 function getFcmMessaging(): {
   messaging: Messaging | null;
   configError?: string;
@@ -268,7 +281,7 @@ function getFcmMessaging(): {
   const path = normalizeCredentialsPath(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   if (creds) {
     try {
-      const parsed = JSON.parse(creds) as ServiceAccount;
+      const parsed = normalizeServiceAccount(JSON.parse(creds) as Record<string, unknown>);
       const app = initializeApp(
         { credential: cert(parsed) },
         "push-fcm"
@@ -295,7 +308,7 @@ function getFcmMessaging(): {
     }
     try {
       const json = fs.readFileSync(path, "utf8");
-      const parsed = JSON.parse(json) as ServiceAccount;
+      const parsed = normalizeServiceAccount(JSON.parse(json) as Record<string, unknown>);
       const app = initializeApp(
         { credential: cert(parsed) },
         "push-fcm"
