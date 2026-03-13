@@ -33,6 +33,7 @@ import * as Updates from "expo-updates";
 import { useEffect } from "react";
 import { ExternalLink } from "@/components/ExternalLink";
 import { ApiSwitch } from "@/components/SessionSwitch";
+import { PushNotifications } from "@/components/settings/PushNotifications";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -127,6 +128,13 @@ export default function TabTwoScreen() {
       type: "spacing",
     },
     {
+      label: t("push.title"),
+      type: "push",
+    },
+    {
+      type: "spacing",
+    },
+    {
       label: t("settings.sections.options"),
       type: "heading",
       icon: "settings",
@@ -204,6 +212,12 @@ export default function TabTwoScreen() {
               <Vertical spacing="lg">
                 {info.map((item, index) => {
                   switch (item.type) {
+                    case "push":
+                      return (
+                        <View key={`push-${index}`}>
+                          <PushNotifications />
+                        </View>
+                      );
                     case "heading":
                       return (
                         <DividerSubtitle

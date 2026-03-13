@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
 import { UnistylesRuntime, useStyles } from "react-native-unistyles";
+import { NotificationResponseHandler } from "@/components/NotificationResponseHandler";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -27,7 +28,9 @@ export default function TabsLayout() {
   }
 
   return (
-    <Stack>
+    <>
+      <NotificationResponseHandler />
+      <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
       {/**
@@ -166,5 +169,6 @@ export default function TabsLayout() {
         options={{ presentation: "modal" }}
       />
     </Stack>
+    </>
   );
 }
