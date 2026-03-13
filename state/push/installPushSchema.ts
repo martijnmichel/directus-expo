@@ -232,7 +232,7 @@ export function useInstallPushSchema() {
               collection: APP_PUSH_DEVICES_COLLECTION,
               action,
               validation: {},
-              fields: ["token", "platform", "subscriptions", "user_id"],
+              fields: ["token", "platform", "subscriptions", "user_id", "id"],
             } as Record<string, unknown>;
             if (action === "create") {
               base.presets = { user_id: "$CURRENT_USER" };
