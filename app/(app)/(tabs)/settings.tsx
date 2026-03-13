@@ -5,7 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeToggle } from "@/unistyles/useThemeToggle";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { Moon } from "@/components/icons/Moon";
 import { Sun } from "@/components/icons/Sun";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
@@ -34,6 +34,7 @@ import { useEffect } from "react";
 import { ExternalLink } from "@/components/ExternalLink";
 import { ApiSwitch } from "@/components/SessionSwitch";
 import { PushNotifications } from "@/components/settings/PushNotifications";
+import { Switch } from "@/components/icons/Switch";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -78,6 +79,19 @@ export default function TabTwoScreen() {
       value: health?.releaseId,
     },
     {
+      type: "component",
+      component: (
+        <Button
+          variant="soft"
+          onPress={() => router.push("/login")}
+          leftIcon={<Switch />}
+        >
+          Connect to another API
+        </Button>
+      ),
+    },
+
+    {
       type: "spacing",
     },
     {
@@ -111,17 +125,6 @@ export default function TabTwoScreen() {
         >
           {t("settings.actions.logout")}
         </Button>
-      ),
-    },
-    {
-      type: "component",
-      component: (
-        <Horizontal style={{ alignItems: "center" }}>
-          <Text style={{ flex: 2 }}>{t("settings.fields.apiSwitch")}</Text>
-          <View style={{ flex: 5 }}>
-            <ApiSwitch />
-          </View>
-        </Horizontal>
       ),
     },
     {

@@ -6,9 +6,16 @@ import {
   createField,
   createFlow,
   createOperation,
+  createPermission,
+  createPolicy,
+  deleteCollection,
+  deleteFlow,
+  deletePolicy,
   readCollections,
   readFlows,
   updateFlow,
+  updatePolicy,
+  updateRole,
 } from "@directus/sdk";
 import Constants from "expo-constants";
 import {
@@ -53,9 +60,14 @@ export function useInstallPushSchema() {
   const { directus } = useAuth();
   const queryClient = useQueryClient();
 
+  const PUSH_POLICY_NAME = "App push devices (read, create, update, delete)";
+
   return useMutation({
-    mutationFn: async (params: { staticApiKey: string }) => {
-      const { staticApiKey } = params;
+    mutationFn: async (params: {
+      staticApiKey: string;
+      roleIds?: string[];
+    }) => {
+      const { staticApiKey, roleIds = [] } = params;
       if (!directus) throw new Error("Not authenticated");
       if (!staticApiKey?.trim()) {
         throw new Error("Static API key is required for the push flow.");
@@ -83,114 +95,182 @@ export function useInstallPushSchema() {
       if (collectionExists && flowExists)
         return { installed: false, alreadyExists: true };
 
-      if (!collectionExists) {
-        await directus.request(
-          createCollection({
-            collection: APP_PUSH_DEVICES_COLLECTION,
-            meta: {
-              icon: "notifications",
-              note: "Push device tokens for custom push endpoint",
-              hidden: false,
-            },
-            schema: { name: APP_PUSH_DEVICES_COLLECTION },
-          } as any)
-        );
-        for (const f of PUSH_FIELDS) {
+      // Best-effort cleanup if something fails mid-install.
+      let createdCollection = false;
+      let createdFlowId: string | null = null;
+      let createdPolicyId: string | null = null;
+
+      try {
+        if (!collectionExists) {
           await directus.request(
-            createField(APP_PUSH_DEVICES_COLLECTION as any, {
-              field: f.field,
-              type: f.type,
-              meta: f.meta,
+            createCollection({
+              collection: APP_PUSH_DEVICES_COLLECTION,
+              meta: {
+                icon: "notifications",
+                note: "Push device tokens for custom push endpoint",
+                hidden: false,
+              },
+              schema: { name: APP_PUSH_DEVICES_COLLECTION },
             } as any)
           );
+          createdCollection = true;
+          for (const f of PUSH_FIELDS) {
+            await directus.request(
+              createField(APP_PUSH_DEVICES_COLLECTION as any, {
+                field: f.field,
+                type: f.type,
+                meta: f.meta,
+              } as any)
+            );
+          }
         }
-      }
 
-      if (!flowExists) {
-        const pushSecret = getPushSecret();
-        if (!pushSecret?.trim()) {
-          throw new Error(
-            "Push secret is not set. Add PUSH_SECRET (or EXPO_PUBLIC_PUSH_SECRET) in .env or EAS Secrets. See README or app.config.js."
+        if (!flowExists) {
+          const pushSecret = getPushSecret();
+          if (!pushSecret?.trim()) {
+            throw new Error(
+              "Push secret is not set. Add PUSH_SECRET (or EXPO_PUBLIC_PUSH_SECRET) in .env or EAS Secrets. See README or app.config.js."
+            );
+          }
+
+          const activeApiStr = await AsyncStorage.getItem(
+            LocalStorageKeys.DIRECTUS_API_ACTIVE
           );
-        }
+          const activeApi = activeApiStr
+            ? (JSON.parse(activeApiStr) as { url?: string })
+            : null;
+          const directusUrl = activeApi?.url?.replace(/\/$/, "") ?? "";
+          if (!directusUrl) {
+            throw new Error(
+              "Could not determine Directus URL. Please try again."
+            );
+          }
 
-        const activeApiStr = await AsyncStorage.getItem(
-          LocalStorageKeys.DIRECTUS_API_ACTIVE
-        );
-        const activeApi = activeApiStr
-          ? (JSON.parse(activeApiStr) as { url?: string })
-          : null;
-        const directusUrl =
-          activeApi?.url?.replace(/\/$/, "") ?? "";
-        if (!directusUrl) {
-          throw new Error("Could not determine Directus URL. Please try again.");
-        }
+          const directusToken = staticApiKey.trim();
 
-        const directusToken = staticApiKey.trim();
-
-        const flow = await directus.request(
-          createFlow({
-            name: APP_PUSH_FLOW_NAME,
-            icon: "notifications",
-            description:
-              "Sends item create/update/delete to the push endpoint. Created by the app; URL and token are set at install.",
-            status: "active",
-            trigger: "event",
-            options: {
-              type: "action",
-              scope: ["items.create", "items.update", "items.delete"],
-              collections: allCollections,
-            },
-          } as any)
-        );
-        const flowId =
-          (flow as { id?: string })?.id ??
-          (flow as { data?: { id?: string } })?.data?.id;
-        if (!flowId) throw new Error("Flow created but no id returned");
-
-        const requestBody = JSON.stringify({
-          directusUrl,
-          directusToken,
-          collection: "{{ $trigger.collection }}",
-          event: "{{ $trigger.event }}",
-          key: "{{ $trigger.key }}",
-          payload: {
-            title: "Item {{ $trigger.event }}",
-            body: "{{ $trigger.collection }} #{{ $trigger.key }}",
-          },
-        });
-
-        const operation = await directus.request(
-          createOperation({
-            flow: flowId,
-            key: "send-push-request",
-            type: "request",
-            name: "Send to push endpoint",
-            position_x: 20,
-            position_y: 0,
-            options: {
-              url: PUSH_ENDPOINT_URL,
-              method: "POST",
-              headers: [
-                { header: "Content-Type", value: "application/json" },
-                { header: "Authorization", value: `Bearer ${pushSecret.trim()}` },
-              ],
-              body: requestBody,
-            },
-          } as any)
-        );
-        const operationId =
-          (operation as { id?: string })?.id ??
-          (operation as { data?: { id?: string } })?.data?.id;
-        if (operationId) {
-          await directus.request(
-            updateFlow(flowId, { operation: operationId } as any)
+          const flow = await directus.request(
+            createFlow({
+              name: APP_PUSH_FLOW_NAME,
+              icon: "notifications",
+              description:
+                "Sends item create/update/delete to the push endpoint. Created by the app; URL and token are set at install.",
+              status: "active",
+              trigger: "event",
+              options: {
+                type: "action",
+                scope: ["items.create", "items.update", "items.delete"],
+                collections: allCollections,
+              },
+            } as any)
           );
+          const flowId =
+            (flow as { id?: string })?.id ??
+            (flow as { data?: { id?: string } })?.data?.id;
+          if (!flowId) throw new Error("Flow created but no id returned");
+          createdFlowId = flowId;
+
+          const requestBody = JSON.stringify({
+            directusUrl,
+            directusToken,
+            collection: "{{ $trigger.collection }}",
+            event: "{{ $trigger.event }}",
+            key: "{{ $trigger.key }}",
+            payload: {
+              title: "Item {{ $trigger.event }}",
+              body: "{{ $trigger.collection }} #{{ $trigger.key }}",
+            },
+          });
+
+          const operation = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "send-push-request",
+              type: "request",
+              name: "Send to push endpoint",
+              position_x: 20,
+              position_y: 0,
+              options: {
+                url: PUSH_ENDPOINT_URL,
+                method: "POST",
+                headers: [
+                  { header: "Content-Type", value: "application/json" },
+                  {
+                    header: "Authorization",
+                    value: `Bearer ${pushSecret.trim()}`,
+                  },
+                ],
+                body: requestBody,
+              },
+            } as any)
+          );
+          const operationId =
+            (operation as { id?: string })?.id ??
+            (operation as { data?: { id?: string } })?.data?.id;
+          if (operationId) {
+            await directus.request(
+              updateFlow(flowId, { operation: operationId } as any)
+            );
+          }
         }
+
+        // Create a policy with RUD (+ create) permissions for app_push_devices and assign to selected roles
+        if (roleIds.length > 0) {
+          const actions = ["create", "read", "update", "delete"] as const;
+          const permissionsPayload = actions.map((action) => ({
+            collection: APP_PUSH_DEVICES_COLLECTION,
+            action,
+            permissions: {},
+            validation: {},
+            presets: {},
+            fields: ["token", "platform", "subscriptions"],
+          }));
+
+          const policy = await directus.request(
+            createPolicy({
+              name: PUSH_POLICY_NAME,
+              icon: "notifications",
+              description:
+                "Allows app users to register and manage their push device and subscriptions.",
+              admin_access: false,
+              app_access: false,
+              
+              permissions: permissionsPayload,
+            } as any)
+          );
+
+          createdPolicyId =
+            (policy as { id?: string })?.id ??
+            (policy as { data?: { id?: string } })?.data?.id ??
+            null;
+
+            
+        }
+      } catch (error) {
+        try {
+          if (createdPolicyId) {
+            await directus.request(deletePolicy(createdPolicyId as any));
+          }
+        } catch {}
+        try {
+          if (createdFlowId) {
+            await directus.request(deleteFlow(createdFlowId as any));
+          }
+        } catch {}
+        try {
+          if (createdCollection) {
+            await directus.request(
+              deleteCollection(APP_PUSH_DEVICES_COLLECTION as any)
+            );
+          }
+        } catch {}
+
+        throw error;
       }
 
       await queryClient.invalidateQueries({ queryKey: ["pushCollectionExists"] });
       await queryClient.invalidateQueries({ queryKey: ["collections"] });
+      await queryClient.invalidateQueries({ queryKey: ["roles"] });
+      await queryClient.invalidateQueries({ queryKey: ["policies"] });
       return { installed: true };
     },
   });

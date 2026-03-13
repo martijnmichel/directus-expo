@@ -13,18 +13,19 @@ import {
 } from "@/state/push/usePushCollection";
 import { useInstallPushSchema } from "@/state/push/installPushSchema";
 import { usePushDevice, useUpsertPushDevice } from "@/state/push/usePushDevice";
-import { useCollections } from "@/state/queries/directus/core";
+import {
+  useCollections,
+  useRoles,
+} from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import type { PushSubscriptionEntry } from "@/constants/push";
 import { Toggle } from "@/components/interfaces/toggle";
 import Toast from "react-native-toast-message";
 import { ActivityIndicator, Linking } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
-import {
-  BottomSheetModal,
-  BottomSheetModalProvider,
-} from "@gorhom/bottom-sheet";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { Input } from "@/components/interfaces/input";
+import { SelectMulti } from "@/components/interfaces/select-multi";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
   return { collection, create: false, update: false, delete: false };
@@ -56,6 +57,13 @@ export function PushNotifications() {
   const { data: collections } = useCollections();
   const sheetRef = useRef<BottomSheetModal | null>(null);
   const [installStaticApiKey, setInstallStaticApiKey] = useState("");
+  const [installRoleIds, setInstallRoleIds] = useState<string[]>([]);
+  const { data: rolesData } = useRoles();
+  const roles = Array.isArray(rolesData?.items) ? rolesData.items : [];
+  const roleOptions = roles.map((r: { id?: string; name?: string }) => ({
+    text: r.name ?? String(r.id ?? ""),
+    value: r.id ?? "",
+  })).filter((o) => o.value);
 
   const userCollections = useMemo(() => {
     if (!collections) return [];
@@ -141,16 +149,31 @@ export function PushNotifications() {
     );
   }
 
-  const haveSchema =
-    setup?.collectionExists && setup?.flowExists;
+  const haveSchema = setup?.collectionExists && setup?.flowExists;
 
-  // 1) Schema not installed yet → static API key input + Install button
+  // 1) Schema not installed yet → static API key input + role select + Install button
   if (!haveSchema) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
         <>
-          <Muted>{t("push.installHint")}</Muted>
+          <Muted>
+            {setup?.issues?.includes("missing_collection") &&
+            setup?.issues?.includes("missing_flow")
+              ? t(
+                  "push.installHint",
+                  "This instance is not set up for push yet. An admin can install the required schema and flow."
+                )
+              : setup?.issues?.includes("missing_collection")
+                ? t(
+                    "push.missingCollectionHint",
+                    "The push collection is missing. An admin can install it."
+                  )
+                : t(
+                    "push.missingFlowHint",
+                    "The push flow is missing. An admin can install it."
+                  )}
+          </Muted>
           <Input
             label={t("push.staticApiKeyLabel")}
             placeholder={t("push.staticApiKeyPlaceholder")}
@@ -161,9 +184,23 @@ export function PushNotifications() {
             autoCapitalize="none"
             autoCorrect={false}
           />
+          <SelectMulti
+            label={t("push.installRolesLabel", "Roles that can use push notifications")}
+            helper={t(
+              "push.installRolesHelper",
+              "A new permission (read, create, update, delete on app_push_devices) will be added to the selected roles."
+            )}
+            options={roleOptions}
+            value={installRoleIds}
+            onValueChange={(v) => setInstallRoleIds((v as string[]) ?? [])}
+            placeholder={t("push.installRolesPlaceholder", "Select roles")}
+          />
           <Button
             onPress={() =>
-              installMutation.mutate({ staticApiKey: installStaticApiKey.trim() })
+              installMutation.mutate({
+                staticApiKey: installStaticApiKey.trim(),
+                roleIds: installRoleIds,
+              })
             }
             disabled={
               installMutation.isPending || !installStaticApiKey.trim()
@@ -186,6 +223,21 @@ export function PushNotifications() {
         </>
       </Vertical>
     );
+  }
+
+  // Schema exists but we can't reliably determine device access (non-403 error) → show a warning but keep going.
+  if (setup?.issues?.includes("unknown_device_access")) {
+    Toast.show({
+      type: "info",
+      text1: t(
+        "push.permissionCheckFailedTitle",
+        "Could not verify push permissions"
+      ),
+      text2: t(
+        "push.permissionCheckFailedBody",
+        "We couldn't verify whether your role can access push settings. If enabling push fails, contact an administrator."
+      ),
+    });
   }
 
   // 2) Schema installed, but this role cannot access app_push_devices → show a warning.

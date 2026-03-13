@@ -20,6 +20,16 @@ export type PushSetupState = {
    * the permission check failed with a non-403 error.
    */
   deviceAccess: "ok" | "forbidden" | "unknown";
+  /**
+   * Human-friendly reason(s) for why push can't be used right now.
+   * This is meant for the settings UI.
+   */
+  issues: Array<
+    | "missing_collection"
+    | "missing_flow"
+    | "no_device_access"
+    | "unknown_device_access"
+  >;
 };
 
 function isForbiddenError(error: unknown): boolean {
@@ -44,6 +54,7 @@ export function usePushCollectionExists() {
   return useQuery<PushSetupState>({
     queryKey: ["pushCollectionExists"],
     staleTime: 1,
+    refetchOnMount: true,
     enabled: !!directus,
     queryFn: async () => {
       const [collections, flows] = await Promise.all([
@@ -87,7 +98,16 @@ export function usePushCollectionExists() {
         }
       }
 
-      return { collectionExists, flowExists, deviceAccess };
+      //10SUHb2IfuHk0s0lsLw7L_K_-abHHzGv
+
+      const issues: PushSetupState["issues"] = [];
+      if (!collectionExists) issues.push("missing_collection");
+      if (!flowExists) issues.push("missing_flow");
+      if (deviceAccess === "forbidden") issues.push("no_device_access");
+      if (deviceAccess === "unknown" && collectionExists)
+        issues.push("unknown_device_access");
+
+      return { collectionExists, flowExists, deviceAccess, issues };
     },
   });
 }
