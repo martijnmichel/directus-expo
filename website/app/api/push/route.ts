@@ -338,19 +338,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const getTitle = () => {
+  const getBody = () => {
     if (body.event?.endsWith("create")) return "Item created";
     if (body.event?.endsWith("update")) return "Item updated";
     if (body.event?.endsWith("delete")) return "Item deleted";
     return "Item";
   }
 
-  const title = getTitle();
-  const bodyText = body.collection
+  const title = body.collection
     .replaceAll("_", " ")
     .split(" ")
     .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
     .join(" ");
+  const bodyText = getBody();
 
   const deepLink = buildDeepLink(body.collection, body.key);
 
