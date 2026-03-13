@@ -107,10 +107,39 @@ export function PushNotifications() {
     useState<PushSubscriptionEntry[]>(merged);
   const lastSavedJsonRef = useRef<string>("");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const createDeviceAttemptedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (merged.length > 0) setSubscriptions(merged);
   }, [device?.id, userCollections.length]);
+
+  // When we have a token but no device record yet, create it in the background so Manage works straight away.
+  useEffect(() => {
+    if (
+      !token ||
+      device != null ||
+      loadingDevice ||
+      deviceError ||
+      deviceAccess !== "ok"
+    )
+      return;
+    if (createDeviceAttemptedRef.current === token) return;
+    createDeviceAttemptedRef.current = token;
+    const initial = mergeSubscriptions(userCollections, null);
+    upsertMutation
+      .mutateAsync({ token, subscriptions: initial })
+      .catch(() => {
+        createDeviceAttemptedRef.current = null;
+      });
+  }, [
+    token,
+    device,
+    loadingDevice,
+    deviceError,
+    deviceAccess,
+    userCollections,
+    upsertMutation,
+  ]);
 
   const updateEntry = (
     collection: string,
@@ -305,49 +334,38 @@ export function PushNotifications() {
     );
   }
 
-  // 3) No token, or token but no device record for this user (e.g. new user on same device) → Enable / set up
-  const noDeviceForThisUser =
-    token && !loadingDevice && device == null && !deviceError;
-  if (!token || noDeviceForThisUser) {
+  // 3) No token → Enable notifications (request token, then create row on success)
+  if (!token) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-        <Muted>
-          {noDeviceForThisUser
-            ? t("push.setUpSubscriptionsHint", "Set up which collections you want to receive push notifications for.")
-            : t("push.unavailable")}
-        </Muted>
+        <Muted>{t("push.unavailable")}</Muted>
         <Button
           onPress={async () => {
-            let tokenToUse = token;
-            if (!tokenToUse) {
-              const newToken = await requestToken();
-              if (!newToken) {
-                Toast.show({
-                  type: "info",
-                  text1: t("push.permissionDeniedTitle", "Notifications disabled"),
-                  text2: t(
-                    "push.permissionDeniedBody",
-                    "Enable notifications for this app in the system settings to receive push notifications."
-                  ),
-                });
-                try {
-                  await Linking.openSettings();
-                } catch {
-                  // Ignore if not supported on this platform.
-                }
-                return;
+            const newToken = await requestToken();
+            if (!newToken) {
+              Toast.show({
+                type: "info",
+                text1: t("push.permissionDeniedTitle", "Notifications disabled"),
+                text2: t(
+                  "push.permissionDeniedBody",
+                  "Enable notifications for this app in the system settings to receive push notifications."
+                ),
+              });
+              try {
+                await Linking.openSettings();
+              } catch {
+                // Ignore if not supported on this platform.
               }
-              tokenToUse = newToken;
+              return;
             }
-
             try {
               const initialSubscriptions = mergeSubscriptions(
                 userCollections,
                 null
               );
               await upsertMutation.mutateAsync({
-                token: tokenToUse,
+                token: newToken,
                 subscriptions: initialSubscriptions,
               });
             } catch (e) {
@@ -365,15 +383,15 @@ export function PushNotifications() {
         >
           {requestingPermission || upsertMutation.isPending
             ? t("common.saving")
-            : noDeviceForThisUser
-              ? t("push.setUpSubscriptions", "Set up subscriptions")
-              : t("push.enableNotifications", "Enable notifications")}
+            : t("push.enableNotifications", "Enable notifications")}
         </Button>
       </Vertical>
     );
   }
 
-  // 4) Token present and device record loaded → show Manage button + bottom sheet
+  // 4) Token present → show Manage (device row is created in background if missing)
+  const creatingDevice =
+    device == null && !loadingDevice && !deviceError && deviceAccess === "ok";
   return (
     <Modal>
       <Vertical spacing="md">
@@ -382,8 +400,11 @@ export function PushNotifications() {
 
         <Modal.Trigger>
           {({ open }) => (
-            <Button onPress={open} disabled={loadingDevice}>
-              {loadingDevice
+            <Button
+              onPress={open}
+              disabled={loadingDevice || (creatingDevice && upsertMutation.isPending)}
+            >
+              {loadingDevice || (creatingDevice && upsertMutation.isPending)
                 ? t("common.loading")
                 : t("push.manageSubscriptions", "Manage subscriptions")}
             </Button>
@@ -400,7 +421,7 @@ export function PushNotifications() {
               <Text style={{ marginBottom: 8 }}>
                 {t("push.subscriptionsHint")}
               </Text>
-              {loadingDevice ? (
+              {loadingDevice || (creatingDevice && upsertMutation.isPending) ? (
                 <ActivityIndicator />
               ) : (
                 <ScrollView>
