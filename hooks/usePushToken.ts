@@ -1,47 +1,55 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 /**
- * Returns the native FCM/APNs device push token for this device, or null if
- * not available (web, permission denied, or simulator).
- * Use this token when registering with app_push_devices for our custom push endpoint.
+ * Imperative helper to request notification permissions and get the
+ * native FCM/APNs device token.
+ *
+ * Does NOTHING until you call `requestToken()`, so you can:
+ * - First check that the server-side schema is installed
+ * - Then, on button press, ask the user to enable notifications
  */
-export function usePushToken(): string | null {
+export function usePushToken() {
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const requestToken = useCallback(async (): Promise<string | null> => {
     if (Platform.OS === "web") {
       setToken(null);
-      return;
+      return null;
     }
 
-    let mounted = true;
+    setLoading(true);
+    try {
+      const { status: existing } = await Notifications.getPermissionsAsync();
+      let final = existing;
 
-    (async () => {
-      try {
-        const { status: existing } =
-          await Notifications.getPermissionsAsync();
-        let final = existing;
-        if (existing !== "granted") {
-          const { status } = await Notifications.requestPermissionsAsync();
-          final = status;
-        }
-        if (final !== "granted" || !mounted) {
-          if (mounted) setToken(null);
-          return;
-        }
-        const tokenData = await Notifications.getDevicePushTokenAsync();
-        if (mounted) setToken(tokenData.data);
-      } catch {
-        if (mounted) setToken(null);
+      // Only show the permission prompt when the user explicitly taps the button
+      if (existing !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        final = status;
       }
-    })();
 
-    return () => {
-      mounted = false;
-    };
+      if (final !== "granted") {
+        setToken(null);
+        return null;
+      }
+
+      const tokenData = await Notifications.getDevicePushTokenAsync();
+      setToken(tokenData.data);
+      return tokenData.data;
+    } catch {
+      setToken(null);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return token;
+  return {
+    token,
+    loading,
+    requestToken,
+  };
 }

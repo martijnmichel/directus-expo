@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { filter, orderBy } from "lodash";
 import { View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -17,6 +17,11 @@ import { Toggle } from "@/components/interfaces/toggle";
 import Toast from "react-native-toast-message";
 import { ActivityIndicator } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+} from "@gorhom/bottom-sheet";
+import { Input } from "@/components/interfaces/input";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
   return { collection, create: false, update: false, delete: false };
@@ -36,13 +41,15 @@ function mergeSubscriptions(
 
 export function PushNotifications() {
   const { t, i18n } = useTranslation();
-  const pushToken = usePushToken();
+  const { token, loading: requestingPermission, requestToken } = usePushToken();
   const { data: collectionExists, isLoading: loadingExists } =
     usePushCollectionExists();
   const installMutation = useInstallPushSchema();
-  const { data: device, isLoading: loadingDevice } = usePushDevice(pushToken);
+  const { data: device, isLoading: loadingDevice } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
+  const sheetRef = useRef<BottomSheetModal | null>(null);
+  const [installStaticApiKey, setInstallStaticApiKey] = useState("");
 
   const userCollections = useMemo(() => {
     if (!collections) return [];
@@ -83,9 +90,9 @@ export function PushNotifications() {
   };
 
   const handleSave = async () => {
-    if (!pushToken) return;
+    if (!token) return;
     try {
-      await upsertMutation.mutateAsync({ token: pushToken, subscriptions });
+      await upsertMutation.mutateAsync({ token, subscriptions });
       Toast.show({ type: "success", text1: t("push.saved") });
     } catch (e) {
       Toast.show({
@@ -96,105 +103,192 @@ export function PushNotifications() {
     }
   };
 
-  if (pushToken === null && !loadingExists) {
+  // While we don't know yet if the schema exists, just show a basic loading state
+  if (loadingExists) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle
           title={t("push.title")}
           icon="msNotifications"
         />
+        <ActivityIndicator />
+      </Vertical>
+    );
+  }
+
+  // 1) Schema not installed yet → static API key input + Install button
+  if (collectionExists === false) {
+    return (
+      <Vertical spacing="md">
+        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
+        <>
+          <Muted>{t("push.installHint")}</Muted>
+          <Input
+            label={t("push.staticApiKeyLabel")}
+            placeholder={t("push.staticApiKeyPlaceholder")}
+            helper={t("push.staticApiKeyHelper")}
+            value={installStaticApiKey}
+            onChangeText={setInstallStaticApiKey}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <Button
+            onPress={() =>
+              installMutation.mutate({ staticApiKey: installStaticApiKey.trim() })
+            }
+            disabled={
+              installMutation.isPending || !installStaticApiKey.trim()
+            }
+            leftIcon={
+              installMutation.isPending ? undefined : (
+                <DirectusIcon name="add_circle" />
+              )
+            }
+          >
+            {installMutation.isPending
+              ? t("push.installing")
+              : t("push.installSchema")}
+          </Button>
+          {installMutation.isError && (
+            <Text style={{ color: "red" }}>
+              {(installMutation.error as Error).message}
+            </Text>
+          )}
+        </>
+      </Vertical>
+    );
+  }
+
+  // 2) Schema installed, but notifications not enabled yet → offer Enable button
+  if (!token) {
+    return (
+      <Vertical spacing="md">
+        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
         <Muted>{t("push.unavailable")}</Muted>
+        <Button
+          onPress={() => requestToken()}
+          disabled={requestingPermission}
+        >
+          {requestingPermission
+            ? t("common.saving")
+            : t("push.enableNotifications", "Enable notifications")}
+        </Button>
       </Vertical>
     );
   }
 
-  if (loadingExists || collectionExists === false) {
-    return (
-      <Vertical spacing="md">
-        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-        {!collectionExists && !loadingExists && (
-          <>
-            <Muted>{t("push.installHint")}</Muted>
-            <Button
-              onPress={() => installMutation.mutate()}
-              disabled={installMutation.isPending}
-              leftIcon={
-                installMutation.isPending ? undefined : (
-                  <DirectusIcon name="add_circle" />
-                )
-              }
-            >
-              {installMutation.isPending
-                ? t("push.installing")
-                : t("push.installSchema")}
-            </Button>
-            {installMutation.isError && (
-              <Text style={{ color: "red" }}>
-                {(installMutation.error as Error).message}
-              </Text>
-            )}
-          </>
-        )}
-      </Vertical>
-    );
-  }
-
-  if (collectionExists && (!pushToken || loadingDevice)) {
-    return (
-      <Vertical spacing="md">
-        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-        {pushToken ? (
-          <ActivityIndicator />
-        ) : (
-          <Muted>{t("push.unavailable")}</Muted>
-        )}
-      </Vertical>
-    );
-  }
-
+  // 3) Schema installed and token present → show Manage button + bottom sheet
   return (
-    <Vertical spacing="md">
-      <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-      <Muted>{t("push.subscriptionsHint")}</Muted>
-      {userCollections.map((col) => {
-        const entry = subscriptions.find((s) => s.collection === col.collection);
-        if (!entry) return null;
-        const name = getCollectionTranslation(col, i18n.language);
-        return (
-          <View key={col.collection} style={{ marginVertical: 8 }}>
-            <Text style={{ marginBottom: 4 }}>{name}</Text>
-            <Vertical spacing="xs">
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ flex: 1 }}>{t("push.onCreate")}</Text>
-                <Toggle
-                  value={entry.create}
-                  onValueChange={(v) => updateEntry(col.collection, "create", v)}
-                />
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ flex: 1 }}>{t("push.onUpdate")}</Text>
-                <Toggle
-                  value={entry.update}
-                  onValueChange={(v) => updateEntry(col.collection, "update", v)}
-                />
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Text style={{ flex: 1 }}>{t("push.onDelete")}</Text>
-                <Toggle
-                  value={entry.delete}
-                  onValueChange={(v) => updateEntry(col.collection, "delete", v)}
-                />
-              </View>
-            </Vertical>
+    <BottomSheetModalProvider>
+      <Vertical spacing="md">
+        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
+        <Muted>{t("push.subscriptionsHint")}</Muted>
+
+        <Button
+          onPress={() => sheetRef.current?.present()}
+          disabled={loadingDevice}
+        >
+          {loadingDevice
+            ? t("common.loading")
+            : t("push.manageSubscriptions", "Manage subscriptions")}
+        </Button>
+
+        <BottomSheetModal
+          ref={sheetRef}
+          snapPoints={["50%", "80%"]}
+          enablePanDownToClose
+        >
+          <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+            <Text style={{ marginBottom: 8 }}>
+              {t("push.subscriptionsHint")}
+            </Text>
+            {loadingDevice ? (
+              <ActivityIndicator />
+            ) : (
+              <>
+                {userCollections.map((col) => {
+                  const entry = subscriptions.find(
+                    (s) => s.collection === col.collection
+                  );
+                  if (!entry) return null;
+                  const name = getCollectionTranslation(col, i18n.language);
+                  return (
+                    <View
+                      key={col.collection}
+                      style={{ marginVertical: 8 }}
+                    >
+                      <Text style={{ marginBottom: 4 }}>{name}</Text>
+                      <Vertical spacing="xs">
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ flex: 1 }}>
+                            {t("push.onCreate")}
+                          </Text>
+                          <Toggle
+                            value={entry.create}
+                            onValueChange={(v) =>
+                              updateEntry(col.collection, "create", v)
+                            }
+                          />
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ flex: 1 }}>
+                            {t("push.onUpdate")}
+                          </Text>
+                          <Toggle
+                            value={entry.update}
+                            onValueChange={(v) =>
+                              updateEntry(col.collection, "update", v)
+                            }
+                          />
+                        </View>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text style={{ flex: 1 }}>
+                            {t("push.onDelete")}
+                          </Text>
+                          <Toggle
+                            value={entry.delete}
+                            onValueChange={(v) =>
+                              updateEntry(col.collection, "delete", v)
+                            }
+                          />
+                        </View>
+                      </Vertical>
+                    </View>
+                  );
+                })}
+                <Button
+                  onPress={async () => {
+                    await handleSave();
+                    sheetRef.current?.dismiss();
+                  }}
+                  disabled={upsertMutation.isPending}
+                  style={{ marginTop: 8 }}
+                >
+                  {upsertMutation.isPending
+                    ? t("common.saving")
+                    : t("common.save")}
+                </Button>
+              </>
+            )}
           </View>
-        );
-      })}
-      <Button
-        onPress={handleSave}
-        disabled={upsertMutation.isPending}
-      >
-        {upsertMutation.isPending ? t("common.saving") : t("common.save")}
-      </Button>
-    </Vertical>
+        </BottomSheetModal>
+      </Vertical>
+    </BottomSheetModalProvider>
   );
 }

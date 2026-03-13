@@ -13,7 +13,7 @@
     "start:dev": "EXPO_PUBLIC_ENV=development expo start --clear",
     "start:staging": "EXPO_PUBLIC_ENV=staging expo start --clear",
     "start:prod": "EXPO_PUBLIC_ENV=production expo start --clear",
-    "build:dev:ios": "eas build --profile development --platform ios",
+    "build:dev:ios": "eas build --profile development --platform ios --local",
     "build:staging:ios": "eas build --profile staging --platform ios",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:prod:ios": "eas build --profile production --platform ios",
@@ -101,6 +101,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "dotenv": "^16.4.5",
     "@babel/core": "^7.25.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
