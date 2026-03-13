@@ -252,12 +252,15 @@ function normalizeCredentialsPath(raw: string | undefined): string | null {
   return unquoted.length > 0 ? unquoted : null;
 }
 
-function getFcmMessaging(): Messaging | null {
+function getFcmMessaging(): {
+  messaging: Messaging | null;
+  configError?: string;
+} {
   try {
     const existing = getApps().find(
       (a): a is App => (a as App).name === "push-fcm"
     );
-    if (existing) return getMessaging(existing);
+    if (existing) return { messaging: getMessaging(existing) };
   } catch {
     // ignore
   }
@@ -270,35 +273,47 @@ function getFcmMessaging(): Messaging | null {
         { credential: cert(parsed) },
         "push-fcm"
       ) as App;
-      return getMessaging(app);
-    } catch {
-      return null;
+      return { messaging: getMessaging(app) };
+    } catch (err) {
+      return {
+        messaging: null,
+        configError:
+          err instanceof Error ? err.message : String(err),
+      };
     }
   }
   if (path) {
+    let lastErr: string | undefined;
     try {
-      // Try path first (firebase-admin resolves it)
       const app = initializeApp(
         { credential: cert(path) },
         "push-fcm"
       ) as App;
-      return getMessaging(app);
-    } catch {
-      // Fallback: read file and pass object (handles cwd / path resolution issues)
-      try {
-        const json = fs.readFileSync(path, "utf8");
-        const parsed = JSON.parse(json) as ServiceAccount;
-        const app = initializeApp(
-          { credential: cert(parsed) },
-          "push-fcm"
-        ) as App;
-        return getMessaging(app);
-      } catch {
-        return null;
-      }
+      return { messaging: getMessaging(app) };
+    } catch (err) {
+      lastErr = err instanceof Error ? err.message : String(err);
+    }
+    try {
+      const json = fs.readFileSync(path, "utf8");
+      const parsed = JSON.parse(json) as ServiceAccount;
+      const app = initializeApp(
+        { credential: cert(parsed) },
+        "push-fcm"
+      ) as App;
+      return { messaging: getMessaging(app) };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        messaging: null,
+        configError: `Path set but init failed. cert(path): ${lastErr ?? "?"}. readFile+cert: ${msg}`,
+      };
     }
   }
-  return null;
+  return {
+    messaging: null,
+    configError:
+      "Neither FCM_SERVICE_ACCOUNT_JSON nor GOOGLE_APPLICATION_CREDENTIALS is set in this process (check env for the API route / server)",
+  };
 }
 
 async function sendFcm(
@@ -317,14 +332,13 @@ async function sendFcm(
   if (tokens.length === 0) {
     return { sent: 0, failed: 0, fcmConfigured: true };
   }
-  const messaging = getFcmMessaging();
+  const { messaging, configError } = getFcmMessaging();
   if (!messaging) {
     return {
       sent: 0,
       failed: tokens.length,
       fcmConfigured: false,
-      firstError:
-        "FCM not configured (missing FCM_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS)",
+      firstError: configError ?? "FCM not configured",
     };
   }
   try {
