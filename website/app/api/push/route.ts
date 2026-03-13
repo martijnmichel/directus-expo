@@ -338,10 +338,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const title =
-    body.payload?.title ?? `Item ${body.action}d`;
-  const bodyText =
-    body.payload?.body ?? `${body.collection} #${body.key}`;
+  const getTitle = () => {
+    if (body.event?.endsWith("create")) return "Item created";
+    if (body.event?.endsWith("update")) return "Item updated";
+    if (body.event?.endsWith("delete")) return "Item deleted";
+    return "Item";
+  }
+
+  const title = getTitle();
+  const bodyText = body.collection
+    .replaceAll("_", " ")
+    .split(" ")
+    .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
+    .join(" ");
+
   const deepLink = buildDeepLink(body.collection, body.key);
 
   const client = createClient(body.directusUrl, body.directusToken);
