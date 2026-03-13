@@ -58,6 +58,7 @@
     "permissionCheckFailedTitle": "Pushrechten konden niet worden gecontroleerd",
     "permissionCheckFailedBody": "We konden niet controleren of uw rol toegang heeft tot pushinstellingen. Neem contact op met een beheerder als inschakelen mislukt.",
     "permissionWarning": "U heeft geen toestemming om pushinstellingen te beheren. Vraag een beheerder om toegang tot app_push_devices.",
+    "checkAgain": "Opnieuw controleren",
     "setUpSubscriptionsHint": "Stel in voor welke verzamelingen u pushmeldingen wilt ontvangen.",
     "setUpSubscriptions": "Abonnementen instellen",
     "enableNotifications": "Meldingen inschakelen",

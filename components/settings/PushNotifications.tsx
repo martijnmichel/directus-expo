@@ -56,9 +56,13 @@ export function PushNotifications() {
     data: setup,
     isLoading: loadingExists,
     isError: setupError,
+    refetch: refetchSetup,
   } = usePushCollectionExists(runFullSetupCheck);
-  const { data: accessOnly, isLoading: loadingAccessOnly } =
-    usePushAccessOnly(!runFullSetupCheck);
+  const {
+    data: accessOnly,
+    isLoading: loadingAccessOnly,
+    refetch: refetchAccessOnly,
+  } = usePushAccessOnly(!runFullSetupCheck);
   const deviceAccess =
     runFullSetupCheck ? setup?.deviceAccess : accessOnly?.deviceAccess;
   const installMutation = useInstallPushSchema();
@@ -67,6 +71,7 @@ export function PushNotifications() {
     isLoading: loadingDevice,
     isError: deviceError,
     error: deviceErrorPayload,
+    refetch: refetchDevice,
   } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
@@ -285,6 +290,17 @@ export function PushNotifications() {
             "You don't have permission to manage push settings. Ask an admin to grant access to app_push_devices."
           )}
         />
+        <Button
+          onPress={() => {
+            refetchSetup();
+            refetchAccessOnly();
+            refetchDevice();
+          }}
+          variant="soft"
+          style={{ marginTop: 8 }}
+        >
+          {t("push.checkAgain", "Check again")}
+        </Button>
       </Vertical>
     );
   }

@@ -61,6 +61,7 @@
     "permissionCheckFailedTitle": "Could not verify push permissions",
     "permissionCheckFailedBody": "We couldn't verify whether your role can access push settings. If enabling push fails, contact an administrator.",
     "permissionWarning": "You don't have permission to manage push settings. Ask an admin to grant access to app_push_devices.",
+    "checkAgain": "Check again",
     "setUpSubscriptionsHint": "Set up which collections you want to receive push notifications for.",
     "setUpSubscriptions": "Set up subscriptions",
     "enableNotifications": "Enable notifications",
