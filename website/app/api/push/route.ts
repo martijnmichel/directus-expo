@@ -4,7 +4,7 @@ import {
   rest,
   staticToken,
 } from "@directus/sdk";
-import { ApnsClient, Notification as ApnsNotification } from "apns2";
+import { ApnsClient, Notification as ApnsNotification, ApnsError } from "apns2";
 import { getApps, cert, type App } from "firebase-admin/app";
 import { getMessaging, type Messaging } from "firebase-admin/messaging";
 import { initializeApp, type ServiceAccount } from "firebase-admin";
@@ -197,14 +197,22 @@ async function sendApns(
   body: string,
   deepLink: string,
   bundleId: string
-): Promise<{ sent: number; failed: number }> {
-  if (tokens.length === 0) return { sent: 0, failed: 0 };
+): Promise<{ sent: number; failed: number; firstError?: string; apnsConfigured: boolean }> {
+  if (tokens.length === 0) {
+    return { sent: 0, failed: 0, apnsConfigured: true };
+  }
   const client = await getApnsClient();
   if (!client) {
-    return { sent: 0, failed: tokens.length };
+    return {
+      sent: 0,
+      failed: tokens.length,
+      apnsConfigured: false,
+      firstError: "APNs not configured (missing APNS_KEY_BASE64/APNS_KEY_PATH, APNS_KEY_ID, APNS_TEAM_ID, or APNS_BUNDLE_ID)",
+    };
   }
   let sent = 0;
   let failed = 0;
+  let firstError: string | undefined;
   for (const deviceToken of tokens) {
     try {
       const notification = new ApnsNotification(deviceToken, {
@@ -214,11 +222,14 @@ async function sendApns(
       });
       await client.send(notification);
       sent += 1;
-    } catch {
+    } catch (err) {
       failed += 1;
+      if (!firstError) {
+        firstError = err instanceof ApnsError ? err.reason : (err instanceof Error ? err.message : String(err));
+      }
     }
   }
-  return { sent, failed };
+  return { sent, failed, firstError, apnsConfigured: true };
 }
 
 // --- FCM ---
@@ -374,7 +385,12 @@ export async function POST(req: NextRequest) {
     ok: true,
     sent,
     failed,
-    ios: { sent: apnResult.sent, failed: apnResult.failed },
+    ios: {
+      sent: apnResult.sent,
+      failed: apnResult.failed,
+      configured: apnResult.apnsConfigured,
+      ...(apnResult.firstError && { error: apnResult.firstError }),
+    },
     android: { sent: fcmResult.sent, failed: fcmResult.failed },
   });
 }
