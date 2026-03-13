@@ -1,3 +1,10 @@
+// Load .env so EXPO_PUBLIC_* and PUSH_SECRET are available (optional: install "dotenv" if using .env)
+try {
+  require("dotenv").config();
+} catch {
+  // dotenv not installed
+}
+
 const packageJson = require("./package.json");
 const buildNumber = 6;
 
@@ -69,6 +76,9 @@ export default () => ({
       eas: {
         projectId: "66baa699-7004-4c6a-85ee-941ba6062451",
       },
+      // Push: same value as PUSH_SECRET on the website. Set in .env as PUSH_SECRET or EXPO_PUBLIC_PUSH_SECRET, or in EAS Secrets.
+      pushSecret:
+        process.env.PUSH_SECRET ?? process.env.EXPO_PUBLIC_PUSH_SECRET ?? "",
     },
     runtimeVersion: `${buildNumber}`,
     updates: {
