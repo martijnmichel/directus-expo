@@ -13,6 +13,7 @@ export function usePushCollectionExists() {
   const { directus } = useAuth();
   return useQuery({
     queryKey: ["pushCollectionExists"],
+    staleTime: 1,
     queryFn: async () => {
       const [collections, flows] = await Promise.all([
         directus?.request(readCollections()) ?? [],
