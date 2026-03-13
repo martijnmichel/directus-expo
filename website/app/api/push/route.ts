@@ -8,6 +8,7 @@ import { ApnsClient, Notification as ApnsNotification, ApnsError } from "apns2";
 import { getApps, cert, type App } from "firebase-admin/app";
 import { getMessaging, type Messaging } from "firebase-admin/messaging";
 import { initializeApp, type ServiceAccount } from "firebase-admin";
+import fs from "fs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -239,6 +240,18 @@ async function sendApns(
 
 // --- FCM ---
 
+/** Trim and strip optional surrounding double quotes (e.g. from .env). */
+function normalizeCredentialsPath(raw: string | undefined): string | null {
+  if (raw == null || typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) return null;
+  const unquoted =
+    trimmed.startsWith('"') && trimmed.endsWith('"')
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
+  return unquoted.length > 0 ? unquoted : null;
+}
+
 function getFcmMessaging(): Messaging | null {
   try {
     const existing = getApps().find(
@@ -249,7 +262,7 @@ function getFcmMessaging(): Messaging | null {
     // ignore
   }
   const creds = process.env.FCM_SERVICE_ACCOUNT_JSON;
-  const path = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const path = normalizeCredentialsPath(process.env.GOOGLE_APPLICATION_CREDENTIALS);
   if (creds) {
     try {
       const parsed = JSON.parse(creds) as ServiceAccount;
@@ -264,13 +277,25 @@ function getFcmMessaging(): Messaging | null {
   }
   if (path) {
     try {
+      // Try path first (firebase-admin resolves it)
       const app = initializeApp(
         { credential: cert(path) },
         "push-fcm"
       ) as App;
       return getMessaging(app);
     } catch {
-      return null;
+      // Fallback: read file and pass object (handles cwd / path resolution issues)
+      try {
+        const json = fs.readFileSync(path, "utf8");
+        const parsed = JSON.parse(json) as ServiceAccount;
+        const app = initializeApp(
+          { credential: cert(parsed) },
+          "push-fcm"
+        ) as App;
+        return getMessaging(app);
+      } catch {
+        return null;
+      }
     }
   }
   return null;
