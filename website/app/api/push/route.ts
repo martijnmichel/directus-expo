@@ -283,23 +283,57 @@ async function sendFcm(
   deepLink: string,
   collection: string,
   key: string
-): Promise<{ sent: number; failed: number }> {
-  if (tokens.length === 0) return { sent: 0, failed: 0 };
+): Promise<{
+  sent: number;
+  failed: number;
+  fcmConfigured: boolean;
+  firstError?: string;
+}> {
+  if (tokens.length === 0) {
+    return { sent: 0, failed: 0, fcmConfigured: true };
+  }
   const messaging = getFcmMessaging();
-  if (!messaging) return { sent: 0, failed: tokens.length };
-  const result = await messaging.sendEachForMulticast({
-    tokens,
-    notification: { title, body },
-    data: {
-      deepLink,
-      collection,
-      key,
-    },
-  });
-  return {
-    sent: result.successCount,
-    failed: result.failureCount,
-  };
+  if (!messaging) {
+    return {
+      sent: 0,
+      failed: tokens.length,
+      fcmConfigured: false,
+      firstError:
+        "FCM not configured (missing FCM_SERVICE_ACCOUNT_JSON or GOOGLE_APPLICATION_CREDENTIALS)",
+    };
+  }
+  try {
+    const result = await messaging.sendEachForMulticast({
+      tokens,
+      notification: { title, body },
+      data: {
+        deepLink,
+        collection,
+        key,
+      },
+    });
+    let firstError: string | undefined;
+    if (result.responses) {
+      const failed = result.responses.find((r) => !r.success && r.error);
+      if (failed?.error) {
+        firstError =
+          failed.error.code ?? failed.error.message ?? String(failed.error);
+      }
+    }
+    return {
+      sent: result.successCount,
+      failed: result.failureCount,
+      fcmConfigured: true,
+      ...(firstError && { firstError }),
+    };
+  } catch (err) {
+    return {
+      sent: 0,
+      failed: tokens.length,
+      fcmConfigured: true,
+      firstError: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 // --- Handler ---
@@ -406,6 +440,11 @@ export async function POST(req: NextRequest) {
       configured: apnResult.apnsConfigured,
       ...(apnResult.firstError && { error: apnResult.firstError }),
     },
-    android: { sent: fcmResult.sent, failed: fcmResult.failed },
+    android: {
+      sent: fcmResult.sent,
+      failed: fcmResult.failed,
+      configured: fcmResult.fcmConfigured,
+      ...(fcmResult.firstError && { error: fcmResult.firstError }),
+    },
   });
 }
