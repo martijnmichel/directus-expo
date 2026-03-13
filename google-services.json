@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "963970492172",
+    "project_id": "directus-mobile-b0444",
+    "storage_bucket": "directus-mobile-b0444.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:963970492172:android:9d67b583a3d0a5f5610b29",
+        "android_client_info": {
+          "package_name": "com.martijnmichel.directusexpo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLY3R1yamgzBetM9Z58kSzJvCidLf7oGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
