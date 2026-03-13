@@ -33,8 +33,11 @@ interface PushRequestBody {
   directusUrl: string;
   directusToken: string;
   collection: string;
-  action: PushAction;
   key: string;
+  /** Optional explicit action from caller (create|update|delete). */
+  action?: PushAction;
+  /** Optional raw Directus event, e.g. items.create */
+  event?: string;
   payload?: { title?: string; body?: string };
 }
 
@@ -57,17 +60,27 @@ function parseBody(body: unknown): PushRequestBody | null {
   const directusToken =
     typeof b.directusToken === "string" ? b.directusToken : null;
   const collection = typeof b.collection === "string" ? b.collection : null;
-  const action = b.action as PushAction | undefined;
   const key = typeof b.key === "string" ? b.key : null;
   if (
     !directusUrl ||
     !directusToken ||
     !collection ||
-    !key ||
-    !action ||
-    !["create", "update", "delete"].includes(action)
+    !key
   )
     return null;
+  const event =
+    typeof b.event === "string" && b.event.length > 0 ? b.event : undefined;
+  const rawAction = b.action as string | undefined;
+  let action: PushAction | undefined;
+  if (rawAction && ["create", "update", "delete"].includes(rawAction)) {
+    action = rawAction as PushAction;
+  } else if (event) {
+    const suffix = event.split(".").pop();
+    if (suffix === "create" || suffix === "update" || suffix === "delete") {
+      action = suffix;
+    }
+  }
+  if (!action) return null;
   let payload: PushRequestBody["payload"] | undefined;
   if (b.payload && typeof b.payload === "object" && b.payload !== null) {
     const p = b.payload as Record<string, unknown>;
@@ -80,6 +93,7 @@ function parseBody(body: unknown): PushRequestBody | null {
     directusToken,
     collection,
     action,
+    event,
     key,
     payload,
   };

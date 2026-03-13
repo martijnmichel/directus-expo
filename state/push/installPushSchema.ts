@@ -70,6 +70,14 @@ export function useInstallPushSchema() {
               c.collection === APP_PUSH_DEVICES_COLLECTION
           )
         : false;
+      const allCollections = Array.isArray(collections)
+        ? (collections as { collection?: string }[])
+            .map((c) => c.collection)
+            .filter(
+              (name): name is string =>
+                typeof name === "string" && !name.startsWith("directus_")
+            )
+        : [];
       const flowsList = Array.isArray(flowsRaw) ? flowsRaw : (flowsRaw as { data?: unknown[] })?.data ?? [];
       const flowExists = flowsList.length > 0;
       if (collectionExists && flowExists)
@@ -131,6 +139,7 @@ export function useInstallPushSchema() {
             options: {
               type: "action",
               scope: ["items.create", "items.update", "items.delete"],
+              collections: allCollections,
             },
           } as any)
         );
@@ -143,10 +152,10 @@ export function useInstallPushSchema() {
           directusUrl,
           directusToken,
           collection: "{{ $trigger.collection }}",
-          action: "{{ $trigger.action }}",
+          event: "{{ $trigger.event }}",
           key: "{{ $trigger.key }}",
           payload: {
-            title: "Item {{ $trigger.action }}d",
+            title: "Item {{ $trigger.event }}",
             body: "{{ $trigger.collection }} #{{ $trigger.key }}",
           },
         });
@@ -157,14 +166,14 @@ export function useInstallPushSchema() {
             key: "send-push-request",
             type: "request",
             name: "Send to push endpoint",
-            position_x: 0,
+            position_x: 20,
             position_y: 0,
             options: {
               url: PUSH_ENDPOINT_URL,
               method: "POST",
               headers: [
-                { name: "Content-Type", value: "application/json" },
-                { name: "Authorization", value: `Bearer ${pushSecret.trim()}` },
+                { header: "Content-Type", value: "application/json" },
+                { header: "Authorization", value: `Bearer ${pushSecret.trim()}` },
               ],
               body: requestBody,
             },
