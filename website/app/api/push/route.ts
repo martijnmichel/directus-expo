@@ -163,23 +163,28 @@ async function getApnsClient(): Promise<ApnsClient | null> {
   const teamId = process.env.APNS_TEAM_ID;
   const bundleId = process.env.APNS_BUNDLE_ID;
   if (!bundleId || !keyId || !teamId) return null;
-  let signingKey: Buffer | undefined;
+  let keyBuffer: Buffer | undefined;
   if (keyBase64) {
     try {
       const cleaned = keyBase64.replace(/[^A-Za-z0-9+/=]/g, "");
-      signingKey = Buffer.from(cleaned, "base64");
+      keyBuffer = Buffer.from(cleaned, "base64");
     } catch {
-      signingKey = undefined;
+      keyBuffer = undefined;
     }
   } else if (keyPath) {
     try {
       const fs = await import("fs");
-      signingKey = fs.readFileSync(keyPath);
+      keyBuffer = fs.readFileSync(keyPath);
     } catch {
-      signingKey = undefined;
+      keyBuffer = undefined;
     }
   }
-  if (!signingKey || signingKey.length === 0) return null;
+  if (!keyBuffer || keyBuffer.length === 0) return null;
+  // apns2/fast-jwt expect a PEM string for ES256; raw Buffer can cause "Invalid private key"
+  const signingKey =
+    keyBuffer[0] === 0x2d
+      ? keyBuffer.toString("utf8")
+      : `-----BEGIN PRIVATE KEY-----\n${keyBuffer.toString("base64").replace(/(.{64})/g, "$1\n").trim()}\n-----END PRIVATE KEY-----`;
   const production = process.env.NODE_ENV === "production";
   apnsClient = new ApnsClient({
     team: teamId,
