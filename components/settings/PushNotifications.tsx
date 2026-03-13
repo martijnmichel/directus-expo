@@ -6,9 +6,9 @@ import { Button } from "@/components/display/button";
 import { Text, Muted } from "@/components/display/typography";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { DividerSubtitle } from "@/components/display/subtitle";
+import { useAuth } from "@/contexts/AuthContext";
 import { usePushToken } from "@/hooks/usePushToken";
 import {
-  useCanManagePushSetup,
   usePushCollectionExists,
   usePushAccessOnly,
 } from "@/state/push/usePushCollection";
@@ -47,10 +47,9 @@ function mergeSubscriptions(
 
 export function PushNotifications() {
   const { t, i18n } = useTranslation();
+  const { policyGlobals } = useAuth();
   const { token, loading: requestingPermission, requestToken } = usePushToken();
-  const { data: canManageSetup, isLoading: loadingCanManage } =
-    useCanManagePushSetup();
-  const runFullSetupCheck = canManageSetup === true;
+  const runFullSetupCheck = policyGlobals?.admin_access === true;
   const {
     data: setup,
     isLoading: loadingExists,
@@ -141,7 +140,6 @@ export function PushNotifications() {
   }, [subscriptions, token, deviceAccess, upsertMutation, t]);
 
   const loading =
-    loadingCanManage ||
     (runFullSetupCheck && loadingExists) ||
     (!runFullSetupCheck && loadingAccessOnly);
 

@@ -48,30 +48,6 @@ function isForbiddenError(error: unknown): boolean {
 }
 
 /**
- * Returns whether the current user can run admin-only setup checks
- * (readCollections / readFlows). Used to avoid 403s for non-admins.
- */
-export function useCanManagePushSetup() {
-  const { directus, user } = useAuth();
-  const userId = user?.id ?? null;
-  return useQuery<boolean>({
-    queryKey: ["pushCanManageSetup", userId],
-    staleTime: 5 * 60 * 1000,
-    refetchOnMount: true,
-    enabled: !!directus,
-    queryFn: async () => {
-      try {
-        await directus!.request(readCollections());
-        return true;
-      } catch (error) {
-        if (isForbiddenError(error)) return false;
-        throw error;
-      }
-    },
-  });
-}
-
-/**
  * Minimal check for non-admins: only tests read access to app_push_devices.
  * Use when we don't run the full schema/flow check (e.g. user is not admin).
  */

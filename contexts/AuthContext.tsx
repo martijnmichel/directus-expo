@@ -5,11 +5,11 @@ import {
   AuthenticationClient,
   AuthenticationData,
   CoreSchema,
-  createDashboard,
   createDirectus,
   DirectusClient,
   DirectusUser,
   readMe,
+  readPolicyGlobals,
   readSettings,
   rest,
   RestClient,
@@ -20,10 +20,19 @@ import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { UnistylesRuntime } from "react-native-unistyles";
 import { LoginFormData } from "@/components/LoginForm";
 
+/** Current user's policy globals from GET /policies/me/globals (Directus v11+). */
+export interface PolicyGlobals {
+  app_access: boolean;
+  admin_access: boolean;
+  enforce_tfa: boolean;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: DirectusUser | null;
+  /** Policy globals (admin_access, app_access, enforce_tfa). Null until fetched or on older Directus. */
+  policyGlobals: PolicyGlobals | null;
   directus:
     | (DirectusClient<CoreSchema> &
         AuthenticationClient<CoreSchema> &
@@ -93,6 +102,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<DirectusUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [policyGlobals, setPolicyGlobals] = useState<PolicyGlobals | null>(null);
+
+  const fetchAndSetPolicyGlobals = async (
+    client: DirectusClient<CoreSchema> &
+      AuthenticationClient<CoreSchema> &
+      RestClient<CoreSchema>
+  ) => {
+    try {
+      const data = await client.request(readPolicyGlobals());
+      const raw = data as Record<string, unknown>;
+      if (
+        raw &&
+        typeof raw.app_access === "boolean" &&
+        typeof raw.admin_access === "boolean"
+      ) {
+        setPolicyGlobals({
+          app_access: raw.app_access,
+          admin_access: raw.admin_access,
+          enforce_tfa: raw.enforce_tfa === true,
+        });
+      } else {
+        setPolicyGlobals(null);
+      }
+    } catch {
+      setPolicyGlobals(null);
+    }
+  };
 
   useEffect(() => {
     initializeDirectus();
@@ -141,6 +177,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setToken(freshToken);
             setUser(user as DirectusUser);
             setIsAuthenticated(true);
+            await fetchAndSetPolicyGlobals(directus);
           } catch (error) {
             // Session is invalid/expired; clear it for the active instance
             try {
@@ -169,6 +206,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setToken(token);
             setUser(user as DirectusUser);
             setIsAuthenticated(true);
+            await fetchAndSetPolicyGlobals(directus);
           } catch {
             try {
               await AsyncStorage.removeItem(
@@ -204,6 +242,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user as DirectusUser);
       setToken(token);
       setIsAuthenticated(true);
+      await fetchAndSetPolicyGlobals(directus);
     } catch (error) {
       throw new Error("Login failed");
     }
@@ -286,6 +325,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setToken(apiKey);
       setUser(user as DirectusUser);
       setIsAuthenticated(true);
+      await fetchAndSetPolicyGlobals(directus);
       await AsyncStorage.setItem(getApiKeyStorageKey(apiUrl), apiKey);
     } catch (error) {
       throw new Error("Login failed");
@@ -320,6 +360,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setDirectus(initDirectus());
       setIsAuthenticated(false);
       setToken(null);
+      setPolicyGlobals(null);
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -341,6 +382,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setApiKey,
         user,
         token,
+        policyGlobals,
       }}
     >
       {children}

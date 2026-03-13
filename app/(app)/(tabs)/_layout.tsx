@@ -17,7 +17,7 @@ import { Folder } from "@/components/icons/Folder";
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { styles } = useStyles(stylesheet);
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, policyGlobals } = useAuth();
   const { theme } = useStyles();
   const { bottom } = useSafeAreaInsets();
 
@@ -28,7 +28,7 @@ export default function TabsLayout() {
     return null; // or return a loading spinner
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !policyGlobals?.app_access) {
     return <Redirect href="/login" />;
   }
 
