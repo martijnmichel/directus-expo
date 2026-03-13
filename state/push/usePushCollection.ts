@@ -36,20 +36,24 @@ export type PushAccessOnlyState = {
   deviceAccess: "ok" | "forbidden" | "unknown";
 };
 
-function isForbiddenError(error: unknown): boolean {
-  const anyErr = error as any;
+export function isForbiddenError(error: unknown): boolean {
+  if (error == null) return false;
+  const anyErr = error as Record<string, unknown>;
   const status =
     anyErr?.status ??
-    anyErr?.response?.status ??
-    anyErr?.errors?.[0]?.extensions?.status;
+    (anyErr?.response as Record<string, unknown>)?.status ??
+    (anyErr?.errors as Array<{ extensions?: { status?: number } }>)?.[0]?.extensions?.status;
   const code =
-    anyErr?.code ?? anyErr?.errors?.[0]?.extensions?.code;
-  return status === 403 || code === "FORBIDDEN";
+    anyErr?.code ??
+    (anyErr?.errors as Array<{ extensions?: { code?: string } }>)?.[0]?.extensions?.code;
+  if (status === 403 || code === "FORBIDDEN") return true;
+  const msg = typeof anyErr?.message === "string" ? anyErr.message.toLowerCase() : "";
+  return msg.includes("403") || msg.includes("forbidden");
 }
 
 /**
- * Minimal check for non-admins: only tests read access to app_push_devices.
- * Use when we don't run the full schema/flow check (e.g. user is not admin).
+ * Minimal check for non-admins: tests read access to app_push_devices with the
+ * same filter the app uses (user_id) so we get 403 when the policy restricts by user.
  */
 export function usePushAccessOnly(enabled: boolean = true) {
   const { directus, user } = useAuth();
@@ -61,8 +65,11 @@ export function usePushAccessOnly(enabled: boolean = true) {
     enabled: !!directus && enabled,
     queryFn: async () => {
       try {
+        const filter: Record<string, unknown> = {};
+        if (userId) filter.user_id = { _eq: userId };
         await directus!.request(
           readItems(APP_PUSH_DEVICES_COLLECTION as any, {
+            ...(Object.keys(filter).length > 0 && { filter }),
             limit: 1,
           }) as RestCommand<unknown, any>
         );

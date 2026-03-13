@@ -14,6 +14,7 @@ interface AlertProps {
   status?: AlertStatus;
   message: string;
   icon?: DirectusIconName;
+  action?: React.ReactNode;
 }
 
 const getStatusConfig = (status: AlertStatus) => {
@@ -39,6 +40,7 @@ export const Alert: React.FC<AlertProps> = ({
   status = "info",
   message,
   icon,
+  action
 }) => {
   const { styles, theme } = useStyles(stylesheet);
   const statusConfig = getStatusConfig(status);
@@ -54,6 +56,7 @@ export const Alert: React.FC<AlertProps> = ({
       />
 
       <Text style={styles.message}>{message}</Text>
+      {action && <View style={styles.action}>{action}</View>}
     </View>
   );
 };
@@ -69,6 +72,9 @@ const stylesheet = createStyleSheet((theme) => ({
     borderLeftWidth: 4,
     padding: theme.spacing.md,
     gap: theme.spacing.sm,
+  },
+  action: {
+    marginLeft: "auto",
   },
   icon: {
     width: 20,

@@ -5,12 +5,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/display/button";
 import { Text, Muted } from "@/components/display/typography";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
+import { Alert } from "@/components/display/alert";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePushToken } from "@/hooks/usePushToken";
 import {
   usePushCollectionExists,
   usePushAccessOnly,
+  isForbiddenError,
 } from "@/state/push/usePushCollection";
 import { useInstallPushSchema } from "@/state/push/installPushSchema";
 import { usePushDevice, useUpsertPushDevice } from "@/state/push/usePushDevice";
@@ -60,7 +62,12 @@ export function PushNotifications() {
   const deviceAccess =
     runFullSetupCheck ? setup?.deviceAccess : accessOnly?.deviceAccess;
   const installMutation = useInstallPushSchema();
-  const { data: device, isLoading: loadingDevice } = usePushDevice(token);
+  const {
+    data: device,
+    isLoading: loadingDevice,
+    isError: deviceError,
+    error: deviceErrorPayload,
+  } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
   const [installStaticApiKey, setInstallStaticApiKey] = useState("");
@@ -262,56 +269,67 @@ export function PushNotifications() {
     });
   }
 
-  // 2) Schema installed, but this role cannot access app_push_devices → show a warning.
-  if (setup?.deviceAccess === "forbidden") {
+  // 2) No access to app_push_devices (probe 403) or device fetch failed (e.g. 403) → show warning.
+  const deviceForbidden =
+    deviceAccess === "forbidden" || (!!token && deviceError);
+  if (deviceForbidden) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-        <Text style={{ color: "red" }}>
-          {t(
+        <Alert
+          status="danger"
+          message={t(
             "push.permissionWarning",
-            "Your role does not have permission to manage push notification settings. Please contact an administrator of this Directus instance to grant read/update/delete access on the app_push_devices collection."
+            "You don't have permission to manage push settings. Ask an admin to grant access to app_push_devices."
           )}
-        </Text>
+        />
       </Vertical>
     );
   }
 
-  // 3) Schema installed, but notifications not enabled yet → offer Enable button
-  if (!token) {
+  // 3) No token, or token but no device record for this user (e.g. new user on same device) → Enable / set up
+  const noDeviceForThisUser =
+    token && !loadingDevice && device == null && !deviceError;
+  if (!token || noDeviceForThisUser) {
     return (
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-        <Muted>{t("push.unavailable")}</Muted>
+        <Muted>
+          {noDeviceForThisUser
+            ? t("push.setUpSubscriptionsHint", "Set up which collections you want to receive push notifications for.")
+            : t("push.unavailable")}
+        </Muted>
         <Button
           onPress={async () => {
-            const newToken = await requestToken();
-            if (!newToken) {
-              Toast.show({
-                type: "info",
-                text1: t("push.permissionDeniedTitle", "Notifications disabled"),
-                text2: t(
-                  "push.permissionDeniedBody",
-                  "Enable notifications for this app in the system settings to receive push notifications."
-                ),
-              });
-              // Try to open the app's system settings so the user can enable notifications.
-              try {
-                await Linking.openSettings();
-              } catch {
-                // Ignore if not supported on this platform.
+            let tokenToUse = token;
+            if (!tokenToUse) {
+              const newToken = await requestToken();
+              if (!newToken) {
+                Toast.show({
+                  type: "info",
+                  text1: t("push.permissionDeniedTitle", "Notifications disabled"),
+                  text2: t(
+                    "push.permissionDeniedBody",
+                    "Enable notifications for this app in the system settings to receive push notifications."
+                  ),
+                });
+                try {
+                  await Linking.openSettings();
+                } catch {
+                  // Ignore if not supported on this platform.
+                }
+                return;
               }
-              return;
+              tokenToUse = newToken;
             }
 
-            // We successfully obtained a token; ensure a device record exists.
             try {
               const initialSubscriptions = mergeSubscriptions(
                 userCollections,
                 null
               );
               await upsertMutation.mutateAsync({
-                token: newToken,
+                token: tokenToUse,
                 subscriptions: initialSubscriptions,
               });
             } catch (e) {
@@ -327,15 +345,17 @@ export function PushNotifications() {
           }}
           disabled={requestingPermission || upsertMutation.isPending}
         >
-          {requestingPermission
+          {requestingPermission || upsertMutation.isPending
             ? t("common.saving")
-            : t("push.enableNotifications", "Enable notifications")}
+            : noDeviceForThisUser
+              ? t("push.setUpSubscriptions", "Set up subscriptions")
+              : t("push.enableNotifications", "Enable notifications")}
         </Button>
       </Vertical>
     );
   }
 
-  // 4) Schema installed and token present → show Manage button + bottom sheet
+  // 4) Token present and device record loaded → show Manage button + bottom sheet
   return (
     <Modal>
       <Vertical spacing="md">
