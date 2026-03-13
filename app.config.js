@@ -39,6 +39,7 @@ export default () => ({
       },
       versionCode: buildNumber,
       package: "com.martijnmichel.directusexpo.app",
+      googleServicesFile: "./google-services.json",
       permissions: [
         "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO",
