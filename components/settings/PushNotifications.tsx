@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { filter, orderBy } from "lodash";
 import { View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -27,6 +27,7 @@ import { Modal } from "@/components/display/modal";
 import { Input } from "@/components/interfaces/input";
 import { SelectMulti } from "@/components/interfaces/select-multi";
 import { KeyboardAwareScrollView } from "../layout/Layout";
+import { ScrollView } from "react-native-gesture-handler";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
   return { collection, create: false, update: false, delete: false };
@@ -86,6 +87,8 @@ export function PushNotifications() {
   );
   const [subscriptions, setSubscriptions] =
     useState<PushSubscriptionEntry[]>(merged);
+  const lastSavedJsonRef = useRef<string>("");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (merged.length > 0) setSubscriptions(merged);
@@ -96,6 +99,7 @@ export function PushNotifications() {
     key: "create" | "update" | "delete",
     value: boolean
   ) => {
+    console.log("updateEntry", collection, key, value);
     setSubscriptions((prev) =>
       prev.map((s) =>
         s.collection === collection ? { ...s, [key]: value } : s
@@ -103,19 +107,32 @@ export function PushNotifications() {
     );
   };
 
-  const handleSave = async () => {
+  // Auto-save subscriptions on every change (debounced).
+  useEffect(() => {
     if (!token) return;
-    try {
-      await upsertMutation.mutateAsync({ token, subscriptions });
-      Toast.show({ type: "success", text1: t("push.saved") });
-    } catch (e) {
-      Toast.show({
-        type: "error",
-        text1: t("push.saveError"),
-        text2: (e as Error).message,
-      });
-    }
-  };
+    if (setup?.deviceAccess !== "ok") return;
+
+    const json = JSON.stringify(subscriptions ?? []);
+    if (json === lastSavedJsonRef.current) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await upsertMutation.mutateAsync({ token, subscriptions });
+        lastSavedJsonRef.current = json;
+      } catch (e) {
+        Toast.show({
+          type: "error",
+          text1: t("push.saveError"),
+          text2: (e as Error).message,
+        });
+      }
+    }, 600);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [subscriptions, token, setup?.deviceAccess, upsertMutation, t]);
 
   // While we don't know yet if the schema exists, just show a basic loading state
   if (loadingExists) {
@@ -332,14 +349,14 @@ export function PushNotifications() {
           title={t("push.title")}
         >
           {({ close }) => (
-            <KeyboardAwareScrollView>
+            <View>
               <Text style={{ marginBottom: 8 }}>
                 {t("push.subscriptionsHint")}
               </Text>
               {loadingDevice ? (
                 <ActivityIndicator />
               ) : (
-                <>
+                <ScrollView>
                   {userCollections.sort((a, b) => a.collection.localeCompare(b.collection)).map((col) => {
                     const entry = subscriptions.find(
                       (s) => s.collection === col.collection
@@ -393,7 +410,6 @@ export function PushNotifications() {
                   })}
                   <Button
                     onPress={async () => {
-                      await handleSave();
                       close();
                     }}
                     disabled={upsertMutation.isPending}
@@ -403,9 +419,9 @@ export function PushNotifications() {
                       ? t("common.saving")
                       : t("common.save")}
                   </Button>
-                </>
+                </ScrollView>
               )}
-            </KeyboardAwareScrollView>
+            </View>
           )}
         </Modal.Content>
       </Vertical>
