@@ -270,8 +270,10 @@ export function PushNotifications() {
   }
 
   // 2) No access to app_push_devices (probe 403) or device fetch failed (e.g. 403) → show warning.
+  // Don't treat device fetch error as forbidden for admins (avoids brief flash during reinstall/refresh).
   const deviceForbidden =
-    deviceAccess === "forbidden" || (!!token && deviceError);
+    deviceAccess === "forbidden" ||
+    (!!token && deviceError && !policyGlobals?.admin_access);
   if (deviceForbidden) {
     return (
       <Vertical spacing="md">
