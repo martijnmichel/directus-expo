@@ -45,7 +45,6 @@ export default () => ({
     plugins: [
       "expo-router",
       "expo-font",
-
       "expo-web-browser",
       [
         "expo-image-picker",
@@ -54,8 +53,14 @@ export default () => ({
             "The app needs access to your photos to let you select images.",
         },
       ],
-
-     
+      [
+        "expo-notifications",
+        {
+          icon: "./assets/images/icon.png",
+          color: "#ffffff",
+          sounds: [],
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

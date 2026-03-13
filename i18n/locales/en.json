@@ -39,7 +39,22 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "warning": "Warning"
+    "warning": "Warning",
+    "save": "Save",
+    "saving": "Saving..."
+  },
+  "push": {
+    "title": "Push notifications",
+    "unavailable": "Push notifications are not available on this device.",
+    "installHint": "Install the push schema on your Directus instance to enable push notifications.",
+    "installSchema": "Install push schema",
+    "installing": "Installing...",
+    "subscriptionsHint": "Choose which collections to subscribe to and when to receive notifications.",
+    "onCreate": "On create",
+    "onUpdate": "On update",
+    "onDelete": "On delete",
+    "saved": "Subscriptions saved.",
+    "saveError": "Failed to save subscriptions"
   },
   "layout": {
     "noData": "No data available",

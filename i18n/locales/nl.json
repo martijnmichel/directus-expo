@@ -36,7 +36,22 @@
     "loading": "Laden...",
     "error": "Fout",
     "success": "Succes",
-    "warning": "Waarschuwing"
+    "warning": "Waarschuwing",
+    "save": "Opslaan",
+    "saving": "Opslaan..."
+  },
+  "push": {
+    "title": "Pushmeldingen",
+    "unavailable": "Pushmeldingen zijn niet beschikbaar op dit apparaat.",
+    "installHint": "Installeer het push-schema op uw Directus-instantie om pushmeldingen in te schakelen.",
+    "installSchema": "Push-schema installeren",
+    "installing": "Installeren...",
+    "subscriptionsHint": "Kies voor welke verzamelingen u meldingen wilt ontvangen.",
+    "onCreate": "Bij aanmaken",
+    "onUpdate": "Bij bijwerken",
+    "onDelete": "Bij verwijderen",
+    "saved": "Abonnementen opgeslagen.",
+    "saveError": "Opslaan van abonnementen mislukt"
   },
   "layout": {
     "noData": "Geen gegevens beschikbaar",
