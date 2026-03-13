@@ -1,6 +1,6 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * Imperative helper to request notification permissions and get the
@@ -13,6 +13,30 @@ import { useCallback, useState } from "react";
 export function usePushToken() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // On app start, if permission is already granted, fetch the token silently
+  // (no permission prompt). This prevents showing "Enable notifications"
+  // when the user already enabled notifications previously.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function bootstrap() {
+      if (Platform.OS === "web") return;
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        if (status !== "granted") return;
+        const tokenData = await Notifications.getDevicePushTokenAsync();
+        if (!cancelled) setToken(tokenData.data);
+      } catch {
+        // ignore - we'll fall back to manual enable flow
+      }
+    }
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const requestToken = useCallback(async (): Promise<string | null> => {
     if (Platform.OS === "web") {

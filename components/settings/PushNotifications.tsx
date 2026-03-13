@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { filter, orderBy } from "lodash";
 import { View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/display/button";
 import { Text, Muted } from "@/components/display/typography";
-import { Vertical } from "@/components/layout/Stack";
+import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { usePushToken } from "@/hooks/usePushToken";
 import {
@@ -23,9 +23,10 @@ import { Toggle } from "@/components/interfaces/toggle";
 import Toast from "react-native-toast-message";
 import { ActivityIndicator, Linking } from "react-native";
 import { DirectusIcon } from "@/components/display/directus-icon";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { Modal } from "@/components/display/modal";
 import { Input } from "@/components/interfaces/input";
 import { SelectMulti } from "@/components/interfaces/select-multi";
+import { KeyboardAwareScrollView } from "../layout/Layout";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
   return { collection, create: false, update: false, delete: false };
@@ -55,7 +56,6 @@ export function PushNotifications() {
   const { data: device, isLoading: loadingDevice } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
-  const sheetRef = useRef<BottomSheetModal | null>(null);
   const [installStaticApiKey, setInstallStaticApiKey] = useState("");
   const [installRoleIds, setInstallRoleIds] = useState<string[]>([]);
   const { data: rolesData } = useRoles();
@@ -116,10 +116,6 @@ export function PushNotifications() {
       });
     }
   };
-
-  const handlePresentSheet = useCallback(() => {
-    sheetRef.current?.present();
-  }, []);
 
   // While we don't know yet if the schema exists, just show a basic loading state
   if (loadingExists) {
@@ -315,110 +311,104 @@ export function PushNotifications() {
 
   // 4) Schema installed and token present → show Manage button + bottom sheet
   return (
-    <Vertical spacing="md">
-      <DividerSubtitle title={t("push.title")} icon="msNotifications" />
-      <Muted>{t("push.subscriptionsHint")}</Muted>
+    <Modal>
+      <Vertical spacing="md">
+        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
+        <Muted>{t("push.subscriptionsHint")}</Muted>
 
-      <Button onPress={handlePresentSheet} disabled={loadingDevice}>
-        {loadingDevice
-          ? t("common.loading")
-          : t("push.manageSubscriptions", "Manage subscriptions")}
-      </Button>
-
-      <BottomSheetModal
-        ref={sheetRef}
-        snapPoints={["50%", "80%"]}
-        enablePanDownToClose
-      >
-        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-          <Text style={{ marginBottom: 8 }}>
-            {t("push.subscriptionsHint")}
-          </Text>
-          {loadingDevice ? (
-            <ActivityIndicator />
-          ) : (
-            <>
-              {userCollections.map((col) => {
-                const entry = subscriptions.find(
-                  (s) => s.collection === col.collection
-                );
-                if (!entry) return null;
-                const name = getCollectionTranslation(col, i18n.language);
-                return (
-                  <View
-                    key={col.collection}
-                    style={{ marginVertical: 8 }}
-                  >
-                    <Text style={{ marginBottom: 4 }}>{name}</Text>
-                    <Vertical spacing="xs">
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ flex: 1 }}>
-                          {t("push.onCreate")}
-                        </Text>
-                        <Toggle
-                          value={entry.create}
-                          onValueChange={(v) =>
-                            updateEntry(col.collection, "create", v)
-                          }
-                        />
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ flex: 1 }}>
-                          {t("push.onUpdate")}
-                        </Text>
-                        <Toggle
-                          value={entry.update}
-                          onValueChange={(v) =>
-                            updateEntry(col.collection, "update", v)
-                          }
-                        />
-                      </View>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Text style={{ flex: 1 }}>
-                          {t("push.onDelete")}
-                        </Text>
-                        <Toggle
-                          value={entry.delete}
-                          onValueChange={(v) =>
-                            updateEntry(col.collection, "delete", v)
-                          }
-                        />
-                      </View>
-                    </Vertical>
-                  </View>
-                );
-              })}
-              <Button
-                onPress={async () => {
-                  await handleSave();
-                  sheetRef.current?.dismiss();
-                }}
-                disabled={upsertMutation.isPending}
-                style={{ marginTop: 8 }}
-              >
-                {upsertMutation.isPending
-                  ? t("common.saving")
-                  : t("common.save")}
-              </Button>
-            </>
+        <Modal.Trigger>
+          {({ open }) => (
+            <Button onPress={open} disabled={loadingDevice}>
+              {loadingDevice
+                ? t("common.loading")
+                : t("push.manageSubscriptions", "Manage subscriptions")}
+            </Button>
           )}
-        </View>
-      </BottomSheetModal>
-    </Vertical>
+        </Modal.Trigger>
+
+        <Modal.Content
+          variant="bottomSheet"
+          height="80%"
+          title={t("push.title")}
+        >
+          {({ close }) => (
+            <KeyboardAwareScrollView>
+              <Text style={{ marginBottom: 8 }}>
+                {t("push.subscriptionsHint")}
+              </Text>
+              {loadingDevice ? (
+                <ActivityIndicator />
+              ) : (
+                <>
+                  {userCollections.sort((a, b) => a.collection.localeCompare(b.collection)).map((col) => {
+                    const entry = subscriptions.find(
+                      (s) => s.collection === col.collection
+                    );
+                    if (!entry) return null;
+                    const name = getCollectionTranslation(col, i18n.language);
+                    return (
+                      <View
+                        key={col.collection}
+                        style={{ marginVertical: 8 }}
+                      >
+                        <Text style={{ marginBottom: 4 }}>{name}</Text>
+                        <Horizontal spacing="xs" style={{ justifyContent: "space-evenly" }}>
+                          <Vertical spacing="xs"
+                          >
+                            <Text>
+                              {t("push.onCreate")}
+                            </Text>
+                            <Toggle
+                              value={entry.create}
+                              onValueChange={(v) =>
+                                updateEntry(col.collection, "create", v)
+                              }
+                            />
+                          </Vertical>
+                          <Vertical spacing="xs">
+                            <Text>
+                              {t("push.onUpdate")}
+                            </Text>
+                            <Toggle
+                              value={entry.update}
+                              onValueChange={(v) =>
+                                updateEntry(col.collection, "update", v)
+                              }
+                            />
+                            </Vertical>
+                          <Vertical spacing="xs">
+                            <Text>
+                              {t("push.onDelete")}
+                            </Text>
+                            <Toggle
+                              value={entry.delete}
+                              onValueChange={(v) =>
+                                updateEntry(col.collection, "delete", v)
+                              }
+                            />
+                            </Vertical>
+                        </Horizontal>
+                      </View>
+                    );
+                  })}
+                  <Button
+                    onPress={async () => {
+                      await handleSave();
+                      close();
+                    }}
+                    disabled={upsertMutation.isPending}
+                    style={{ marginTop: 8 }}
+                  >
+                    {upsertMutation.isPending
+                      ? t("common.saving")
+                      : t("common.save")}
+                  </Button>
+                </>
+              )}
+            </KeyboardAwareScrollView>
+          )}
+        </Modal.Content>
+      </Vertical>
+    </Modal>
   );
 }
