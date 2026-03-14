@@ -398,6 +398,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
   if (!body) {
     return NextResponse.json(
       { error: "Missing or invalid body fields" },

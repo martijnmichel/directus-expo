@@ -73,7 +73,9 @@
     "saved": "Subscriptions saved.",
     "saveError": "Failed to save subscriptions",
     "permissionDeniedTitle": "Notifications disabled",
-    "permissionDeniedBody": "Enable notifications for this app in the system settings to receive push notifications."
+    "permissionDeniedBody": "Enable notifications for this app in the system settings to receive push notifications.",
+    "searchLabel": "Search collection",
+    "searchPlaceholder": "Type a collection name"
   },
   "layout": {
     "noData": "No data available",

@@ -35,32 +35,32 @@ const PUSH_FIELDS: Array<{
   type: string;
   meta: Record<string, unknown>;
 }> = [
-  {
-    field: "token",
-    type: "string",
-    meta: { interface: "input", required: true },
-  },
-  {
-    field: "platform",
-    type: "string",
-    meta: { interface: "select-dropdown", options: { choices: [{ text: "iOS", value: "ios" }, { text: "Android", value: "android" }] } },
-  },
-  {
-    field: "subscriptions",
-    type: "json",
-    meta: { interface: "input-code", options: { language: "json" } },
-  },
-  {
-    field: "user_id",
-    type: "uuid",
-    meta: {
-      interface: "select-dropdown-m2o",
-      special: ["directus_users"],
-      required: true,
-      note: "Owner of this device (set by app; used for multi-user per server).",
+    {
+      field: "token",
+      type: "string",
+      meta: { interface: "input", required: true },
     },
-  },
-];
+    {
+      field: "platform",
+      type: "string",
+      meta: { interface: "select-dropdown", options: { choices: [{ text: "iOS", value: "ios" }, { text: "Android", value: "android" }] } },
+    },
+    {
+      field: "subscriptions",
+      type: "json",
+      meta: { interface: "input-code", options: { language: "json" } },
+    },
+    {
+      field: "user_id",
+      type: "uuid",
+      meta: {
+        interface: "select-dropdown-m2o",
+        special: ["directus_users"],
+        required: true,
+        note: "Owner of this device (set by app; used for multi-user per server).",
+      },
+    },
+  ];
 
 /**
  * Installs the app_push_devices collection and its fields (token, platform, subscriptions).
@@ -75,9 +75,8 @@ export function useInstallPushSchema() {
   return useMutation({
     mutationFn: async (params: {
       staticApiKey: string;
-      roleIds?: string[];
     }) => {
-      const { staticApiKey, roleIds = [] } = params;
+      const { staticApiKey } = params;
       if (!directus) throw new Error("Not authenticated");
       if (!staticApiKey?.trim()) {
         throw new Error("Static API key is required for the push flow.");
@@ -88,17 +87,17 @@ export function useInstallPushSchema() {
       ]);
       const collectionExists = Array.isArray(collections)
         ? collections.some(
-            (c: { collection?: string }) =>
-              c.collection === APP_PUSH_DEVICES_COLLECTION
-          )
+          (c: { collection?: string }) =>
+            c.collection === APP_PUSH_DEVICES_COLLECTION
+        )
         : false;
       const allCollections = Array.isArray(collections)
         ? (collections as { collection?: string }[])
-            .map((c) => c.collection)
-            .filter(
-              (name): name is string =>
-                typeof name === "string" && !name.startsWith("directus_")
-            )
+          .map((c) => c.collection)
+          .filter(
+            (name): name is string =>
+              typeof name === "string" && !name.startsWith("directus_")
+          )
         : [];
       const flowsList = Array.isArray(flowsRaw) ? flowsRaw : (flowsRaw as { data?: unknown[] })?.data ?? [];
       const flowExists = flowsList.length > 0;
@@ -225,65 +224,65 @@ export function useInstallPushSchema() {
 
         // Create a policy with RUD (+ create) permissions for app_push_devices and assign to selected roles.
         // Item-level filter ensures each user only sees/updates their own device row(s); preset sets user_id on create.
-        if (roleIds.length > 0) {
-          const actions = ["create", "read", "update", "delete"] as const;
-          const permissionsPayload = actions.map((action) => {
-            const base = {
-              collection: APP_PUSH_DEVICES_COLLECTION,
-              action,
-              validation: {},
-              fields: ["token", "platform", "subscriptions", "user_id", "id"],
-            } as Record<string, unknown>;
-            if (action === "create") {
-              base.presets = { user_id: "$CURRENT_USER" };
-              base.permissions = {};
-            } else {
-              base.permissions = {
-                _and: [{ user_id: { _eq: "$CURRENT_USER" } }],
-              };
-              base.presets = {};
-            }
-            return base;
-          });
 
-          const policy = await directus.request(
-            createPolicy({
-              name: PUSH_POLICY_NAME,
-              icon: "notifications",
-              description:
-                "Allows app users to register and manage their push device and subscriptions.",
-              admin_access: false,
-              app_access: false,
-              
-              permissions: permissionsPayload,
-            } as any)
-          );
+        const actions = ["create", "read", "update", "delete"] as const;
+        const permissionsPayload = actions.map((action) => {
+          const base = {
+            collection: APP_PUSH_DEVICES_COLLECTION,
+            action,
+            validation: {},
+            fields: ["token", "platform", "subscriptions", "user_id", "id"],
+          } as Record<string, unknown>;
+          if (action === "create") {
+            base.presets = { user_id: "$CURRENT_USER" };
+            base.permissions = {};
+          } else {
+            base.permissions = {
+              _and: [{ user_id: { _eq: "$CURRENT_USER" } }],
+            };
+            base.presets = {};
+          }
+          return base;
+        });
 
-          createdPolicyId =
-            (policy as { id?: string })?.id ??
-            (policy as { data?: { id?: string } })?.data?.id ??
-            null;
+        const policy = await directus.request(
+          createPolicy({
+            name: PUSH_POLICY_NAME,
+            icon: "notifications",
+            description:
+              "Allows app users to register and manage their push device and subscriptions.",
+            admin_access: false,
+            app_access: false,
 
-            
-        }
+            permissions: permissionsPayload,
+          } as any)
+        );
+
+        createdPolicyId =
+          (policy as { id?: string })?.id ??
+          (policy as { data?: { id?: string } })?.data?.id ??
+          null;
+
+
+
       } catch (error) {
         try {
           if (createdPolicyId) {
             await directus.request(deletePolicy(createdPolicyId as any));
           }
-        } catch {}
+        } catch { }
         try {
           if (createdFlowId) {
             await directus.request(deleteFlow(createdFlowId as any));
           }
-        } catch {}
+        } catch { }
         try {
           if (createdCollection) {
             await directus.request(
               deleteCollection(APP_PUSH_DEVICES_COLLECTION as any)
             );
           }
-        } catch {}
+        } catch { }
 
         throw error;
       }

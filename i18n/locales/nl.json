@@ -70,7 +70,9 @@
     "saved": "Abonnementen opgeslagen.",
     "saveError": "Opslaan van abonnementen mislukt",
     "permissionDeniedTitle": "Meldingen uitgeschakeld",
-    "permissionDeniedBody": "Schakel meldingen in voor deze app in de systeeminstellingen om pushmeldingen te ontvangen."
+    "permissionDeniedBody": "Schakel meldingen in voor deze app in de systeeminstellingen om pushmeldingen te ontvangen.",
+    "searchLabel": "Zoek collectie",
+    "searchPlaceholder": "Typ een collectie naam"
   },
   "layout": {
     "noData": "Geen gegevens beschikbaar",

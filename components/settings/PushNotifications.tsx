@@ -16,10 +16,7 @@ import {
 } from "@/state/push/usePushCollection";
 import { useInstallPushSchema } from "@/state/push/installPushSchema";
 import { usePushDevice, useUpsertPushDevice } from "@/state/push/usePushDevice";
-import {
-  useCollections,
-  useRoles,
-} from "@/state/queries/directus/core";
+import { useCollections, useRoles } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import type { PushSubscriptionEntry } from "@/constants/push";
 import { Toggle } from "@/components/interfaces/toggle";
@@ -30,6 +27,11 @@ import { Modal } from "@/components/display/modal";
 import { Input } from "@/components/interfaces/input";
 import { SelectMulti } from "@/components/interfaces/select-multi";
 import { ScrollView } from "react-native-gesture-handler";
+import { CheckboxGroup } from "../interfaces/checkbox-group";
+import { ButtonGroup } from "../interfaces/button-group";
+import { KeyboardAwareScrollView } from "../layout/Layout";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useStyles } from "react-native-unistyles";
 
 function defaultSubscription(collection: string): PushSubscriptionEntry {
   return { collection, create: false, update: false, delete: false };
@@ -37,7 +39,7 @@ function defaultSubscription(collection: string): PushSubscriptionEntry {
 
 function mergeSubscriptions(
   collections: Array<{ collection: string }>,
-  current: PushSubscriptionEntry[] | null
+  current: PushSubscriptionEntry[] | null,
 ): PushSubscriptionEntry[] {
   const byCollection = new Map<string, PushSubscriptionEntry>();
   (current ?? []).forEach((s) => byCollection.set(s.collection, s));
@@ -48,7 +50,9 @@ function mergeSubscriptions(
 }
 
 export function PushNotifications() {
+  const { theme } = useStyles();
   const { t, i18n } = useTranslation();
+  const { bottom, top } = useSafeAreaInsets();
   const { policyGlobals } = useAuth();
   const { token, loading: requestingPermission, requestToken } = usePushToken();
   const runFullSetupCheck = policyGlobals?.admin_access === true;
@@ -63,8 +67,9 @@ export function PushNotifications() {
     isLoading: loadingAccessOnly,
     refetch: refetchAccessOnly,
   } = usePushAccessOnly(!runFullSetupCheck);
-  const deviceAccess =
-    runFullSetupCheck ? setup?.deviceAccess : accessOnly?.deviceAccess;
+  const deviceAccess = runFullSetupCheck
+    ? setup?.deviceAccess
+    : accessOnly?.deviceAccess;
   const installMutation = useInstallPushSchema();
   const {
     data: device,
@@ -75,14 +80,17 @@ export function PushNotifications() {
   } = usePushDevice(token);
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
+  const [search, setSearch] = useState("");
   const [installStaticApiKey, setInstallStaticApiKey] = useState("");
   const [installRoleIds, setInstallRoleIds] = useState<string[]>([]);
   const { data: rolesData } = useRoles();
   const roles = Array.isArray(rolesData?.items) ? rolesData.items : [];
-  const roleOptions = roles.map((r: { id?: string; name?: string }) => ({
-    text: r.name ?? String(r.id ?? ""),
-    value: r.id ?? "",
-  })).filter((o) => o.value);
+  const roleOptions = roles
+    .map((r: { id?: string; name?: string }) => ({
+      text: r.name ?? String(r.id ?? ""),
+      value: r.id ?? "",
+    }))
+    .filter((o) => o.value);
 
   const userCollections = useMemo(() => {
     if (!collections) return [];
@@ -93,15 +101,15 @@ export function PushNotifications() {
           !c.collection.startsWith("directus_") &&
           !!c.meta &&
           !c.meta?.hidden &&
-          !!c.schema
+          !!c.schema,
       ),
-      (i) => i.meta?.sort
+      (i) => i.meta?.sort,
     );
   }, [collections]);
 
   const merged = useMemo(
     () => mergeSubscriptions(userCollections, device?.subscriptions ?? null),
-    [userCollections, device?.subscriptions]
+    [userCollections, device?.subscriptions],
   );
   const [subscriptions, setSubscriptions] =
     useState<PushSubscriptionEntry[]>(merged);
@@ -126,11 +134,9 @@ export function PushNotifications() {
     if (createDeviceAttemptedRef.current === token) return;
     createDeviceAttemptedRef.current = token;
     const initial = mergeSubscriptions(userCollections, null);
-    upsertMutation
-      .mutateAsync({ token, subscriptions: initial })
-      .catch(() => {
-        createDeviceAttemptedRef.current = null;
-      });
+    upsertMutation.mutateAsync({ token, subscriptions: initial }).catch(() => {
+      createDeviceAttemptedRef.current = null;
+    });
   }, [
     token,
     device,
@@ -144,12 +150,12 @@ export function PushNotifications() {
   const updateEntry = (
     collection: string,
     key: "create" | "update" | "delete",
-    value: boolean
+    value: boolean,
   ) => {
     setSubscriptions((prev) =>
       prev.map((s) =>
-        s.collection === collection ? { ...s, [key]: value } : s
-      )
+        s.collection === collection ? { ...s, [key]: value } : s,
+      ),
     );
   };
 
@@ -188,10 +194,7 @@ export function PushNotifications() {
   if (loading) {
     return (
       <Vertical spacing="md">
-        <DividerSubtitle
-          title={t("push.title")}
-          icon="msNotifications"
-        />
+        <DividerSubtitle title={t("push.title")} icon="msNotifications" />
         <ActivityIndicator />
       </Vertical>
     );
@@ -205,7 +208,7 @@ export function PushNotifications() {
         <Text>
           {t(
             "push.setupError",
-            "Push notification settings are currently unavailable. Please try again later."
+            "Push notification settings are currently unavailable. Please try again later.",
           )}
         </Text>
       </Vertical>
@@ -220,23 +223,29 @@ export function PushNotifications() {
       <Vertical spacing="md">
         <DividerSubtitle title={t("push.title")} icon="msNotifications" />
         <>
-          <Muted>
-            {setup?.issues?.includes("missing_collection") &&
-            setup?.issues?.includes("missing_flow")
-              ? t(
-                  "push.installHint",
-                  "This instance is not set up for push yet. An admin can install the required schema and flow."
-                )
-              : setup?.issues?.includes("missing_collection")
-                ? t(
-                    "push.missingCollectionHint",
-                    "The push collection is missing. An admin can install it."
-                  )
-                : t(
-                    "push.missingFlowHint",
-                    "The push flow is missing. An admin can install it."
-                  )}
-          </Muted>
+          {(setup?.issues?.includes("missing_collection") ||
+            setup?.issues?.includes("missing_flow")) && (
+            <Alert
+              status="warning"
+              message={
+                setup?.issues?.includes("missing_collection") &&
+                setup?.issues?.includes("missing_flow")
+                  ? t(
+                      "push.installHint",
+                      "This instance is not set up for push yet. An admin can install the required schema and flow.",
+                    )
+                  : setup?.issues?.includes("missing_collection")
+                    ? t(
+                        "push.missingCollectionHint",
+                        "The push collection is missing. An admin can install it.",
+                      )
+                    : t(
+                        "push.missingFlowHint",
+                        "The push flow is missing. An admin can install it.",
+                      )
+              }
+            ></Alert>
+          )}
           <Input
             label={t("push.staticApiKeyLabel")}
             placeholder={t("push.staticApiKeyPlaceholder")}
@@ -247,27 +256,14 @@ export function PushNotifications() {
             autoCapitalize="none"
             autoCorrect={false}
           />
-          <SelectMulti
-            label={t("push.installRolesLabel", "Roles that can use push notifications")}
-            helper={t(
-              "push.installRolesHelper",
-              "A new permission (read, create, update, delete on app_push_devices) will be added to the selected roles."
-            )}
-            options={roleOptions}
-            value={installRoleIds}
-            onValueChange={(v) => setInstallRoleIds((v as string[]) ?? [])}
-            placeholder={t("push.installRolesPlaceholder", "Select roles")}
-          />
+
           <Button
             onPress={() =>
               installMutation.mutate({
                 staticApiKey: installStaticApiKey.trim(),
-                roleIds: installRoleIds,
               })
             }
-            disabled={
-              installMutation.isPending || !installStaticApiKey.trim()
-            }
+            disabled={installMutation.isPending || !installStaticApiKey.trim()}
             leftIcon={
               installMutation.isPending ? undefined : (
                 <DirectusIcon name="add_circle" />
@@ -294,11 +290,11 @@ export function PushNotifications() {
       type: "info",
       text1: t(
         "push.permissionCheckFailedTitle",
-        "Could not verify push permissions"
+        "Could not verify push permissions",
       ),
       text2: t(
         "push.permissionCheckFailedBody",
-        "We couldn't verify whether your role can access push settings. If enabling push fails, contact an administrator."
+        "We couldn't verify whether your role can access push settings. If enabling push fails, contact an administrator.",
       ),
     });
   }
@@ -316,7 +312,7 @@ export function PushNotifications() {
           status="danger"
           message={t(
             "push.permissionWarning",
-            "You don't have permission to manage push settings. Ask an admin to grant access to app_push_devices."
+            "You don't have permission to manage push settings. Ask an admin to grant access to app_push_devices.",
           )}
         />
         <Button
@@ -346,10 +342,13 @@ export function PushNotifications() {
             if (!newToken) {
               Toast.show({
                 type: "info",
-                text1: t("push.permissionDeniedTitle", "Notifications disabled"),
+                text1: t(
+                  "push.permissionDeniedTitle",
+                  "Notifications disabled",
+                ),
                 text2: t(
                   "push.permissionDeniedBody",
-                  "Enable notifications for this app in the system settings to receive push notifications."
+                  "Enable notifications for this app in the system settings to receive push notifications.",
                 ),
               });
               try {
@@ -362,7 +361,7 @@ export function PushNotifications() {
             try {
               const initialSubscriptions = mergeSubscriptions(
                 userCollections,
-                null
+                null,
               );
               await upsertMutation.mutateAsync({
                 token: newToken,
@@ -373,7 +372,7 @@ export function PushNotifications() {
                 type: "error",
                 text1: t(
                   "push.saveError",
-                  "Could not save your push notification settings."
+                  "Could not save your push notification settings.",
                 ),
                 text2: (e as Error).message,
               });
@@ -402,7 +401,9 @@ export function PushNotifications() {
           {({ open }) => (
             <Button
               onPress={open}
-              disabled={loadingDevice || (creatingDevice && upsertMutation.isPending)}
+              disabled={
+                loadingDevice || (creatingDevice && upsertMutation.isPending)
+              }
             >
               {loadingDevice || (creatingDevice && upsertMutation.isPending)
                 ? t("common.loading")
@@ -418,76 +419,91 @@ export function PushNotifications() {
         >
           {({ close }) => (
             <View>
-              <Text style={{ marginBottom: 8 }}>
-                {t("push.subscriptionsHint")}
-              </Text>
               {loadingDevice || (creatingDevice && upsertMutation.isPending) ? (
                 <ActivityIndicator />
               ) : (
-                <ScrollView>
-                  {userCollections.sort((a, b) => a.collection.localeCompare(b.collection)).map((col) => {
-                    const entry = subscriptions.find(
-                      (s) => s.collection === col.collection
-                    );
-                    if (!entry) return null;
-                    const name = getCollectionTranslation(col, i18n.language);
-                    return (
-                      <View
-                        key={col.collection}
-                        style={{ marginVertical: 8 }}
-                      >
-                        <Text style={{ marginBottom: 4 }}>{name}</Text>
-                        <Horizontal spacing="xs" style={{ justifyContent: "space-evenly" }}>
-                          <Vertical spacing="xs"
+                <KeyboardAwareScrollView stickyHeaderIndices={[1]}>
+                  <Muted style={{ marginBottom: 8 }}>
+                    {t("push.subscriptionsHint")}
+                  </Muted>
+                  <View style={{ paddingBottom: 8, backgroundColor: theme.colors.background }}>
+                    <Input
+                      label={t("push.searchLabel")}
+                      placeholder={t("push.searchPlaceholder")}
+                      value={search}
+                      onChangeText={setSearch}
+                      append={<DirectusIcon name="search" />}
+                    />
+                  </View>
+                  {userCollections
+                    .filter((col) => {
+                      const name = getCollectionTranslation(col, i18n.language);
+                      return (
+                        name
+                          ?.replace("_", " ")
+                          .toLowerCase()
+                          .includes(search.toLowerCase()) ?? false
+                      );
+                    })
+                    .sort((a, b) => a.collection.localeCompare(b.collection))
+                    .map((col) => {
+                      const entry = subscriptions.find(
+                        (s) => s.collection === col.collection,
+                      );
+                      if (!entry) return null;
+                      const name = getCollectionTranslation(col, i18n.language);
+                      return (
+                        <Horizontal
+                          key={col.collection}
+                          spacing="md"
+                          style={{ marginVertical: 4 }}
+                        >
+                          <Text
+                            style={{ marginBottom: 4, flex: 1 }}
+                            numberOfLines={1}
                           >
-                            <Text>
-                              {t("push.onCreate")}
-                            </Text>
-                            <Toggle
-                              value={entry.create}
-                              onValueChange={(v) =>
-                                updateEntry(col.collection, "create", v)
+                            {name}
+                          </Text>
+                          <View style={{ flex: 1 }}>
+                            <ButtonGroup
+                              options={[
+                                {
+                                  value: "create",
+                                  icon: <DirectusIcon name="add_circle" />,
+                                },
+                                {
+                                  value: "update",
+                                  icon: <DirectusIcon name="update" />,
+                                },
+                                {
+                                  value: "delete",
+                                  icon: <DirectusIcon name="delete" />,
+                                },
+                              ]}
+                              value={
+                                [
+                                  entry.create ? "create" : undefined,
+                                  entry.update ? "update" : undefined,
+                                  entry.delete ? "delete" : undefined,
+                                ].filter(Boolean) as (string | number)[]
                               }
+                              onChange={(value) => {
+                                ["create", "update", "delete"].forEach((v) => {
+                                  const isSelected = value.includes(v);
+                                  updateEntry(
+                                    col.collection,
+                                    v as "create" | "update" | "delete",
+                                    isSelected,
+                                  );
+                                });
+                              }}
                             />
-                          </Vertical>
-                          <Vertical spacing="xs">
-                            <Text>
-                              {t("push.onUpdate")}
-                            </Text>
-                            <Toggle
-                              value={entry.update}
-                              onValueChange={(v) =>
-                                updateEntry(col.collection, "update", v)
-                              }
-                            />
-                            </Vertical>
-                          <Vertical spacing="xs">
-                            <Text>
-                              {t("push.onDelete")}
-                            </Text>
-                            <Toggle
-                              value={entry.delete}
-                              onValueChange={(v) =>
-                                updateEntry(col.collection, "delete", v)
-                              }
-                            />
-                            </Vertical>
+                          </View>
                         </Horizontal>
-                      </View>
-                    );
-                  })}
-                  <Button
-                    onPress={async () => {
-                      close();
-                    }}
-                    disabled={upsertMutation.isPending}
-                    style={{ marginTop: 8 }}
-                  >
-                    {upsertMutation.isPending
-                      ? t("common.saving")
-                      : t("common.save")}
-                  </Button>
-                </ScrollView>
+                      );
+                    })}
+                  
+                </KeyboardAwareScrollView>
               )}
             </View>
           )}
