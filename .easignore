@@ -1,50 +1,46 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies (EAS installs on build server)
 node_modules/
+.yarn
 
-# Expo
+# Website (Next.js) – not needed for Expo app build
+website/
+
+# Expo / Metro
 .expo/
 dist/
 web-build/
-expo-env.d.ts
+.metro-health-check*
 
-# Native
+# Native / build artifacts
+android
+ios
+*.ipa
+*.apk
+*.aab
+*.app
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+build-*.tar.gz
+*.tsbuildinfo
 
-# Metro
-.metro-health-check*
+# macOS / local
+.DS_Store
+*.pem
+directusexpo.app
+appstore/
 
-# debug
+# Env (secrets; use EAS Secrets instead)
+.env
+.env.*
+!.env.example
+
+# Debug / misc
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-# macOS
-.DS_Store
-*.pem
-
-# local env files
-.env*.local
-
-# typescript
-*.tsbuildinfo
-android
-ios
-
-.env.*
-!.env.example
-
-*.ipa
-*.apk
-*.aab
-*.app
-build-*.tar.gz
-
-website/**
-appstore/**
+# google-services.json is required for Android (FCM) – keep in project for EAS build; in .gitignore so not committed
