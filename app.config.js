@@ -51,6 +51,17 @@ export default () => ({
       favicon: "./assets/images/favicon.png",
     },
     plugins: [
+      [
+        "expo-build-properties",
+        {
+          android: {
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            buildToolsVersion: "35.0.0",
+            useLegacyPackaging: true,
+          },
+        },
+      ],
       "expo-router",
       "expo-font",
       "expo-web-browser",
