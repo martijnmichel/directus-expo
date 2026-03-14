@@ -1,3 +1,5 @@
+# [0.10.0](https://github.com/martijnmichel/directus-expo/compare/v0.9.0...v0.10.0) (2026-03-14)
+
 # [0.9.0](https://github.com/martijnmichel/directus-expo/compare/v0.8.9...v0.9.0) (2026-03-13)
 
 
