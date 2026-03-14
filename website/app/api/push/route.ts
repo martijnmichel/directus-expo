@@ -48,12 +48,12 @@ function parseBody(body: unknown): PushRequestBody | null {
   if (rawAction && ["create", "update", "delete"].includes(rawAction)) {
     action = rawAction as PushAction;
   } else if (event) {
-    const suffix = event.split(".").pop();
+    const suffix = event.split(".").pop()?.toLowerCase();
     if (suffix === "create" || suffix === "update" || suffix === "delete") {
       action = suffix;
     }
   }
-  if (!action) return null;
+  if (!action) action = "update";
   let payload: PushRequestBody["payload"] | undefined;
   if (b.payload && typeof b.payload === "object" && b.payload !== null) {
     const p = b.payload as Record<string, unknown>;
@@ -357,10 +357,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: PushRequestBody;
+  let body: PushRequestBody | null;
   try {
-    const raw = await req.json();
-    body = parseBody(raw) as PushRequestBody;
+    const text = await req.text();
+    let raw: unknown;
+    try {
+      raw = JSON.parse(text) as unknown;
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON body" },
+        { status: 400 }
+      );
+    }
+    if (typeof raw === "string") {
+      try {
+        raw = JSON.parse(raw) as unknown;
+      } catch {
+        raw = null;
+      }
+    }
+    body = parseBody(raw);
   } catch {
     return NextResponse.json(
       { error: "Invalid JSON body" },

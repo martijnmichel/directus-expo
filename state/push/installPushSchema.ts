@@ -155,16 +155,11 @@ export function useInstallPushSchema() {
 
           const opTypes = PUSH_FLOW_OPERATION_TYPES;
 
-          const requestBody = JSON.stringify({
-            collection: "{{ $trigger.collection }}",
-            event: "{{ $trigger.event }}",
-            key: "{{ $trigger.key }}",
-            payload: {
-              title: "Item {{ $trigger.event }}",
-              body: "{{ $trigger.collection }} #{{ $trigger.key }}",
-            },
-            tokens: "{{ filter_tokens }}",
-          });
+          // Build body so "tokens" is raw {{ filter_tokens }} (no quotes). Directus then
+          // embeds the array as JSON; wrapping in quotes caused invalid trailing " and 400.
+          const requestBody =
+            '{"collection":"{{ $trigger.collection }}","event":"{{ $trigger.event }}","key":"{{ $trigger.key }}",' +
+            '"payload":{"title":"Item {{ $trigger.event }}","body":"{{ $trigger.collection }} #{{ $trigger.key }}"},"tokens":{{ filter_tokens }}}';
 
           const opRequest = await directus.request(
             createOperation({
@@ -199,20 +194,60 @@ module.exports = async function(data) {
   const collection = trigger.collection || '';
   const action = (trigger.event || '').split('.').pop() || '';
 
-  const permissions = Array.isArray(data.read_permissions) ? data.read_permissions : [];
-  const policies = Array.isArray(data.read_policies) ? data.read_policies : [];
-  const roles = Array.isArray(data.read_roles) ? data.read_roles : [];
-  const users = Array.isArray(data.read_users) ? data.read_users : [];
-  const devices = Array.isArray(data.read_devices) ? data.read_devices : [];
+  function asArray(val) {
+    if (Array.isArray(val)) return val;
+    if (val && typeof val === 'object' && Array.isArray(val.data)) return val.data;
+    return [];
+  }
+  const permissions = asArray(data.read_permissions);
+  const policies = asArray(data.read_policies);
+  const roles = asArray(data.read_roles);
+  const users = asArray(data.read_users);
+  const devices = asArray(data.read_devices);
 
-  var policyIdsFromPermissions = new Set(permissions.filter(function(p) { return p.collection === collection && p.action === action; }).map(function(p) { return p.policy; }).filter(Boolean));
-  var policyIdsWithAdmin = new Set(policies.filter(function(p) { return p.admin_access; }).map(function(p) { return p.id; }).filter(Boolean));
-  function policyId(p) { return typeof p === 'object' && p !== null ? (p.id || p) : p; }
+  console.info('[push-flow] trigger', { collection, action, event: trigger.event });
+  console.info('[push-flow] counts', {
+    permissions: permissions.length,
+    policies: policies.length,
+    roles: roles.length,
+    users: users.length,
+    devices: devices.length,
+  });
+
+  function toPolicyId(p) {
+    if (p == null) return null;
+    if (typeof p === 'string') return p;
+    if (typeof p === 'number') return String(p);
+    if (typeof p === 'object') {
+      var id = p.id || p.policy || p.directus_policies_id || null;
+      if (id != null && typeof id === 'object') id = (id.id != null ? id.id : null);
+      return id != null ? String(id) : null;
+    }
+    return null;
+  }
+  var policyIdsFromPermissions = new Set(
+    permissions
+      .filter(function(p) { return p && p.collection === collection && p.action === action; })
+      .map(function(p) { return toPolicyId(p.policy); })
+      .filter(Boolean)
+  );
+  var policyIdsWithAdmin = new Set(
+    policies
+      .filter(function(p) { return p && p.admin_access; })
+      .map(function(p) { return toPolicyId(p.id); })
+      .filter(Boolean)
+  );
+  function policyId(p) {
+    return toPolicyId(p);
+  }
   function policyIds(obj) {
     var pol = obj.policies || obj.policy || [];
-    return Array.isArray(pol) ? pol : (pol && pol.id ? [pol] : []);
+    return Array.isArray(pol) ? pol : (pol && (pol.id || pol.policy) ? [pol] : []);
   }
-  var policyIdsWithAccess = new Set([].concat(Array.from(policyIdsFromPermissions), Array.from(policyIdsWithAdmin)));
+  var policyIdsWithAccess = new Set([].concat(
+    Array.from(policyIdsFromPermissions).map(function(id) { return String(id); }),
+    Array.from(policyIdsWithAdmin).map(function(id) { return String(id); })
+  ));
   function hasAccessViaPolicies(policyList) {
     for (var i = 0; i < policyList.length; i++) {
       var pid = policyId(policyList[i]);
@@ -229,6 +264,12 @@ module.exports = async function(data) {
     return hasAccessViaPolicies(policyIds(u));
   }
   var userIds = new Set(users.filter(userHasAccess).map(function(u) { return u.id; }).filter(Boolean));
+  console.info('[push-flow] access', {
+    policyIdsFromPermissions: policyIdsFromPermissions.size,
+    policyIdsWithAdmin: policyIdsWithAdmin.size,
+    roleIdsWithAccess: roleIdsWithAccess.size,
+    userIds: userIds.size,
+  });
 
   const out = [];
   for (var i = 0; i < devices.length; i++) {
@@ -243,6 +284,7 @@ module.exports = async function(data) {
       out.push({ token: token, platform: d.platform });
     }
   }
+  console.info('[push-flow] out', { tokens: out.length });
   return out;
 };
 `.trim();
@@ -273,9 +315,10 @@ module.exports = async function(data) {
               position_x: 60,
               position_y: 0,
               resolve: opScriptId,
-              permissions: "$full",
               options: {
                 collection: APP_PUSH_DEVICES_COLLECTION,
+                permissions: "$full",
+                emitEvents: false,
                 query: { limit: -1, fields: ["token", "platform", "subscriptions", "user_id"] },
               },
             } as any)
@@ -294,10 +337,11 @@ module.exports = async function(data) {
               position_x: 40,
               position_y: 0,
               resolve: opReadDevicesId,
-              permissions: "$full",
               options: {
                 collection: "directus_users",
-                query: { limit: -1, fields: ["id", "role", "policies"] },
+                permissions: "$full",
+                emitEvents: false,
+                query: { limit: -1, fields: ["id", "role", "policies.policy"] },
               },
             } as any)
           );
@@ -315,10 +359,11 @@ module.exports = async function(data) {
               position_x: 20,
               position_y: 0,
               resolve: opReadUsersId,
-              permissions: "$full",
               options: {
                 collection: "directus_roles",
-                query: { limit: -1, fields: ["id", "policies"] },
+                permissions: "$full",
+                emitEvents: false,
+                query: { limit: -1, fields: ["id", "policies.policy"] },
               },
             } as any)
           );
@@ -336,9 +381,10 @@ module.exports = async function(data) {
               position_x: 10,
               position_y: 0,
               resolve: opReadRolesId,
-              permissions: "$full",
               options: {
                 collection: "directus_policies",
+                permissions: "$full",
+                emitEvents: false,
                 query: { limit: -1, fields: ["id", "admin_access"] },
               },
             } as any)
@@ -357,9 +403,10 @@ module.exports = async function(data) {
               position_x: 0,
               position_y: 0,
               resolve: opReadPoliciesId,
-              permissions: "$full",
               options: {
                 collection: "directus_permissions",
+                permissions: "$full",
+                emitEvents: false,
                 query: { limit: -1, fields: ["collection", "policy", "action"] },
               },
             } as any)
