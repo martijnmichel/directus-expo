@@ -81,7 +81,6 @@ export function PushNotifications() {
   const upsertMutation = useUpsertPushDevice();
   const { data: collections } = useCollections();
   const [search, setSearch] = useState("");
-  const [installStaticApiKey, setInstallStaticApiKey] = useState("");
   const [installRoleIds, setInstallRoleIds] = useState<string[]>([]);
   const { data: rolesData } = useRoles();
   const roles = Array.isArray(rolesData?.items) ? rolesData.items : [];
@@ -246,24 +245,9 @@ export function PushNotifications() {
               }
             ></Alert>
           )}
-          <Input
-            label={t("push.staticApiKeyLabel")}
-            placeholder={t("push.staticApiKeyPlaceholder")}
-            helper={t("push.staticApiKeyHelper")}
-            value={installStaticApiKey}
-            onChangeText={setInstallStaticApiKey}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-
           <Button
-            onPress={() =>
-              installMutation.mutate({
-                staticApiKey: installStaticApiKey.trim(),
-              })
-            }
-            disabled={installMutation.isPending || !installStaticApiKey.trim()}
+            onPress={() => installMutation.mutate()}
+            disabled={installMutation.isPending}
             leftIcon={
               installMutation.isPending ? undefined : (
                 <DirectusIcon name="add_circle" />

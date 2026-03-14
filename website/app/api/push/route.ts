@@ -1,9 +1,3 @@
-import {
-  createDirectus,
-  readItems,
-  rest,
-  staticToken,
-} from "@directus/sdk";
 import { ApnsClient, Notification as ApnsNotification, ApnsError } from "apns2";
 import admin from "firebase-admin";
 import type { Messaging } from "firebase-admin/messaging";
@@ -15,33 +9,21 @@ import type { NextRequest } from "next/server";
 
 type PushAction = "create" | "update" | "delete";
 
-interface SubscriptionEntry {
-  collection: string;
-  create: boolean;
-  update: boolean;
-  delete: boolean;
-}
-
-interface AppPushDevice {
-  id: string | number;
+/** Token + platform for one device. Flow sends only devices that have access to the trigger collection. */
+export interface PushTokenItem {
   token: string;
   platform: "ios" | "android";
-  subscriptions: SubscriptionEntry[] | null;
 }
 
 interface PushRequestBody {
-  directusUrl: string;
-  directusToken: string;
   collection: string;
   key: string;
-  /** Optional explicit action from caller (create|update|delete). */
   action?: PushAction;
-  /** Optional raw Directus event, e.g. items.create */
   event?: string;
   payload?: { title?: string; body?: string };
+  /** Required. List of device tokens (with platform) that have access to the trigger collection. */
+  tokens: PushTokenItem[];
 }
-
-const COLLECTION = "app_push_devices";
 
 // --- Auth ---
 
@@ -56,18 +38,9 @@ function getAuthSecret(req: NextRequest): string | null {
 function parseBody(body: unknown): PushRequestBody | null {
   if (!body || typeof body !== "object") return null;
   const b = body as Record<string, unknown>;
-  const directusUrl = typeof b.directusUrl === "string" ? b.directusUrl : null;
-  const directusToken =
-    typeof b.directusToken === "string" ? b.directusToken : null;
   const collection = typeof b.collection === "string" ? b.collection : null;
   const key = typeof b.key === "string" ? b.key : null;
-  if (
-    !directusUrl ||
-    !directusToken ||
-    !collection ||
-    !key
-  )
-    return null;
+  if (!collection || !key) return null;
   const event =
     typeof b.event === "string" && b.event.length > 0 ? b.event : undefined;
   const rawAction = b.action as string | undefined;
@@ -88,59 +61,55 @@ function parseBody(body: unknown): PushRequestBody | null {
     if (typeof p.title === "string") payload.title = p.title;
     if (typeof p.body === "string") payload.body = p.body;
   }
+  let tokens: PushTokenItem[] = [];
+  const rawTokens = b.tokens;
+  if (Array.isArray(rawTokens)) {
+    for (const item of rawTokens) {
+      if (item && typeof item === "object" && typeof (item as Record<string, unknown>).token === "string" && typeof (item as Record<string, unknown>).platform === "string") {
+        const plat = (item as Record<string, unknown>).platform as string;
+        if (plat === "ios" || plat === "android") {
+          const t = ((item as Record<string, unknown>).token as string).trim();
+          if (t) tokens.push({ token: t, platform: plat as "ios" | "android" });
+        }
+      }
+    }
+  } else if (typeof rawTokens === "string") {
+    try {
+      const parsed = JSON.parse(rawTokens) as unknown[];
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (item && typeof item === "object" && typeof (item as Record<string, unknown>).token === "string" && typeof (item as Record<string, unknown>).platform === "string") {
+            const plat = (item as Record<string, unknown>).platform as string;
+            if (plat === "ios" || plat === "android") {
+              const t = ((item as Record<string, unknown>).token as string).trim();
+              if (t) tokens.push({ token: t, platform: plat as "ios" | "android" });
+            }
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
   return {
-    directusUrl,
-    directusToken,
     collection,
     action,
     event,
     key,
     payload,
+    tokens,
   };
 }
 
-function isAllowedUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" || u.hostname === "localhost";
-  } catch {
-    return false;
-  }
-}
-
-// --- Directus ---
-
-function createClient(baseUrl: string, token: string) {
-  return createDirectus(baseUrl).with(rest()).with(staticToken(token));
-}
-
-function filterDevicesForEvent(
-  devices: AppPushDevice[],
-  collection: string,
-  action: PushAction
-): AppPushDevice[] {
-  return devices.filter((d) => {
-    const subs = d.subscriptions;
-    if (!Array.isArray(subs)) return false;
-    const entry = subs.find(
-      (s) => typeof s?.collection === "string" && s.collection === collection
-    );
-    if (!entry) return false;
-    return Boolean(entry[action]);
-  });
-}
-
-function splitByPlatform(devices: AppPushDevice[]): {
+function splitByPlatform(items: PushTokenItem[]): {
   ios: string[];
   android: string[];
 } {
   const ios: string[] = [];
   const android: string[] = [];
-  for (const d of devices) {
-    const t = typeof d.token === "string" ? d.token.trim() : "";
-    if (!t) continue;
-    if (d.platform === "ios") ios.push(t);
-    else if (d.platform === "android") android.push(t);
+  for (const d of items) {
+    if (d.platform === "ios") ios.push(d.token);
+    else if (d.platform === "android") android.push(d.token);
   }
   return { ios, android };
 }
@@ -406,19 +375,12 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!isAllowedUrl(body.directusUrl)) {
-    return NextResponse.json(
-      { error: "directusUrl must be HTTPS or localhost" },
-      { status: 400 }
-    );
-  }
-
   const getBody = () => {
     if (body.event?.endsWith("create")) return "Item created";
     if (body.event?.endsWith("update")) return "Item updated";
     if (body.event?.endsWith("delete")) return "Item deleted";
     return "Item";
-  }
+  };
 
   const title = body.collection
     .replaceAll("_", " ")
@@ -429,29 +391,7 @@ export async function POST(req: NextRequest) {
 
   const deepLink = buildDeepLink(body.collection, body.key);
 
-  const client = createClient(body.directusUrl, body.directusToken);
-  let devices: AppPushDevice[];
-  try {
-    const raw = await client.request(
-      readItems(COLLECTION as "app_push_devices", { limit: -1 })
-    );
-    if (Array.isArray(raw)) devices = raw as AppPushDevice[];
-    else if (raw && typeof raw === "object" && Array.isArray((raw as { data?: unknown }).data))
-      devices = (raw as { data: AppPushDevice[] }).data;
-    else devices = [];
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch devices" },
-      { status: 502 }
-    );
-  }
-
-  const filtered = filterDevicesForEvent(
-    devices,
-    body.collection,
-    body.action as PushAction
-  );
-  const { ios, android } = splitByPlatform(filtered);
+  const { ios, android } = splitByPlatform(body.tokens);
 
   const bundleId =
     process.env.APNS_BUNDLE_ID ?? "com.martijnmichel.directusexpo";

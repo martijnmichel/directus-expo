@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -19,8 +18,8 @@ import {
   APP_PUSH_DEVICES_COLLECTION,
   APP_PUSH_FLOW_NAME,
   PUSH_ENDPOINT_URL,
+  PUSH_FLOW_OPERATION_TYPES,
 } from "@/constants/push";
-import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 
 function getPushSecret(): string | undefined {
   return (Constants.expoConfig as { extra?: { pushSecret?: string } })?.extra
@@ -70,14 +69,8 @@ export function useInstallPushSchema() {
   const PUSH_POLICY_NAME = "App push devices (read, create, update, delete)";
 
   return useMutation({
-    mutationFn: async (params: {
-      staticApiKey: string;
-    }) => {
-      const { staticApiKey } = params;
+    mutationFn: async () => {
       if (!directus) throw new Error("Not authenticated");
-      if (!staticApiKey?.trim()) {
-        throw new Error("Static API key is required for the push flow.");
-      }
       const [collections, flowsRaw] = await Promise.all([
         directus.request(readCollections()),
         directus.request(readFlows({ filter: { name: { _eq: APP_PUSH_FLOW_NAME } }, limit: 1 } as any)),
@@ -139,27 +132,12 @@ export function useInstallPushSchema() {
             );
           }
 
-          const activeApiStr = await AsyncStorage.getItem(
-            LocalStorageKeys.DIRECTUS_API_ACTIVE
-          );
-          const activeApi = activeApiStr
-            ? (JSON.parse(activeApiStr) as { url?: string })
-            : null;
-          const directusUrl = activeApi?.url?.replace(/\/$/, "") ?? "";
-          if (!directusUrl) {
-            throw new Error(
-              "Could not determine Directus URL. Please try again."
-            );
-          }
-
-          const directusToken = staticApiKey.trim();
-
           const flow = await directus.request(
             createFlow({
               name: APP_PUSH_FLOW_NAME,
               icon: "notifications",
               description:
-                "Sends item create/update/delete to the push endpoint. Created by the app; URL and token are set at install.",
+                "Reads app_push_devices, filters by trigger collection/action and user access, sends token list to push endpoint.",
               status: "active",
               trigger: "event",
               options: {
@@ -175,9 +153,9 @@ export function useInstallPushSchema() {
           if (!flowId) throw new Error("Flow created but no id returned");
           createdFlowId = flowId;
 
+          const opTypes = PUSH_FLOW_OPERATION_TYPES;
+
           const requestBody = JSON.stringify({
-            directusUrl,
-            directusToken,
             collection: "{{ $trigger.collection }}",
             event: "{{ $trigger.event }}",
             key: "{{ $trigger.key }}",
@@ -185,15 +163,16 @@ export function useInstallPushSchema() {
               title: "Item {{ $trigger.event }}",
               body: "{{ $trigger.collection }} #{{ $trigger.key }}",
             },
+            tokens: "{{ filter_tokens }}",
           });
 
-          const operation = await directus.request(
+          const opRequest = await directus.request(
             createOperation({
               flow: flowId,
               key: "send-push-request",
-              type: "request",
+              type: opTypes.request,
               name: "Send to push endpoint",
-              position_x: 20,
+              position_x: 120,
               position_y: 0,
               options: {
                 url: PUSH_ENDPOINT_URL,
@@ -209,14 +188,190 @@ export function useInstallPushSchema() {
               },
             } as any)
           );
-          const operationId =
-            (operation as { id?: string })?.id ??
-            (operation as { data?: { id?: string } })?.data?.id;
-          if (operationId) {
-            await directus.request(
-              updateFlow(flowId, { operation: operationId } as any)
-            );
-          }
+          const opRequestId =
+            (opRequest as { id?: string })?.id ??
+            (opRequest as { data?: { id?: string } })?.data?.id;
+          if (!opRequestId) throw new Error("Request operation created but no id");
+
+          const filterScriptCode = `
+module.exports = async function(data) {
+  const trigger = (data && data.$trigger) ? data.$trigger : {};
+  const collection = trigger.collection || '';
+  const action = (trigger.event || '').split('.').pop() || '';
+
+  const permissions = Array.isArray(data.read_permissions) ? data.read_permissions : [];
+  const policies = Array.isArray(data.read_policies) ? data.read_policies : [];
+  const roles = Array.isArray(data.read_roles) ? data.read_roles : [];
+  const users = Array.isArray(data.read_users) ? data.read_users : [];
+  const devices = Array.isArray(data.read_devices) ? data.read_devices : [];
+
+  var policyIdsFromPermissions = new Set(permissions.filter(function(p) { return p.collection === collection && p.action === action; }).map(function(p) { return p.policy; }).filter(Boolean));
+  var policyIdsWithAdmin = new Set(policies.filter(function(p) { return p.admin_access; }).map(function(p) { return p.id; }).filter(Boolean));
+  function policyId(p) { return typeof p === 'object' && p !== null ? (p.id || p) : p; }
+  function policyIds(obj) {
+    var pol = obj.policies || obj.policy || [];
+    return Array.isArray(pol) ? pol : (pol && pol.id ? [pol] : []);
+  }
+  var policyIdsWithAccess = new Set([].concat(Array.from(policyIdsFromPermissions), Array.from(policyIdsWithAdmin)));
+  function hasAccessViaPolicies(policyList) {
+    for (var i = 0; i < policyList.length; i++) {
+      var pid = policyId(policyList[i]);
+      if (pid && policyIdsWithAccess.has(pid)) return true;
+    }
+    return false;
+  }
+  function roleHasAccess(r) {
+    return hasAccessViaPolicies(policyIds(r));
+  }
+  var roleIdsWithAccess = new Set(roles.filter(roleHasAccess).map(function(r) { return r.id; }).filter(Boolean));
+  function userHasAccess(u) {
+    if (u.role && roleIdsWithAccess.has(u.role)) return true;
+    return hasAccessViaPolicies(policyIds(u));
+  }
+  var userIds = new Set(users.filter(userHasAccess).map(function(u) { return u.id; }).filter(Boolean));
+
+  const out = [];
+  for (var i = 0; i < devices.length; i++) {
+    var d = devices[i];
+    if (d.user_id && !userIds.has(d.user_id)) continue;
+    var subs = d.subscriptions;
+    if (!Array.isArray(subs)) continue;
+    var entry = subs.find(function(s) { return s && s.collection === collection; });
+    if (!entry || !entry[action]) continue;
+    var token = d.token && String(d.token).trim();
+    if (token && (d.platform === 'ios' || d.platform === 'android')) {
+      out.push({ token: token, platform: d.platform });
+    }
+  }
+  return out;
+};
+`.trim();
+
+          const opScript = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "filter_tokens",
+              type: opTypes.runScript,
+              name: "Filter tokens by access and subscription",
+              position_x: 100,
+              position_y: 0,
+              resolve: opRequestId,
+              options: { code: filterScriptCode },
+            } as any)
+          );
+          const opScriptId =
+            (opScript as { id?: string })?.id ??
+            (opScript as { data?: { id?: string } })?.data?.id;
+          if (!opScriptId) throw new Error("Script operation created but no id");
+
+          const opReadDevices = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "read_devices",
+              type: opTypes.readData,
+              name: "Read push devices",
+              position_x: 60,
+              position_y: 0,
+              resolve: opScriptId,
+              permissions: "$full",
+              options: {
+                collection: APP_PUSH_DEVICES_COLLECTION,
+                query: { limit: -1, fields: ["token", "platform", "subscriptions", "user_id"] },
+              },
+            } as any)
+          );
+          const opReadDevicesId =
+            (opReadDevices as { id?: string })?.id ??
+            (opReadDevices as { data?: { id?: string } })?.data?.id;
+          if (!opReadDevicesId) throw new Error("Read devices operation created but no id");
+
+          const opReadUsers = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "read_users",
+              type: opTypes.readData,
+              name: "Read users",
+              position_x: 40,
+              position_y: 0,
+              resolve: opReadDevicesId,
+              permissions: "$full",
+              options: {
+                collection: "directus_users",
+                query: { limit: -1, fields: ["id", "role", "policies"] },
+              },
+            } as any)
+          );
+          const opReadUsersId =
+            (opReadUsers as { id?: string })?.id ??
+            (opReadUsers as { data?: { id?: string } })?.data?.id;
+          if (!opReadUsersId) throw new Error("Read users operation created but no id");
+
+          const opReadRoles = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "read_roles",
+              type: opTypes.readData,
+              name: "Read roles",
+              position_x: 20,
+              position_y: 0,
+              resolve: opReadUsersId,
+              permissions: "$full",
+              options: {
+                collection: "directus_roles",
+                query: { limit: -1, fields: ["id", "policies"] },
+              },
+            } as any)
+          );
+          const opReadRolesId =
+            (opReadRoles as { id?: string })?.id ??
+            (opReadRoles as { data?: { id?: string } })?.data?.id;
+          if (!opReadRolesId) throw new Error("Read roles operation created but no id");
+
+          const opReadPolicies = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "read_policies",
+              type: opTypes.readData,
+              name: "Read policies",
+              position_x: 10,
+              position_y: 0,
+              resolve: opReadRolesId,
+              permissions: "$full",
+              options: {
+                collection: "directus_policies",
+                query: { limit: -1, fields: ["id", "admin_access"] },
+              },
+            } as any)
+          );
+          const opReadPoliciesId =
+            (opReadPolicies as { id?: string })?.id ??
+            (opReadPolicies as { data?: { id?: string } })?.data?.id;
+          if (!opReadPoliciesId) throw new Error("Read policies operation created but no id");
+
+          const opReadPermissions = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "read_permissions",
+              type: opTypes.readData,
+              name: "Read permissions",
+              position_x: 0,
+              position_y: 0,
+              resolve: opReadPoliciesId,
+              permissions: "$full",
+              options: {
+                collection: "directus_permissions",
+                query: { limit: -1, fields: ["collection", "policy", "action"] },
+              },
+            } as any)
+          );
+          const opReadPermissionsId =
+            (opReadPermissions as { id?: string })?.id ??
+            (opReadPermissions as { data?: { id?: string } })?.data?.id;
+          if (!opReadPermissionsId) throw new Error("Read permissions operation created but no id");
+
+          await directus.request(
+            updateFlow(flowId, { operation: opReadPermissionsId } as any)
+          );
         }
 
         // Create a policy with RUD (+ create) permissions for app_push_devices and assign to selected roles.
