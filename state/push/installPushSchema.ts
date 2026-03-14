@@ -6,7 +6,6 @@ import {
   createField,
   createFlow,
   createOperation,
-  createPermission,
   createPolicy,
   deleteCollection,
   deleteFlow,
@@ -14,8 +13,6 @@ import {
   readCollections,
   readFlows,
   updateFlow,
-  updatePolicy,
-  updateRole,
 } from "@directus/sdk";
 import Constants from "expo-constants";
 import {
@@ -35,32 +32,32 @@ const PUSH_FIELDS: Array<{
   type: string;
   meta: Record<string, unknown>;
 }> = [
-    {
-      field: "token",
-      type: "string",
-      meta: { interface: "input", required: true },
+  {
+    field: "token",
+    type: "string",
+    meta: { interface: "input", required: true },
+  },
+  {
+    field: "platform",
+    type: "string",
+    meta: { interface: "select-dropdown", options: { choices: [{ text: "iOS", value: "ios" }, { text: "Android", value: "android" }] } },
+  },
+  {
+    field: "subscriptions",
+    type: "json",
+    meta: { interface: "input-code", options: { language: "json" } },
+  },
+  {
+    field: "user_id",
+    type: "uuid",
+    meta: {
+      interface: "select-dropdown-m2o",
+      special: ["directus_users"],
+      required: true,
+      note: "Owner of this device (set by app; used for multi-user per server).",
     },
-    {
-      field: "platform",
-      type: "string",
-      meta: { interface: "select-dropdown", options: { choices: [{ text: "iOS", value: "ios" }, { text: "Android", value: "android" }] } },
-    },
-    {
-      field: "subscriptions",
-      type: "json",
-      meta: { interface: "input-code", options: { language: "json" } },
-    },
-    {
-      field: "user_id",
-      type: "uuid",
-      meta: {
-        interface: "select-dropdown-m2o",
-        special: ["directus_users"],
-        required: true,
-        note: "Owner of this device (set by app; used for multi-user per server).",
-      },
-    },
-  ];
+  },
+];
 
 /**
  * Installs the app_push_devices collection and its fields (token, platform, subscriptions).
