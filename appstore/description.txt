@@ -4,6 +4,7 @@ Transform your content management experience with Directus, the powerful open da
 
 Key Features:
 • Intuitive Content Management: Create, edit and publish content on the go
+• Push Notifications: Get notified when content changes—subscribe per collection and choose create, update, or delete events so you stay in the loop
 • Rich Text Editor: Format your content with a full-featured mobile editor
 • Media Library: Upload and manage images, videos, and documents directly from your device
 • Multi-language Support: Work in your preferred language with full internationalization
@@ -59,7 +60,7 @@ Supported interfaces:
 - Hash
 - Slider
 
-Whether you're updating a blog post, managing your website content, or coordinating your digital presence, the Directus mobile app provides a streamlined interface to handle your content needs efficiently.
+Whether you're updating a blog post, managing your website content, or coordinating your digital presence, the Directus mobile app provides a streamlined interface to handle your content needs efficiently. Turn on push notifications to get alerts for the collections that matter to you—no more refreshing to catch the latest changes.
 
 Built with the same commitment to simplicity and user experience as our web platform, the Directus mobile app ensures you have complete control over your content wherever you are. Experience the freedom of managing your content from any device.
 
