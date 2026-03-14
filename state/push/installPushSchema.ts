@@ -263,7 +263,12 @@ module.exports = async function(data) {
     if (u.role && roleIdsWithAccess.has(u.role)) return true;
     return hasAccessViaPolicies(policyIds(u));
   }
-  var userIds = new Set(users.filter(userHasAccess).map(function(u) { return u.id; }).filter(Boolean));
+  function userActive(u) {
+    var s = u.status;
+    if (s == null || s === undefined) return true;
+    return String(s).toLowerCase() === 'active';
+  }
+  var userIds = new Set(users.filter(function(u) { return userActive(u) && userHasAccess(u); }).map(function(u) { return u.id; }).filter(Boolean));
   console.info('[push-flow] access', {
     policyIdsFromPermissions: policyIdsFromPermissions.size,
     policyIdsWithAdmin: policyIdsWithAdmin.size,
@@ -341,7 +346,7 @@ module.exports = async function(data) {
                 collection: "directus_users",
                 permissions: "$full",
                 emitEvents: false,
-                query: { limit: -1, fields: ["id", "role", "policies.policy"] },
+                query: { limit: -1, fields: ["id", "role", "status", "policies.policy"] },
               },
             } as any)
           );
