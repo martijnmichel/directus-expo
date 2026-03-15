@@ -1,16 +1,35 @@
 export const metadata = {
-  title: "directus-expo 0.10.0 — What’s in this build",
+  title: "Directus Mobile 0.10.0 — Push Notifications",
   description:
-    "0.10.0 bundles file management, translations, Android polish, and lots of fixes.",
+    "0.10.0 adds push notifications, file management, translations, Android polish, and lots of fixes. Stay informed when content changes in your Directus backend.",
   date: "2026-03-15",
   tags: ["Product", "Release"],
-  readTime: "4 min read",
+  readTime: "6 min read",
   image: "/blog/push-notifications.jpg",
 };
 
-# directus-expo 0.10.0 — What’s in this build
+# Directus Mobile 0.10.0 — Push Notifications
 
-**0.10.0** (March 2026) brings together the latest improvements. If you’ve been on an older version, this is the one to pick: it includes a proper file browser, translations, Android improvements, and a lot of fixes and polish.
+**0.10.0** (March 2026) is a major update. The headline feature is **push notifications**: the app can notify you when content is created, updated, or deleted in your Directus backend. You choose which collections to subscribe to and which events (create, update, delete) you care about. On top of that you get a proper file browser, translations, Android improvements, and a lot of fixes and polish.
+
+## Push notifications
+
+Push notifications are the biggest addition in 0.10.0. You get notified on your device when something changes in Directus—so content managers and editors can stay in the loop without constantly refreshing the app or checking the backend.
+
+### How it works
+
+- **One-time setup (admins).** If you have admin access, the app can install the push setup on your Directus instance: a collection to store devices and a flow that sends notifications when items are created, updated, or deleted. You run the setup once from the app; no manual schema or flow editing required.
+- **Enable notifications.** In the app you enable push (grant permission when prompted). Your device is registered with the backend and linked to your user.
+- **Choose what to follow.** In **Settings → Push notifications** you see your project’s collections. For each collection you can turn on **Create**, **Update**, and **Delete** independently. So you might only want “notify me when something is created in Articles” or “notify me on any change in Products.”
+- **Receive and open.** When a matching change happens, you get a notification. Tapping it opens the app so you can jump straight into the content.
+
+Admins get the full setup (schema + flow); non-admin users can still enable push and manage their own subscriptions for the collections they have access to. Subscriptions are saved automatically, so you set it once and stay informed.
+
+### Why it matters
+
+Content teams no longer need to poll or keep the app open to see new or changed content. You subscribe to the collections that matter to you and get notified only for the events you care about. That makes 0.10.0 a big step for day-to-day content workflows on the go.
+
+---
 
 ## Relations (fixes & polish)
 
@@ -58,4 +77,4 @@ Plus more: **pagination** (including second page), **primary key** handling, **h
 
 ---
 
-If you’re still on an older version, upgrading to **0.10.0** is the way to get all of this in one go.
+If you’re still on an older version, upgrading to **0.10.0** is the way to get push notifications and all of this in one go.
