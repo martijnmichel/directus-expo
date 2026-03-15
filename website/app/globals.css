@@ -40,6 +40,14 @@ body {
   position: relative;
 }
 
+.container-dense {
+  @apply container mx-auto px-4 max-w-3xl;
+}
+
+.vertical-space {
+  @apply py-12;
+}
+
 @keyframes carousel {
 
   0%,

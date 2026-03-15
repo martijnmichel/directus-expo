@@ -1,0 +1,58 @@
+export const metadata = {
+  title: "directus-expo 0.10.0 — What’s in this build",
+  description:
+    "0.10.0 bundles file management, translations, Android polish, and lots of fixes.",
+  date: "2026-03-15",
+};
+
+# directus-expo 0.10.0 — What’s in this build
+
+**0.10.0** (March 2026) brings together the latest improvements. If you’ve been on an older version, this is the one to pick: it includes a proper file browser, translations, Android improvements, and a lot of fixes and polish.
+
+## Relations (fixes & polish)
+
+Relations (M2M, M2O, O2M, M2A) were already working before this release. In this build you get **refinements**:
+
+- **M2M** and **O2M**: pick modals, correct filtering, sorting, permissions, and relation collection handling.
+- **M2O**: relational picking and field value transforms.
+- **M2A**: nested data in tables and interfaces, editing support, and sort with new items.
+- **Deep nesting** in related DataTables; **related datatable column** M2M pick.
+
+So you can manage linked items, files, and junction data directly from the app with modals and tables that match how you work in Directus.
+
+## Files & media
+
+- **File browser / File screen** for browsing and managing assets.
+- **File pick modal** and **multi-file input** for M2M file fields.
+- **Upload/import** in the file browser; **update/delete** for existing files.
+- **CollectionTable thumbnails** and **image browser** for quicker scanning of media.
+- **Pagination** in the file select modal.
+
+## Translations & i18n
+
+- **Translations** for collection items, with a translation modal editor and **compare language** view.
+- **Pick language from Directus** and **remember i18n locale**.
+- **Links to translation modal** from the table, and support for **removing** translations.
+
+So non-default languages and translation workflows are supported end-to-end.
+
+## Android & UX
+
+- **Android**: fixes for **quickView & bottomSheet**, **tabs**, and **drag-drop in ScrollView**.
+- **TinyMCE** webview with **fullscreen** and **light mode** CSS.
+- **Sticky table header & toolbar**, **positioning of toolbar**.
+- **Instance switch** to change API, **API key refresh**, and **server health** checks.
+- **EAS update info** so you can see update status in the app.
+- **Collection item dropdown**, **reset button**, **notice & dividers**, **tags interface**.
+
+Plus more: **pagination** (including second page), **primary key** handling, **hash-input** and **file-input**, **slider**, **repeater**, **buttons**, layout tabs and crash on no meta collection, and various smaller fixes.
+
+## Under the hood
+
+- **Optimized table queries** and a **rewrite of the O2M input** for better performance.
+- **UUID** and **required** handling across interfaces (including document-editor and M2A).
+- **Permissions** for M2M and M2O, and more consistent **filtering** (M2M, M2A, O2M) based on current values.
+
+---
+
+If you’re still on an older version, upgrading to **0.10.0** is the way to get all of this in one go.

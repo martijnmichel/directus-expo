@@ -1,0 +1,10 @@
+export const metadata = {
+  title: "About",
+  description: "About this site.",
+};
+
+# About
+
+This page is rendered from **MDX** in `content/pages/about.mdx`.
+
+Add more `.mdx` or `.md` files under `content/blog/` for blog posts and `content/pages/` for standalone pages. Use `export const metadata = { title, description, date }` for SEO and listing.

@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@directus/sdk": "^18.0.3",
+    "@mdx-js/loader": "^3.0.0",
+    "@mdx-js/react": "^3.0.0",
+    "@next/mdx": "^16.0.0",
     "apns2": "^12.2.0",
     "firebase-admin": "^13.0.2",
     "lucide": "^0.577.0",
@@ -19,11 +22,15 @@
     "preact": "^10.25.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.0",
     "schema-dts": "^1.1.2",
     "swiper": "^11.2.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/mdx": "^2.0.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
