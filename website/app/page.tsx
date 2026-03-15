@@ -93,6 +93,7 @@ export default function Home() {
           <h2 className="text-center">Features</h2>
 
           <Slider
+          autoplay
             items={features.map((feature) => ({
               title: feature.title,
               titleGradientPart: feature.titleGradientPart,

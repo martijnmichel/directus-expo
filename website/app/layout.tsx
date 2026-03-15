@@ -66,7 +66,7 @@ export default function RootLayout({
                   className="rounded"
                 />
               </Link>
-              
+
               <Link
                 href="/#features"
                 className="hover:text-pink-500  transition-colors"
@@ -74,16 +74,12 @@ export default function RootLayout({
                 Features
               </Link>
 
-              <a
-                href="https://kurbo.dev/shop"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Browse Directus Themes"
-                className="flex items-center gap-2 border rounded-md border-zinc-200 px-2 py-1 text-sm hover:text-pink-500 transition-colors hover:bg-pink-50"
+              <Link
+                href="/blog"
+                className="hover:text-pink-500  transition-colors"
               >
-                Directus Themes
-
-              </a>
+                Blog
+              </Link>
             </nav>
 
             <div className="flex items-center gap-2">
@@ -105,8 +101,6 @@ export default function RootLayout({
                   />
                 </svg>
               </a>
-
-              
             </div>
           </div>
         </header>
@@ -131,8 +125,8 @@ export default function RootLayout({
                 className="text-zinc-800 hover:underline"
               >
                 Kurbo Web Agency
-              </a>
-              {" "}&{" "}
+              </a>{" "}
+              &{" "}
               <a
                 href="https://kurbo.dev/shop"
                 target="_blank"

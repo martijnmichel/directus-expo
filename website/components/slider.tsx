@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 /** Collapsed strip height: only icon + title visible. */
 const COLLAPSED_HEIGHT_CLAMP = "clamp(2.75rem, 8vh, 5rem)";
-const AUTOPLAY_MS = 6000;
+const AUTOPLAY_MS = 10000;
 
 /** Renders title with optional gradient on a substring; gradient only when expanded. */
 function TitleWithGradient({
