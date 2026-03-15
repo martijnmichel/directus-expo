@@ -56,7 +56,7 @@ export default function RootLayout({
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
         <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-zinc-100 shadow-xs backdrop-blur-sm">
           <div className="container mx-auto px-4 flex items-center justify-between">
-            <nav className="flex items-center gap-6 text-zinc-600 text-sm tracking-wide ">
+            <nav className="flex items-center gap-4 sm:gap-6 text-zinc-600 text-sm tracking-wide ">
               <Link href="/" className="flex items-center gap-2 p-3">
                 <Image
                   src="/icon.png"
@@ -66,9 +66,7 @@ export default function RootLayout({
                   className="rounded"
                 />
               </Link>
-              <Link href="/" className="hover:text-pink-500 transition-colors">
-                Home
-              </Link>
+              
               <Link
                 href="/#features"
                 className="hover:text-pink-500  transition-colors"
@@ -85,7 +83,6 @@ export default function RootLayout({
               >
                 Directus Themes
 
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-external-link-icon lucide-external-link"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
               </a>
             </nav>
 
@@ -133,7 +130,16 @@ export default function RootLayout({
                 rel="noopener noreferrer"
                 className="text-zinc-800 hover:underline"
               >
-                Kurbo Web Agency & Directus Themes Marketplace
+                Kurbo Web Agency
+              </a>
+              {" "}&{" "}
+              <a
+                href="https://kurbo.dev/shop"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-zinc-800 hover:underline"
+              >
+                Directus Themes Marketplace
               </a>
               .
             </p>

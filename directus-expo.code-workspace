@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "name": "App (Expo)",
+      "path": "."
+    },
+    {
+      "name": "Website",
+      "path": "website"
+    }
+  ],
+  "settings": {
+    "eslint.workingDirectories": [
+      { "directory": "website", "changeProcessCWD": true }
+    ]
+  }
+}

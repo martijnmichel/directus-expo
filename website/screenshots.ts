@@ -49,4 +49,12 @@ export const images = [
     src: "/carousel/settings-screen.png",
     alt: "System settings page",
   },
+  {
+    src: "/carousel/push-notifications.png",
+    alt: "Push notifications for any Directus collection and server",
+  },
+  {
+    src: "/carousel/manage-notifications.png",
+    alt: "Push notifications settings page",
+  }
 ];
