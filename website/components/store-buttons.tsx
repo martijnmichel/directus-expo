@@ -5,6 +5,7 @@ export const StoreButtons = () => (
     <a
       target="_blank"
       aria-label="download app on ios"
+      rel="noopener noreferrer"
       data-umami-event="download-app"
       data-umami-event-platform="ios"
       href="https://apps.apple.com/app/directus-mobile/id6740696350"
@@ -19,6 +20,7 @@ export const StoreButtons = () => (
     <a
       target="_blank"
       aria-label="download app on android"
+      rel="noopener noreferrer"
       data-umami-event="download-app"
       data-umami-event-platform="android"
       href="https://play.google.com/store/apps/details?id=com.martijnmichel.directusexpo.app"
