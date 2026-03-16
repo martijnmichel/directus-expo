@@ -35,6 +35,7 @@ import { ExternalLink } from "@/components/ExternalLink";
 import { ApiSwitch } from "@/components/SessionSwitch";
 import { PushNotifications } from "@/components/settings/PushNotifications";
 import { Switch } from "@/components/icons/Switch";
+import { WidgetConfigSection } from "@/components/settings/WidgetConfigSection";
 export default function TabTwoScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
@@ -134,8 +135,13 @@ export default function TabTwoScreen() {
       label: t("push.title"),
       type: "push",
     },
+
     {
       type: "spacing",
+    },
+    {
+        label: "Widgets",
+        type: "widgets"
     },
     {
       label: t("settings.sections.options"),
@@ -219,6 +225,12 @@ export default function TabTwoScreen() {
                       return (
                         <View key={`push-${index}`}>
                           <PushNotifications />
+                        </View>
+                      );
+                    case "widgets":
+                      return (
+                        <View key={`widgets-${index}`}>
+                          <WidgetConfigSection />
                         </View>
                       );
                     case "heading":
