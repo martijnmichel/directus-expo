@@ -37,6 +37,7 @@ import {
   useWidgetAccessOnly,
   isWidgetForbiddenError,
 } from "@/state/widget/useWidgetCollection";
+import { useTranslation } from "react-i18next";
 
 const DEFAULT_FIELDS = ["id", "title", "name", "date_updated", "date_created"];
 
@@ -53,6 +54,7 @@ function useWidgetConfigs() {
 }
 
 export function WidgetConfigSection() {
+  const { t } = useTranslation();
   const { configs, reload } = useWidgetConfigs();
   const { directus, policyGlobals } = useAuth();
   const installMutation = useInstallWidgetSchema();
@@ -260,8 +262,8 @@ export function WidgetConfigSection() {
         const { requested } = await requestAddWidgetToHomeScreen();
         if (requested) {
           Alert.alert(
-            "Add to home screen",
-            "Confirm on the next screen to place the widget."
+            t("widget.addConfirmTitle"),
+            t("widget.addConfirmMessage")
           );
         }
       }
@@ -272,12 +274,12 @@ export function WidgetConfigSection() {
 
   const remove = (c: LatestItemsWidgetConfig) => {
     Alert.alert(
-      "Remove widget",
-      `Remove "${c.title || c.collection}" from home screen options?`,
+      t("widget.removeTitle"),
+      t("widget.removeMessage", { name: c.title || c.collection }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("button.cancel"), style: "cancel" },
         {
-          text: "Remove",
+          text: t("widget.removeButton"),
           style: "destructive",
           onPress: async () => {
             if (directus && c.widgetId) {
@@ -307,7 +309,7 @@ export function WidgetConfigSection() {
   if (loading) {
     return (
       <Vertical spacing="md">
-        <DividerSubtitle title="Widgets" icon="msWidgets" />
+        <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
         <ActivityIndicator />
       </Vertical>
     );
@@ -316,10 +318,8 @@ export function WidgetConfigSection() {
   if (runFullSetupCheck && setupError && !setup) {
     return (
       <Vertical spacing="md">
-        <DividerSubtitle title="Widgets" icon="msWidgets" />
-        <Text>
-          Widget settings are currently unavailable. Please try again later.
-        </Text>
+        <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
+        <Text>{t("widget.unavailable")}</Text>
       </Vertical>
     );
   }
@@ -329,17 +329,17 @@ export function WidgetConfigSection() {
   if (runFullSetupCheck && !haveSchema) {
     return (
       <Vertical spacing="md">
-        <DividerSubtitle title="Widgets" icon="msWidgets" />
+        <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
         <>
           {(setup?.issues?.includes("missing_collection") ||
             setup?.issues?.includes("missing_flow")) && (
             <Text>
               {setup?.issues?.includes("missing_collection") &&
               setup?.issues?.includes("missing_flow")
-                ? "This instance is not set up for widgets yet. An admin can install the required schema and flow."
+                ? t("widget.installHintBoth")
                 : setup?.issues?.includes("missing_collection")
-                  ? "The widget config collection is missing. An admin can install it."
-                  : "The widget flow is missing. An admin can install it."}
+                  ? t("widget.installHintCollection")
+                  : t("widget.installHintFlow")}
             </Text>
           )}
           <Button
@@ -352,8 +352,8 @@ export function WidgetConfigSection() {
             }
           >
             {installMutation.isPending
-              ? "Installing widget backend..."
-              : "Install widget backend"}
+              ? t("widget.installing")
+              : t("widget.installBackend")}
           </Button>
           {installMutation.isError && (
             <Text style={{ color: "red" }}>
@@ -369,11 +369,8 @@ export function WidgetConfigSection() {
   if (!runFullSetupCheck && accessForbidden) {
     return (
       <Vertical spacing="md">
-        <DividerSubtitle title="Widgets" icon="msWidgets" />
-        <Text>
-          You don't have permission to manage widgets. Ask an admin to grant
-          access to app_widget_config.
-        </Text>
+        <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
+        <Text>{t("widget.permissionWarning")}</Text>
         <Button
           onPress={() => {
             refetchSetup();
@@ -382,7 +379,7 @@ export function WidgetConfigSection() {
           variant="soft"
           style={{ marginTop: 8 }}
         >
-          Check again
+          {t("widget.checkAgain")}
         </Button>
       </Vertical>
     );
@@ -390,19 +387,15 @@ export function WidgetConfigSection() {
 
   return (
     <Vertical spacing="md">
-      <DividerSubtitle title="Widgets" icon="msWidgets" />
-      <Muted>
-        Configure which collections native widgets can show. Install the widget
-        backend once per Directus instance (requires admin), then add personal
-        widget setups below.
-      </Muted>
+      <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
+      <Muted>{t("widget.intro")}</Muted>
       {configs.length > 0 && (
         <View style={{ marginTop: 8, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "rgba(0,0,0,0.04)", borderRadius: 8 }}>
-          <Text style={{ fontWeight: "600", marginBottom: 4 }}>Add widget to home screen</Text>
+          <Text style={{ fontWeight: "600", marginBottom: 4 }}>{t("widget.addToHomeScreenTitle")}</Text>
           <Muted style={{ marginBottom: 8 }}>
             {Platform.OS === "android"
-              ? "Tap below to add the Latest Items widget to your home screen. You can then choose which setup to show."
-              : "Long-press the home screen, tap +, choose \"Latest Items\" for this app, then pick the setup you want."}
+              ? t("widget.addToHomeScreenHintAndroid")
+              : t("widget.addToHomeScreenHintIos")}
           </Muted>
           {Platform.OS === "android" && (
             <Button
@@ -410,14 +403,14 @@ export function WidgetConfigSection() {
               onPress={async () => {
                 const { requested, error } = await requestAddWidgetToHomeScreen();
                 if (error) {
-                  Alert.alert("Could not add widget", error);
+                  Alert.alert(t("widget.addErrorTitle"), error);
                 } else if (requested) {
-                  Alert.alert("Add widget", "Confirm on the next screen to place the widget on your home screen.");
+                  Alert.alert(t("widget.addConfirmTitle"), t("widget.addConfirmMessage"));
                 }
               }}
               leftIcon={<DirectusIcon name="add" />}
             >
-              Add to home screen
+              {t("widget.addToHomeScreenButton")}
             </Button>
           )}
         </View>
@@ -448,7 +441,7 @@ export function WidgetConfigSection() {
             </Pressable>
             <Horizontal spacing="xs">
               <Button variant="ghost" size="sm" onPress={() => openEdit(c)}>
-                Edit
+                {t("widget.edit")}
               </Button>
               <Button
                 variant="ghost"
@@ -456,24 +449,24 @@ export function WidgetConfigSection() {
                 colorScheme="error"
                 onPress={() => remove(c)}
               >
-                Delete
+                {t("widget.delete")}
               </Button>
             </Horizontal>
           </View>
         ))}
       </Horizontal>
       <Button variant="soft" onPress={openAdd} leftIcon={<DirectusIcon name="add" />}>
-        Add widget setup
+        {t("widget.addSetup")}
       </Button>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Modal.Content
-          title={editingId ? "Edit widget" : "Add widget setup"}
+          title={editingId ? t("widget.editModalTitle") : t("widget.addModalTitle")}
           variant="default"
           actions={
             <Horizontal spacing="sm">
               <Button variant="ghost" onPress={() => setModalOpen(false)}>
-                Cancel
+                {t("button.cancel")}
               </Button>
               <Button
                 onPress={save}
@@ -481,7 +474,7 @@ export function WidgetConfigSection() {
                   saving || !form.instanceUrl?.trim() || !form.collection?.trim()
                 }
               >
-                {editingId ? "Save" : "Add"}
+                {editingId ? t("common.save") : t("widget.add")}
               </Button>
             </Horizontal>
           }
@@ -489,34 +482,34 @@ export function WidgetConfigSection() {
           <ScrollView style={{ maxHeight: 400 }}>
             <Vertical spacing="md">
               <Input
-                label="Collection"
+                label={t("widget.collectionLabel")}
                 value={form.collection}
-                onChangeText={(t) => setForm((f) => ({ ...f, collection: t }))}
-                placeholder="e.g. articles"
+                onChangeText={(val) => setForm((f) => ({ ...f, collection: val }))}
+                placeholder={t("widget.collectionPlaceholder")}
                 autoCapitalize="none"
               />
               <Input
-                label="Title (optional)"
+                label={t("widget.titleLabel")}
                 value={form.title ?? ""}
-                onChangeText={(t) => setForm((f) => ({ ...f, title: t }))}
-                placeholder="Widget header"
+                onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
+                placeholder={t("widget.titlePlaceholder")}
               />
               <Input
-                label="Sort"
+                label={t("widget.sortLabel")}
                 value={form.sort ?? ""}
-                onChangeText={(t) => setForm((f) => ({ ...f, sort: t }))}
-                placeholder="-date_updated"
+                onChangeText={(val) => setForm((f) => ({ ...f, sort: val }))}
+                placeholder={t("widget.sortPlaceholder")}
               />
               <Input
-                label="Limit"
+                label={t("widget.limitLabel")}
                 value={String(form.limit ?? 5)}
-                onChangeText={(t) =>
-                  setForm((f) => ({ ...f, limit: Number(t) || 5 }))
+                onChangeText={(val) =>
+                  setForm((f) => ({ ...f, limit: Number(val) || 5 }))
                 }
                 keyboardType="number-pad"
               />
               <Text style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-                Columns and values match the collection table view (preset or all fields).
+                {t("widget.columnsHint")}
               </Text>
             </Vertical>
           </ScrollView>
