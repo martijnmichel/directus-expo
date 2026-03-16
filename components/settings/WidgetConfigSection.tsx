@@ -301,7 +301,7 @@ export function WidgetConfigSection() {
           >
             {installMutation.isPending
               ? "Installing widget backend..."
-              : "Install widget backend (schema + flow)"}
+              : "Install widget backend"}
           </Button>
           {installMutation.isError && (
             <Text style={{ color: "red" }}>

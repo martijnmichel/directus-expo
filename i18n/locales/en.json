@@ -56,7 +56,7 @@
     "installRolesLabel": "Roles that can use push notifications",
     "installRolesHelper": "A new permission (read, create, update, delete on app_push_devices) will be added to the selected roles.",
     "installRolesPlaceholder": "Select roles",
-    "installSchema": "Install push schema",
+    "installSchema": "Install Push Notifications",
     "installing": "Installing...",
     "permissionCheckFailedTitle": "Could not verify push permissions",
     "permissionCheckFailedBody": "We couldn't verify whether your role can access push settings. If enabling push fails, contact an administrator.",
