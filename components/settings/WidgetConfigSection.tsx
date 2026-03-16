@@ -10,7 +10,7 @@ import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, Pressable, Alert, ActivityIndicator } from "react-native";
+import { View, ScrollView, Pressable, Alert, ActivityIndicator, Platform } from "react-native";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import {
   getLatestItemsWidgetConfigs,
@@ -22,6 +22,7 @@ import {
   writeLatestItemsWidgetConfigListToCache,
   removeLatestItemsWidgetPayloadFromCache,
 } from "@/widgets/latestItems/sync";
+import { requestAddWidgetToHomeScreen } from "@/widgets/shared/requestAddWidgetToHomeScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
@@ -108,6 +109,13 @@ export function WidgetConfigSection() {
     refetch: refetchAccessOnly,
   } = useWidgetAccessOnly(!runFullSetupCheck);
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
+
+  // Keep native widget config list in sync so the home-screen widget picker sees setups
+  useEffect(() => {
+    if (configs.length > 0) {
+      writeLatestItemsWidgetConfigListToCache(configs).catch(() => {});
+    }
+  }, [configs]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -344,6 +352,32 @@ export function WidgetConfigSection() {
         backend once per Directus instance (requires admin), then add personal
         widget setups below.
       </Muted>
+      {configs.length > 0 && (
+        <View style={{ marginTop: 8, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "rgba(0,0,0,0.04)", borderRadius: 8 }}>
+          <Text style={{ fontWeight: "600", marginBottom: 4 }}>Add widget to home screen</Text>
+          <Muted style={{ marginBottom: 8 }}>
+            {Platform.OS === "android"
+              ? "Tap below to add the Latest Items widget to your home screen. You can then choose which setup to show."
+              : "Long-press the home screen, tap +, choose \"Latest Items\" for this app, then pick the setup you want."}
+          </Muted>
+          {Platform.OS === "android" && (
+            <Button
+              variant="soft"
+              onPress={async () => {
+                const { requested, error } = await requestAddWidgetToHomeScreen();
+                if (error) {
+                  Alert.alert("Could not add widget", error);
+                } else if (requested) {
+                  Alert.alert("Add widget", "Confirm on the next screen to place the widget on your home screen.");
+                }
+              }}
+              leftIcon={<DirectusIcon name="add" />}
+            >
+              Add to home screen
+            </Button>
+          )}
+        </View>
+      )}
       <Horizontal style={{ flexWrap: "wrap", gap: 8, marginTop: 8 }}>
         {configs.map((c) => (
           <View

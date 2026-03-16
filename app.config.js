@@ -31,6 +31,11 @@ export default () => ({
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },
+      entitlements: {
+        "com.apple.security.application-groups": [
+          "group.com.martijnmichel.directusexpo.widgets",
+        ],
+      },
     },
     android: {
       adaptiveIcon: {
@@ -51,6 +56,7 @@ export default () => ({
       favicon: "./assets/images/favicon.png",
     },
     plugins: [
+      "@bacons/apple-targets",
       [
         "expo-build-properties",
         {

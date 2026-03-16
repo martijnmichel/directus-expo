@@ -31,6 +31,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@bacons/apple-targets": "^4.0.6",
     "@10play/react-native-web-webview": "^0.0.3",
     "@10play/tentap-editor": "^0.6.0",
     "@directus/sdk": "^18.0.3",

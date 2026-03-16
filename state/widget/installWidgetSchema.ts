@@ -571,6 +571,7 @@ module.exports = async function (data) {
       await queryClient.invalidateQueries({ queryKey: ["collections"] });
       await queryClient.invalidateQueries({ queryKey: ["flows"] });
       await queryClient.invalidateQueries({ queryKey: ["policies"] });
+      await queryClient.invalidateQueries({ queryKey: ["widgetCollectionExists"] });
 
       return { installed: true };
     },
