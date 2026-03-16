@@ -24,6 +24,22 @@ export type LocalStorageTyp = {
   [LocalStorageKeys.CONTENT_PATH]: string;
 };
 
+/** Default value when storage is empty so React Query never receives undefined. */
+function getDefaultForKey(key: LocalStorageKeys): Record<string, unknown> | [] | string | null {
+  switch (key) {
+    case LocalStorageKeys.APP_SETTINGS:
+      return {};
+    case LocalStorageKeys.DIRECTUS_APIS:
+      return [];
+    case LocalStorageKeys.DIRECTUS_API_ACTIVE:
+      return {};
+    case LocalStorageKeys.CONTENT_PATH:
+      return "";
+    default:
+      return null;
+  }
+}
+
 export const useLocalStorage = <T extends any = undefined>(
   key: LocalStorageKeys,
   options?: Omit<UseQueryOptions<T, Error>, "queryKey" | "queryFn">,
@@ -32,21 +48,28 @@ export const useLocalStorage = <T extends any = undefined>(
   return useQuery({
     queryKey: ["local-storage", key],
     staleTime: 1,
-    queryFn: async () => {
+    queryFn: async (): Promise<T> => {
       try {
         const value = await AsyncStorage.getItem(key);
-        if (value === null) return fallbackValue;
-        if (value === "undefined") return undefined;
+        if (value === null) {
+          const resolved = fallbackValue ?? getDefaultForKey(key);
+          return resolved as T;
+        }
+        if (value === "undefined") {
+          const resolved = fallbackValue ?? getDefaultForKey(key);
+          return resolved as T;
+        }
 
         try {
-          return (JSON.parse(value) as T) || {};
+          const parsed = JSON.parse(value) as T;
+          return (parsed !== undefined && parsed !== null ? parsed : getDefaultForKey(key)) as T;
         } catch {
-          // If JSON parsing fails, return the raw value
-          return (value as T) || "";
+          return (value as T) ?? (getDefaultForKey(key) as T);
         }
       } catch (error) {
         console.error("Error reading from storage:", error);
-        return fallbackValue;
+        const resolved = fallbackValue ?? getDefaultForKey(key);
+        return resolved as T;
       }
     },
     ...options,

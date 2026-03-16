@@ -54,6 +54,7 @@
     "addToHomeScreenTitle": "Widget aan startscherm toevoegen",
     "addToHomeScreenHintAndroid": "Tik hieronder om de widget Latest Items aan uw startscherm toe te voegen. U kunt daarna kiezen welke configuratie getoond wordt.",
     "addToHomeScreenHintIos": "Druk lang op het startscherm, tik op +, kies \"Latest Items\" voor deze app en selecteer de gewenste configuratie.",
+    "setupPickerHint": "Voeg hieronder minstens één configuratie toe zodat de Setup-keuzelijst van de widget opties heeft. Open dit scherm voordat u de widget toevoegt.",
     "addToHomeScreenButton": "Aan startscherm toevoegen",
     "addErrorTitle": "Widget kon niet worden toegevoegd",
     "addConfirmTitle": "Widget toevoegen",

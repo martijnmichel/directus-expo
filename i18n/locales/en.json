@@ -57,6 +57,7 @@
     "addToHomeScreenTitle": "Add widget to home screen",
     "addToHomeScreenHintAndroid": "Tap below to add the Latest Items widget to your home screen. You can then choose which setup to show.",
     "addToHomeScreenHintIos": "Long-press the home screen, tap +, choose \"Latest Items\" for this app, then pick the setup you want.",
+    "setupPickerHint": "Add at least one setup below so the widget's Setup picker has options. Open this screen before adding the widget so the list is synced.",
     "addToHomeScreenButton": "Add to home screen",
     "addErrorTitle": "Could not add widget",
     "addConfirmTitle": "Add widget",

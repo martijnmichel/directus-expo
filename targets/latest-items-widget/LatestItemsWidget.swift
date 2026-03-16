@@ -9,6 +9,11 @@ private let configListKey = "directus.widgets.latestItems.v1.configList"
 private let payloadPrefix = "directus.widgets.latestItems.v1.payload."
 
 // MARK: - Models
+//
+// The widget does not store the "Directus API URL" separately. Each config entry
+// includes webhookUrl (the flow trigger URL, e.g. https://your-directus.com/flows/trigger/xxx).
+// The app writes the config list (with webhookUrl per setup) to App Group; the widget
+// uses config.webhookUrl to POST { "widget_id": ... } and receive the payload.
 
 struct WidgetConfigEntry: Decodable, Hashable {
   let id: String

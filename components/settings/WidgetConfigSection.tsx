@@ -397,6 +397,9 @@ export function WidgetConfigSection() {
               ? t("widget.addToHomeScreenHintAndroid")
               : t("widget.addToHomeScreenHintIos")}
           </Muted>
+          {configs.length === 0 && (
+            <Muted style={{ marginBottom: 8 }}>{t("widget.setupPickerHint")}</Muted>
+          )}
           {Platform.OS === "android" && (
             <Button
               variant="soft"
