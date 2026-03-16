@@ -1,5 +1,5 @@
 import { LatestItemsWidgetConfig } from "./types";
-
+import { v4 as uuidv4 } from "uuid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const CONFIGS_KEY = "@widget/latest-items/configs";

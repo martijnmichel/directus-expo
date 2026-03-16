@@ -17,6 +17,7 @@ import {
   addLatestItemsWidgetConfig,
   updateLatestItemsWidgetConfig,
   removeLatestItemsWidgetConfig,
+  setLatestItemsWidgetConfigs,
 } from "../../widgets/latestItems/storage";
 import {
   writeLatestItemsWidgetConfigListToCache,
@@ -28,7 +29,7 @@ import {
   APP_WIDGET_CONFIG_COLLECTION,
   APP_WIDGET_FLOW_NAME,
 } from "@/constants/widget";
-import { createItem, updateItem, deleteItem, readFlows } from "@directus/sdk";
+import { createItem, updateItem, deleteItem, readFlows, readItems } from "@directus/sdk";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useInstallWidgetSchema } from "@/state/widget/installWidgetSchema";
 import {
@@ -109,6 +110,40 @@ export function WidgetConfigSection() {
     refetch: refetchAccessOnly,
   } = useWidgetAccessOnly(!runFullSetupCheck);
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
+
+  // Sync widget configs from Directus so existing app_widget_config rows appear and are editable
+  const isLoadingSetup = (runFullSetupCheck && loadingExists) || (!runFullSetupCheck && loadingAccessOnly);
+  useEffect(() => {
+    if (isLoadingSetup || widgetAccess !== "ok" || !directus || !activeApi?.url) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const webhookUrl = await getWebhookUrlForInstance(activeApi.url);
+        const rows = await directus.request(
+          readItems(APP_WIDGET_CONFIG_COLLECTION as any, { limit: -1 } as any)
+        ) as unknown;
+        const data = Array.isArray(rows) ? rows : (rows as { data?: unknown[] })?.data ?? [];
+        const mapped: LatestItemsWidgetConfig[] = (data as any[]).map((row: any) => ({
+          id: row.id,
+          widgetId: row.id,
+          instanceUrl: activeApi.url,
+          collection: row.collection ?? "",
+          sort: row.sort ?? "-date_updated",
+          limit: row.limit ?? 5,
+          title: row.title,
+          webhookUrl,
+          type: "collection",
+        }));
+        if (!cancelled) {
+          await setLatestItemsWidgetConfigs(mapped);
+          reload();
+        }
+      } catch {
+        if (!cancelled) reload();
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isLoadingSetup, widgetAccess, directus, activeApi?.url, getWebhookUrlForInstance, reload]);
 
   // Keep native widget config list in sync so the home-screen widget picker sees setups
   useEffect(() => {
@@ -221,6 +256,15 @@ export function WidgetConfigSection() {
       );
       await reload();
       setModalOpen(false);
+      if (Platform.OS === "android" && !editingId) {
+        const { requested } = await requestAddWidgetToHomeScreen();
+        if (requested) {
+          Alert.alert(
+            "Add to home screen",
+            "Confirm on the next screen to place the widget."
+          );
+        }
+      }
     } finally {
       setSaving(false);
     }

@@ -98,39 +98,47 @@ private func fetchPayloadFromWebhook(config: WidgetConfigEntry) async -> LatestI
 }
 
 // MARK: - AppIntent (per-widget config picker)
+// Public types so the system can resolve the intent when the user taps "Setup".
 
-struct LatestItemsConfigEntity: AppEntity, Identifiable {
-  static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget setup"
-  static var defaultQuery = LatestItemsConfigQuery()
+public struct LatestItemsConfigEntity: AppEntity, Identifiable {
+  public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget setup"
+  public static var defaultQuery = LatestItemsConfigQuery()
 
-  let id: String
-  let title: String
+  public let id: String
+  public let title: String
 
-  var displayRepresentation: DisplayRepresentation {
+  public init(id: String, title: String) {
+    self.id = id
+    self.title = title
+  }
+
+  public var displayRepresentation: DisplayRepresentation {
     DisplayRepresentation(title: LocalizedStringResource(stringLiteral: title))
   }
 }
 
-struct LatestItemsConfigQuery: EntityQuery {
-  func entities(for identifiers: [LatestItemsConfigEntity.ID]) async throws -> [LatestItemsConfigEntity] {
+public struct LatestItemsConfigQuery: EntityQuery {
+  public init() {}
+
+  public func entities(for identifiers: [LatestItemsConfigEntity.ID]) async throws -> [LatestItemsConfigEntity] {
     let all = try await suggestedEntities()
     return all.filter { identifiers.contains($0.id) }
   }
 
-  func suggestedEntities() async throws -> [LatestItemsConfigEntity] {
+  public func suggestedEntities() async throws -> [LatestItemsConfigEntity] {
     let list = readConfigList()
     return list.map { LatestItemsConfigEntity(id: $0.id, title: $0.title) }
   }
 }
 
-struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationIntent {
-  static var title: LocalizedStringResource = "Latest Items"
-  static var description = IntentDescription("Pick which widget setup to show.")
+public struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationIntent {
+  public static var title: LocalizedStringResource = "Latest Items"
+  public static var description = IntentDescription("Pick which widget setup to show.")
 
   @Parameter(title: "Setup")
-  var setup: LatestItemsConfigEntity?
+  public var setup: LatestItemsConfigEntity?
 
-  init() {}
+  public init() {}
 }
 
 // MARK: - Timeline
