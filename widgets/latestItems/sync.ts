@@ -64,6 +64,7 @@ export async function syncLatestItemsWidget(_: {
 export async function removeLatestItemsWidgetPayloadFromCache(
   configId: string
 ): Promise<void> {
+  if (!configId || typeof configId !== "string") return;
   const cache = getWidgetCache();
   await cache.setPayload(configId, null);
 }

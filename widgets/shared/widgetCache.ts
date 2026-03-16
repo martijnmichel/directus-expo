@@ -13,6 +13,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 type NativeWidgetSharedStorage = {
   setConfigList?(json: string): Promise<void> | void;
   setPayload?(id: string, json: string | null): Promise<void> | void;
+  getConfigListFromAppGroup?(): Promise<{
+    length: number;
+    count: number;
+    ids: string[];
+  }>;
 };
 
 type WidgetCache = {
@@ -25,6 +30,11 @@ export function getWidgetCache(): WidgetCache {
     (NativeModules as any).WidgetSharedStorage;
 
   const hasNative = !!native;
+  if (__DEV__ && Platform.OS === "ios" && !hasNative) {
+    console.warn(
+      "[Widget] WidgetSharedStorage native module not found — widget Setup picker will stay empty. Rebuild the app with `npx expo run:ios`."
+    );
+  }
 
   return {
     async setConfigList(json: string) {
@@ -52,5 +62,32 @@ export function getWidgetCache(): WidgetCache {
       }
     },
   };
+}
+
+/** Read back config list from app group / shared prefs. Used for debug logs and "synced" check icon. */
+export async function getConfigListFromAppGroup(): Promise<{
+  length: number;
+  count: number;
+  ids: string[];
+} | null> {
+  const native = (NativeModules as any).WidgetSharedStorage as NativeWidgetSharedStorage | undefined;
+  if (!native?.getConfigListFromAppGroup) return null;
+  const result = await Promise.resolve(native.getConfigListFromAppGroup!());
+  return result as { length: number; count: number; ids: string[] };
+}
+
+/** Ids of configs currently in app group / shared prefs (so widget Setup can show them). */
+export async function getConfigListIdsFromAppGroup(): Promise<string[]> {
+  const data = await getConfigListFromAppGroup();
+  return data?.ids ?? [];
+}
+
+/** For debugging: log read-back in __DEV__. */
+export async function debugGetConfigListFromAppGroup(): Promise<{
+  length: number;
+  count: number;
+  ids: string[];
+} | null> {
+  return getConfigListFromAppGroup();
 }
 

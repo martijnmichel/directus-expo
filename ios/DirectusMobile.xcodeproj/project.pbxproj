@@ -14,7 +14,6 @@
 		990F8E77FBE4DADAD81F0D77 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D68FF048F3674E3215C9 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F21748432D0307B40044C1D9 /* WidgetSharedStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21748412D0307B40044C1D9 /* WidgetSharedStorage.swift */; };
 		F21748442D0307B40044C1D9 /* WidgetSharedStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */; };
 		XX12B55A1EDABF083C3B51XX /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */; };
 		XX1A6800511A685AB346D2XX /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XXA12889081EB894481655XX /* AppIntents.framework */; };
@@ -61,7 +60,6 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DirectusMobile/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DirectusMobile-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "DirectusMobile-Bridging-Header.h"; path = "DirectusMobile/DirectusMobile-Bridging-Header.h"; sourceTree = "<group>"; };
-		F21748412D0307B40044C1D9 /* WidgetSharedStorage.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = WidgetSharedStorage.swift; path = DirectusMobile/WidgetSharedStorage.swift; sourceTree = "<group>"; };
 		F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = WidgetSharedStorage.m; path = DirectusMobile/WidgetSharedStorage.m; sourceTree = "<group>"; };
 		XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		XX4DFF38D47332D6BF0183XX /* SwiftUI.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -123,7 +121,6 @@
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
 				F11748442D0722820044C1D9 /* DirectusMobile-Bridging-Header.h */,
-				F21748412D0307B40044C1D9 /* WidgetSharedStorage.swift */,
 				F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -483,7 +480,6 @@
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 				990F8E77FBE4DADAD81F0D77 /* ExpoModulesProvider.swift in Sources */,
-				F21748432D0307B40044C1D9 /* WidgetSharedStorage.swift in Sources */,
 				F21748442D0307B40044C1D9 /* WidgetSharedStorage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -23,6 +23,10 @@ import {
   writeLatestItemsWidgetConfigListToCache,
   removeLatestItemsWidgetPayloadFromCache,
 } from "@/widgets/latestItems/sync";
+import {
+  debugGetConfigListFromAppGroup,
+  getConfigListIdsFromAppGroup,
+} from "@/widgets/shared/widgetCache";
 import { requestAddWidgetToHomeScreen } from "@/widgets/shared/requestAddWidgetToHomeScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -74,6 +78,7 @@ export function WidgetConfigSection() {
     fields: DEFAULT_FIELDS,
   });
   const [saving, setSaving] = useState(false);
+  const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
 
   const getWebhookUrlForInstance = useCallback(
     async (instanceUrl: string): Promise<string> => {
@@ -138,6 +143,17 @@ export function WidgetConfigSection() {
         }));
         if (!cancelled) {
           await setLatestItemsWidgetConfigs(mapped);
+          await writeLatestItemsWidgetConfigListToCache(mapped);
+          if (__DEV__) {
+            const readBack = await debugGetConfigListFromAppGroup();
+            if (readBack != null) {
+              console.log(
+                "[Widget] App group read-back after Directus sync:",
+                readBack.count,
+                "setup(s)"
+              );
+            }
+          }
           reload();
         }
       } catch {
@@ -147,10 +163,29 @@ export function WidgetConfigSection() {
     return () => { cancelled = true; };
   }, [isLoadingSetup, widgetAccess, directus, activeApi?.url, getWebhookUrlForInstance, reload]);
 
-  // Keep native widget config list in sync so the home-screen widget picker sees setups
+  // Keep native widget config list in sync and refresh "synced" state for check icons
   useEffect(() => {
     if (configs.length > 0) {
-      writeLatestItemsWidgetConfigListToCache(configs).catch(() => {});
+      writeLatestItemsWidgetConfigListToCache(configs)
+        .then(async () => {
+          const readBack = await debugGetConfigListFromAppGroup();
+          if (readBack != null) {
+            setIdsInAppGroup(readBack.ids ?? []);
+            if (__DEV__) {
+              console.log(
+                "[Widget] App group read-back after write:",
+                readBack.count,
+                "setup(s), raw length",
+                readBack.length
+              );
+            }
+          } else {
+            getConfigListIdsFromAppGroup().then(setIdsInAppGroup);
+          }
+        })
+        .catch(() => getConfigListIdsFromAppGroup().then(setIdsInAppGroup));
+    } else {
+      setIdsInAppGroup([]);
     }
   }, [configs]);
 
@@ -435,12 +470,21 @@ export function WidgetConfigSection() {
             }}
           >
             <Pressable onPress={() => openEdit(c)} style={{ flex: 1 }}>
-              <Text numberOfLines={1} style={{ fontWeight: "600" }}>
-                {c.title || c.collection}
-              </Text>
-              <Text numberOfLines={1} style={{ fontSize: 12, opacity: 0.8 }}>
-                {c.instanceName || c.instanceUrl} · {c.collection}
-              </Text>
+              <Horizontal spacing="xs" style={{ alignItems: "center" }}>
+                {idsInAppGroup.includes(c.id) && (
+                  <View style={{ opacity: 0.7 }}>
+                    <DirectusIcon name="check" size={16} />
+                  </View>
+                )}
+                <View>
+                  <Text numberOfLines={1} style={{ fontWeight: "600" }}>
+                    {c.title || c.collection}
+                  </Text>
+                  <Text numberOfLines={1} style={{ fontSize: 12, opacity: 0.8 }}>
+                    {c.instanceName || c.instanceUrl} · {c.collection}
+                  </Text>
+                </View>
+              </Horizontal>
             </Pressable>
             <Horizontal spacing="xs">
               <Button variant="ghost" size="sm" onPress={() => openEdit(c)}>

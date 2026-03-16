@@ -41,5 +41,32 @@ class WidgetSharedStorageModule(private val reactContext: ReactApplicationContex
       promise.reject("SET_PAYLOAD_ERROR", e)
     }
   }
+
+  @ReactMethod
+  fun getConfigListFromAppGroup(promise: Promise) {
+    try {
+      val raw = prefs.getString("directus.widgets.latestItems.v1.configList", null) ?: ""
+      val length = raw.length
+      var count = 0
+      val ids = Arguments.createArray()
+      if (raw.isNotEmpty()) {
+        val jsonArr = org.json.JSONArray(raw)
+        count = jsonArr.length()
+        for (i in 0 until jsonArr.length()) {
+          val obj = jsonArr.optJSONObject(i) ?: continue
+          val id = obj.optString("id", "")
+          if (id.isNotBlank()) ids.pushString(id)
+        }
+      }
+      val result = Arguments.createMap().apply {
+        putInt("length", length)
+        putInt("count", count)
+        putArray("ids", ids)
+      }
+      promise.resolve(result)
+    } catch (e: Exception) {
+      promise.reject("GET_CONFIG_LIST_ERROR", e)
+    }
+  }
 }
 
