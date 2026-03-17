@@ -249,7 +249,6 @@ export function useInstallWidgetSchema() {
               status: "active",
               trigger: "webhook",
               options: {
-                method: "GET",
                 async: false,
                 response_body: "$last",
               },
@@ -280,7 +279,9 @@ export function useInstallWidgetSchema() {
             (flowsList[0] as any)?.operation ?? null;
           const fallbackStartId: string | null =
             (byKey.get("widget_config")?.id as string | undefined) ?? null;
-          const existingStartId: string | null = flowOperationId ?? fallbackStartId;
+          // IMPORTANT: For "update existing flow", never resolve the condition back to the flow entrypoint
+          // (which might already be extract_query). That creates a cycle and crashes Directus.
+          const dataStartId: string | null = fallbackStartId ?? flowOperationId ?? null;
 
           // 1) Ensure handshake op exists
           let handshakeOp = byKey.get("handshake");
@@ -328,7 +329,7 @@ module.exports = async function () {
                 name: "widget_id present?",
                 position_x: 40,
                 position_y: -40,
-                resolve: existingStartId,
+                resolve: dataStartId,
                 reject: (handshakeOp as any).id,
                 options: {
                   // Condition Rules (Filter Rules). We validate output of extract_query.
@@ -339,7 +340,7 @@ module.exports = async function () {
           } else {
             await directus.request(
               updateOperation(conditionOp.id, {
-                resolve: existingStartId,
+                resolve: dataStartId,
                 reject: (handshakeOp as any).id,
                 options: { ...(conditionOp.options ?? {}), filter: { extract_query: { widget_id: { _nnull: true } } } },
               } as any),
@@ -403,7 +404,7 @@ module.exports = async function (data) {
                     ...prevQuery,
                     filter: {
                       ...prevFilter,
-                      id: "{{ extract_query.widget_id }}",
+                      id: { _eq: "{{ extract_query.widget_id }}" },
                     },
                   },
                 },
@@ -426,7 +427,6 @@ module.exports = async function (data) {
               trigger: "webhook",
               options: {
                 // Synchronous: wait for flow to finish and return $last.
-                method: "GET",
                 async: false,
                 response_body: "$last",
               },
@@ -680,7 +680,7 @@ module.exports = async function (data) {
                   limit: 1,
                   filter: {
                     // GET-only: widget_id comes from querystring via extract_query
-                    id: "{{ extract_query.widget_id }}",
+                    id: { _eq: "{{ extract_query.widget_id }}" },
                   },
                 },
               },
