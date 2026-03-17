@@ -15,7 +15,7 @@ import {
   useDocument,
   useFields,
 } from "@/state/queries/directus/collection";
-import { View } from "react-native";
+import { Alert, View } from "react-native";
 import { Check, Trash } from "../icons";
 import {
   coreCollections,
@@ -62,7 +62,7 @@ export const DocumentEditor = ({
 
   const { data: itemPermissions } = useItemPermissions(
     collection as keyof CoreSchema,
-    id as number
+    id as number,
   );
 
   const { styles } = useStyles(formStyles);
@@ -97,7 +97,7 @@ export const DocumentEditor = ({
   const modalContext = useContext(ModalContext);
   const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
     collection as keyof CoreSchema,
-    id as number
+    id as number,
   );
 
   const { data } = useCollection(collection as keyof CoreSchema);
@@ -116,21 +116,24 @@ export const DocumentEditor = ({
 
   const { mutateAsync: updateDoc } = mutateDocument(
     collection as keyof CoreSchema,
-    id as number
+    id as number,
   );
 
   const getDocumentFieldValues = (document: Record<string, unknown>) => {
-    return Object.keys(document).reduce((acc, key) => {
-      acc[key] = document[key] === null ? "" : document[key];
-      return acc;
-    }, {} as Record<string, unknown>);
+    return Object.keys(document).reduce(
+      (acc, key) => {
+        acc[key] = document[key] === null ? "" : document[key];
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    );
   };
 
   useEffect(() => {
     /** if a document is fetched, reset the form with the document */
     if (document) {
       context.reset(
-        getDocumentFieldValues(document as Record<string, unknown>)
+        getDocumentFieldValues(document as Record<string, unknown>),
       );
       //console.log("reset", document);
       setRevision((state) => state + 1);
@@ -147,7 +150,7 @@ export const DocumentEditor = ({
 
   function getDirtyValues<T extends Record<string, any>>(
     dirtyFields: Partial<Record<keyof T, DirtyFieldsType>>,
-    values: T
+    values: T,
   ): Partial<T> {
     const dirtyValues = Object.keys(dirtyFields).reduce((prev, key) => {
       const value = dirtyFields[key];
@@ -206,11 +209,24 @@ export const DocumentEditor = ({
 
   const handleDelete = () => {
     // Implement delete functionality with confirmation dialog
-    deleteDoc(undefined, {
-      onSuccess: () => {
-        onDelete?.();
-      },
-    });
+    Alert.alert(
+      t("common.delete"),
+      t("widget.removeMessage", { name: collection }),
+      [
+        { text: t("button.cancel"), style: "cancel" },
+        {
+          text: t("widget.removeButton"),
+          style: "destructive",
+          onPress: () => {
+            deleteDoc(undefined, {
+              onSuccess: () => {
+                onDelete?.();
+              },
+            });
+          },
+        },
+      ],
+    );
   };
 
   const handleSave = () => {
@@ -231,6 +247,7 @@ export const DocumentEditor = ({
                   <Button
                     rounded
                     variant="soft"
+                    size="sm"
                     onPress={handleDelete}
                     loading={isDeleting}
                   >
@@ -241,6 +258,7 @@ export const DocumentEditor = ({
                   rounded
                   disabled={!isDirty || !isValid || isSubmitting}
                   loading={isSubmitting}
+                  size="sm"
                   onPress={handleSave}
                 >
                   <Check />

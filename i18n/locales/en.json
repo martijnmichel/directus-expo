@@ -41,7 +41,8 @@
     "success": "Success",
     "warning": "Warning",
     "save": "Save",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "delete": "Delete item?"
   },
   "widget": {
     "title": "Widgets",
@@ -235,6 +236,11 @@
     },
     "files": {
       "title": "Files"
+    },
+    "settings": {
+      "widget": {
+        "addWidgetSetup": "Add widget"
+      }
     }
   },
   "base_language": "base language"

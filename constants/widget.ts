@@ -8,7 +8,7 @@ export const APP_WIDGET_FLOW_NAME = "App widgets data";
  * Contract version for the widget webhook response.
  * Keep this in sync with the Directus Flow script.
  */
-export const APP_WIDGET_FLOW_VERSION = 23;
+export const APP_WIDGET_FLOW_VERSION = 24;
 
 /** Widget type identifier used across app + Directus flow. */
 export const APP_WIDGET_TYPE_LATEST_ITEMS = "latest-items" as const;
@@ -24,6 +24,14 @@ export function getWidgetTypeLabel(value: string | null | undefined): string {
 
 /** Capabilities the app expects the flow to support. */
 export const APP_WIDGET_SUPPORTED = [APP_WIDGET_TYPE_LATEST_ITEMS] as const;
+
+/** Latest-items slot definitions (single source of truth for UI + flow defaults). */
+export const APP_WIDGET_LATEST_ITEMS_SLOTS = [
+  { key: "left", label: "Left", hint: "Left column" },
+  { key: "title", label: "Title", hint: "Primary text" },
+  { key: "subtitle", label: "Subtitle", hint: "Secondary text" },
+  { key: "right", label: "Right", hint: "Right column" },
+] as const;
 
 /** Flow operation type ids (same as push). */
 export const WIDGET_FLOW_OPERATION_TYPES = {
