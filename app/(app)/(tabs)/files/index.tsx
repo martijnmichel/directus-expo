@@ -47,7 +47,7 @@ export default function TabTwoScreen() {
                 {canCreate && (
                   <Modal>
                     <Modal.Trigger>
-                      <Button rounded>
+                      <Button size="sm" rounded>
                         <Plus />
                       </Button>
                     </Modal.Trigger>

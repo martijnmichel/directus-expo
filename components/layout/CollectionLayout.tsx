@@ -115,7 +115,7 @@ export default function CollectionLayout({
           headerRight: () =>
             canCreate && (
               <Link href={`/content/${collection}/+`} asChild>
-                <Button rounded>
+                <Button size="sm" rounded>
                   <Plus />
                 </Button>
               </Link>
