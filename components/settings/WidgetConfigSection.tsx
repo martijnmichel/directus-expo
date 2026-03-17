@@ -98,29 +98,35 @@ export function WidgetConfigSection() {
   const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(
     null,
   );
-  const [sortOptions, setSortOptions] = useState<Array<{ value: string; text: string }>>([]);
+  const [sortOptions, setSortOptions] = useState<
+    Array<{ value: string; text: string }>
+  >([]);
   const flowVersionQuery = useFlowVersion(
     activeApi?.url ?? null,
     Platform.OS === "ios",
   );
 
   // Build collection options (non-hidden, non-directus_). Use same filtering as UserCollections.
-  const collectionOptions =
-    (Array.isArray(allCollections) ? allCollections : []) // SDK returns array
-      .filter(
-        (c: any) =>
-          c &&
-          typeof c.collection === "string" &&
-          !c.collection.startsWith("directus_") &&
-          !!c.meta &&
-          !c.meta?.hidden &&
-          !!c.schema,
-      )
-      .sort((a: any, b: any) => (Number(a?.meta?.sort ?? 0) - Number(b?.meta?.sort ?? 0)))
-      .map((c: any) => ({
-        value: String(c.collection),
-        text: getCollectionTranslation(c, i18n.language) ?? String(c.collection),
-      }));
+  const collectionOptions = (
+    Array.isArray(allCollections) ? allCollections : []
+  ) // SDK returns array
+    .filter(
+      (c: any) =>
+        c &&
+        typeof c.collection === "string" &&
+        !c.collection.startsWith("directus_") &&
+        !!c.meta &&
+        !c.meta?.hidden &&
+        !!c.schema,
+    )
+    .sort(
+      (a: any, b: any) =>
+        Number(a?.meta?.sort ?? 0) - Number(b?.meta?.sort ?? 0),
+    )
+    .map((c: any) => ({
+      value: String(c.collection),
+      text: getCollectionTranslation(c, i18n.language) ?? String(c.collection),
+    }));
 
   // Load fields for sort dropdown when collection changes (top-level only)
   useEffect(() => {
@@ -131,13 +137,18 @@ export function WidgetConfigSection() {
         return;
       }
       try {
-        const raw = await directus.request(readFieldsByCollection(form.collection as any));
+        const raw = await directus.request(
+          readFieldsByCollection(form.collection as any),
+        );
         const list = Array.isArray(raw) ? raw : ((raw as any)?.data ?? []);
         const simple = (list as any[])
           .filter((f) => f && typeof f.field === "string")
           .filter((f) => !f.meta?.hidden)
           .filter((f) => !String(f.field).startsWith("_"))
-          .filter((f) => !Array.isArray(f.meta?.special) || f.meta.special.length === 0); // avoid relations for now
+          .filter(
+            (f) =>
+              !Array.isArray(f.meta?.special) || f.meta.special.length === 0,
+          ); // avoid relations for now
 
         const opts: Array<{ value: string; text: string }> = [];
         for (const f of simple) {
@@ -193,13 +204,16 @@ export function WidgetConfigSection() {
   } = useWidgetAccessOnly(!runFullSetupCheck);
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
 
-
   const widgetItemsQuery = useWidgetItems({
     enabled: widgetAccess === "ok",
   });
   const configs = widgetItemsQuery.data?.configs ?? [];
   const configIdsKey = useMemo(
-    () => configs.map((c) => c.id).sort().join("|"),
+    () =>
+      configs
+        .map((c) => c.id)
+        .sort()
+        .join("|"),
     [configs],
   );
   const lastSyncedIdsKeyRef = useRef<string>("");
@@ -305,7 +319,6 @@ export function WidgetConfigSection() {
             } as any),
           );
         }
-
       } else {
         const row = await directus.request(
           createItem(
@@ -473,7 +486,8 @@ export function WidgetConfigSection() {
               variant="soft"
               size="sm"
               onPress={async () => {
-                const { requested, error } = await requestAddWidgetToHomeScreen();
+                const { requested, error } =
+                  await requestAddWidgetToHomeScreen();
                 if (error) {
                   Alert.alert(t("widget.addErrorTitle"), error);
                 } else if (requested) {
@@ -502,18 +516,26 @@ export function WidgetConfigSection() {
             <Horizontal spacing="sm" style={{ alignItems: "center", flex: 1 }}>
               {idsInAppGroup.includes(c.id) ? (
                 <View style={{ opacity: 0.7 }}>
-                  <DirectusIcon name="check" size={18} color={theme.colors.success} />
+                  <DirectusIcon
+                    name="check"
+                    size={18}
+                    color={theme.colors.success}
+                  />
                 </View>
               ) : (
                 <View style={{ opacity: 0.25 }}>
-                    <DirectusIcon name="close" size={18} color={theme.colors.error} />
+                  <DirectusIcon
+                    name="close"
+                    size={18}
+                    color={theme.colors.error}
+                  />
                 </View>
               )}
               <View style={{ flex: 1 }}>
                 <Text numberOfLines={1} style={{ fontWeight: "700" }}>
-                  {APP_WIDGET_TYPES.find((t) => t.value === c.type)?.label}: {c.title || c.collection}
+                  {APP_WIDGET_TYPES.find((t) => t.value === c.type)?.label}:{" "}
+                  {c.title || c.collection}
                 </Text>
-                
               </View>
             </Horizontal>
 
@@ -617,6 +639,14 @@ export function WidgetConfigSection() {
                   text: t.label,
                 }))}
               />
+
+              <Input
+                label={t("widget.titleLabel")}
+                value={form.title ?? ""}
+                onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
+                placeholder={t("widget.titlePlaceholder")}
+              />
+
               <Select
                 label={t("widget.collectionLabel")}
                 value={form.collection}
@@ -626,16 +656,13 @@ export function WidgetConfigSection() {
                 options={collectionOptions}
                 placeholder={t("widget.collectionPlaceholder")}
               />
-              <Input
-                label={t("widget.titleLabel")}
-                value={form.title ?? ""}
-                onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
-                placeholder={t("widget.titlePlaceholder")}
-              />
+
               <Select
                 label={t("widget.sortLabel")}
                 value={form.sort ?? ""}
-                onValueChange={(val) => setForm((f) => ({ ...f, sort: String(val) }))}
+                onValueChange={(val) =>
+                  setForm((f) => ({ ...f, sort: String(val) }))
+                }
                 options={sortOptions.length ? sortOptions : []}
                 placeholder={t("widget.sortPlaceholder")}
                 disabled={!form.collection}
