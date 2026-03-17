@@ -20,13 +20,6 @@ import {
 } from "react-native";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import {
-  getLatestItemsWidgetConfigs,
-  addLatestItemsWidgetConfig,
-  updateLatestItemsWidgetConfig,
-  removeLatestItemsWidgetConfig,
-  setLatestItemsWidgetConfigs,
-} from "../../widgets/latestItems/storage";
-import {
   writeLatestItemsWidgetConfigListToCache,
   removeLatestItemsWidgetPayloadFromCache,
 } from "@/widgets/latestItems/sync";
@@ -65,25 +58,13 @@ import { KeyboardAwareScrollView } from "@/components/layout/Layout";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { readFieldsByCollection } from "@directus/sdk";
+import { useWidgetItems } from "@/state/widget/useWidgetItems";
 
-const DEFAULT_FIELDS = ["id", "title", "name", "date_updated", "date_created"];
-
-function useWidgetConfigs() {
-  const [configs, setConfigs] = useState<LatestItemsWidgetConfig[]>([]);
-  const load = useCallback(async () => {
-    const list = await getLatestItemsWidgetConfigs();
-    setConfigs(list);
-  }, []);
-  useEffect(() => {
-    load();
-  }, [load]);
-  return { configs, reload: load };
-}
+const DEFAULT_FIELDS: string[] = [];
 
 export function WidgetConfigSection() {
   const { t } = useTranslation();
   const { i18n } = useTranslation();
-  const { configs, reload } = useWidgetConfigs();
   const { directus, policyGlobals, user } = useAuth();
   const { data: allCollections } = useCollections();
   const installMutation = useInstallWidgetSchema();
@@ -208,57 +189,15 @@ export function WidgetConfigSection() {
   } = useWidgetAccessOnly(!runFullSetupCheck);
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
 
-  // Sync widget configs from Directus so existing app_widget_config rows appear and are editable
+  const widgetItemsQuery = useWidgetItems({
+    enabled: widgetAccess === "ok",
+  });
+  const configs = widgetItemsQuery.data?.configs ?? [];
+
   const isLoadingSetup =
     (runFullSetupCheck && loadingExists) ||
-    (!runFullSetupCheck && loadingAccessOnly);
-  useEffect(() => {
-    if (isLoadingSetup || widgetAccess !== "ok" || !directus || !activeApi?.url)
-      return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const webhookUrl = await getWebhookUrlForInstance(activeApi.url);
-        const rows = (await directus.request(
-          readItems(APP_WIDGET_CONFIG_COLLECTION as any, { limit: -1 } as any),
-        )) as unknown;
-        const data = Array.isArray(rows)
-          ? rows
-          : ((rows as { data?: unknown[] })?.data ?? []);
-        const mapped: LatestItemsWidgetConfig[] = (data as any[]).map(
-          (row: any) => ({
-            id: String(row.id ?? ""),
-            widgetId: row.id != null ? String(row.id) : undefined,
-            instanceUrl: activeApi.url,
-            collection: row.collection ?? "",
-            sort: row.sort ?? "-date_updated",
-            limit: row.limit ?? 5,
-            fields: Array.isArray(row.fields) ? row.fields : DEFAULT_FIELDS,
-            title: row.title,
-            webhookUrl,
-            type: APP_WIDGET_TYPE_LATEST_ITEMS,
-          }),
-        );
-        if (!cancelled) {
-          await setLatestItemsWidgetConfigs(mapped);
-          await writeLatestItemsWidgetConfigListToCache(mapped);
-          reload();
-        }
-      } catch {
-        if (!cancelled) reload();
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    isLoadingSetup,
-    widgetAccess,
-    directus,
-    activeApi?.url,
-    getWebhookUrlForInstance,
-    reload,
-  ]);
+    (!runFullSetupCheck && loadingAccessOnly) ||
+    (widgetAccess === "ok" && widgetItemsQuery.isLoading);
 
   // Keep native widget config list in sync and refresh "synced" state for check icons
   useEffect(() => {
@@ -346,19 +285,6 @@ export function WidgetConfigSection() {
           );
         }
 
-        await updateLatestItemsWidgetConfig(editingId, {
-          instanceUrl: form.instanceUrl,
-          instanceName: form.instanceName,
-          collection: form.collection,
-          title: form.title || undefined,
-          sort: form.sort || undefined,
-          limit: form.limit,
-          displayField: form.displayField || undefined,
-          fields: form.fields,
-          widgetId,
-          webhookUrl,
-          type: "collection",
-        });
       } else {
         const row = await directus.request(
           createItem(
@@ -377,25 +303,8 @@ export function WidgetConfigSection() {
         widgetId =
           (row as { id?: string })?.id ??
           (row as { data?: { id?: string } })?.data?.id;
-
-        await addLatestItemsWidgetConfig({
-          instanceUrl: form.instanceUrl,
-          instanceName: form.instanceName,
-          collection: form.collection,
-          title: form.title,
-          sort: form.sort,
-          limit: form.limit,
-          displayField: form.displayField,
-          fields: form.fields,
-          widgetId,
-          webhookUrl,
-          type: APP_WIDGET_TYPE_LATEST_ITEMS,
-        });
       }
-      await writeLatestItemsWidgetConfigListToCache(
-        await getLatestItemsWidgetConfigs(),
-      );
-      await reload();
+      await widgetItemsQuery.refetch();
       setModalOpen(false);
       if (Platform.OS === "android" && !editingId) {
         const { requested } = await requestAddWidgetToHomeScreen();
@@ -429,12 +338,8 @@ export function WidgetConfigSection() {
                 ) as any,
               );
             }
-            await removeLatestItemsWidgetConfig(c.id);
             await removeLatestItemsWidgetPayloadFromCache(c.id);
-            await writeLatestItemsWidgetConfigListToCache(
-              await getLatestItemsWidgetConfigs(),
-            );
-            reload();
+            await widgetItemsQuery.refetch();
           },
         },
       ],
