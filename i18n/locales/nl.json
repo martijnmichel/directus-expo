@@ -76,7 +76,8 @@
     "removeTitle": "Widget verwijderen",
     "removeMessage": "\"{{name}}\" verwijderen van de startschermopties?",
     "removeButton": "Verwijderen",
-    "syncToWidget": "Sync naar widget"
+    "syncToWidget": "Sync naar widget",
+    "synced": "Gesynchronizeerd"
   },
   "push": {
     "title": "Pushmeldingen",

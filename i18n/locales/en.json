@@ -79,7 +79,8 @@
     "removeTitle": "Remove widget",
     "removeMessage": "Remove \"{{name}}\" from home screen options?",
     "removeButton": "Remove",
-    "syncToWidget": "Sync to widget"
+    "syncToWidget": "Sync to widget",
+    "synced": "Synced"
   },
   "push": {
     "title": "Push notifications",

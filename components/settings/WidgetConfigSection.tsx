@@ -62,7 +62,6 @@ import { readFieldsByCollection } from "@directus/sdk";
 import { useWidgetItems } from "@/state/widget/useWidgetItems";
 import { listStyles } from "@/components/display/related-listitem";
 import { useStyles } from "react-native-unistyles";
-
 const DEFAULT_FIELDS: string[] = [];
 
 export function WidgetConfigSection() {
@@ -75,6 +74,7 @@ export function WidgetConfigSection() {
   const { data: activeApi } = useLocalStorage<{ url: string }>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE,
   );
+  const { theme } = useStyles();
   const isAdmin = policyGlobals?.admin_access === true;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -502,20 +502,18 @@ export function WidgetConfigSection() {
             <Horizontal spacing="sm" style={{ alignItems: "center", flex: 1 }}>
               {idsInAppGroup.includes(c.id) ? (
                 <View style={{ opacity: 0.7 }}>
-                  <DirectusIcon name="check" size={18} />
+                  <DirectusIcon name="check" size={18} color={theme.colors.success} />
                 </View>
               ) : (
                 <View style={{ opacity: 0.25 }}>
-                  <DirectusIcon name="check" size={18} />
+                    <DirectusIcon name="close" size={18} color={theme.colors.error} />
                 </View>
               )}
               <View style={{ flex: 1 }}>
-                <Text numberOfLines={1} style={{ fontWeight: "600" }}>
-                  {c.title || c.collection}
+                <Text numberOfLines={1} style={{ fontWeight: "700" }}>
+                  {APP_WIDGET_TYPES.find((t) => t.value === c.type)?.label}: {c.title || c.collection}
                 </Text>
-                <Text numberOfLines={1} style={{ fontSize: 12, opacity: 0.8 }}>
-                  {c.collection}
-                </Text>
+                
               </View>
             </Horizontal>
 
@@ -544,7 +542,7 @@ export function WidgetConfigSection() {
                 </Button>
               )}
               <Button variant="ghost" size="sm" onPress={() => openEdit(c)}>
-                <DirectusIcon name="edit" />
+                <DirectusIcon name="edit_square" />
               </Button>
               <Button
                 variant="ghost"
