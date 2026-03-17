@@ -636,7 +636,7 @@ export function WidgetConfigSection() {
                 label={t("widget.sortLabel")}
                 value={form.sort ?? ""}
                 onValueChange={(val) => setForm((f) => ({ ...f, sort: String(val) }))}
-                options={sortOptions.length ? sortOptions : [{ value: "-date_updated", text: "-date_updated (desc)" }]}
+                options={sortOptions.length ? sortOptions : []}
                 placeholder={t("widget.sortPlaceholder")}
                 disabled={!form.collection}
               />
@@ -648,9 +648,6 @@ export function WidgetConfigSection() {
                 }
                 keyboardType="number-pad"
               />
-              <Text style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-                {t("widget.columnsHint")}
-              </Text>
             </Vertical>
           </KeyboardAwareScrollView>
         </Modal.Content>
