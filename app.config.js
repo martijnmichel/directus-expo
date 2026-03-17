@@ -28,7 +28,7 @@ export default () => ({
       buildNumber: `${buildNumber}`,
       bundleIdentifier: "com.martijnmichel.directusexpo",
       associatedDomains: ["applinks:directusmobile.app"],
-      appleTeamId: "2Z23L72946",
+      appleTeamId: "U94SNGSSX7",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
       },

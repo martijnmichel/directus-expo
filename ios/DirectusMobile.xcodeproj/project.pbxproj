@@ -1,7 +1,7 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	objectVersion = 54;
+	objectVersion = 70;
 	classes = {
 	};
 	objects = {
@@ -72,8 +72,8 @@
 		XXA9E7B2C1BEFFA35B4823XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
 				"expo-target.config.js",
+				Info.plist,
 			);
 			target = XXD37895CDE99FCC696EE0XX /* latest-items-widget */;
 		};
@@ -182,7 +182,6 @@
 				1AD825F633DD9C17A8CF70AC /* Pods-DirectusMobile.debug.xcconfig */,
 				E2B1BA577600F367F26873AC /* Pods-DirectusMobile.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -276,7 +275,6 @@
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						DevelopmentTeam = MK33A88HLB;
 						LastSwiftMigration = 1250;
 						ProvisioningStyle = Automatic;
 					};
@@ -376,6 +374,8 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/React-Core-prebuilt/React.framework/React",
@@ -383,6 +383,8 @@
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/React.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/ReactNativeDependencies.framework",
@@ -392,15 +394,13 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
-			outputFileListPaths = (
-			);
-			inputFileListPaths = (
-			);
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			inputFileListPaths = (
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile-resources.sh",
@@ -421,6 +421,8 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-menu/EXDevMenu.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+			);
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoApplication_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
@@ -442,10 +444,6 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile-resources.sh\"\n";
 			showEnvVarsInLog = 0;
-			outputFileListPaths = (
-			);
-			inputFileListPaths = (
-			);
 		};
 		D60A3912C9A1429DB9A08CBC /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -512,7 +510,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2Z23L72946;
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
@@ -551,7 +549,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 2Z23L72946;
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 				INFOPLIST_FILE = DirectusMobile/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -730,7 +728,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
-				DEVELOPMENT_TEAM = 2Z23L72946;
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
 		};
 		XX3AE400A0D1A4C65DD0D4XX /* Debug */ = {
@@ -771,7 +769,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
-				DEVELOPMENT_TEAM = 2Z23L72946;
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
 		};
 /* End XCBuildConfiguration section */

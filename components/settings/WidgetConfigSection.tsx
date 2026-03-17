@@ -10,7 +10,7 @@ import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { useCallback, useEffect, useState } from "react";
-import { View, ScrollView, Pressable, Alert, ActivityIndicator, Platform } from "react-native";
+import { View, Pressable, Alert, ActivityIndicator, Platform } from "react-native";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import {
   getLatestItemsWidgetConfigs,
@@ -25,7 +25,10 @@ import {
 } from "@/widgets/latestItems/sync";
 import {
   debugGetConfigListFromAppGroup,
+  getConfigListFromAppGroup,
   getConfigListIdsFromAppGroup,
+  getWidgetDebugInfo,
+  type WidgetDebugInfo,
 } from "@/widgets/shared/widgetCache";
 import { requestAddWidgetToHomeScreen } from "@/widgets/shared/requestAddWidgetToHomeScreen";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,6 +45,7 @@ import {
   isWidgetForbiddenError,
 } from "@/state/widget/useWidgetCollection";
 import { useTranslation } from "react-i18next";
+import { KeyboardAwareScrollView } from "@/components/layout/Layout";
 
 const DEFAULT_FIELDS = ["id", "title", "name", "date_updated", "date_created"];
 
@@ -79,6 +83,8 @@ export function WidgetConfigSection() {
   });
   const [saving, setSaving] = useState(false);
   const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
+  const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(null);
+  const [widgetDebugInfo, setWidgetDebugInfo] = useState<WidgetDebugInfo>(null);
 
   const getWebhookUrlForInstance = useCallback(
     async (instanceUrl: string): Promise<string> => {
@@ -182,12 +188,20 @@ export function WidgetConfigSection() {
           } else {
             getConfigListIdsFromAppGroup().then(setIdsInAppGroup);
           }
+          const debug = await getWidgetDebugInfo();
+          setWidgetDebugInfo(debug ?? null);
         })
         .catch(() => getConfigListIdsFromAppGroup().then(setIdsInAppGroup));
     } else {
       setIdsInAppGroup([]);
     }
   }, [configs]);
+
+  // Load widget extension debug info on mount (so we see what the widget last saw)
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    getWidgetDebugInfo().then((d) => setWidgetDebugInfo(d ?? null));
+  }, []);
 
   const openAdd = () => {
     setEditingId(null);
@@ -487,6 +501,29 @@ export function WidgetConfigSection() {
               </Horizontal>
             </Pressable>
             <Horizontal spacing="xs">
+              {!idsInAppGroup.includes(c.id) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onPress={async () => {
+                    setSyncingToWidgetId(c.id);
+                    try {
+                      await writeLatestItemsWidgetConfigListToCache(configs);
+                      const readBack = await getConfigListFromAppGroup();
+                      if (readBack?.ids) setIdsInAppGroup(readBack.ids);
+                    } finally {
+                      setSyncingToWidgetId(null);
+                    }
+                  }}
+                  disabled={syncingToWidgetId !== null}
+                >
+                  {syncingToWidgetId === c.id ? (
+                    <ActivityIndicator size="small" />
+                  ) : (
+                    t("widget.syncToWidget")
+                  )}
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onPress={() => openEdit(c)}>
                 {t("widget.edit")}
               </Button>
@@ -506,10 +543,37 @@ export function WidgetConfigSection() {
         {t("widget.addSetup")}
       </Button>
 
+      {Platform.OS === "ios" && (
+        <View style={{ marginTop: 12, padding: 10, backgroundColor: "rgba(0,0,0,0.05)", borderRadius: 8 }}>
+          <Horizontal style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+            <Text style={{ fontSize: 12, fontWeight: "600" }}>Widget extension (diagnostic)</Text>
+            <Pressable
+              onPress={() => getWidgetDebugInfo().then((d) => setWidgetDebugInfo(d ?? null))}
+              hitSlop={8}
+            >
+              <Muted style={{ fontSize: 11 }}>Refresh</Muted>
+            </Pressable>
+          </Horizontal>
+          {widgetDebugInfo ? (
+            <Muted style={{ fontSize: 11 }}>
+              Last saw {widgetDebugInfo.configCount} setup(s). App group: defaults {widgetDebugInfo.defaultsAvailable ? "✓" : "✗"}, container {widgetDebugInfo.containerAvailable ? "✓" : "✗"}. Raw: UserDefaults {widgetDebugInfo.defaultsRawLength ?? "—"} chars, file {widgetDebugInfo.fileRawLength ?? "—"} chars.
+              {widgetDebugInfo.decodeError ? ` Decode error: ${widgetDebugInfo.decodeError}` : null}
+              {"\n"}
+              {widgetDebugInfo.at}
+            </Muted>
+          ) : (
+            <Muted style={{ fontSize: 11 }}>
+              No debug file yet. Add the widget to the home screen, tap Setup, then tap Refresh here to see what the widget saw.
+            </Muted>
+          )}
+        </View>
+      )}
+
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Modal.Content
+          variant="bottomSheet"
+          height="70%"
           title={editingId ? t("widget.editModalTitle") : t("widget.addModalTitle")}
-          variant="default"
           actions={
             <Horizontal spacing="sm">
               <Button variant="ghost" onPress={() => setModalOpen(false)}>
@@ -526,7 +590,7 @@ export function WidgetConfigSection() {
             </Horizontal>
           }
         >
-          <ScrollView style={{ maxHeight: 400 }}>
+          <KeyboardAwareScrollView>
             <Vertical spacing="md">
               <Input
                 label={t("widget.collectionLabel")}
@@ -559,7 +623,7 @@ export function WidgetConfigSection() {
                 {t("widget.columnsHint")}
               </Text>
             </Vertical>
-          </ScrollView>
+          </KeyboardAwareScrollView>
         </Modal.Content>
       </Modal>
     </Vertical>

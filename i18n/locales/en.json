@@ -78,7 +78,8 @@
     "columnsHint": "Columns and values match the collection table view (preset or all fields).",
     "removeTitle": "Remove widget",
     "removeMessage": "Remove \"{{name}}\" from home screen options?",
-    "removeButton": "Remove"
+    "removeButton": "Remove",
+    "syncToWidget": "Sync to widget"
   },
   "push": {
     "title": "Push notifications",

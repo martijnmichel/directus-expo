@@ -22,12 +22,12 @@ export async function writeLatestItemsWidgetConfigListToCache(
   // Native side reads a single string value by key; the actual persistence
   // implementation lives elsewhere in the app.
   const list: WidgetConfigListEntry[] = configs.map((c) => ({
-    id: c.id,
-    title: c.title ?? c.collection,
-    instanceUrl: c.instanceUrl,
-    collection: c.collection,
-    widgetId: c.widgetId,
-    webhookUrl: c.webhookUrl,
+    id: String(c.id ?? ""),
+    title: String(c.title ?? c.collection ?? ""),
+    instanceUrl: String(c.instanceUrl ?? ""),
+    collection: String(c.collection ?? ""),
+    widgetId: c.widgetId != null ? String(c.widgetId) : undefined,
+    webhookUrl: c.webhookUrl != null ? String(c.webhookUrl) : undefined,
   }));
   const cache = getWidgetCache();
   await cache.setConfigList(JSON.stringify(list));

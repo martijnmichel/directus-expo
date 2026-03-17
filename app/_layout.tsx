@@ -29,7 +29,10 @@ import { queryClient } from "@/utils/react-query";
 import Toast from "react-native-toast-message";
 import { DateUtils } from "@/utils/dayjs";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 import { EventProvider } from "react-native-outside-press";
+import { getLatestItemsWidgetConfigs } from "@/widgets/latestItems/storage";
+import { writeLatestItemsWidgetConfigListToCache } from "@/widgets/latestItems/sync";
 import { OTAUpdate } from "@/components/OTAUpdate";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -77,6 +80,18 @@ const Preload = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     refetch();
   }, [refetch]);
+
+  // Sync widget config list to app group on launch so the widget sees configs even if user never opened Settings → Widget
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    getLatestItemsWidgetConfigs()
+      .then((configs) => {
+        if (configs.length > 0) {
+          writeLatestItemsWidgetConfigListToCache(configs);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (data?.locale && !i18n.initializedLanguageOnce) {

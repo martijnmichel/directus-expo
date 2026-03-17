@@ -75,7 +75,8 @@
     "columnsHint": "Kolommen en waarden komen overeen met de tabelweergave van de verzameling (voorinstelling of alle velden).",
     "removeTitle": "Widget verwijderen",
     "removeMessage": "\"{{name}}\" verwijderen van de startschermopties?",
-    "removeButton": "Verwijderen"
+    "removeButton": "Verwijderen",
+    "syncToWidget": "Sync naar widget"
   },
   "push": {
     "title": "Pushmeldingen",
