@@ -41,6 +41,7 @@ import {
   APP_WIDGET_FLOW_NAME,
   APP_WIDGET_FLOW_VERSION,
   APP_WIDGET_SUPPORTED,
+  APP_WIDGET_TYPE_LATEST_ITEMS,
 } from "@/constants/widget";
 import {
   createItem,
@@ -172,9 +173,10 @@ export function WidgetConfigSection() {
             collection: row.collection ?? "",
             sort: row.sort ?? "-date_updated",
             limit: row.limit ?? 5,
+            fields: Array.isArray(row.fields) ? row.fields : DEFAULT_FIELDS,
             title: row.title,
             webhookUrl,
-            type: "collection",
+            type: APP_WIDGET_TYPE_LATEST_ITEMS,
           }),
         );
         if (!cancelled) {
@@ -272,9 +274,13 @@ export function WidgetConfigSection() {
         if (widgetId) {
           await directus.request(
             updateItem(APP_WIDGET_CONFIG_COLLECTION as any, widgetId, {
+              type: APP_WIDGET_TYPE_LATEST_ITEMS,
+              user_id: user.id,
               collection: form.collection,
+              fields: form.fields,
               sort: form.sort,
               limit: form.limit,
+              filter: {},
             } as any),
           );
         }
@@ -298,9 +304,12 @@ export function WidgetConfigSection() {
             APP_WIDGET_CONFIG_COLLECTION as any,
             {
               user_id: user.id,
+              type: APP_WIDGET_TYPE_LATEST_ITEMS,
               collection: form.collection,
+              fields: form.fields,
               sort: form.sort,
               limit: form.limit,
+              filter: {},
             } as any,
           ),
         );
@@ -319,7 +328,7 @@ export function WidgetConfigSection() {
           fields: form.fields,
           widgetId,
           webhookUrl,
-          type: "collection",
+          type: APP_WIDGET_TYPE_LATEST_ITEMS,
         });
       }
       await writeLatestItemsWidgetConfigListToCache(

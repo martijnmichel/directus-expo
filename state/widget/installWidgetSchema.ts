@@ -22,6 +22,7 @@ import {
   APP_WIDGET_FLOW_NAME,
   APP_WIDGET_FLOW_VERSION,
   APP_WIDGET_SUPPORTED,
+  APP_WIDGET_TYPE_LATEST_ITEMS,
   WIDGET_FLOW_OPERATION_TYPES,
 } from "@/constants/widget";
 
@@ -53,10 +54,10 @@ const WIDGET_FIELDS: Array<{
     meta: {
       interface: "select-dropdown",
       options: {
-        choices: [{ text: "Collection", value: "collection" }],
+        choices: [{ text: "Latest items", value: APP_WIDGET_TYPE_LATEST_ITEMS }],
       },
       required: true,
-      note: "Widget type. Currently only 'collection' is supported.",
+      note: "Widget type. Currently only 'latest-items' is supported.",
     },
   },
   {
@@ -73,6 +74,15 @@ const WIDGET_FIELDS: Array<{
     field: "collection",
     type: "string",
     meta: { interface: "input", required: true },
+  },
+  {
+    field: "fields",
+    type: "json",
+    meta: {
+      interface: "input-code",
+      options: { language: "json" },
+      note: "Fields array for the widget query (e.g. [\"id\",\"title\"]).",
+    },
   },
   {
     field: "filter",
@@ -337,7 +347,7 @@ module.exports = async function (data) {
       error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
     };
   }
-  if (widget.type && widget.type !== "collection") {
+  if (widget.type && widget.type !== "${APP_WIDGET_TYPE_LATEST_ITEMS}") {
     return {
       ok: false,
       status: "invalid_config",
@@ -462,13 +472,14 @@ module.exports = async function (data) {
             position_y: 0,
             resolve: filterItemsId,
             options: {
-              collection: "{{ widget_config.collection }}",
+              collection: "{{ extract_widget_config.widget.collection }}",
               permissions: "$full",
               emitEvents: false,
               query: {
-                limit: "{{ widget_config.limit || 10 }}",
-                sort: "{{ widget_config.sort || '-date_updated' }}",
-                filter: {},
+                limit: "{{ extract_widget_config.widget.limit || 10 }}",
+                sort: "{{ extract_widget_config.widget.sort || '-date_updated' }}",
+                filter: "{{ extract_widget_config.widget.filter || {} }}",
+                fields: "{{ extract_widget_config.widget.fields || [] }}",
               },
             },
           } as any),
@@ -627,7 +638,7 @@ module.exports = async function (data) {
               emitEvents: false,
               query: {
                 limit: 1,
-                fields: ["id", "type", "user_id", "collection", "filter", "sort", "limit"],
+                fields: ["id", "type", "user_id", "collection", "fields", "filter", "sort", "limit"],
                 filter: { id: { _eq: "{{ extract_query.widget_id }}" } },
               },
             },
@@ -894,7 +905,7 @@ module.exports = async function (data) {
             collection: APP_WIDGET_CONFIG_COLLECTION,
             action,
             validation: {},
-            fields: ["id", "user_id", "collection", "filter", "sort", "limit"],
+            fields: ["id", "user_id", "collection", "fields", "filter", "sort", "limit", "type"],
           } as Record<string, unknown>;
 
           if (action === "create") {

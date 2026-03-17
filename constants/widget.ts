@@ -10,8 +10,11 @@ export const APP_WIDGET_FLOW_NAME = "App widgets data";
  */
 export const APP_WIDGET_FLOW_VERSION = 14;
 
+/** Widget type identifier used across app + Directus flow. */
+export const APP_WIDGET_TYPE_LATEST_ITEMS = "latest-items" as const;
+
 /** Capabilities the app expects the flow to support. */
-export const APP_WIDGET_SUPPORTED = ["latest-items"] as const;
+export const APP_WIDGET_SUPPORTED = [APP_WIDGET_TYPE_LATEST_ITEMS] as const;
 
 /** Flow operation type ids (same as push). */
 export const WIDGET_FLOW_OPERATION_TYPES = {
