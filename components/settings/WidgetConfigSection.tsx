@@ -10,7 +10,7 @@ import { Select } from "@/components/interfaces/select";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Pressable,
@@ -193,29 +193,45 @@ export function WidgetConfigSection() {
     enabled: widgetAccess === "ok",
   });
   const configs = widgetItemsQuery.data?.configs ?? [];
+  const configIdsKey = useMemo(
+    () => configs.map((c) => c.id).sort().join("|"),
+    [configs],
+  );
+  const lastSyncedIdsKeyRef = useRef<string>("");
 
   const isLoadingSetup =
     (runFullSetupCheck && loadingExists) ||
     (!runFullSetupCheck && loadingAccessOnly) ||
     (widgetAccess === "ok" && widgetItemsQuery.isLoading);
 
-  // Keep native widget config list in sync and refresh "synced" state for check icons
+  // Refresh "synced" state for check icons (read-back from app group / shared prefs).
   useEffect(() => {
-    if (configs.length > 0) {
-      writeLatestItemsWidgetConfigListToCache(configs)
-        .then(async () => {
-          const readBack = await debugGetConfigListFromAppGroup();
-          if (readBack != null) {
-            setIdsInAppGroup(readBack.ids ?? []);
-          } else {
-            getConfigListIdsFromAppGroup().then(setIdsInAppGroup);
-          }
-        })
-        .catch(() => getConfigListIdsFromAppGroup().then(setIdsInAppGroup));
-    } else {
-      setIdsInAppGroup([]);
-    }
-  }, [configs]);
+    let cancelled = false;
+
+    // Avoid update loops: only refresh when the config id-set changes.
+    if (lastSyncedIdsKeyRef.current === configIdsKey) return;
+    lastSyncedIdsKeyRef.current = configIdsKey;
+
+    (async () => {
+      try {
+        const readBack = await debugGetConfigListFromAppGroup();
+        const ids = readBack?.ids ?? (await getConfigListIdsFromAppGroup());
+        if (!cancelled) {
+          setIdsInAppGroup((prev) => {
+            const nextKey = [...ids].sort().join("|");
+            const prevKey = [...prev].sort().join("|");
+            return nextKey === prevKey ? prev : ids;
+          });
+        }
+      } catch {
+        if (!cancelled) setIdsInAppGroup((prev) => (prev.length ? prev : []));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [configIdsKey]);
 
   const openAdd = () => {
     setEditingId(null);
@@ -304,7 +320,10 @@ export function WidgetConfigSection() {
           (row as { id?: string })?.id ??
           (row as { data?: { id?: string } })?.data?.id;
       }
-      await widgetItemsQuery.refetch();
+      const refreshed = await widgetItemsQuery.refetch();
+      await writeLatestItemsWidgetConfigListToCache(
+        (refreshed.data as any)?.configs ?? [],
+      );
       setModalOpen(false);
       if (Platform.OS === "android" && !editingId) {
         const { requested } = await requestAddWidgetToHomeScreen();
@@ -339,7 +358,10 @@ export function WidgetConfigSection() {
               );
             }
             await removeLatestItemsWidgetPayloadFromCache(c.id);
-            await widgetItemsQuery.refetch();
+            const refreshed = await widgetItemsQuery.refetch();
+            await writeLatestItemsWidgetConfigListToCache(
+              (refreshed.data as any)?.configs ?? [],
+            );
           },
         },
       ],
@@ -522,7 +544,10 @@ export function WidgetConfigSection() {
                   onPress={async () => {
                     setSyncingToWidgetId(c.id);
                     try {
-                      await writeLatestItemsWidgetConfigListToCache(configs);
+                      const refreshed = await widgetItemsQuery.refetch();
+                      await writeLatestItemsWidgetConfigListToCache(
+                        (refreshed.data as any)?.configs ?? [],
+                      );
                       const readBack = await getConfigListFromAppGroup();
                       if (readBack?.ids) setIdsInAppGroup(readBack.ids);
                     } finally {

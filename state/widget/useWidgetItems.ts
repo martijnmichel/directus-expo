@@ -7,7 +7,6 @@ import {
   APP_WIDGET_TYPE_LATEST_ITEMS,
 } from "@/constants/widget";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
-import { writeLatestItemsWidgetConfigListToCache } from "@/widgets/latestItems/sync";
 
 function coerceArray(val: unknown): string[] | undefined {
   if (!Array.isArray(val)) return undefined;
@@ -75,9 +74,6 @@ export function useWidgetItems(params: {
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
         }))
         .filter((c) => c.id.length > 0);
-
-      // Keep native widget shared cache in sync (iOS app group / Android shared prefs).
-      await writeLatestItemsWidgetConfigListToCache(mapped);
 
       return { configs: mapped };
     },
