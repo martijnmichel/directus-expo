@@ -67,11 +67,11 @@ export function useWidgetItems(params: {
           widgetId: row.id != null ? String(row.id) : undefined,
           instanceUrl: instanceUrl,
           collection: row.collection ?? "",
-          sort: row.sort ?? "-date_updated",
+          sort: row.sort ?? "",
           limit: row.limit ?? 5,
           fields: coerceArray(row.fields) ?? [],
           title: row.title,
-          webhookUrl: webhookUrl. ?? undefined,
+          webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
         }))
         .filter((c) => c.id.length > 0);
