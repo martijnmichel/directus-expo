@@ -62,6 +62,9 @@ import {
 } from "@/state/widget/useWidgetCollection";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "@/components/layout/Layout";
+import { useCollections } from "@/state/queries/directus/core";
+import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
+import { readFieldsByCollection } from "@directus/sdk";
 
 const DEFAULT_FIELDS = ["id", "title", "name", "date_updated", "date_created"];
 
@@ -79,8 +82,10 @@ function useWidgetConfigs() {
 
 export function WidgetConfigSection() {
   const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const { configs, reload } = useWidgetConfigs();
   const { directus, policyGlobals, user } = useAuth();
+  const { data: allCollections } = useCollections();
   const installMutation = useInstallWidgetSchema();
   const { data: activeApi } = useLocalStorage<{ url: string }>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE,
@@ -108,10 +113,62 @@ export function WidgetConfigSection() {
   const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(
     null,
   );
+  const [sortOptions, setSortOptions] = useState<Array<{ value: string; text: string }>>([]);
   const flowVersionQuery = useFlowVersion(
     activeApi?.url ?? null,
     Platform.OS === "ios",
   );
+
+  // Build collection options (non-hidden, non-directus_). Use same filtering as UserCollections.
+  const collectionOptions =
+    (Array.isArray(allCollections) ? allCollections : []) // SDK returns array
+      .filter(
+        (c: any) =>
+          c &&
+          typeof c.collection === "string" &&
+          !c.collection.startsWith("directus_") &&
+          !!c.meta &&
+          !c.meta?.hidden &&
+          !!c.schema,
+      )
+      .sort((a: any, b: any) => (Number(a?.meta?.sort ?? 0) - Number(b?.meta?.sort ?? 0)))
+      .map((c: any) => ({
+        value: String(c.collection),
+        text: getCollectionTranslation(c, i18n.language) ?? String(c.collection),
+      }));
+
+  // Load fields for sort dropdown when collection changes (top-level only)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!directus || !form.collection) {
+        setSortOptions([]);
+        return;
+      }
+      try {
+        const raw = await directus.request(readFieldsByCollection(form.collection as any));
+        const list = Array.isArray(raw) ? raw : ((raw as any)?.data ?? []);
+        const simple = (list as any[])
+          .filter((f) => f && typeof f.field === "string")
+          .filter((f) => !f.meta?.hidden)
+          .filter((f) => !String(f.field).startsWith("_"))
+          .filter((f) => !Array.isArray(f.meta?.special) || f.meta.special.length === 0); // avoid relations for now
+
+        const opts: Array<{ value: string; text: string }> = [];
+        for (const f of simple) {
+          const name = String(f.field);
+          opts.push({ value: `-${name}`, text: `${name} (desc)` });
+          opts.push({ value: name, text: `${name} (asc)` });
+        }
+        if (!cancelled) setSortOptions(opts);
+      } catch {
+        if (!cancelled) setSortOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [directus, form.collection]);
 
   const getWebhookUrlForInstance = useCallback(
     async (instanceUrl: string): Promise<string> => {
@@ -652,14 +709,14 @@ export function WidgetConfigSection() {
                   text: t.label,
                 }))}
               />
-              <Input
+              <Select
                 label={t("widget.collectionLabel")}
                 value={form.collection}
-                onChangeText={(val) =>
-                  setForm((f) => ({ ...f, collection: val }))
+                onValueChange={(val) =>
+                  setForm((f) => ({ ...f, collection: String(val) }))
                 }
+                options={collectionOptions}
                 placeholder={t("widget.collectionPlaceholder")}
-                autoCapitalize="none"
               />
               <Input
                 label={t("widget.titleLabel")}
@@ -667,11 +724,13 @@ export function WidgetConfigSection() {
                 onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
                 placeholder={t("widget.titlePlaceholder")}
               />
-              <Input
+              <Select
                 label={t("widget.sortLabel")}
                 value={form.sort ?? ""}
-                onChangeText={(val) => setForm((f) => ({ ...f, sort: val }))}
+                onValueChange={(val) => setForm((f) => ({ ...f, sort: String(val) }))}
+                options={sortOptions.length ? sortOptions : [{ value: "-date_updated", text: "-date_updated (desc)" }]}
                 placeholder={t("widget.sortPlaceholder")}
+                disabled={!form.collection}
               />
               <Input
                 label={t("widget.limitLabel")}

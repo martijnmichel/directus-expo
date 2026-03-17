@@ -338,9 +338,9 @@ module.exports = async function (data) {
 module.exports = async function (data) {
   const version = ${APP_WIDGET_FLOW_VERSION};
   const supports = ${JSON.stringify(APP_WIDGET_SUPPORTED)};
-  const widget = (data.widget_config && Array.isArray(data.widget_config.data))
+  const widget = data?.extract_widget_config?.widget ?? ((data.widget_config && Array.isArray(data.widget_config.data))
     ? data.widget_config.data[0]
-    : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config);
+    : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config));
   if (!widget || !widget.user_id || !widget.collection) {
     return {
       ok: false,
@@ -351,7 +351,7 @@ module.exports = async function (data) {
       error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
     };
   }
-  if (widget.type && widget.type !== "${APP_WIDGET_TYPE_LATEST_ITEMS}") {
+  if (widget.type && !supports.includes(String(widget.type))) {
     return {
       ok: false,
       status: "invalid_config",
