@@ -11,13 +11,17 @@ import {
   deletePolicy,
   readCollections,
   readFlows,
+  readOperations,
   readItems,
   type RestCommand,
   updateFlow,
+  updateOperation,
 } from "@directus/sdk";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
   APP_WIDGET_FLOW_NAME,
+  APP_WIDGET_FLOW_VERSION,
+  APP_WIDGET_SUPPORTED,
   WIDGET_FLOW_OPERATION_TYPES,
 } from "@/constants/widget";
 
@@ -32,6 +36,17 @@ const WIDGET_FIELDS: Array<{
   type: string;
   meta: Record<string, unknown>;
 }> = [
+  {
+    field: "id",
+    type: "uuid",
+    meta: {
+      special: ["uuid"],
+      hidden:true,
+      required: true,
+      primary_key: true,
+      note: "Primary key (UUID, auto-generated).",
+    },
+  },
   {
     field: "type",
     type: "string",
@@ -230,15 +245,174 @@ export function useInstallWidgetSchema() {
               name: APP_WIDGET_FLOW_NAME,
               icon: "widgets",
               description:
-                "Widget webhook. GET returns {version,supports}. POST resolves widget_id and returns widget data.",
+                "Widget webhook (GET-only). GET with no params returns {version,supports}. GET with ?widget_id=... returns widget data.",
               status: "active",
               trigger: "webhook",
               options: {
+                method: "GET",
                 async: false,
                 response_body: "$last",
               },
             } as any),
           );
+
+          // Ensure GET-only handshake + widget_id branching exists (and update id source to querystring).
+          // Flow shape:
+          //   extract_query (exec) -> condition(widget_id present?) -> resolve: existing start -> ...
+          //                                         reject: handshake (exec) -> {version,supports}
+          const opTypes = WIDGET_FLOW_OPERATION_TYPES;
+          const opsRaw = await directus.request(
+            readOperations({
+              filter: { flow: { _eq: existingFlowId } },
+              limit: -1,
+            } as any),
+          );
+          const opsList = Array.isArray(opsRaw)
+            ? opsRaw
+            : ((opsRaw as { data?: unknown[] })?.data ?? []);
+
+          const byKey = new Map<string, any>();
+          for (const op of opsList as any[]) {
+            if (op?.key) byKey.set(String(op.key), op);
+          }
+
+          const flowOperationId: string | null =
+            (flowsList[0] as any)?.operation ?? null;
+          const fallbackStartId: string | null =
+            (byKey.get("widget_config")?.id as string | undefined) ?? null;
+          const existingStartId: string | null = flowOperationId ?? fallbackStartId;
+
+          // 1) Ensure handshake op exists
+          let handshakeOp = byKey.get("handshake");
+          if (!handshakeOp) {
+            handshakeOp = await directus.request(
+              createOperation({
+                flow: existingFlowId,
+                key: "handshake",
+                type: opTypes.runScript,
+                name: "Handshake (version + supports)",
+                position_x: 60,
+                position_y: -80,
+                resolve: null,
+                options: {
+                  code: `
+module.exports = async function () {
+  return { version: ${APP_WIDGET_FLOW_VERSION}, supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)} };
+};`.trim(),
+                },
+              } as any),
+            );
+          } else {
+            // Keep handshake payload up to date
+            await directus.request(
+              updateOperation(handshakeOp.id, {
+                options: {
+                  ...(handshakeOp.options ?? {}),
+                  code: `
+module.exports = async function () {
+  return { version: ${APP_WIDGET_FLOW_VERSION}, supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)} };
+};`.trim(),
+                },
+              } as any),
+            );
+          }
+
+          // 2) Ensure condition op exists (branches based on extract_query.widget_id presence)
+          let conditionOp = byKey.get("widget_id_present");
+          if (!conditionOp) {
+            conditionOp = await directus.request(
+              createOperation({
+                flow: existingFlowId,
+                key: "widget_id_present",
+                type: opTypes.condition,
+                name: "widget_id present?",
+                position_x: 40,
+                position_y: -40,
+                resolve: existingStartId,
+                reject: (handshakeOp as any).id,
+                options: {
+                  // Condition Rules (Filter Rules). We validate output of extract_query.
+                  filter: { extract_query: { widget_id: { _nnull: true } } },
+                },
+              } as any),
+            );
+          } else {
+            await directus.request(
+              updateOperation(conditionOp.id, {
+                resolve: existingStartId,
+                reject: (handshakeOp as any).id,
+                options: { ...(conditionOp.options ?? {}), filter: { extract_query: { widget_id: { _nnull: true } } } },
+              } as any),
+            );
+          }
+
+          // 3) Ensure extract_query op exists and is the flow start op
+          let extractOp = byKey.get("extract_query");
+          if (!extractOp) {
+            extractOp = await directus.request(
+              createOperation({
+                flow: existingFlowId,
+                key: "extract_query",
+                type: opTypes.runScript,
+                name: "Extract widget_id from query",
+                position_x: 20,
+                position_y: -40,
+                resolve: (conditionOp as any).id,
+                options: {
+                  code: `
+module.exports = async function (data) {
+  const q = (data && data.$trigger && data.$trigger.query) ? data.$trigger.query : {};
+  const widget_id = q && q.widget_id != null ? String(q.widget_id) : null;
+  const uuid = typeof widget_id === "string" ? widget_id.trim() : "";
+  const is_uuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+  return { widget_id: is_uuid ? uuid : null };
+};`.trim(),
+                },
+              } as any),
+            );
+          } else {
+            await directus.request(
+              updateOperation(extractOp.id, {
+                resolve: (conditionOp as any).id,
+                options: {
+                  ...(extractOp.options ?? {}),
+                  code: `
+module.exports = async function (data) {
+  const q = (data && data.$trigger && data.$trigger.query) ? data.$trigger.query : {};
+  const widget_id = q && q.widget_id != null ? String(q.widget_id) : null;
+  const uuid = typeof widget_id === "string" ? widget_id.trim() : "";
+  const is_uuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+  return { widget_id: is_uuid ? uuid : null };
+};`.trim(),
+                },
+              } as any),
+            );
+          }
+
+          // 4) Update widget_config operation to use extracted widget_id (GET-only)
+          const widgetConfigOp = byKey.get("widget_config");
+          if (widgetConfigOp?.id) {
+            const prevOptions = widgetConfigOp.options ?? {};
+            const prevQuery = prevOptions.query ?? {};
+            const prevFilter = prevQuery.filter ?? {};
+            await directus.request(
+              updateOperation(widgetConfigOp.id, {
+                options: {
+                  ...prevOptions,
+                  query: {
+                    ...prevQuery,
+                    filter: {
+                      ...prevFilter,
+                      id: "{{ extract_query.widget_id }}",
+                    },
+                  },
+                },
+              } as any),
+            );
+          }
+
+          // 5) Make extract_query the entrypoint
+          await directus.request(updateFlow(existingFlowId, { operation: (extractOp as any).id } as any));
         }
 
         if (!flowExists) {
@@ -252,6 +426,7 @@ export function useInstallWidgetSchema() {
               trigger: "webhook",
               options: {
                 // Synchronous: wait for flow to finish and return $last.
+                method: "GET",
                 async: false,
                 response_body: "$last",
               },
@@ -504,7 +679,8 @@ module.exports = async function (data) {
                 query: {
                   limit: 1,
                   filter: {
-                    id: "{{ $trigger.body.widget_id }}",
+                    // GET-only: widget_id comes from querystring via extract_query
+                    id: "{{ extract_query.widget_id }}",
                   },
                 },
               },
@@ -517,9 +693,61 @@ module.exports = async function (data) {
           if (!opReadWidgetId)
             throw new Error("Read widget config operation created but no id");
 
-          await directus.request(
-            updateFlow(flowId, { operation: opReadWidgetId } as any),
+          // Add handshake branching + GET-only widget_id extraction for new flows too
+          const opHandshake = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "handshake",
+              type: opTypes.runScript,
+              name: "Handshake (version + supports)",
+              position_x: 60,
+              position_y: -80,
+              resolve: null,
+              options: {
+                code: `
+module.exports = async function () {
+  return { version: ${APP_WIDGET_FLOW_VERSION}, supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)} };
+};`.trim(),
+              },
+            } as any),
           );
+          const opWidgetIdPresent = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "widget_id_present",
+              type: opTypes.condition,
+              name: "widget_id present?",
+              position_x: 40,
+              position_y: -40,
+              resolve: opReadWidgetId,
+              reject: (opHandshake as any).id,
+              options: {
+                filter: { extract_query: { widget_id: { _nnull: true } } },
+              },
+            } as any),
+          );
+          const opExtractQuery = await directus.request(
+            createOperation({
+              flow: flowId,
+              key: "extract_query",
+              type: opTypes.runScript,
+              name: "Extract widget_id from query",
+              position_x: 20,
+              position_y: -40,
+              resolve: (opWidgetIdPresent as any).id,
+              options: {
+                code: `
+module.exports = async function (data) {
+  const q = (data && data.$trigger && data.$trigger.query) ? data.$trigger.query : {};
+  const widget_id = q && q.widget_id != null ? String(q.widget_id) : null;
+  const uuid = typeof widget_id === "string" ? widget_id.trim() : "";
+  const is_uuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
+  return { widget_id: is_uuid ? uuid : null };
+};`.trim(),
+              },
+            } as any),
+          );
+          await directus.request(updateFlow(flowId, { operation: (opExtractQuery as any).id } as any));
         }
 
         // Create a policy that allows users to manage only their own widget rows.

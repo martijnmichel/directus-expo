@@ -10,7 +10,13 @@ import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import { useCallback, useEffect, useState } from "react";
-import { View, Pressable, Alert, ActivityIndicator, Platform } from "react-native";
+import {
+  View,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+  Platform,
+} from "react-native";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import {
   getLatestItemsWidgetConfigs,
@@ -36,7 +42,13 @@ import {
   APP_WIDGET_FLOW_VERSION,
   APP_WIDGET_SUPPORTED,
 } from "@/constants/widget";
-import { createItem, updateItem, deleteItem, readFlows, readItems } from "@directus/sdk";
+import {
+  createItem,
+  updateItem,
+  deleteItem,
+  readFlows,
+  readItems,
+} from "@directus/sdk";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useInstallWidgetSchema } from "@/state/widget/installWidgetSchema";
 import {
@@ -68,12 +80,17 @@ export function WidgetConfigSection() {
   const { directus, policyGlobals } = useAuth();
   const installMutation = useInstallWidgetSchema();
   const { data: activeApi } = useLocalStorage<{ url: string }>(
-    LocalStorageKeys.DIRECTUS_API_ACTIVE
+    LocalStorageKeys.DIRECTUS_API_ACTIVE,
   );
   const isAdmin = policyGlobals?.admin_access === true;
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Partial<LatestItemsWidgetConfig> & { instanceUrl: string; collection: string }>({
+  const [form, setForm] = useState<
+    Partial<LatestItemsWidgetConfig> & {
+      instanceUrl: string;
+      collection: string;
+    }
+  >({
     instanceUrl: activeApi?.url ?? "",
     collection: "",
     title: "",
@@ -84,8 +101,13 @@ export function WidgetConfigSection() {
   });
   const [saving, setSaving] = useState(false);
   const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
-  const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(null);
-  const flowVersionQuery = useFlowVersion(activeApi?.url ?? null, Platform.OS === "ios");
+  const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(
+    null,
+  );
+  const flowVersionQuery = useFlowVersion(
+    activeApi?.url ?? null,
+    Platform.OS === "ios",
+  );
 
   const getWebhookUrlForInstance = useCallback(
     async (instanceUrl: string): Promise<string> => {
@@ -101,7 +123,9 @@ export function WidgetConfigSection() {
         : (((flows as { data?: unknown[] })?.data as unknown[]) ?? []);
       const id = (list[0] as { id?: string } | undefined)?.id;
       if (!id) {
-        throw new Error("Widget flow not found on this instance. Install the widget backend first.");
+        throw new Error(
+          "Widget flow not found on this instance. Install the widget backend first.",
+        );
       }
       const base = instanceUrl.replace(/\/+$/, "");
       return `${base}/flows/trigger/${id}`;
@@ -124,28 +148,35 @@ export function WidgetConfigSection() {
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
 
   // Sync widget configs from Directus so existing app_widget_config rows appear and are editable
-  const isLoadingSetup = (runFullSetupCheck && loadingExists) || (!runFullSetupCheck && loadingAccessOnly);
+  const isLoadingSetup =
+    (runFullSetupCheck && loadingExists) ||
+    (!runFullSetupCheck && loadingAccessOnly);
   useEffect(() => {
-    if (isLoadingSetup || widgetAccess !== "ok" || !directus || !activeApi?.url) return;
+    if (isLoadingSetup || widgetAccess !== "ok" || !directus || !activeApi?.url)
+      return;
     let cancelled = false;
     (async () => {
       try {
         const webhookUrl = await getWebhookUrlForInstance(activeApi.url);
-        const rows = await directus.request(
-          readItems(APP_WIDGET_CONFIG_COLLECTION as any, { limit: -1 } as any)
-        ) as unknown;
-        const data = Array.isArray(rows) ? rows : (rows as { data?: unknown[] })?.data ?? [];
-        const mapped: LatestItemsWidgetConfig[] = (data as any[]).map((row: any) => ({
-          id: String(row.id ?? ""),
-          widgetId: row.id != null ? String(row.id) : undefined,
-          instanceUrl: activeApi.url,
-          collection: row.collection ?? "",
-          sort: row.sort ?? "-date_updated",
-          limit: row.limit ?? 5,
-          title: row.title,
-          webhookUrl,
-          type: "collection",
-        }));
+        const rows = (await directus.request(
+          readItems(APP_WIDGET_CONFIG_COLLECTION as any, { limit: -1 } as any),
+        )) as unknown;
+        const data = Array.isArray(rows)
+          ? rows
+          : ((rows as { data?: unknown[] })?.data ?? []);
+        const mapped: LatestItemsWidgetConfig[] = (data as any[]).map(
+          (row: any) => ({
+            id: String(row.id ?? ""),
+            widgetId: row.id != null ? String(row.id) : undefined,
+            instanceUrl: activeApi.url,
+            collection: row.collection ?? "",
+            sort: row.sort ?? "-date_updated",
+            limit: row.limit ?? 5,
+            title: row.title,
+            webhookUrl,
+            type: "collection",
+          }),
+        );
         if (!cancelled) {
           await setLatestItemsWidgetConfigs(mapped);
           await writeLatestItemsWidgetConfigListToCache(mapped);
@@ -155,8 +186,17 @@ export function WidgetConfigSection() {
         if (!cancelled) reload();
       }
     })();
-    return () => { cancelled = true; };
-  }, [isLoadingSetup, widgetAccess, directus, activeApi?.url, getWebhookUrlForInstance, reload]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isLoadingSetup,
+    widgetAccess,
+    directus,
+    activeApi?.url,
+    getWebhookUrlForInstance,
+    reload,
+  ]);
 
   // Keep native widget config list in sync and refresh "synced" state for check icons
   useEffect(() => {
@@ -251,11 +291,14 @@ export function WidgetConfigSection() {
         });
       } else {
         const row = await directus.request(
-          createItem(APP_WIDGET_CONFIG_COLLECTION as any, {
-            collection: form.collection,
-            sort: form.sort,
-            limit: form.limit,
-          } as any),
+          createItem(
+            APP_WIDGET_CONFIG_COLLECTION as any,
+            {
+              collection: form.collection,
+              sort: form.sort,
+              limit: form.limit,
+            } as any,
+          ),
         );
         widgetId =
           (row as { id?: string })?.id ??
@@ -276,7 +319,7 @@ export function WidgetConfigSection() {
         });
       }
       await writeLatestItemsWidgetConfigListToCache(
-        await getLatestItemsWidgetConfigs()
+        await getLatestItemsWidgetConfigs(),
       );
       await reload();
       setModalOpen(false);
@@ -285,7 +328,7 @@ export function WidgetConfigSection() {
         if (requested) {
           Alert.alert(
             t("widget.addConfirmTitle"),
-            t("widget.addConfirmMessage")
+            t("widget.addConfirmMessage"),
           );
         }
       }
@@ -315,12 +358,12 @@ export function WidgetConfigSection() {
             await removeLatestItemsWidgetConfig(c.id);
             await removeLatestItemsWidgetPayloadFromCache(c.id);
             await writeLatestItemsWidgetConfigListToCache(
-              await getLatestItemsWidgetConfigs()
+              await getLatestItemsWidgetConfigs(),
             );
             reload();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -412,25 +455,41 @@ export function WidgetConfigSection() {
       <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
       <Muted>{t("widget.intro")}</Muted>
       {configs.length > 0 && (
-        <View style={{ marginTop: 8, paddingVertical: 8, paddingHorizontal: 12, backgroundColor: "rgba(0,0,0,0.04)", borderRadius: 8 }}>
-          <Text style={{ fontWeight: "600", marginBottom: 4 }}>{t("widget.addToHomeScreenTitle")}</Text>
+        <View
+          style={{
+            marginTop: 8,
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            backgroundColor: "rgba(0,0,0,0.04)",
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ fontWeight: "600", marginBottom: 4 }}>
+            {t("widget.addToHomeScreenTitle")}
+          </Text>
           <Muted style={{ marginBottom: 8 }}>
             {Platform.OS === "android"
               ? t("widget.addToHomeScreenHintAndroid")
               : t("widget.addToHomeScreenHintIos")}
           </Muted>
           {configs.length === 0 && (
-            <Muted style={{ marginBottom: 8 }}>{t("widget.setupPickerHint")}</Muted>
+            <Muted style={{ marginBottom: 8 }}>
+              {t("widget.setupPickerHint")}
+            </Muted>
           )}
           {Platform.OS === "android" && (
             <Button
               variant="soft"
               onPress={async () => {
-                const { requested, error } = await requestAddWidgetToHomeScreen();
+                const { requested, error } =
+                  await requestAddWidgetToHomeScreen();
                 if (error) {
                   Alert.alert(t("widget.addErrorTitle"), error);
                 } else if (requested) {
-                  Alert.alert(t("widget.addConfirmTitle"), t("widget.addConfirmMessage"));
+                  Alert.alert(
+                    t("widget.addConfirmTitle"),
+                    t("widget.addConfirmMessage"),
+                  );
                 }
               }}
               leftIcon={<DirectusIcon name="add" />}
@@ -467,7 +526,10 @@ export function WidgetConfigSection() {
                   <Text numberOfLines={1} style={{ fontWeight: "600" }}>
                     {c.title || c.collection}
                   </Text>
-                  <Text numberOfLines={1} style={{ fontSize: 12, opacity: 0.8 }}>
+                  <Text
+                    numberOfLines={1}
+                    style={{ fontSize: 12, opacity: 0.8 }}
+                  >
                     {c.instanceName || c.instanceUrl} · {c.collection}
                   </Text>
                 </View>
@@ -512,12 +574,16 @@ export function WidgetConfigSection() {
           </View>
         ))}
       </Horizontal>
-      <Button variant="soft" onPress={openAdd} leftIcon={<DirectusIcon name="add" />}>
+      <Button
+        variant="soft"
+        onPress={openAdd}
+        leftIcon={<DirectusIcon name="add" />}
+      >
         {t("widget.addSetup")}
       </Button>
 
-      {Platform.OS === "ios" && configs.some((c) => !!c.webhookUrl) && (flowVersionQuery.isError || flowVersionQuery.data?.needsUpdate) && (
-        <View style={{ marginTop: 10 }}>
+      {policyGlobals?.admin_access === true &&
+        (flowVersionQuery.data?.needsUpdate || flowVersionQuery.isError) && (
           <Button
             variant="soft"
             disabled={!isAdmin || installMutation.isPending}
@@ -529,14 +595,15 @@ export function WidgetConfigSection() {
                 ? "Install flow"
                 : "Update flow"}
           </Button>
-        </View>
-      )}
+        )}
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Modal.Content
           variant="bottomSheet"
           height="70%"
-          title={editingId ? t("widget.editModalTitle") : t("widget.addModalTitle")}
+          title={
+            editingId ? t("widget.editModalTitle") : t("widget.addModalTitle")
+          }
           actions={
             <Horizontal spacing="sm">
               <Button variant="ghost" onPress={() => setModalOpen(false)}>
@@ -545,7 +612,9 @@ export function WidgetConfigSection() {
               <Button
                 onPress={save}
                 disabled={
-                  saving || !form.instanceUrl?.trim() || !form.collection?.trim()
+                  saving ||
+                  !form.instanceUrl?.trim() ||
+                  !form.collection?.trim()
                 }
               >
                 {editingId ? t("common.save") : t("widget.add")}
@@ -558,7 +627,9 @@ export function WidgetConfigSection() {
               <Input
                 label={t("widget.collectionLabel")}
                 value={form.collection}
-                onChangeText={(val) => setForm((f) => ({ ...f, collection: val }))}
+                onChangeText={(val) =>
+                  setForm((f) => ({ ...f, collection: val }))
+                }
                 placeholder={t("widget.collectionPlaceholder")}
                 autoCapitalize="none"
               />
@@ -592,4 +663,3 @@ export function WidgetConfigSection() {
     </Vertical>
   );
 }
-
