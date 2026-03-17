@@ -171,7 +171,7 @@ export const useWidgetFlowExists = () => {
 export function useFlowVersion(instanceUrl: string | null, enabled: boolean = true) {
   const { directus } = useAuth();
   return useQuery({
-    queryKey: ["widgetFlowHandshake", instanceUrl],
+    queryKey: ["widgetFlowHandshake", instanceUrl, APP_WIDGET_FLOW_VERSION],
     enabled: !!directus && !!instanceUrl && enabled,
     staleTime: 10_000,
     refetchOnMount: true,
