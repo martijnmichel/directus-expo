@@ -256,7 +256,12 @@ export function useInstallWidgetSchema() {
             options: {
               code: `
 module.exports = async function () {
-  return { version: ${APP_WIDGET_FLOW_VERSION}, supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)} };
+  return {
+    ok: true,
+    status: "handshake",
+    version: ${APP_WIDGET_FLOW_VERSION},
+    supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)},
+  };
 };`.trim(),
             },
           } as any),
@@ -264,6 +269,43 @@ module.exports = async function () {
         const handshakeId = idOf(opHandshake);
         if (!handshakeId) throw new Error("Handshake operation created but no id");
         log("created op", "handshake", handshakeId);
+
+        // Empty response for invalid/missing widget config (still includes data: [] for client contract)
+        const opEmptyResponse = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "empty_response",
+            type: opTypes.runScript,
+            name: "Empty response",
+            position_x: 100,
+            position_y: -80,
+            resolve: null,
+            options: {
+              code: `
+module.exports = async function (data) {
+  const widgetId = data?.extract_query?.widget_id ?? null;
+  const reason = data?.extract_widget_config?.reason ?? null;
+  return {
+    ok: false,
+    status: "not_found",
+    version: ${APP_WIDGET_FLOW_VERSION},
+    supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)},
+    data: [{ type: "latest-items", items: [] }],
+    error: {
+      code: "WIDGET_NOT_FOUND",
+      message: reason
+        ? \`Widget config not usable (\${reason})\`
+        : "Widget config not found or invalid.",
+    },
+    widget_id: widgetId,
+  };
+};`.trim(),
+            },
+          } as any),
+        );
+        const emptyResponseId = idOf(opEmptyResponse);
+        if (!emptyResponseId) throw new Error("Empty response operation created but no id");
+        log("created op", "empty_response", emptyResponseId);
 
         // Final response op for data path (returns the full webhook response object)
         const opFilterItems = await directus.request(
@@ -284,10 +326,24 @@ module.exports = async function (data) {
     ? data.widget_config.data[0]
     : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config);
   if (!widget || !widget.user_id || !widget.collection) {
-    return { version, supports, data: [{ type: "latest-items", items: [] }] };
+    return {
+      ok: false,
+      status: "invalid_config",
+      version,
+      supports,
+      data: [{ type: "latest-items", items: [] }],
+      error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
+    };
   }
   if (widget.type && widget.type !== "collection") {
-    return { version, supports, data: [{ type: "latest-items", items: [] }] };
+    return {
+      ok: false,
+      status: "invalid_config",
+      version,
+      supports,
+      data: [{ type: "latest-items", items: [] }],
+      error: { code: "UNSUPPORTED_WIDGET_TYPE", message: "Unsupported widget type." },
+    };
   }
 
   function asArray(val) {
@@ -374,10 +430,17 @@ module.exports = async function (data) {
   );
 
   if (!userIds.has(widget.user_id)) {
-    return { version, supports, data: [{ type: "latest-items", items: [] }] };
+    return {
+      ok: false,
+      status: "forbidden",
+      version,
+      supports,
+      data: [{ type: "latest-items", items: [] }],
+      error: { code: "FORBIDDEN", message: "Widget owner does not have read access to this collection." },
+    };
   }
 
-  return { version, supports, data: [{ type: "latest-items", items }] };
+  return { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items }] };
 };`.trim(),
             },
           } as any),
@@ -498,6 +561,55 @@ module.exports = async function (data) {
           throw new Error("Read permissions operation created but no id");
         log("created op", "read_permissions", readPermissionsId);
 
+        const opWidgetConfigOk = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "widget_config_ok",
+            type: opTypes.condition,
+            name: "widget_config ok?",
+            position_x: 30,
+            position_y: -10,
+            resolve: readPermissionsId,
+            reject: emptyResponseId,
+            options: {
+              filter: { extract_widget_config: { ok: { _eq: true } } },
+            },
+          } as any),
+        );
+        const widgetConfigOkId = idOf(opWidgetConfigOk);
+        if (!widgetConfigOkId) throw new Error("widget_config_ok operation created but no id");
+        log("created op", "widget_config_ok", widgetConfigOkId);
+
+        // Extract/validate widget_config row (so we can branch before read_collection runs)
+        const opExtractWidgetConfig = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "extract_widget_config",
+            type: opTypes.runScript,
+            name: "Extract widget config",
+            position_x: 20,
+            position_y: -10,
+            resolve: widgetConfigOkId,
+            options: {
+              code: `
+module.exports = async function (data) {
+  const row = (data.widget_config && Array.isArray(data.widget_config.data))
+    ? data.widget_config.data[0]
+    : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config);
+  const widget = row && typeof row === "object" ? row : null;
+  if (!widget) return { ok: false, reason: "missing_row", widget: null };
+  if (!widget.user_id) return { ok: false, reason: "missing_user_id", widget };
+  if (!widget.collection) return { ok: false, reason: "missing_collection", widget };
+  return { ok: true, reason: null, widget };
+};`.trim(),
+            },
+          } as any),
+        );
+        const extractWidgetConfigId = idOf(opExtractWidgetConfig);
+        if (!extractWidgetConfigId)
+          throw new Error("Extract widget config operation created but no id");
+        log("created op", "extract_widget_config", extractWidgetConfigId);
+
         const opWidgetConfig = await directus.request(
           createOperation({
             flow: flowId,
@@ -506,13 +618,14 @@ module.exports = async function (data) {
             name: "Read widget config",
             position_x: 0,
             position_y: 0,
-            resolve: readPermissionsId,
+            resolve: extractWidgetConfigId,
             options: {
               collection: APP_WIDGET_CONFIG_COLLECTION,
               permissions: "$full",
               emitEvents: false,
               query: {
                 limit: 1,
+                fields: ["id", "type", "user_id", "collection", "filter", "sort", "limit"],
                 filter: { id: { _eq: "{{ extract_query.widget_id }}" } },
               },
             },

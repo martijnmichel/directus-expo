@@ -8,7 +8,7 @@ export const APP_WIDGET_FLOW_NAME = "App widgets data";
  * Contract version for the widget webhook response.
  * Keep this in sync with the Directus Flow script.
  */
-export const APP_WIDGET_FLOW_VERSION = 10;
+export const APP_WIDGET_FLOW_VERSION = 13;
 
 /** Capabilities the app expects the flow to support. */
 export const APP_WIDGET_SUPPORTED = ["latest-items"] as const;
