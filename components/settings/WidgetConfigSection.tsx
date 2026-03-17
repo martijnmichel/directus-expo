@@ -77,7 +77,7 @@ function useWidgetConfigs() {
 export function WidgetConfigSection() {
   const { t } = useTranslation();
   const { configs, reload } = useWidgetConfigs();
-  const { directus, policyGlobals } = useAuth();
+  const { directus, policyGlobals, user } = useAuth();
   const installMutation = useInstallWidgetSchema();
   const { data: activeApi } = useLocalStorage<{ url: string }>(
     LocalStorageKeys.DIRECTUS_API_ACTIVE,
@@ -256,6 +256,9 @@ export function WidgetConfigSection() {
       if (!directus) {
         throw new Error("Not authenticated with Directus");
       }
+      if (!user?.id) {
+        throw new Error("Not authenticated (missing user)");
+      }
 
       const webhookUrl =
         form.webhookUrl && form.webhookUrl.trim().length > 0
@@ -294,6 +297,7 @@ export function WidgetConfigSection() {
           createItem(
             APP_WIDGET_CONFIG_COLLECTION as any,
             {
+              user_id: user.id,
               collection: form.collection,
               sort: form.sort,
               limit: form.limit,

@@ -11,9 +11,11 @@ import {
   deletePolicy,
   readCollections,
   readFlows,
+  readPolicies,
   readOperations,
   readItems,
   updateFlow,
+  updatePolicy,
 } from "@directus/sdk";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
@@ -707,6 +709,23 @@ module.exports = async function (data) {
                     },
                   };
                 }
+                if (f.field === "user_id") {
+                  return {
+                    field: "user_id",
+                    type: "uuid",
+                    meta: { ...f.meta },
+                    schema: {
+                      data_type: "uuid",
+                      is_primary_key: false,
+                      is_unique: false,
+                      is_nullable: false,
+                      has_auto_increment: false,
+                      default_value: null,
+                      foreign_key_table: "directus_users",
+                      foreign_key_column: "id",
+                    },
+                  };
+                }
                 return { field: f.field, type: f.type, meta: f.meta };
               }),
             } as any),
@@ -890,22 +909,50 @@ module.exports = async function (data) {
           return base;
         });
 
-        const policy = await directus.request(
-          createPolicy({
-            name: WIDGET_POLICY_NAME,
-            icon: "widgets",
-            description:
-              "Allows app users to manage their own widget configurations.",
-            admin_access: false,
-            app_access: false,
-            permissions: permissionsPayload,
+        // Only create policy once (avoid duplicating on each Update click)
+        const existingPoliciesRaw = await directus.request(
+          readPolicies({
+            filter: { name: { _eq: WIDGET_POLICY_NAME } },
+            limit: 1,
           } as any),
         );
+        const existingPolicies = Array.isArray(existingPoliciesRaw)
+          ? existingPoliciesRaw
+          : ((existingPoliciesRaw as { data?: unknown[] })?.data ?? []);
+        const existingPolicyId: string | null =
+          (existingPolicies[0] as any)?.id ?? null;
 
-        createdPolicyId =
-          (policy as { id?: string })?.id ??
-          (policy as { data?: { id?: string } })?.data?.id ??
-          null;
+        if (!existingPolicyId) {
+          const policy = await directus.request(
+            createPolicy({
+              name: WIDGET_POLICY_NAME,
+              icon: "widgets",
+              description:
+                "Allows app users to manage their own widget configurations.",
+              admin_access: false,
+              app_access: false,
+              permissions: permissionsPayload,
+            } as any),
+          );
+
+          createdPolicyId =
+            (policy as { id?: string })?.id ??
+            (policy as { data?: { id?: string } })?.data?.id ??
+            null;
+        } else {
+          await directus.request(
+            updatePolicy(existingPolicyId as any, {
+              name: WIDGET_POLICY_NAME,
+              icon: "widgets",
+              description:
+                "Allows app users to manage their own widget configurations.",
+              admin_access: false,
+              app_access: false,
+              permissions: permissionsPayload,
+            } as any),
+          );
+          log("policy exists, updated", existingPolicyId);
+        }
       } catch (error) {
         try {
           if (createdPolicyId) {
