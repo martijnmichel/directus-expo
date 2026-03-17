@@ -27,14 +27,14 @@ import {
   debugGetConfigListFromAppGroup,
   getConfigListFromAppGroup,
   getConfigListIdsFromAppGroup,
-  getWidgetDebugInfo,
-  type WidgetDebugInfo,
 } from "@/widgets/shared/widgetCache";
 import { requestAddWidgetToHomeScreen } from "@/widgets/shared/requestAddWidgetToHomeScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
   APP_WIDGET_FLOW_NAME,
+  APP_WIDGET_FLOW_VERSION,
+  APP_WIDGET_SUPPORTED,
 } from "@/constants/widget";
 import { createItem, updateItem, deleteItem, readFlows, readItems } from "@directus/sdk";
 import { DividerSubtitle } from "@/components/display/subtitle";
@@ -43,6 +43,7 @@ import {
   useWidgetCollectionExists,
   useWidgetAccessOnly,
   isWidgetForbiddenError,
+  useFlowVersion,
 } from "@/state/widget/useWidgetCollection";
 import { useTranslation } from "react-i18next";
 import { KeyboardAwareScrollView } from "@/components/layout/Layout";
@@ -84,7 +85,7 @@ export function WidgetConfigSection() {
   const [saving, setSaving] = useState(false);
   const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
   const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(null);
-  const [widgetDebugInfo, setWidgetDebugInfo] = useState<WidgetDebugInfo>(null);
+  const flowVersionQuery = useFlowVersion(activeApi?.url ?? null, Platform.OS === "ios");
 
   const getWebhookUrlForInstance = useCallback(
     async (instanceUrl: string): Promise<string> => {
@@ -100,9 +101,7 @@ export function WidgetConfigSection() {
         : (((flows as { data?: unknown[] })?.data as unknown[]) ?? []);
       const id = (list[0] as { id?: string } | undefined)?.id;
       if (!id) {
-        throw new Error(
-          "Widget flow not found on this instance. Install the widget backend first.",
-        );
+        throw new Error("Widget flow not found on this instance. Install the widget backend first.");
       }
       const base = instanceUrl.replace(/\/+$/, "");
       return `${base}/flows/trigger/${id}`;
@@ -137,8 +136,8 @@ export function WidgetConfigSection() {
         ) as unknown;
         const data = Array.isArray(rows) ? rows : (rows as { data?: unknown[] })?.data ?? [];
         const mapped: LatestItemsWidgetConfig[] = (data as any[]).map((row: any) => ({
-          id: row.id,
-          widgetId: row.id,
+          id: String(row.id ?? ""),
+          widgetId: row.id != null ? String(row.id) : undefined,
           instanceUrl: activeApi.url,
           collection: row.collection ?? "",
           sort: row.sort ?? "-date_updated",
@@ -150,16 +149,6 @@ export function WidgetConfigSection() {
         if (!cancelled) {
           await setLatestItemsWidgetConfigs(mapped);
           await writeLatestItemsWidgetConfigListToCache(mapped);
-          if (__DEV__) {
-            const readBack = await debugGetConfigListFromAppGroup();
-            if (readBack != null) {
-              console.log(
-                "[Widget] App group read-back after Directus sync:",
-                readBack.count,
-                "setup(s)"
-              );
-            }
-          }
           reload();
         }
       } catch {
@@ -177,31 +166,15 @@ export function WidgetConfigSection() {
           const readBack = await debugGetConfigListFromAppGroup();
           if (readBack != null) {
             setIdsInAppGroup(readBack.ids ?? []);
-            if (__DEV__) {
-              console.log(
-                "[Widget] App group read-back after write:",
-                readBack.count,
-                "setup(s), raw length",
-                readBack.length
-              );
-            }
           } else {
             getConfigListIdsFromAppGroup().then(setIdsInAppGroup);
           }
-          const debug = await getWidgetDebugInfo();
-          setWidgetDebugInfo(debug ?? null);
         })
         .catch(() => getConfigListIdsFromAppGroup().then(setIdsInAppGroup));
     } else {
       setIdsInAppGroup([]);
     }
   }, [configs]);
-
-  // Load widget extension debug info on mount (so we see what the widget last saw)
-  useEffect(() => {
-    if (Platform.OS !== "ios") return;
-    getWidgetDebugInfo().then((d) => setWidgetDebugInfo(d ?? null));
-  }, []);
 
   const openAdd = () => {
     setEditingId(null);
@@ -543,29 +516,19 @@ export function WidgetConfigSection() {
         {t("widget.addSetup")}
       </Button>
 
-      {Platform.OS === "ios" && (
-        <View style={{ marginTop: 12, padding: 10, backgroundColor: "rgba(0,0,0,0.05)", borderRadius: 8 }}>
-          <Horizontal style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: "600" }}>Widget extension (diagnostic)</Text>
-            <Pressable
-              onPress={() => getWidgetDebugInfo().then((d) => setWidgetDebugInfo(d ?? null))}
-              hitSlop={8}
-            >
-              <Muted style={{ fontSize: 11 }}>Refresh</Muted>
-            </Pressable>
-          </Horizontal>
-          {widgetDebugInfo ? (
-            <Muted style={{ fontSize: 11 }}>
-              Last saw {widgetDebugInfo.configCount} setup(s). App group: defaults {widgetDebugInfo.defaultsAvailable ? "✓" : "✗"}, container {widgetDebugInfo.containerAvailable ? "✓" : "✗"}. Raw: UserDefaults {widgetDebugInfo.defaultsRawLength ?? "—"} chars, file {widgetDebugInfo.fileRawLength ?? "—"} chars.
-              {widgetDebugInfo.decodeError ? ` Decode error: ${widgetDebugInfo.decodeError}` : null}
-              {"\n"}
-              {widgetDebugInfo.at}
-            </Muted>
-          ) : (
-            <Muted style={{ fontSize: 11 }}>
-              No debug file yet. Add the widget to the home screen, tap Setup, then tap Refresh here to see what the widget saw.
-            </Muted>
-          )}
+      {Platform.OS === "ios" && configs.some((c) => !!c.webhookUrl) && (flowVersionQuery.isError || flowVersionQuery.data?.needsUpdate) && (
+        <View style={{ marginTop: 10 }}>
+          <Button
+            variant="soft"
+            disabled={!isAdmin || installMutation.isPending}
+            onPress={() => installMutation.mutate()}
+          >
+            {installMutation.isPending
+              ? "Updating…"
+              : flowVersionQuery.isError
+                ? "Install flow"
+                : "Update flow"}
+          </Button>
         </View>
       )}
 

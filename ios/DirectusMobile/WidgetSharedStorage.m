@@ -3,7 +3,6 @@
 static NSString *const kAppGroup = @"group.com.martijnmichel.directusexpo.widgets";
 static NSString *const kConfigListKey = @"directus.widgets.latestItems.v1.configList";
 static NSString *const kConfigListFileName = @"configList.json";
-static NSString *const kWidgetDebugFileName = @"widget_debug.json";
 static NSString *const kPayloadPrefix = @"directus.widgets.latestItems.v1.payload.";
 
 @interface WidgetSharedStorage : NSObject <RCTBridgeModule>
@@ -66,23 +65,6 @@ RCT_EXPORT_METHOD(getConfigListFromAppGroup:(RCTPromiseResolveBlock)resolve
     }
   }
   resolve(@{ @"length": @(length), @"count": @(count), @"ids": ids });
-}
-
-RCT_EXPORT_METHOD(getWidgetDebugInfo:(RCTPromiseResolveBlock)resolve
-                  reject:(RCTPromiseRejectBlock)reject) {
-  NSURL *containerURL = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:kAppGroup];
-  if (!containerURL) {
-    resolve([NSNull null]);
-    return;
-  }
-  NSURL *fileURL = [containerURL URLByAppendingPathComponent:kWidgetDebugFileName];
-  NSData *data = [NSData dataWithContentsOfURL:fileURL];
-  if (!data.length) {
-    resolve([NSNull null]);
-    return;
-  }
-  id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:NULL];
-  resolve(json ?: [NSNull null]);
 }
 
 RCT_EXPORT_METHOD(setPayload:(NSString *)id

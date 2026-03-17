@@ -1,5 +1,6 @@
 import type { LatestItemsWidgetConfig, LatestItemsWidgetPayload } from "./types";
 import { getWidgetCache } from "@/widgets/shared/widgetCache";
+import { APP_WIDGET_FLOW_VERSION, APP_WIDGET_SUPPORTED } from "@/constants/widget";
 
 /** Compact config list for native widgets (id, title, instanceUrl, collection). */
 export type WidgetConfigListEntry = {
@@ -67,4 +68,64 @@ export async function removeLatestItemsWidgetPayloadFromCache(
   if (!configId || typeof configId !== "string") return;
   const cache = getWidgetCache();
   await cache.setPayload(configId, null);
+}
+
+export type WidgetWebhookHandshakeResponse = {
+  version: number;
+  supports: string[];
+};
+
+/**
+ * Calls the Directus Flow webhook (GET) and returns handshake info.
+ * Intended for checking whether the flow exists and is compatible.
+ *
+ * Expected response shape:
+ * { version: 1, supports: ["latest-items"] }
+ */
+export async function fetchWidgetWebhookHandshake(
+  webhookUrl: string
+): Promise<WidgetWebhookHandshakeResponse> {
+  if (!webhookUrl) throw new Error("Missing webhookUrl");
+  const res = await fetch(webhookUrl, { method: "GET" });
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+  }
+
+  let json: any;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Non-JSON response: ${text.slice(0, 500)}`);
+  }
+
+  if (!json || typeof json !== "object") throw new Error("Invalid JSON response");
+  if (typeof json.version !== "number") throw new Error("Missing/invalid 'version' in response");
+  if (!Array.isArray(json.supports)) throw new Error("Missing/invalid 'supports' in response");
+
+  const supports = json.supports.map((s: any) => String(s));
+
+  return { version: json.version, supports };
+}
+
+/** Convenience: strict check for latest-items compatibility. */
+export async function testLatestItemsWidgetWebhook(
+  config: LatestItemsWidgetConfig
+): Promise<WidgetWebhookHandshakeResponse> {
+  const webhookUrl = config.webhookUrl;
+  if (!webhookUrl) throw new Error("No webhookUrl on this setup");
+  const handshake = await fetchWidgetWebhookHandshake(webhookUrl);
+  if (handshake.version !== APP_WIDGET_FLOW_VERSION) {
+    throw new Error(
+      `Flow version mismatch: got ${handshake.version}, expected ${APP_WIDGET_FLOW_VERSION}`
+    );
+  }
+  const required = APP_WIDGET_SUPPORTED[0];
+  if (!handshake.supports.includes(required)) {
+    throw new Error(
+      `Flow does not support '${required}'. supports=[${handshake.supports.join(", ")}]`
+    );
+  }
+  return handshake;
 }

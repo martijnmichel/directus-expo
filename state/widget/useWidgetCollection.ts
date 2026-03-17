@@ -9,7 +9,10 @@ import {
 import {
   APP_WIDGET_CONFIG_COLLECTION,
   APP_WIDGET_FLOW_NAME,
+  APP_WIDGET_FLOW_VERSION,
+  APP_WIDGET_SUPPORTED,
 } from "@/constants/widget";
+import { fetchWidgetWebhookHandshake } from "@/widgets/latestItems/sync";
 
 export type WidgetSetupState = {
   collectionExists: boolean;
@@ -147,3 +150,53 @@ export function useWidgetCollectionExists(enabled: boolean = true) {
   });
 }
 
+export const useWidgetFlowExists = () => {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["widgetFlowExists"],
+    queryFn: async () => {
+      const flows = await directus!.request(readFlows({
+        filter: { name: { _eq: APP_WIDGET_FLOW_NAME } },
+        limit: 1,
+      } as any));
+      return Array.isArray(flows) ? flows.length > 0 : false;
+    },
+  });
+};
+
+/**
+ * Fetches the widget webhook handshake (GET) via react-query.
+ * Uses the current Directus instance base URL and looks up the flow by name.
+ */
+export function useFlowVersion(instanceUrl: string | null, enabled: boolean = true) {
+  const { directus } = useAuth();
+  return useQuery({
+    queryKey: ["widgetFlowHandshake", instanceUrl],
+    enabled: !!directus && !!instanceUrl && enabled,
+    staleTime: 10_000,
+    refetchOnMount: true,
+    queryFn: async () => {
+      if (!directus || !instanceUrl) return null;
+      const flows = await directus.request(
+        readFlows({
+          filter: { name: { _eq: APP_WIDGET_FLOW_NAME } },
+          limit: 1,
+        } as any),
+      );
+      const flowList = Array.isArray(flows)
+        ? flows
+        : ((flows as { data?: unknown[] })?.data ?? []);
+      const id = (flowList[0] as any)?.id ?? null;
+      if (!id) throw new Error("Flow not found");
+      const base = instanceUrl.replace(/\/+$/, "");
+      const webhookUrl = `${base}/flows/trigger/${id}`;
+
+      const handshake = await fetchWidgetWebhookHandshake(webhookUrl);
+      const required = APP_WIDGET_SUPPORTED[0];
+      const needsUpdate =
+        handshake.version !== APP_WIDGET_FLOW_VERSION ||
+        !handshake.supports.includes(required);
+      return { ...handshake, needsUpdate };
+    },
+  });
+}

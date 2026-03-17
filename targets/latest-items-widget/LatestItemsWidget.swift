@@ -7,7 +7,6 @@ import AppIntents
 private let appGroup = "group.com.martijnmichel.directusexpo.widgets"
 private let configListKey = "directus.widgets.latestItems.v1.configList"
 private let configListFileName = "configList.json"
-private let widgetDebugFileName = "widget_debug.json"
 private let payloadPrefix = "directus.widgets.latestItems.v1.payload."
 
 // MARK: - Models
@@ -67,64 +66,25 @@ private func getDefaults() -> UserDefaults? {
 }
 
 private func readConfigList() -> [WidgetConfigEntry] {
-  let defaultsAvailable = getDefaults() != nil
-  let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
   var raw: String?
-  var defaultsRawLength = 0
   if let defaults = getDefaults() {
     raw = defaults.string(forKey: configListKey)
-    defaultsRawLength = (raw ?? "").count
   }
-  var fileRawLength = 0
-  if raw == nil || raw?.isEmpty == true, let containerURL = containerURL {
+  if raw == nil || raw?.isEmpty == true,
+     let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
     let fileURL = containerURL.appendingPathComponent(configListFileName)
     raw = try? String(contentsOf: fileURL, encoding: .utf8)
-    fileRawLength = (raw ?? "").count
   }
   var list: [WidgetConfigEntry] = []
-  var decodeError: String?
   if let raw = raw, !raw.isEmpty, let data = raw.data(using: .utf8) {
     do {
       let decoded = try JSONDecoder().decode([WidgetConfigEntry].self, from: data)
       list = decoded.filter { !$0.id.isEmpty }
     } catch {
-      decodeError = String(describing: error)
+      // If decoding fails, treat as empty list.
     }
   }
-  writeWidgetDebug(
-    configCount: list.count,
-    defaultsAvailable: defaultsAvailable,
-    containerAvailable: containerURL != nil,
-    defaultsRawLength: defaultsRawLength,
-    fileRawLength: fileRawLength,
-    decodeError: decodeError
-  )
   return list
-}
-
-private func writeWidgetDebug(
-  configCount: Int,
-  defaultsAvailable: Bool,
-  containerAvailable: Bool,
-  defaultsRawLength: Int = 0,
-  fileRawLength: Int = 0,
-  decodeError: String? = nil
-) {
-  guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) else { return }
-  let fileURL = containerURL.appendingPathComponent(widgetDebugFileName)
-  var payload: [String: Any] = [
-    "configCount": configCount,
-    "defaultsAvailable": defaultsAvailable,
-    "containerAvailable": containerAvailable,
-    "defaultsRawLength": defaultsRawLength,
-    "fileRawLength": fileRawLength,
-    "at": ISO8601DateFormatter().string(from: Date()),
-  ]
-  if let decodeError = decodeError {
-    payload["decodeError"] = decodeError
-  }
-  guard let data = try? JSONSerialization.data(withJSONObject: payload) else { return }
-  try? data.write(to: fileURL)
 }
 
 private func readPayload(configId: String) -> LatestItemsPayload? {

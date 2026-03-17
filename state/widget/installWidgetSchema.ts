@@ -186,10 +186,12 @@ export function useInstallWidgetSchema() {
         ? flowsRaw
         : ((flowsRaw as { data?: unknown[] })?.data ?? []);
       const flowExists = flowsList.length > 0;
-
-      if (collectionExists && flowExists) {
-        return { installed: false, alreadyExists: true };
-      }
+      const existingFlowId: string | null =
+        flowExists
+          ? ((flowsList[0] as any)?.id ??
+            (flowsList[0] as any)?.data?.id ??
+            null)
+          : null;
 
       let createdCollection = false;
       let createdFlowId: string | null = null;
@@ -219,6 +221,24 @@ export function useInstallWidgetSchema() {
               } as any),
             );
           }
+        }
+
+        // If the flow already exists, keep it up-to-date (safe metadata/options update).
+        if (flowExists && existingFlowId) {
+          await directus.request(
+            updateFlow(existingFlowId, {
+              name: APP_WIDGET_FLOW_NAME,
+              icon: "widgets",
+              description:
+                "Widget webhook. GET returns {version,supports}. POST resolves widget_id and returns widget data.",
+              status: "active",
+              trigger: "webhook",
+              options: {
+                async: false,
+                response_body: "$last",
+              },
+            } as any),
+          );
         }
 
         if (!flowExists) {

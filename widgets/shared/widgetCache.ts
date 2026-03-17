@@ -10,16 +10,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
  *   predictably during development (widgets just won't see the data).
  */
 
-export type WidgetDebugInfo = {
-  configCount: number;
-  defaultsAvailable: boolean;
-  containerAvailable: boolean;
-  defaultsRawLength?: number;
-  fileRawLength?: number;
-  decodeError?: string;
-  at: string;
-} | null;
-
 type NativeWidgetSharedStorage = {
   setConfigList?(json: string): Promise<void> | void;
   setPayload?(id: string, json: string | null): Promise<void> | void;
@@ -28,7 +18,6 @@ type NativeWidgetSharedStorage = {
     count: number;
     ids: string[];
   }>;
-  getWidgetDebugInfo?(): Promise<WidgetDebugInfo>;
 };
 
 type WidgetCache = {
@@ -100,14 +89,5 @@ export async function debugGetConfigListFromAppGroup(): Promise<{
   ids: string[];
 } | null> {
   return getConfigListFromAppGroup();
-}
-
-/** What the widget extension last read (from widget_debug.json). Null if widget hasn't run or has no app group access. */
-export async function getWidgetDebugInfo(): Promise<WidgetDebugInfo> {
-  const native = (NativeModules as any).WidgetSharedStorage as NativeWidgetSharedStorage | undefined;
-  if (!native?.getWidgetDebugInfo) return null;
-  const result = await Promise.resolve(native.getWidgetDebugInfo!());
-  if (result == null || result === undefined) return null;
-  return result as WidgetDebugInfo;
 }
 
