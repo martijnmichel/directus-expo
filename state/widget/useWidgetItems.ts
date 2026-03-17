@@ -37,9 +37,6 @@ export function useWidgetItems(params: {
   const instanceUrl = directus?.url;
   const userId = user?.id ?? null;
 
-  console.log({ instanceUrl: instanceUrl?.toString() });
-  console.log({ userId });
-
   return useQuery({
     queryKey: ["widgetConfigs", instanceUrl, userId],
     enabled: !!directus && !!instanceUrl?.toString() && !!userId && enabled,
@@ -72,6 +69,7 @@ export function useWidgetItems(params: {
           title: row.title,
           webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
+          extra: row.extra && typeof row.extra === "object" ? row.extra : undefined,
         }))
         .filter((c) => c.id.length > 0);
 

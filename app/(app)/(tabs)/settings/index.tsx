@@ -1,55 +1,38 @@
 import { Button } from "@/components/display/button";
-import { H1, H2, H3, Text } from "@/components/display/typography";
+import { Text } from "@/components/display/typography";
 import { Container } from "@/components/layout/Container";
 import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
 import { useAuth } from "@/contexts/AuthContext";
 import { useThemeToggle } from "@/unistyles/useThemeToggle";
-import { Link, router } from "expo-router";
-import { Moon } from "@/components/icons/Moon";
-import { Sun } from "@/components/icons/Sun";
+import { router } from "expo-router";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import Constants from "expo-constants";
-import {
-  useServerHealth,
-  useServerInfo,
-} from "@/state/queries/directus/server";
-import { APISelect } from "@/components/APISelect";
-import { Divider } from "@/components/layout/divider";
-import { useLocalStorage } from "@/state/local/useLocalStorage";
-import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import { API } from "@/components/APIForm";
-import { Toggle } from "@/components/interfaces/toggle";
-import { LocaleSelect } from "@/components/settings/locale-switch";
-import {
-  DirectusIcon,
-  DirectusIconName,
-} from "@/components/display/directus-icon";
-import { Platform, View } from "react-native";
+import { useServerHealth, useServerInfo } from "@/state/queries/directus/server";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
+import { ScrollView, Platform, View } from "react-native";
 import * as Updates from "expo-updates";
 import { useEffect } from "react";
 import { ExternalLink } from "@/components/ExternalLink";
-import { ApiSwitch } from "@/components/SessionSwitch";
 import { PushNotifications } from "@/components/settings/PushNotifications";
 import { Switch } from "@/components/icons/Switch";
 import { WidgetConfigSection } from "@/components/settings/WidgetConfigSection";
-export default function TabTwoScreen() {
+import { useLocalStorage } from "@/state/local/useLocalStorage";
+import { LocalStorageKeys } from "@/state/local/useLocalStorage";
+import type { API } from "@/components/APIForm";
+import { Toggle } from "@/components/interfaces/toggle";
+import { LocaleSelect } from "@/components/settings/locale-switch";
+import { DirectusIcon, DirectusIconName } from "@/components/display/directus-icon";
+
+export default function SettingsScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
-  const { data: serverInfo } = useServerInfo();
   const { data: health } = useServerHealth();
-  const { directus } = useAuth();
-  const { data: api } = useLocalStorage<API>(
-    LocalStorageKeys.DIRECTUS_API_ACTIVE,
-  );
-
+  const { data: api } = useLocalStorage<API>(LocalStorageKeys.DIRECTUS_API_ACTIVE);
   const { t } = useTranslation();
 
-  const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
-    Updates.useUpdates();
+  const { isUpdateAvailable } = Updates.useUpdates();
 
   useEffect(() => {
     if (Platform.OS !== "web") {
@@ -63,22 +46,10 @@ export default function TabTwoScreen() {
       type: "heading",
       icon: "msDatabase",
     },
-    {
-      label: t("settings.fields.api"),
-      value: api?.name,
-    },
-    {
-      label: t("settings.fields.url"),
-      value: health?.serviceId,
-    },
-    {
-      label: t("settings.fields.status"),
-      value: health?.status,
-    },
-    {
-      label: t("settings.fields.version"),
-      value: health?.releaseId,
-    },
+    { label: t("settings.fields.api"), value: api?.name },
+    { label: t("settings.fields.url"), value: health?.serviceId },
+    { label: t("settings.fields.status"), value: health?.status },
+    { label: t("settings.fields.version"), value: health?.releaseId },
     {
       type: "component",
       component: (
@@ -91,27 +62,15 @@ export default function TabTwoScreen() {
         </Button>
       ),
     },
-
-    {
-      type: "spacing",
-    },
+    { type: "spacing" },
     {
       label: t("settings.sections.user"),
       type: "heading",
       icon: "verified_user",
     },
-    {
-      label: t("settings.fields.firstname"),
-      value: user?.first_name,
-    },
-    {
-      label: t("settings.fields.lastname"),
-      value: user?.last_name,
-    },
-    {
-      label: t("settings.fields.email"),
-      value: user?.email,
-    },
+    { label: t("settings.fields.firstname"), value: user?.first_name },
+    { label: t("settings.fields.lastname"), value: user?.last_name },
+    { label: t("settings.fields.email"), value: user?.email },
     {
       type: "component",
       component: (
@@ -128,21 +87,10 @@ export default function TabTwoScreen() {
         </Button>
       ),
     },
-    {
-      type: "spacing",
-    },
-    {
-      label: t("push.title"),
-      type: "push",
-    },
-
-    {
-      type: "spacing",
-    },
-    {
-        label: "Widgets",
-        type: "widgets"
-    },
+    { type: "spacing" },
+    { label: t("push.title"), type: "push" },
+    { type: "spacing" },
+    { label: "Widgets", type: "widgets" },
     {
       label: t("settings.sections.options"),
       type: "heading",
@@ -160,10 +108,7 @@ export default function TabTwoScreen() {
       label: t("settings.fields.locale"),
       component: <LocaleSelect />,
     },
-
-    {
-      type: "spacing",
-    },
+    { type: "spacing" },
     {
       label: t("settings.sections.app"),
       type: "heading",
@@ -173,10 +118,7 @@ export default function TabTwoScreen() {
       label: t("settings.fields.runtime"),
       value: Constants.expoConfig?.runtimeVersion?.toString(),
     },
-    {
-      label: t("settings.fields.version"),
-      value: Constants.expoConfig?.version,
-    },
+    { label: t("settings.fields.version"), value: Constants.expoConfig?.version },
     {
       label: t("settings.fields.support"),
       type: "component",
@@ -207,9 +149,7 @@ export default function TabTwoScreen() {
           },
         ]
       : []),
-    {
-      type: "spacing",
-    },
+    { type: "spacing" },
   ];
 
   return (
@@ -219,7 +159,7 @@ export default function TabTwoScreen() {
           <Section>
             <Vertical spacing="lg">
               <Vertical spacing="lg">
-                {info.map((item, index) => {
+                {info.map((item: any, index: number) => {
                   switch (item.type) {
                     case "push":
                       return (
@@ -242,9 +182,7 @@ export default function TabTwoScreen() {
                         />
                       );
                     case "spacing":
-                      return (
-                        <View key={`space-${index}`} style={{ height: 18 }} />
-                      );
+                      return <View key={`space-${index}`} style={{ height: 18 }} />;
                     case "component":
                       return (
                         <Horizontal
@@ -274,3 +212,4 @@ export default function TabTwoScreen() {
     </Layout>
   );
 }
+

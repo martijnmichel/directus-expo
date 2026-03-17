@@ -1,12 +1,9 @@
 import { Button } from "@/components/display/button";
-import { Modal } from "@/components/display/modal";
 import { Text, Muted } from "@/components/display/typography";
 import {
   DirectusIcon,
   DirectusIconName,
 } from "@/components/display/directus-icon";
-import { Input } from "@/components/interfaces/input";
-import { Select } from "@/components/interfaces/select";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
@@ -39,8 +36,6 @@ import {
   APP_WIDGET_TYPES,
 } from "@/constants/widget";
 import {
-  createItem,
-  updateItem,
   deleteItem,
   readFlows,
   readItems,
@@ -55,14 +50,19 @@ import {
   useFlowVersion,
 } from "@/state/widget/useWidgetCollection";
 import { useTranslation } from "react-i18next";
-import { KeyboardAwareScrollView } from "@/components/layout/Layout";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
-import { readFieldsByCollection } from "@directus/sdk";
 import { useWidgetItems } from "@/state/widget/useWidgetItems";
 import { listStyles } from "@/components/display/related-listitem";
 import { useStyles } from "react-native-unistyles";
+import { router } from "expo-router";
 const DEFAULT_FIELDS: string[] = [];
+const DEFAULT_SLOTS = [
+  { key: "left", label: "Left", field: "" },
+  { key: "title", label: "Title", field: "" },
+  { key: "subtitle", label: "Subtitle", field: "" },
+  { key: "right", label: "Right", field: "" },
+];
 
 export function WidgetConfigSection() {
   const { t } = useTranslation();
@@ -76,31 +76,10 @@ export function WidgetConfigSection() {
   );
   const { theme } = useStyles();
   const isAdmin = policyGlobals?.admin_access === true;
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<
-    Partial<LatestItemsWidgetConfig> & {
-      instanceUrl: string;
-      collection: string;
-    }
-  >({
-    instanceUrl: activeApi?.url ?? "",
-    collection: "",
-    type: APP_WIDGET_TYPE_LATEST_ITEMS,
-    title: "",
-    sort: "-date_updated",
-    limit: 5,
-    displayField: "",
-    fields: DEFAULT_FIELDS,
-  });
-  const [saving, setSaving] = useState(false);
   const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
   const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(
     null,
   );
-  const [sortOptions, setSortOptions] = useState<
-    Array<{ value: string; text: string }>
-  >([]);
   const flowVersionQuery = useFlowVersion(
     activeApi?.url ?? null,
     Platform.OS === "ios",
@@ -128,67 +107,7 @@ export function WidgetConfigSection() {
       text: getCollectionTranslation(c, i18n.language) ?? String(c.collection),
     }));
 
-  // Load fields for sort dropdown when collection changes (top-level only)
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!directus || !form.collection) {
-        setSortOptions([]);
-        return;
-      }
-      try {
-        const raw = await directus.request(
-          readFieldsByCollection(form.collection as any),
-        );
-        const list = Array.isArray(raw) ? raw : ((raw as any)?.data ?? []);
-        const simple = (list as any[])
-          .filter((f) => f && typeof f.field === "string")
-          .filter((f) => !f.meta?.hidden)
-          .filter((f) => !String(f.field).startsWith("_"))
-          .filter(
-            (f) =>
-              !Array.isArray(f.meta?.special) || f.meta.special.length === 0,
-          ); // avoid relations for now
-
-        const opts: Array<{ value: string; text: string }> = [];
-        for (const f of simple) {
-          const name = String(f.field);
-          opts.push({ value: `-${name}`, text: `${name} (desc)` });
-          opts.push({ value: name, text: `${name} (asc)` });
-        }
-        if (!cancelled) setSortOptions(opts);
-      } catch {
-        if (!cancelled) setSortOptions([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [directus, form.collection]);
-
-  const getWebhookUrlForInstance = useCallback(
-    async (instanceUrl: string): Promise<string> => {
-      if (!directus) throw new Error("Not authenticated with Directus");
-      const flows = await directus.request(
-        readFlows({
-          filter: { name: { _eq: APP_WIDGET_FLOW_NAME } },
-          limit: 1,
-        } as any),
-      );
-      const list = Array.isArray(flows)
-        ? flows
-        : (((flows as { data?: unknown[] })?.data as unknown[]) ?? []);
-      const id = (list[0] as { id?: string } | undefined)?.id;
-      if (!id) {
-        throw new Error(
-          "Widget flow not found on this instance. Install the widget backend first.",
-        );
-      }
-      const base = instanceUrl.replace(/\/+$/, "");
-      return `${base}/flows/trigger/${id}`;
-    },
-    [directus],
-  );
+  // (Editor moved to /settings/widget/[id])
 
   const runFullSetupCheck = isAdmin === true;
   const {
@@ -252,110 +171,8 @@ export function WidgetConfigSection() {
     };
   }, [configIdsKey]);
 
-  const openAdd = () => {
-    setEditingId(null);
-    setForm({
-      instanceUrl: activeApi?.url ?? "",
-      collection: "",
-      type: APP_WIDGET_TYPE_LATEST_ITEMS,
-      title: "",
-      sort: "-date_updated",
-      limit: 5,
-      displayField: "",
-      fields: DEFAULT_FIELDS,
-    });
-    setModalOpen(true);
-  };
-
-  const openEdit = (c: LatestItemsWidgetConfig) => {
-    setEditingId(c.id);
-    setForm({
-      id: c.id,
-      instanceUrl: c.instanceUrl,
-      instanceName: c.instanceName,
-      collection: c.collection,
-      title: c.title ?? "",
-      sort: c.sort ?? "-date_updated",
-      limit: c.limit ?? 5,
-      displayField: c.displayField ?? "",
-      fields: c.fields?.length ? c.fields : DEFAULT_FIELDS,
-    });
-    setModalOpen(true);
-  };
-
-  const save = async () => {
-    if (!form.instanceUrl?.trim() || !form.collection?.trim()) return;
-    setSaving(true);
-    try {
-      let widgetId: string | undefined = undefined;
-
-      // For now, only support creating widget rows for the active API / current Directus client.
-      if (!directus) {
-        throw new Error("Not authenticated with Directus");
-      }
-      if (!user?.id) {
-        throw new Error("Not authenticated (missing user)");
-      }
-
-      const webhookUrl =
-        form.webhookUrl && form.webhookUrl.trim().length > 0
-          ? form.webhookUrl
-          : await getWebhookUrlForInstance(form.instanceUrl);
-
-      if (editingId) {
-        const existing = configs.find((c) => c.id === editingId);
-        widgetId = existing?.widgetId;
-
-        if (widgetId) {
-          await directus.request(
-            updateItem(APP_WIDGET_CONFIG_COLLECTION as any, widgetId, {
-              type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
-              user_id: user.id,
-              collection: form.collection,
-              fields: form.fields,
-              sort: form.sort,
-              limit: form.limit,
-              filter: {},
-            } as any),
-          );
-        }
-      } else {
-        const row = await directus.request(
-          createItem(
-            APP_WIDGET_CONFIG_COLLECTION as any,
-            {
-              user_id: user.id,
-              type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
-              collection: form.collection,
-              fields: form.fields,
-              sort: form.sort,
-              limit: form.limit,
-              filter: {},
-            } as any,
-          ),
-        );
-        widgetId =
-          (row as { id?: string })?.id ??
-          (row as { data?: { id?: string } })?.data?.id;
-      }
-      const refreshed = await widgetItemsQuery.refetch();
-      await writeLatestItemsWidgetConfigListToCache(
-        (refreshed.data as any)?.configs ?? [],
-      );
-      setModalOpen(false);
-      if (Platform.OS === "android" && !editingId) {
-        const { requested } = await requestAddWidgetToHomeScreen();
-        if (requested) {
-          Alert.alert(
-            t("widget.addConfirmTitle"),
-            t("widget.addConfirmMessage"),
-          );
-        }
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
+  const openAdd = () => router.push("/settings/widget/new");
+  const openEdit = (c: LatestItemsWidgetConfig) => router.push(`/settings/widget/${c.id}`);
 
   const remove = (c: LatestItemsWidgetConfig) => {
     Alert.alert(
@@ -600,85 +417,6 @@ export function WidgetConfigSection() {
                 : "Update flow"}
           </Button>
         )}
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Modal.Content
-          variant="bottomSheet"
-          height="70%"
-          title={
-            editingId ? t("widget.editModalTitle") : t("widget.addModalTitle")
-          }
-          actions={
-            <Horizontal spacing="sm">
-              <Button variant="ghost" onPress={() => setModalOpen(false)}>
-                {t("button.cancel")}
-              </Button>
-              <Button
-                onPress={save}
-                disabled={
-                  saving ||
-                  !form.instanceUrl?.trim() ||
-                  !form.collection?.trim()
-                }
-              >
-                {editingId ? t("common.save") : t("widget.add")}
-              </Button>
-            </Horizontal>
-          }
-        >
-          <KeyboardAwareScrollView>
-            <Vertical spacing="md">
-              <Select
-                label="Type"
-                value={form.type || APP_WIDGET_TYPE_LATEST_ITEMS}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, type: String(val) }))
-                }
-                options={APP_WIDGET_TYPES.map((t) => ({
-                  value: t.value,
-                  text: t.label,
-                }))}
-              />
-
-              <Input
-                label={t("widget.titleLabel")}
-                value={form.title ?? ""}
-                onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
-                placeholder={t("widget.titlePlaceholder")}
-              />
-
-              <Select
-                label={t("widget.collectionLabel")}
-                value={form.collection}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, collection: String(val) }))
-                }
-                options={collectionOptions}
-                placeholder={t("widget.collectionPlaceholder")}
-              />
-
-              <Select
-                label={t("widget.sortLabel")}
-                value={form.sort ?? ""}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, sort: String(val) }))
-                }
-                options={sortOptions.length ? sortOptions : []}
-                placeholder={t("widget.sortPlaceholder")}
-                disabled={!form.collection}
-              />
-              <Input
-                label={t("widget.limitLabel")}
-                value={String(form.limit ?? 5)}
-                onChangeText={(val) =>
-                  setForm((f) => ({ ...f, limit: Number(val) || 5 }))
-                }
-                keyboardType="number-pad"
-              />
-            </Vertical>
-          </KeyboardAwareScrollView>
-        </Modal.Content>
-      </Modal>
     </Vertical>
   );
 }

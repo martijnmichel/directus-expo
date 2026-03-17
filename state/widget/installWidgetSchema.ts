@@ -89,6 +89,16 @@ const WIDGET_FIELDS: Array<{
     },
   },
   {
+    field: "extra",
+    type: "json",
+    meta: {
+      interface: "input-code",
+      options: { language: "json" },
+      note:
+        "Per-widget-type config (e.g. latest-items field slots). Shape depends on `type`.",
+    },
+  },
+  {
     field: "filter",
     type: "json",
     meta: {
@@ -623,9 +633,52 @@ module.exports = async function (data) {
   const limit = (widget.limit != null && Number.isFinite(Number(widget.limit))) ? Number(widget.limit) : 10;
   const sort = widget.sort != null && String(widget.sort).trim().length ? String(widget.sort) : "";
   const filter = (widget.filter && typeof widget.filter === "object") ? widget.filter : {};
-  let fields = Array.isArray(widget.fields) ? widget.fields : [];
-  // If no fields are set, request everything.
-  if (!fields.length) fields = ["*"];
+  const extra = (widget.extra && typeof widget.extra === "object") ? widget.extra : {};
+
+  const type = widget.type != null ? String(widget.type) : "";
+  const supports = ["latest-items"];
+  if (type && supports.indexOf(type) === -1) {
+    return { ok: false, reason: "unsupported_type", widget };
+  }
+
+  function normalizeSlots(input) {
+    const defaults = [
+      { key: "left", label: "Left", field: "" },
+      { key: "title", label: "Title", field: "" },
+      { key: "subtitle", label: "Subtitle", field: "" },
+      { key: "right", label: "Right", field: "" },
+    ];
+    const raw = input && Array.isArray(input.slots) ? input.slots : [];
+    const byKey = {};
+    for (var i = 0; i < raw.length; i++) {
+      var s = raw[i];
+      if (!s || typeof s !== "object") continue;
+      var k = s.key != null ? String(s.key) : "";
+      if (!k) continue;
+      byKey[k] = {
+        key: k,
+        label: s.label != null ? String(s.label) : k,
+        field: s.field != null ? String(s.field) : "",
+      };
+    }
+    return defaults.map(function (d) { return byKey[d.key] || d; });
+  }
+
+  const slots = normalizeSlots(extra);
+
+  function sanitizePath(p) {
+    if (!p || typeof p !== "string") return "";
+    // Keep Directus dot paths and M2A colon syntax; strip transforms like .$upper
+    const parts = p.split(".").filter(Boolean).filter(function (seg) { return seg[0] !== "$"; });
+    return parts.join(".");
+  }
+
+  var fieldsSet = new Set(["id"]);
+  for (var j = 0; j < slots.length; j++) {
+    var path = sanitizePath(slots[j].field);
+    if (path) fieldsSet.add(path);
+  }
+  var fields = Array.from(fieldsSet);
   const fields_csv = fields.map(String).join(",");
 
   return {
@@ -633,6 +686,7 @@ module.exports = async function (data) {
     reason: null,
     widget: {
       ...widget,
+      extra: { slots: slots },
       limit,
       sort,
       filter,
@@ -666,7 +720,17 @@ module.exports = async function (data) {
               emitEvents: false,
               query: {
                 limit: 1,
-                fields: ["id", "type", "user_id", "collection", "fields", "filter", "sort", "limit"],
+                fields: [
+                  "id",
+                  "type",
+                  "user_id",
+                  "collection",
+                  "fields",
+                  "extra",
+                  "filter",
+                  "sort",
+                  "limit",
+                ],
                 filter: { id: { _eq: "{{ extract_query.widget_id }}" } },
               },
             },

@@ -1,6 +1,4 @@
 import { useFields } from "@/state/queries/directus/collection";
-import { getValuesAtPath } from "@/helpers/document/template";
-import { toM2AReadPath } from "@/helpers/collections/getDisplayTemplate";
 import { get } from "lodash";
 import { Text } from "../display/typography";
 import { View } from "react-native";
@@ -13,6 +11,7 @@ import { tail } from "lodash";
 import { CoreSchema } from "@directus/sdk";
 import { useStyles } from "react-native-unistyles";
 import { tableStylesheet } from "../display/table";
+import { getJoinedLeafValuesAtPath } from "@/helpers/document/pathValue";
 
 export const DataTableColumn = ({
   template,
@@ -79,22 +78,8 @@ export const DataTableColumn = ({
     const pathSegments = path.split(".").filter(Boolean);
     const isNestedRelationPath = pathSegments.length > 1;
 
-    // Paths that cross multiple arrays (e.g. items.faq_id.translations.question) need
-    // getValuesAtPath; lodash get doesn't traverse into array elements.
-    // M2A API returns items[].<junctionField> = { ... } without collection key; try read path without that segment.
-    let valuesFromPath = getValuesAtPath(relatedDocument, path);
-    const pathSegs = path.split(".").filter(Boolean);
-    const isM2AStylePath = pathSegs.length >= 4;
-    if (isM2AStylePath && (Array.isArray(valuesFromPath) ? valuesFromPath : [valuesFromPath]).every((v) => v == null || typeof v === "object")) {
-      valuesFromPath = getValuesAtPath(relatedDocument, toM2AReadPath(path));
-    }
-    const flattened = Array.isArray(valuesFromPath) ? valuesFromPath : [valuesFromPath];
-    const leafValues = flattened.filter((v) => v != null && typeof v !== "object");
-    if (leafValues.length > 0) {
-      const str = leafValues
-        .map((v) => getFieldValueString({ value: v }))
-        .filter(Boolean)
-        .join(", ");
+    const joined = getJoinedLeafValuesAtPath(relatedDocument, path);
+    if (joined) {
       return (
         <View style={{ width: "100%", minWidth: 0, overflow: "hidden" }}>
           <Text
@@ -102,7 +87,7 @@ export const DataTableColumn = ({
             ellipsizeMode="tail"
             style={[styles.cellText, styles.truncate, { width: "100%" }]}
           >
-            {str}
+            {joined}
           </Text>
         </View>
       );
@@ -177,7 +162,11 @@ export const DataTableColumn = ({
       <Text numberOfLines={1} style={[styles.cellText, styles.truncate]}>
         {parse({
           item: fieldInfo.field,
-          data: (isRelatedValuesAlias ? relatedDocument ?? document : document) as Record<string, unknown>,
+          // For `related-values` aliases (m2m/o2m lists), the base row often contains the populated relation
+          // while the "relatedDocument" query may omit the needed expansion depending on fields selection.
+          data: (isRelatedValuesAlias
+            ? document
+            : relatedDocument ?? document) as Record<string, unknown>,
         })}
       </Text>
     );

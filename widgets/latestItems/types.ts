@@ -45,6 +45,17 @@ export type LatestItemsWidgetConfig = {
    * Field name used as the primary display string if present.
    */
   displayField?: string;
+
+  /**
+   * Per-widget-type config (e.g. latest-items field slots).
+   */
+  extra?: {
+    slots?: Array<{
+      key: string;
+      label: string;
+      field: string;
+    }>;
+  };
 };
 
 /** One column in the widget table (same as datatable header). */

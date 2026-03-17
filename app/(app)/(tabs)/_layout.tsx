@@ -69,7 +69,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="settings/index"
         options={{
           title: t("components.tabs.settings"),
           tabBarIcon: ({ color }) => <Cog size={32} color={color} />,
@@ -81,6 +81,7 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen name="settings/widget/[id]" options={{ href: null }} />
     </Tabs>
   );
 }
