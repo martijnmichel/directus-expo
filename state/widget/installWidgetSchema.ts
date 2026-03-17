@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   createCollection,
+  createField,
   createFlow,
   createOperation,
   createPolicy,
@@ -10,11 +11,13 @@ import {
   deleteOperation,
   deletePolicy,
   readCollections,
+  readFieldsByCollection,
   readFlows,
   readPolicies,
   readOperations,
   readItems,
   updateFlow,
+  updateField,
   updatePolicy,
 } from "@directus/sdk";
 import {
@@ -23,6 +26,7 @@ import {
   APP_WIDGET_FLOW_VERSION,
   APP_WIDGET_SUPPORTED,
   APP_WIDGET_TYPE_LATEST_ITEMS,
+  APP_WIDGET_TYPES,
   WIDGET_FLOW_OPERATION_TYPES,
 } from "@/constants/widget";
 
@@ -54,7 +58,7 @@ const WIDGET_FIELDS: Array<{
     meta: {
       interface: "select-dropdown",
       options: {
-        choices: [{ text: "Latest items", value: APP_WIDGET_TYPE_LATEST_ITEMS }],
+        choices: APP_WIDGET_TYPES.map((t) => ({ text: t.label, value: t.value })),
       },
       required: true,
       note: "Widget type. Currently only 'latest-items' is supported.",
@@ -461,7 +465,7 @@ module.exports = async function (data) {
         if (!filterItemsId) throw new Error("Filter items operation created but no id");
         log("created op", "filter_items", filterItemsId);
 
-        // Dynamic collection read (drives widget payload)
+        // Read the target collection items via Read Data, using normalized values (no `||` / no "undefined").
         const opReadCollection = await directus.request(
           createOperation({
             flow: flowId,
@@ -476,17 +480,18 @@ module.exports = async function (data) {
               permissions: "$full",
               emitEvents: false,
               query: {
-                limit: "{{ extract_widget_config.widget.limit || 10 }}",
-                sort: "{{ extract_widget_config.widget.sort || '-date_updated' }}",
-                filter: "{{ extract_widget_config.widget.filter || {} }}",
-                fields: "{{ extract_widget_config.widget.fields || [] }}",
+                limit: "{{ extract_widget_config.widget.limit }}",
+                sort: "{{ extract_widget_config.widget.sort }}",
+                // Directus expects JSON for filter; provide a JSON string that parses to an object.
+                filter: "{{ extract_widget_config.widget.filter_json }}",
+                // Fields: pass as CSV string (Directus parses this; templated arrays are treated as literal field names)
+                fields: "{{ extract_widget_config.widget.fields_csv }}",
               },
             },
           } as any),
         );
         const readCollectionId = idOf(opReadCollection);
-        if (!readCollectionId)
-          throw new Error("Read collection operation created but no id");
+        if (!readCollectionId) throw new Error("Read collection op created but no id");
         log("created op", "read_collection", readCollectionId);
 
         const opReadUsers = await directus.request(
@@ -613,7 +618,30 @@ module.exports = async function (data) {
   if (!widget) return { ok: false, reason: "missing_row", widget: null };
   if (!widget.user_id) return { ok: false, reason: "missing_user_id", widget };
   if (!widget.collection) return { ok: false, reason: "missing_collection", widget };
-  return { ok: true, reason: null, widget };
+
+  // Normalize query inputs so templating never produces "undefined"
+  const limit = (widget.limit != null && Number.isFinite(Number(widget.limit))) ? Number(widget.limit) : 10;
+  const sort = widget.sort != null && String(widget.sort).trim().length ? String(widget.sort) : "";
+  const filter = (widget.filter && typeof widget.filter === "object") ? widget.filter : {};
+  let fields = Array.isArray(widget.fields) ? widget.fields : [];
+  // If no fields are set, request everything.
+  if (!fields.length) fields = ["*"];
+  const fields_csv = fields.map(String).join(",");
+
+  return {
+    ok: true,
+    reason: null,
+    widget: {
+      ...widget,
+      limit,
+      sort,
+      filter,
+      fields,
+      fields_csv,
+      filter_json: JSON.stringify(filter),
+      fields_json: JSON.stringify(fields),
+    },
+  };
 };`.trim(),
             },
           } as any),
@@ -689,10 +717,12 @@ module.exports = async function (data) {
         const extractId = idOf(opExtractQuery);
         if (!extractId) throw new Error("Extract query operation created but no id");
         log("created op", "extract_query", extractId);
+
         return { extractId };
       };
 
       try {
+        // Ensure collection exists (create if missing)
         if (!collectionExists) {
           await directus.request(
             createCollection({
@@ -742,6 +772,54 @@ module.exports = async function (data) {
             } as any),
           );
           createdCollection = true;
+        }
+
+        // Ensure required fields exist / are up-to-date (even if collection already existed).
+        // We avoid touching primary key `id` on existing collections.
+        try {
+          const existingFieldsRaw = await directus.request(
+            readFieldsByCollection(APP_WIDGET_CONFIG_COLLECTION as any),
+          );
+          const existingFields = Array.isArray(existingFieldsRaw)
+            ? existingFieldsRaw
+            : ((existingFieldsRaw as { data?: unknown[] })?.data ?? []);
+          const existing = new Set(
+            (existingFields as any[])
+              .map((f) => String(f?.field ?? ""))
+              .filter(Boolean),
+          );
+
+          for (const f of WIDGET_FIELDS) {
+            if (f.field === "id") continue;
+            if (existing.has(f.field)) continue;
+            await directus.request(
+              createField(APP_WIDGET_CONFIG_COLLECTION as any, {
+                field: f.field,
+                type: f.type,
+                meta: f.meta,
+              } as any),
+            );
+            log("created missing field", f.field);
+          }
+
+          // Keep the `type` dropdown choices aligned (safe meta-only update).
+          if (existing.has("type")) {
+            await directus.request(
+              updateField(APP_WIDGET_CONFIG_COLLECTION as any, "type", {
+                meta: {
+                  interface: "select-dropdown",
+                  options: {
+                    choices: APP_WIDGET_TYPES.map((t) => ({ text: t.label, value: t.value })),
+                  },
+                  required: true,
+                  note: "Widget type. Currently only 'latest-items' is supported.",
+                },
+              } as any),
+            );
+          }
+        } catch (e: any) {
+          // Don't fail install if field upsert fails; flow updates are still valuable.
+          log("field upsert failed", String(e?.message ?? e ?? ""));
         }
 
         // If the flow already exists: keep the SAME flow id, delete all operations, recreate canonical ops.

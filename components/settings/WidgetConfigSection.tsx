@@ -6,6 +6,7 @@ import {
   DirectusIconName,
 } from "@/components/display/directus-icon";
 import { Input } from "@/components/interfaces/input";
+import { Select } from "@/components/interfaces/select";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
 import { useLocalStorage } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
@@ -42,6 +43,7 @@ import {
   APP_WIDGET_FLOW_VERSION,
   APP_WIDGET_SUPPORTED,
   APP_WIDGET_TYPE_LATEST_ITEMS,
+  APP_WIDGET_TYPES,
 } from "@/constants/widget";
 import {
   createItem,
@@ -94,6 +96,7 @@ export function WidgetConfigSection() {
   >({
     instanceUrl: activeApi?.url ?? "",
     collection: "",
+    type: APP_WIDGET_TYPE_LATEST_ITEMS,
     title: "",
     sort: "-date_updated",
     limit: 5,
@@ -223,6 +226,7 @@ export function WidgetConfigSection() {
     setForm({
       instanceUrl: activeApi?.url ?? "",
       collection: "",
+      type: APP_WIDGET_TYPE_LATEST_ITEMS,
       title: "",
       sort: "-date_updated",
       limit: 5,
@@ -274,7 +278,7 @@ export function WidgetConfigSection() {
         if (widgetId) {
           await directus.request(
             updateItem(APP_WIDGET_CONFIG_COLLECTION as any, widgetId, {
-              type: APP_WIDGET_TYPE_LATEST_ITEMS,
+              type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
               user_id: user.id,
               collection: form.collection,
               fields: form.fields,
@@ -304,7 +308,7 @@ export function WidgetConfigSection() {
             APP_WIDGET_CONFIG_COLLECTION as any,
             {
               user_id: user.id,
-              type: APP_WIDGET_TYPE_LATEST_ITEMS,
+              type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
               collection: form.collection,
               fields: form.fields,
               sort: form.sort,
@@ -637,6 +641,17 @@ export function WidgetConfigSection() {
         >
           <KeyboardAwareScrollView>
             <Vertical spacing="md">
+              <Select
+                label="Type"
+                value={form.type || APP_WIDGET_TYPE_LATEST_ITEMS}
+                onValueChange={(val) =>
+                  setForm((f) => ({ ...f, type: String(val) }))
+                }
+                options={APP_WIDGET_TYPES.map((t) => ({
+                  value: t.value,
+                  text: t.label,
+                }))}
+              />
               <Input
                 label={t("widget.collectionLabel")}
                 value={form.collection}
