@@ -46,6 +46,7 @@ import {
   readItems,
 } from "@directus/sdk";
 import { DividerSubtitle } from "@/components/display/subtitle";
+import { Alert as InlineAlert } from "@/components/display/alert";
 import { useInstallWidgetSchema } from "@/state/widget/installWidgetSchema";
 import {
   useWidgetCollectionExists,
@@ -59,6 +60,8 @@ import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { readFieldsByCollection } from "@directus/sdk";
 import { useWidgetItems } from "@/state/widget/useWidgetItems";
+import { listStyles } from "@/components/display/related-listitem";
+import { useStyles } from "react-native-unistyles";
 
 const DEFAULT_FIELDS: string[] = [];
 
@@ -66,6 +69,7 @@ export function WidgetConfigSection() {
   const { t } = useTranslation();
   const { i18n } = useTranslation();
   const { directus, policyGlobals, user } = useAuth();
+  const { styles: listItemStyles } = useStyles(listStyles);
   const { data: allCollections } = useCollections();
   const installMutation = useInstallWidgetSchema();
   const { data: activeApi } = useLocalStorage<{ url: string }>(
@@ -188,6 +192,7 @@ export function WidgetConfigSection() {
     refetch: refetchAccessOnly,
   } = useWidgetAccessOnly(!runFullSetupCheck);
   const widgetAccess = runFullSetupCheck ? setup?.access : accessOnly?.access;
+
 
   const widgetItemsQuery = useWidgetItems({
     enabled: widgetAccess === "ok",
@@ -455,35 +460,20 @@ export function WidgetConfigSection() {
     <Vertical spacing="md">
       <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
       <Muted>{t("widget.intro")}</Muted>
-      {configs.length > 0 && (
-        <View
-          style={{
-            marginTop: 8,
-            paddingVertical: 8,
-            paddingHorizontal: 12,
-            backgroundColor: "rgba(0,0,0,0.04)",
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ fontWeight: "600", marginBottom: 4 }}>
-            {t("widget.addToHomeScreenTitle")}
-          </Text>
-          <Muted style={{ marginBottom: 8 }}>
-            {Platform.OS === "android"
-              ? t("widget.addToHomeScreenHintAndroid")
-              : t("widget.addToHomeScreenHintIos")}
-          </Muted>
-          {configs.length === 0 && (
-            <Muted style={{ marginBottom: 8 }}>
-              {t("widget.setupPickerHint")}
-            </Muted>
-          )}
-          {Platform.OS === "android" && (
+      <InlineAlert
+        status="info"
+        message={
+          Platform.OS === "android"
+            ? t("widget.addToHomeScreenHintAndroid")
+            : t("widget.addToHomeScreenHintIos")
+        }
+        action={
+          Platform.OS === "android" ? (
             <Button
               variant="soft"
+              size="sm"
               onPress={async () => {
-                const { requested, error } =
-                  await requestAddWidgetToHomeScreen();
+                const { requested, error } = await requestAddWidgetToHomeScreen();
                 if (error) {
                   Alert.alert(t("widget.addErrorTitle"), error);
                 } else if (requested) {
@@ -493,54 +483,48 @@ export function WidgetConfigSection() {
                   );
                 }
               }}
-              leftIcon={<DirectusIcon name="add" />}
             >
-              {t("widget.addToHomeScreenButton")}
+              <DirectusIcon name="add" />
             </Button>
-          )}
-        </View>
+          ) : undefined
+        }
+      />
+      {configs.length === 0 && (
+        <InlineAlert status="warning" message={t("widget.setupPickerHint")} />
       )}
-      <Horizontal style={{ flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+      <Vertical spacing="xs" style={{ marginTop: 8 }}>
         {configs.map((c) => (
-          <View
+          <Pressable
             key={c.id}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              backgroundColor: "rgba(0,0,0,0.04)",
-              borderRadius: 8,
-              marginBottom: 4,
-              minWidth: 200,
-            }}
+            onPress={() => openEdit(c)}
+            style={listItemStyles.listItem}
           >
-            <Pressable onPress={() => openEdit(c)} style={{ flex: 1 }}>
-              <Horizontal spacing="xs" style={{ alignItems: "center" }}>
-                {idsInAppGroup.includes(c.id) && (
-                  <View style={{ opacity: 0.7 }}>
-                    <DirectusIcon name="check" size={16} />
-                  </View>
-                )}
-                <View>
-                  <Text numberOfLines={1} style={{ fontWeight: "600" }}>
-                    {c.title || c.collection}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{ fontSize: 12, opacity: 0.8 }}
-                  >
-                    {c.instanceName || c.instanceUrl} · {c.collection}
-                  </Text>
+            <Horizontal spacing="sm" style={{ alignItems: "center", flex: 1 }}>
+              {idsInAppGroup.includes(c.id) ? (
+                <View style={{ opacity: 0.7 }}>
+                  <DirectusIcon name="check" size={18} />
                 </View>
-              </Horizontal>
-            </Pressable>
-            <Horizontal spacing="xs">
+              ) : (
+                <View style={{ opacity: 0.25 }}>
+                  <DirectusIcon name="check" size={18} />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text numberOfLines={1} style={{ fontWeight: "600" }}>
+                  {c.title || c.collection}
+                </Text>
+                <Text numberOfLines={1} style={{ fontSize: 12, opacity: 0.8 }}>
+                  {c.collection}
+                </Text>
+              </View>
+            </Horizontal>
+
+            <Horizontal spacing="xs" style={{ marginLeft: "auto" }}>
               {!idsInAppGroup.includes(c.id) && (
                 <Button
                   variant="ghost"
                   size="sm"
+                  loading={syncingToWidgetId === c.id}
                   onPress={async () => {
                     setSyncingToWidgetId(c.id);
                     try {
@@ -556,15 +540,11 @@ export function WidgetConfigSection() {
                   }}
                   disabled={syncingToWidgetId !== null}
                 >
-                  {syncingToWidgetId === c.id ? (
-                    <ActivityIndicator size="small" />
-                  ) : (
-                    t("widget.syncToWidget")
-                  )}
+                  <DirectusIcon name="refresh" />
                 </Button>
               )}
               <Button variant="ghost" size="sm" onPress={() => openEdit(c)}>
-                {t("widget.edit")}
+                <DirectusIcon name="edit" />
               </Button>
               <Button
                 variant="ghost"
@@ -572,12 +552,12 @@ export function WidgetConfigSection() {
                 colorScheme="error"
                 onPress={() => remove(c)}
               >
-                {t("widget.delete")}
+                <DirectusIcon name="delete" />
               </Button>
             </Horizontal>
-          </View>
+          </Pressable>
         ))}
-      </Horizontal>
+      </Vertical>
       <Button
         variant="soft"
         onPress={openAdd}

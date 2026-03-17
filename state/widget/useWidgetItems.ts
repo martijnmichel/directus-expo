@@ -14,10 +14,7 @@ function coerceArray(val: unknown): string[] | undefined {
 }
 
 async function getWebhookUrlForInstance(directus: any) {
-  const instanceUrl: string | null =
-    ((directus as any)?.url as string | undefined) ||
-    ((directus as any)?.client?.url as string | undefined) ||
-    null;
+  const instanceUrl = directus?.url.toString();
   if (!instanceUrl) return null;
   const flows = await directus.request(
     readFlows({
@@ -37,19 +34,21 @@ export function useWidgetItems(params: {
 }) {
   const { directus, user } = useAuth();
   const enabled = params.enabled ?? true;
-  const instanceUrl =
-    ((directus as any)?.url as string | undefined) ||
-    ((directus as any)?.client?.url as string | undefined) ||
-    null;
+  const instanceUrl = directus?.url;
   const userId = user?.id ?? null;
+
+  console.log({ instanceUrl: instanceUrl?.toString() });
+  console.log({ userId });
 
   return useQuery({
     queryKey: ["widgetConfigs", instanceUrl, userId],
-    enabled: !!directus && !!instanceUrl && !!userId && enabled,
+    enabled: !!directus && !!instanceUrl?.toString() && !!userId && enabled,
     staleTime: 5_000,
     queryFn: async (): Promise<{ configs: LatestItemsWidgetConfig[] }> => {
-      if (!directus || !instanceUrl || !userId) return { configs: [] };
+      if (!directus || !instanceUrl?.toString() || !userId) return { configs: [] };
+
       const webhookUrl = await getWebhookUrlForInstance(directus);
+
 
       // Directus-first list, filtered by current user.
       const rowsRaw = await directus.request(
@@ -60,11 +59,12 @@ export function useWidgetItems(params: {
       );
       const rows = Array.isArray(rowsRaw) ? rowsRaw : ((rowsRaw as any)?.data ?? []);
 
+
       const mapped: LatestItemsWidgetConfig[] = (rows as any[])
         .map((row) => ({
           id: String(row.id ?? ""),
           widgetId: row.id != null ? String(row.id) : undefined,
-          instanceUrl: instanceUrl,
+          instanceUrl: instanceUrl.toString(),
           collection: row.collection ?? "",
           sort: row.sort ?? "",
           limit: row.limit ?? 5,
