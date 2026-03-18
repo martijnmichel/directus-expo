@@ -459,6 +459,7 @@ module.exports = async function (data) {
   const users = asArray(data.read_users);
   const items = asArray(data.read_collection);
   const relations = asArray(data.read_relations);
+  const fieldsMeta = asArray(data.read_fields);
 
   function toPolicyId(p) {
     if (p == null) return null;
@@ -666,6 +667,33 @@ module.exports = async function (data) {
       return null;
     }
 
+    var translationsAliasByCollection = {};
+    function isTranslationsAliasField(col, fieldName) {
+      var key = String(col) + ":" + String(fieldName);
+      if (Object.prototype.hasOwnProperty.call(translationsAliasByCollection, key)) {
+        return translationsAliasByCollection[key] === true;
+      }
+      var isTrans = false;
+      for (var i = 0; i < fieldsMeta.length; i++) {
+        var f = fieldsMeta[i];
+        if (!f) continue;
+        var c = f.collection != null ? f.collection : f.many_collection;
+        var ff = f.field != null ? f.field : f.many_field;
+        if (c !== col || ff !== fieldName) continue;
+        var iface = f.meta && f.meta.interface != null ? String(f.meta.interface) : "";
+        if (iface === "translations") { isTrans = true; break; }
+        var sp = f.meta && f.meta.special != null ? f.meta.special : null;
+        if (Array.isArray(sp)) {
+          for (var j = 0; j < sp.length; j++) {
+            if (String(sp[j]) === "translations") { isTrans = true; break; }
+          }
+          if (isTrans) break;
+        }
+      }
+      translationsAliasByCollection[key] = isTrans;
+      return isTrans;
+    }
+
     function nextCollectionFromSegment(col, fieldName) {
       // M2O / direct FK: relations.collection.field -> related_collection
       var direct = findRelation(col, fieldName);
@@ -687,6 +715,13 @@ module.exports = async function (data) {
       if (junctionFieldRaw) {
         var junctionCollection = String(aliasManyCol);
         var junctionField = String(junctionFieldRaw);
+
+        // Translations: alias points to the translations rows (many_collection) directly,
+        // even though "junction_field" is set (usually languages_code).
+        if (isTranslationsAliasField(col, fieldName)) {
+          return String(aliasManyCol);
+        }
+
         var manySide = findRelation(junctionCollection, junctionField);
         if (manySide) {
           var related2 = (manySide.related_collection != null ? manySide.related_collection : manySide.one_collection);
@@ -880,6 +915,30 @@ module.exports = async function (data) {
         if (!readRelationsId) throw new Error("Read relations operation created but no id");
         log("created op", "read_relations", readRelationsId);
 
+        const opReadFieldsMeta = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "read_fields",
+            type: opTypes.readData,
+            name: "Read fields meta",
+            position_x: -10,
+            position_y: 0,
+            resolve: readRelationsId,
+            options: {
+              collection: "directus_fields",
+              permissions: "$full",
+              emitEvents: false,
+              query: {
+                limit: -1,
+                fields: ["collection", "field", "meta.interface", "meta.special"],
+              },
+            },
+          } as any),
+        );
+        const readFieldsId = idOf(opReadFieldsMeta);
+        if (!readFieldsId) throw new Error("Read fields meta operation created but no id");
+        log("created op", "read_fields", readFieldsId);
+
         const opWidgetConfigOk = await directus.request(
           createOperation({
             flow: flowId,
@@ -888,7 +947,7 @@ module.exports = async function (data) {
             name: "widget_config ok?",
             position_x: 30,
             position_y: -10,
-            resolve: readRelationsId,
+            resolve: readFieldsId,
             reject: emptyResponseId,
             options: {
               filter: { extract_widget_config: { ok: { _eq: true } } },

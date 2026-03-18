@@ -75,6 +75,7 @@ function getAliasRelationTargets(args: {
   | {
       kind: "m2m";
       relatedCollection: string;
+      viaJunctionField?: string | null;
     }
   | {
       kind: "m2a";
@@ -137,6 +138,7 @@ function getAliasRelationTargets(args: {
     relatedCollection: isTranslationsAlias
       ? junctionCollection
       : String(manySide.related_collection),
+    viaJunctionField: isTranslationsAlias ? null : junctionField,
   };
 }
 
@@ -220,6 +222,9 @@ function FieldTree({
           if (aliasTargets && !search.trim()) {
             if (aliasTargets.kind === "m2m") {
               const relatedCollection = aliasTargets.relatedCollection;
+              const via = aliasTargets.viaJunctionField
+                ? `${String(aliasTargets.viaJunctionField)}.`
+                : "";
               return (
                 <Accordion
                   key={`${collection}.${basePath}${fieldName}`}
@@ -235,7 +240,7 @@ function FieldTree({
                     <AccordionContent>
                       <FieldTree
                         collection={relatedCollection}
-                        basePath={`${basePath}${fieldName}.`}
+                        basePath={`${basePath}${fieldName}.${via}`}
                         search={search}
                         onSelect={onSelect}
                         depth={depth + 1}
