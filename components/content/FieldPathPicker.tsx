@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { useFields } from "@/state/queries/directus/collection";
 import { useRelations } from "@/state/queries/directus/core";
 import type { CoreSchema } from "@directus/sdk";
+import { ScrollView } from "react-native-gesture-handler";
 
 type FieldOutput = {
   field: string;
@@ -124,7 +125,16 @@ function getAliasRelationTargets(args: {
   }
 
   // M2M: many-side points to the related collection
-  return { kind: "m2m", relatedCollection: String(manySide.related_collection) };
+  // Special-case "translations" junction collections: users typically want to pick fields
+  // from the translation rows themselves (e.g. `translations.title`), not from `languages.*`.
+  const isTranslationsJunction =
+    aliasField === "translations" || junctionCollection.endsWith("_translations");
+  return {
+    kind: "m2m",
+    relatedCollection: isTranslationsJunction
+      ? junctionCollection
+      : String(manySide.related_collection),
+  };
 }
 
 function FieldTree({
@@ -343,6 +353,9 @@ export function FieldPathPicker({
   return (
     <Modal open={open} onClose={onClose}>
       <Modal.Content variant="bottomSheet" height="80%" title={title}>
+        <ScrollView>
+
+
         <Vertical spacing="md">
           <Input
             value={search}
@@ -364,6 +377,7 @@ export function FieldPathPicker({
             />
           )}
         </Vertical>
+        </ScrollView>
       </Modal.Content>
     </Modal>
   );
