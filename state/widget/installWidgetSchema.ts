@@ -458,6 +458,7 @@ module.exports = async function (data) {
   const roles = asArray(data.read_roles);
   const users = asArray(data.read_users);
   const items = asArray(data.read_collection);
+  const relations = asArray(data.read_relations);
 
   function toPolicyId(p) {
     if (p == null) return null;
@@ -540,12 +541,197 @@ module.exports = async function (data) {
     };
   }
 
+  function asStringArray(val) {
+    if (val == null) return [];
+    if (val && typeof val === "object" && Array.isArray(val.data)) return asStringArray(val.data);
+    if (Array.isArray(val)) return val.map(function (v) { return v == null ? "" : String(v); }).filter(Boolean);
+    if (typeof val === "string") {
+      var s = val.trim();
+      if (!s) return [];
+      if (s.indexOf(",") >= 0) return s.split(",").map(function (x) { return String(x).trim(); }).filter(Boolean);
+      return [s];
+    }
+    return [String(val)];
+  }
+
+  function getUserById(uid) {
+    for (var i = 0; i < users.length; i++) if (users[i] && users[i].id === uid) return users[i];
+    return null;
+  }
+
+  function getRoleById(rid) {
+    for (var i = 0; i < roles.length; i++) if (roles[i] && roles[i].id === rid) return roles[i];
+    return null;
+  }
+
+  function getPolicyIdListForUser(uid) {
+    var u = getUserById(uid);
+    if (!u) return [];
+    var ids = [];
+    // user policies
+    var up = policyIds(u);
+    for (var i = 0; i < up.length; i++) {
+      var pid = toPolicyId(up[i]);
+      if (pid) ids.push(pid);
+    }
+    // role policies
+    if (u.role) {
+      var r = getRoleById(u.role);
+      if (r) {
+        var rp = policyIds(r);
+        for (var j = 0; j < rp.length; j++) {
+          var rpid = toPolicyId(rp[j]);
+          if (rpid) ids.push(rpid);
+        }
+      }
+    }
+    // de-dupe
+    var seen = {};
+    var out = [];
+    for (var k = 0; k < ids.length; k++) {
+      var v = String(ids[k]);
+      if (!seen[v]) { seen[v] = true; out.push(v); }
+    }
+    return out;
+  }
+
+  function getAllowedFieldsForUserOnCollection(uid, col) {
+    var pols = getPolicyIdListForUser(uid);
+    // Admin access => allow all fields
+    for (var i = 0; i < pols.length; i++) {
+      if (policyIdsWithAdmin.has(String(pols[i]))) return null;
+    }
+    var allowed = new Set();
+    var hasAny = false;
+    for (var j = 0; j < permissions.length; j++) {
+      var p = permissions[j];
+      if (!p) continue;
+      if (p.collection !== col) continue;
+      if (p.action !== "read") continue;
+      var pid = toPolicyId(p.policy);
+      if (!pid) continue;
+      if (pols.indexOf(String(pid)) === -1) continue;
+      var fields = asStringArray(p.fields);
+      if (fields.length === 0) continue;
+      hasAny = true;
+      for (var f = 0; f < fields.length; f++) {
+        var name = String(fields[f] || "").trim();
+        if (!name) continue;
+        if (name === "*") return null; // wildcard => all fields
+        allowed.add(name);
+      }
+    }
+    // If we couldn't derive anything, be conservative and allow (collection-level check already passed).
+    if (!hasAny) return null;
+    return allowed;
+  }
+
+  function isFieldAllowed(allowedSetOrNull, fieldName) {
+    if (!fieldName) return false;
+    if (allowedSetOrNull == null) return true;
+    return allowedSetOrNull.has(fieldName);
+  }
+
+  function isPathAllowedForUser(uid, baseCol, path) {
+    var p = String(path || "").trim();
+    if (!p) return false;
+    var currentCol = String(baseCol);
+    var allowedByCol = {};
+    function allowedFor(col) {
+      var k = String(col);
+      if (Object.prototype.hasOwnProperty.call(allowedByCol, k)) return allowedByCol[k];
+      allowedByCol[k] = getAllowedFieldsForUserOnCollection(uid, k);
+      return allowedByCol[k];
+    }
+
+    function findRelation(col, fieldName) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var manyCol = (r.collection != null ? r.collection : r.many_collection);
+        var manyField = (r.field != null ? r.field : r.many_field);
+        if (manyCol === col && manyField === fieldName) return r;
+      }
+      return null;
+    }
+
+    function findAliasRelation(col, aliasField) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var oneCol = (r.related_collection != null ? r.related_collection : r.one_collection);
+        var oneField = (r.meta && r.meta.one_field != null ? r.meta.one_field : r.one_field);
+        if (oneCol === col && oneField === aliasField) return r;
+      }
+      return null;
+    }
+
+    function nextCollectionFromSegment(col, fieldName) {
+      // M2O / direct FK: relations.collection.field -> related_collection
+      var direct = findRelation(col, fieldName);
+      if (direct) {
+        var related = (direct.related_collection != null ? direct.related_collection : direct.one_collection);
+        if (related) return String(related);
+      }
+
+      // O2M / alias: relations.related_collection.meta.one_field -> relations.collection
+      var alias = findAliasRelation(col, fieldName);
+      var aliasManyCol = alias
+        ? (alias.collection != null ? alias.collection : alias.many_collection)
+        : null;
+      if (!alias || !aliasManyCol) return null;
+
+      // M2M/M2A alias has junction_field; resolve many-side to determine related collection
+      var junctionFieldRaw =
+        alias.meta && alias.meta.junction_field != null ? alias.meta.junction_field : alias.junction_field;
+      if (junctionFieldRaw) {
+        var junctionCollection = String(aliasManyCol);
+        var junctionField = String(junctionFieldRaw);
+        var manySide = findRelation(junctionCollection, junctionField);
+        if (manySide) {
+          var related2 = (manySide.related_collection != null ? manySide.related_collection : manySide.one_collection);
+          if (related2) return String(related2);
+        }
+        return null; // M2A handled via explicit ":collection" segments
+      }
+
+      return String(aliasManyCol);
+    }
+
+    var parts = p.split(".");
+    for (var j = 0; j < parts.length; j++) {
+      var seg = String(parts[j] || "");
+      if (!seg) continue;
+      var colon = seg.indexOf(":");
+      var fieldName = (colon >= 0 ? seg.slice(0, colon) : seg).trim();
+      if (!isFieldAllowed(allowedFor(currentCol), fieldName)) return false;
+      if (colon >= 0) {
+        var nextCol = seg.slice(colon + 1).trim();
+        if (nextCol) currentCol = nextCol;
+      } else {
+        // Follow relation graph to validate subsequent segments against the correct collection
+        var nc = nextCollectionFromSegment(currentCol, fieldName);
+        if (nc) currentCol = nc;
+      }
+    }
+    return true;
+  }
+
   var slots = normalizeSlots(widget.extra || {});
   var formatted = (Array.isArray(items) ? items : []).map(function (it) {
     var id = it && (it.id != null ? String(it.id) : "");
     var values = slots.map(function (s) {
       var path = (s.field || "").trim();
-      var value = path ? getJoinedLeafValuesAtPath(it, path) : "";
+      var value = "";
+      if (path) {
+        // Enforce field-level read access for the widget owner.
+        // If any field in the path is not readable, return an empty string for that slot.
+        if (isPathAllowedForUser(widget.user_id, collection, path)) {
+          value = getJoinedLeafValuesAtPath(it, path) || "";
+        } else {
+          value = "";
+        }
+      }
       return { slot: s.key, type: "string", value: value || "" };
     });
     return { id: id, values: values };
@@ -665,7 +851,7 @@ module.exports = async function (data) {
               collection: "directus_permissions",
               permissions: "$full",
               emitEvents: false,
-              query: { limit: -1, fields: ["collection", "policy", "action"] },
+              query: { limit: -1, fields: ["collection", "policy", "action", "fields"] },
             },
           } as any),
         );
@@ -673,6 +859,26 @@ module.exports = async function (data) {
         if (!readPermissionsId)
           throw new Error("Read permissions operation created but no id");
         log("created op", "read_permissions", readPermissionsId);
+
+        const opReadRelations = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "read_relations",
+            type: opTypes.readData,
+            name: "Read relations",
+            position_x: 0,
+            position_y: 0,
+            resolve: readPermissionsId,
+            options: {
+              collection: "directus_relations",
+              permissions: "$full",
+              emitEvents: false,
+            },
+          } as any),
+        );
+        const readRelationsId = idOf(opReadRelations);
+        if (!readRelationsId) throw new Error("Read relations operation created but no id");
+        log("created op", "read_relations", readRelationsId);
 
         const opWidgetConfigOk = await directus.request(
           createOperation({
@@ -682,7 +888,7 @@ module.exports = async function (data) {
             name: "widget_config ok?",
             position_x: 30,
             position_y: -10,
-            resolve: readPermissionsId,
+            resolve: readRelationsId,
             reject: emptyResponseId,
             options: {
               filter: { extract_widget_config: { ok: { _eq: true } } },
