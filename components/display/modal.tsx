@@ -66,7 +66,7 @@ interface ModalContentProps {
 
 interface ModalTriggerProps {
   children:
-    | React.ReactNode
+    | React.ReactElement<any>
     | ((props: { open: () => void }) => React.ReactNode);
 }
 
@@ -140,14 +140,17 @@ const ModalContent = ({
           <Pressable style={StyleSheet.absoluteFill} onPress={close} />
 
           {variant === "bottomSheet" && (
-            <Button
-              onPress={close}
-              variant="soft"
-              rounded
-              style={styles.closeButton}
-            >
-              <X size={24} aria-label={t("components.modal.close")} />
-            </Button>
+            <View style={styles.bottomSheetCloseWrapper} pointerEvents="box-none">
+              <Button
+                onPress={close}
+                variant="soft"
+                rounded
+                size="md"
+                style={styles.closeButton}
+              >
+                <X size={24} aria-label={t("components.modal.close")} />
+              </Button>
+            </View>
           )}
           <View style={contentStyles} onStartShouldSetResponder={() => true}>
             {variant === "bottomSheet" && (
@@ -176,9 +179,7 @@ const ModalTrigger = ({ children }: ModalTriggerProps) => {
 
   return typeof children === "function"
     ? children({ open })
-    : cloneElement(children as React.ReactElement, {
-        onPress: open,
-      });
+    : cloneElement(children as React.ReactElement<any>, { onPress: open } as any);
 };
 
 // Attach sub-components to Modal
@@ -240,6 +241,11 @@ const modalStyles = createStyleSheet((theme) => ({
     alignSelf: "center",
     marginBottom: theme.spacing.sm,
   },
+  bottomSheetCloseWrapper: {
+    alignSelf: "flex-end",
+    padding: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+  },
   closeButtonWrapper: {
     position: "absolute",
     top: theme.spacing.xl,
@@ -247,9 +253,6 @@ const modalStyles = createStyleSheet((theme) => ({
     zIndex: 1,
   },
   closeButton: {
-    marginLeft: "auto",
-    marginRight: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
     shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
