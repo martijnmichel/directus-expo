@@ -694,7 +694,7 @@ module.exports = async function (data) {
       return isTrans;
     }
 
-    function nextCollectionFromSegment(col, fieldName) {
+    function nextCollectionFromSegment(col, fieldName, nextFieldName) {
       // M2O / direct FK: relations.collection.field -> related_collection
       var direct = findRelation(col, fieldName);
       if (direct) {
@@ -722,6 +722,13 @@ module.exports = async function (data) {
           return String(aliasManyCol);
         }
 
+        // Some M2M shapes return junction rows; the next segment is the junction FK field
+        // (e.g. "test_m2m.pages_id.translations.title"). If that's the case, step into
+        // the junction collection first so we validate "pages_id" against the right collection.
+        if (nextFieldName && String(nextFieldName) === junctionField) {
+          return junctionCollection;
+        }
+
         var manySide = findRelation(junctionCollection, junctionField);
         if (manySide) {
           var related2 = (manySide.related_collection != null ? manySide.related_collection : manySide.one_collection);
@@ -745,7 +752,10 @@ module.exports = async function (data) {
         if (nextCol) currentCol = nextCol;
       } else {
         // Follow relation graph to validate subsequent segments against the correct collection
-        var nc = nextCollectionFromSegment(currentCol, fieldName);
+        var nextSeg = (j + 1 < parts.length) ? String(parts[j + 1] || "") : "";
+        var nextColon = nextSeg.indexOf(":");
+        var nextFieldName = (nextColon >= 0 ? nextSeg.slice(0, nextColon) : nextSeg).trim();
+        var nc = nextCollectionFromSegment(currentCol, fieldName, nextFieldName);
         if (nc) currentCol = nc;
       }
     }
