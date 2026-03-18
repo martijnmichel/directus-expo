@@ -39,24 +39,105 @@ struct WidgetConfigEntry: Decodable, Hashable {
   }
 }
 
-struct PayloadColumn: Decodable, Hashable {
+// MARK: - Flow response models
+//
+// Directus Flow response (APP_WIDGET_FLOW_VERSION):
+// { ok, status, version, supports, data: [{ type: "latest-items", items: [{ id, values: [{slot,type,value}] }] }] }
+
+private let latestItemsType = "latest-items"
+private let slotOrder: [String] = ["left", "title", "subtitle", "right"]
+
+struct FlowItemValue: Decodable, Hashable {
+  let slot: String
+  let type: String?
+  let value: String
+
+  enum CodingKeys: String, CodingKey {
+    case slot, type, value
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    slot = (try? c.decode(String.self, forKey: .slot)) ?? ""
+    type = try? c.decodeIfPresent(String.self, forKey: .type)
+    value = (try? c.decode(String.self, forKey: .value))
+      ?? (try? c.decode(Int.self, forKey: .value)).map { String($0) }
+      ?? (try? c.decode(Double.self, forKey: .value)).map { String($0) }
+      ?? ""
+  }
+}
+
+struct FlowItem: Decodable, Hashable {
+  let id: String
+  let values: [FlowItemValue]
+
+  enum CodingKeys: String, CodingKey {
+    case id, values
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    id = (try? c.decode(String.self, forKey: .id)) ?? (try? c.decode(Int.self, forKey: .id)).map { String($0) } ?? ""
+    values = (try? c.decode([FlowItemValue].self, forKey: .values)) ?? []
+  }
+}
+
+struct FlowDataEntry: Decodable {
+  let type: String
+  let items: [FlowItem]
+
+  enum CodingKeys: String, CodingKey {
+    case type, items
+  }
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.container(keyedBy: CodingKeys.self)
+    type = (try? c.decode(String.self, forKey: .type)) ?? ""
+    items = (try? c.decode([FlowItem].self, forKey: .items)) ?? []
+  }
+}
+
+struct FlowResponse: Decodable {
+  let ok: Bool?
+  let status: String?
+  let version: Int?
+  let supports: [String]?
+  let data: [FlowDataEntry]?
+}
+
+// MARK: - Legacy payload (fallback only)
+
+struct LegacyPayloadColumn: Decodable, Hashable {
   let key: String
   let label: String
 }
 
-struct PayloadRow: Decodable, Hashable {
+struct LegacyPayloadRow: Decodable, Hashable {
   let id: String
   let deepLink: String?
   let cells: [String: String]
 }
 
-struct LatestItemsPayload: Decodable {
+struct LegacyLatestItemsPayload: Decodable {
   let version: Int
   let title: String
   let collection: String
   let fetchedAt: String
-  let columns: [PayloadColumn]
-  let rows: [PayloadRow]
+  let columns: [LegacyPayloadColumn]
+  let rows: [LegacyPayloadRow]
+}
+
+// MARK: - View model
+
+struct SlotItem: Hashable, Identifiable {
+  let id: String
+  let urlString: String?
+  let slots: [String: String]
+
+  func value(for slot: String) -> String {
+    let v = slots[slot] ?? ""
+    return v.isEmpty ? "–" : v
+  }
 }
 
 // MARK: - Data access
@@ -87,21 +168,68 @@ private func readConfigList() -> [WidgetConfigEntry] {
   return list
 }
 
-private func readPayload(configId: String) -> LatestItemsPayload? {
+private func decodeSlotItemsFromFlowResponse(_ response: FlowResponse, config: WidgetConfigEntry?) -> [SlotItem] {
+  let items = response.data?.first(where: { $0.type == latestItemsType })?.items ?? []
+  let collection = config?.collection
+  let urlBase: String? = collection.map { "directus://content/\($0)/" }
+
+  return items
+    .filter { !$0.id.isEmpty }
+    .map { it in
+      var map: [String: String] = [:]
+      for v in it.values {
+        if !v.slot.isEmpty { map[v.slot] = v.value }
+      }
+      let url = (urlBase != nil) ? (urlBase! + it.id) : nil
+      return SlotItem(id: it.id, urlString: url, slots: map)
+    }
+}
+
+private func decodeSlotItemsFromLegacyPayload(_ payload: LegacyLatestItemsPayload) -> (title: String, items: [SlotItem]) {
+  // Best-effort mapping: take up to first 4 columns and map them into known slots.
+  let keys = payload.columns.map(\.key)
+  let slotKeys = Array(slotOrder.prefix(min(slotOrder.count, keys.count)))
+
+  let items: [SlotItem] = payload.rows
+    .filter { !$0.id.isEmpty }
+    .map { row in
+      var map: [String: String] = [:]
+      for (idx, slot) in slotKeys.enumerated() {
+        let colKey = keys[idx]
+        map[slot] = row.cells[colKey] ?? ""
+      }
+      return SlotItem(id: row.id, urlString: row.deepLink, slots: map)
+    }
+
+  return (payload.title, items)
+}
+
+private func readPayload(configId: String, config: WidgetConfigEntry?) -> (title: String?, items: [SlotItem])? {
   guard let defaults = getDefaults(),
         let raw = defaults.string(forKey: payloadPrefix + configId),
         let data = raw.data(using: .utf8)
   else { return nil }
+
   do {
-    return try JSONDecoder().decode(LatestItemsPayload.self, from: data)
+    // Prefer the current flow response shape.
+    let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
+    let items = decodeSlotItemsFromFlowResponse(resp, config: config)
+    return (nil, items)
   } catch {
-    return nil
+    // Fallback: older cached widget payload shape.
+    do {
+      let legacy = try JSONDecoder().decode(LegacyLatestItemsPayload.self, from: data)
+      let mapped = decodeSlotItemsFromLegacyPayload(legacy)
+      return (mapped.title, mapped.items)
+    } catch {
+      return nil
+    }
   }
 }
 
 // MARK: - Webhook fetch
 
-private func fetchPayloadFromWebhook(config: WidgetConfigEntry) async -> LatestItemsPayload? {
+private func fetchSlotItemsFromWebhook(config: WidgetConfigEntry) async -> [SlotItem]? {
   guard let urlString = config.webhookUrl,
         let url = URL(string: urlString) else {
     return nil
@@ -121,7 +249,8 @@ private func fetchPayloadFromWebhook(config: WidgetConfigEntry) async -> LatestI
           (200..<300).contains(http.statusCode) else {
       return nil
     }
-    return try JSONDecoder().decode(LatestItemsPayload.self, from: data)
+    let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
+    return decodeSlotItemsFromFlowResponse(resp, config: config)
   } catch {
     return nil
   }
@@ -176,14 +305,14 @@ public struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurati
 struct Entry: TimelineEntry {
   let date: Date
   let configTitle: String
-  let payload: LatestItemsPayload?
+  let items: [SlotItem]
 }
 
 struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
 
   func placeholder(in context: Context) -> Entry {
-    Entry(date: .now, configTitle: "Latest", payload: nil)
+    Entry(date: .now, configTitle: "Latest", items: [])
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
@@ -191,19 +320,23 @@ struct Provider: AppIntentTimelineProvider {
     let selectedId = configuration.setup?.id ?? list.first?.id
     let selectedConfig = list.first(where: { $0.id == selectedId }) ?? list.first
 
-    var payload: LatestItemsPayload? = nil
+    var items: [SlotItem] = []
+    var titleOverride: String? = nil
 
     if let config = selectedConfig,
        (config.webhookUrl != nil || config.widgetId != nil) {
-      payload = await fetchPayloadFromWebhook(config: config)
+      items = await fetchSlotItemsFromWebhook(config: config) ?? []
     }
 
-    if payload == nil, let id = selectedConfig?.id {
-      payload = readPayload(configId: id)
+    if items.isEmpty, let config = selectedConfig {
+      if let cached = readPayload(configId: config.id, config: config) {
+        titleOverride = cached.title
+        items = cached.items
+      }
     }
 
-    let title = payload?.title ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
-    return Entry(date: .now, configTitle: title, payload: payload)
+    let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
+    return Entry(date: .now, configTitle: title, items: items)
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
@@ -216,39 +349,49 @@ struct Provider: AppIntentTimelineProvider {
 
 // MARK: - View
 
-struct LatestItemsWidgetView: View {
-  var entry: Provider.Entry
+struct SlotRowView: View {
+  let item: SlotItem
+  let slotKeys: [String]
 
   var body: some View {
+    HStack(alignment: .firstTextBaseline, spacing: 8) {
+      ForEach(slotKeys, id: \.self) { key in
+        Text(item.value(for: key))
+          .font(key == "title" ? .caption : .caption2)
+          .lineLimit(1)
+          .frame(maxWidth: .infinity, alignment: .leading)
+      }
+    }
+    .widgetURL(URL(string: item.urlString ?? ""))
+  }
+}
+
+struct LatestItemsWidgetView: View {
+  var entry: Provider.Entry
+  @Environment(\.widgetFamily) private var family
+
+  var body: some View {
+    let maxRows: Int = (family == .systemSmall) ? 3 : (family == .systemMedium) ? 5 : 8
+    let visibleSlots: [String] = {
+      switch family {
+      case .systemSmall:
+        return ["title", "subtitle"]
+      case .systemMedium:
+        return ["left", "title", "right"]
+      default:
+        return slotOrder
+      }
+    }()
+
     VStack(alignment: .leading, spacing: 8) {
-      Text(entry.payload?.title ?? entry.configTitle)
+      Text(entry.configTitle)
         .font(.headline)
         .lineLimit(1)
 
-      if let payload = entry.payload, !payload.columns.isEmpty {
+      if !entry.items.isEmpty {
         VStack(alignment: .leading, spacing: 4) {
-          // Header row
-          HStack(alignment: .top, spacing: 8) {
-            ForEach(payload.columns.prefix(3), id: \.key) { col in
-              Text(col.label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-          }
-
-          // Data rows (limit for small/medium)
-          ForEach(payload.rows.prefix(5), id: \.id) { row in
-            HStack(alignment: .top, spacing: 8) {
-              ForEach(payload.columns.prefix(3), id: \.key) { col in
-                Text(row.cells[col.key] ?? "–")
-                  .font(.caption)
-                  .lineLimit(1)
-                  .frame(maxWidth: .infinity, alignment: .leading)
-              }
-            }
-            .widgetURL(URL(string: row.deepLink ?? ""))
+          ForEach(entry.items.prefix(maxRows), id: \.id) { it in
+            SlotRowView(item: it, slotKeys: visibleSlots)
           }
         }
       } else {
