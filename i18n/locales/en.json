@@ -88,7 +88,7 @@
       "slots": {
         "left": {
           "label": "Left",
-          "hint": "A value that appears on the left side of the widget row, best used for images or icons."
+          "hint": "Optional short text shown on the left of each row (e.g. status like archived/published, or a small label). Leave empty to hide this column."
         },
         "title": {
           "label": "Title",
@@ -100,7 +100,7 @@
         },
         "right": {
           "label": "Right",
-          "hint": "A value that appears on the right side of the widget row, best used for text or numbers."
+          "hint": "Optional short text shown on the right of each row (e.g. time, counters, or a small meta value). Leave empty to hide this column."
         }
       },
       "slotsTitle": "Slots",

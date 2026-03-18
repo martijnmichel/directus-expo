@@ -80,6 +80,15 @@ const WIDGET_FIELDS: Array<{
     meta: { interface: "input", required: true },
   },
   {
+    field: "title",
+    type: "string",
+    meta: {
+      interface: "input",
+      required: false,
+      note: "Optional display title for the widget (shown in the widget header).",
+    },
+  },
+  {
     field: "fields",
     type: "json",
     meta: {
@@ -1186,7 +1195,8 @@ module.exports = async function (data) {
     if (!widget.collection) return { ok: false, reason: "missing_collection", widget };
 
   // Normalize query inputs so templating never produces "undefined"
-  const limit = (widget.limit != null && Number.isFinite(Number(widget.limit))) ? Number(widget.limit) : 10;
+  // For latest-items we always fetch 10 rows (widgets can't scroll).
+  const limit = 10;
   const sort = widget.sort != null && String(widget.sort).trim().length ? String(widget.sort) : "";
   const filter = (widget.filter && typeof widget.filter === "object") ? widget.filter : {};
   const extra = (widget.extra && typeof widget.extra === "object") ? widget.extra : {};
@@ -1615,7 +1625,7 @@ module.exports = async function (data) {
             collection: APP_WIDGET_CONFIG_COLLECTION,
             action,
             validation: {},
-            fields: ["id", "user_id", "collection", "fields", "filter", "sort", "limit", "type"],
+            fields: ["id", "user_id", "collection", "title", "fields", "filter", "sort", "limit", "type"],
           } as Record<string, unknown>;
 
           if (action === "create") {

@@ -96,7 +96,6 @@ export default function WidgetConfigEditorScreen() {
     title: "",
     collection: "",
     sort: "-date_updated",
-    limit: 5,
     extra: { slots: DEFAULT_SLOTS },
   });
 
@@ -109,7 +108,6 @@ export default function WidgetConfigEditorScreen() {
       title: existing.title ?? "",
       collection: existing.collection ?? "",
       sort: existing.sort ?? "-date_updated",
-      limit: existing.limit ?? 5,
       extra: existing.extra?.slots?.length
         ? existing.extra
         : { slots: DEFAULT_SLOTS },
@@ -164,7 +162,6 @@ export default function WidgetConfigEditorScreen() {
         type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
         collection: form.collection,
         sort: form.sort,
-        limit: form.limit,
         filter: {},
         extra: form.extra ?? { slots: DEFAULT_SLOTS },
       };
@@ -302,15 +299,6 @@ export default function WidgetConfigEditorScreen() {
                 options={sortOptions.length ? sortOptions : []}
                 placeholder={t("widget.sortPlaceholder")}
                 disabled={!form.collection}
-              />
-
-              <Input
-                label={t("widget.limitLabel")}
-                value={String(form.limit ?? 5)}
-                onChangeText={(val) =>
-                  setForm((f) => ({ ...f, limit: Number(val) || 5 }))
-                }
-                keyboardType="number-pad"
               />
 
               <Divider />

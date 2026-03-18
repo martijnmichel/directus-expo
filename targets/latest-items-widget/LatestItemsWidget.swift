@@ -394,7 +394,13 @@ struct Provider: AppIntentTimelineProvider {
     }
 
     let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
-    let favicon = selectedConfig.flatMap { faviconURLString(instanceUrl: $0.instanceUrl) }
+    var favicon: String? = nil
+    let baseFromConfig = selectedConfig.flatMap { cfg in
+      faviconURLString(instanceUrl: cfg.instanceUrl) ?? instanceBaseURLString(from: cfg.webhookUrl)
+    }
+    if let base = baseFromConfig {
+      favicon = await fetchFaviconURL(from: base) ?? fallbackFaviconICO(instanceBaseUrl: base)
+    }
     return Entry(date: .now, configTitle: title, faviconUrl: favicon, items: items, statusMessage: status)
   }
 
@@ -410,62 +416,143 @@ struct Provider: AppIntentTimelineProvider {
 
 struct SlotRowView: View {
   let item: SlotItem
-  let slotKeys: [String]
+  let family: WidgetFamily
 
   var body: some View {
-    let left = item.value(for: "left")
-    let title = item.value(for: "title")
-    let subtitle = item.value(for: "subtitle")
-    let right = item.value(for: "right")
+    let leftRaw = item.value(for: "left")
+    let titleRaw = item.value(for: "title")
+    let subtitleRaw = item.value(for: "subtitle")
+    let rightRaw = item.value(for: "right")
 
-    return Group {
-      if slotKeys == ["title", "subtitle"] {
-        VStack(alignment: .leading, spacing: 2) {
-          Text(title)
-            .font(.caption.weight(.semibold))
-            .lineLimit(1)
+    // If a slot contains a date string, format it nicely (time for today, relative day otherwise).
+    let left = formatDateIfPossible(leftRaw)
+    let title = formatDateIfPossible(titleRaw)
+    let subtitle = formatDateIfPossible(subtitleRaw)
+    let right = formatDateIfPossible(rightRaw)
+    let leftWidth: CGFloat = {
+      switch family {
+      case .systemSmall: return 52
+      case .systemMedium: return 58
+      default: return 64
+      }
+    }()
+    let rightWidth: CGFloat = {
+      switch family {
+      case .systemSmall: return 38
+      case .systemMedium: return 48
+      default: return 56
+      }
+    }()
+    let hasLeft = leftRaw != "–"
+    let hasRight = rightRaw != "–"
 
-          Text(subtitle)
+    // Mail-like 2-line layout:
+    // Line 1: left - title - right
+    // Line 2: subtitle aligned under title (no left/right texts)
+    let lineSpacing: CGFloat = family == .systemSmall ? 1.5 : 2
+    return VStack(alignment: .leading, spacing: lineSpacing) {
+      // Line 1
+      HStack(alignment: .center, spacing: 10) {
+        if hasLeft {
+          Text(left)
             .font(.caption2)
             .foregroundStyle(.secondary)
             .lineLimit(1)
+            .frame(width: leftWidth, alignment: .leading)
         }
-      } else {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
-          if slotKeys.contains("left") {
-            Text(left)
-              .font(.caption2)
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .frame(minWidth: 34, alignment: .leading)
-          }
 
-          VStack(alignment: .leading, spacing: 2) {
-            Text(title)
-              .font(.caption.weight(.semibold))
-              .lineLimit(1)
-
-            if slotKeys.contains("subtitle") {
-              Text(subtitle)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            }
-          }
+        Text(title)
+          .font(.headline.weight(.semibold))
+          .lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .leading)
+          .layoutPriority(1)
 
-          if slotKeys.contains("right") {
-            Text(right)
-              .font(.caption2)
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .frame(alignment: .trailing)
-          }
+        if hasRight {
+          Text(right)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .frame(width: rightWidth, alignment: .trailing)
         }
       }
+
+      // Line 2
+      Text(subtitle)
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .layoutPriority(1)
     }
     .widgetURL(item.urlString.flatMap { URL(string: $0) })
   }
+}
+
+private func formatDateIfPossible(_ raw: String) -> String {
+  let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !trimmed.isEmpty else { return raw }
+  guard trimmed != "–" else { return raw }
+
+  guard let date = parseDateIfPossible(trimmed) else { return raw }
+
+  let now = Date()
+  let calendar = Calendar.current
+  let dayDiff = calendar.dateComponents([.day], from: date, to: now).day ?? 0
+
+  // If the slot clearly contains a time and it's effectively "today", show time only.
+  let hasTimeComponent = trimmed.contains(":")
+  if hasTimeComponent && abs(dayDiff) == 0 {
+    let df = DateFormatter()
+    df.locale = .current
+    df.timeStyle = .short
+    df.dateStyle = .none
+    return df.string(from: date)
+  }
+
+  // Otherwise show relative day text like "Yesterday" / "3 days ago".
+  let rdtf = RelativeDateTimeFormatter()
+  rdtf.locale = .current
+  rdtf.unitsStyle = .full
+  return rdtf.localizedString(for: date, relativeTo: now)
+}
+
+private func parseDateIfPossible(_ s: String) -> Date? {
+  let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+
+  // Epoch seconds / milliseconds.
+  if let intVal = Int64(t), t.count == 10 || t.count == 13 {
+    let seconds = t.count == 13 ? Double(intVal) / 1000.0 : Double(intVal)
+    return Date(timeIntervalSince1970: seconds)
+  }
+
+  // Prefer ISO8601 parsing (Directus typically outputs ISO date-times).
+  let iso = ISO8601DateFormatter()
+  iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds, .withTimeZone]
+  if let d = iso.date(from: t) { return d }
+
+  iso.formatOptions = [.withInternetDateTime, .withTimeZone]
+  if let d = iso.date(from: t) { return d }
+
+  // Common fallback patterns (no timezone).
+  let df = DateFormatter()
+  df.locale = Locale(identifier: "en_US_POSIX")
+  df.timeZone = TimeZone.current
+
+  let formats = [
+    "yyyy-MM-dd",
+    "yyyy-MM-dd HH:mm",
+    "yyyy-MM-dd HH:mm:ss",
+    "yyyy-MM-dd'T'HH:mm",
+    "yyyy-MM-dd'T'HH:mm:ss",
+    "yyyy-MM-dd'T'HH:mm:ss.SSS"
+  ]
+
+  for f in formats {
+    df.dateFormat = f
+    if let d = df.date(from: t) { return d }
+  }
+
+  return nil
 }
 
 private func faviconURLString(instanceUrl: String?) -> String? {
@@ -477,7 +564,64 @@ private func faviconURLString(instanceUrl: String?) -> String? {
     s = "https://\(s)"
   }
   s = s.replacingOccurrences(of: "/+$", with: "", options: .regularExpression)
-  return "\(s)/favicon.ico"
+  return s
+}
+
+private func fallbackFaviconICO(instanceBaseUrl: String) -> String {
+  "\(instanceBaseUrl)/favicon.ico"
+}
+
+private func instanceBaseURLString(from webhookUrl: String?) -> String? {
+  guard let webhookUrl, !webhookUrl.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        let url = URL(string: webhookUrl),
+        let scheme = url.scheme,
+        let host = url.host
+  else {
+    return nil
+  }
+
+  if let port = url.port {
+    return "\(scheme)://\(host):\(port)"
+  }
+  return "\(scheme)://\(host)"
+}
+
+private func resolveIconHref(_ href: String, baseURL: URL) -> String? {
+  let h = href.trimmingCharacters(in: .whitespacesAndNewlines)
+  if h.isEmpty { return nil }
+  if h.hasPrefix("http://") || h.hasPrefix("https://") { return h }
+  if h.hasPrefix("//") { return "\(baseURL.scheme ?? "https"):\(h)" }
+  return URL(string: h, relativeTo: baseURL)?.absoluteURL.absoluteString
+}
+
+private func extractIconHref(from html: String) -> String? {
+  // Look for <link rel="icon" href="..."> (also accepts "shortcut icon", "apple-touch-icon", etc.)
+  let pattern =
+    #"<link\b[^>]*\brel\s*=\s*["']([^"']*icon[^"']*)["'][^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>"#
+  guard let re = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return nil }
+  let ns = html as NSString
+  let range = NSRange(location: 0, length: ns.length)
+  guard let match = re.firstMatch(in: html, options: [], range: range) else { return nil }
+  guard match.numberOfRanges >= 3 else { return nil }
+  return ns.substring(with: match.range(at: 2))
+}
+
+private func fetchFaviconURL(from instanceBaseUrl: String) async -> String? {
+  guard let baseURL = URL(string: instanceBaseUrl) else { return nil }
+  var request = URLRequest(url: baseURL)
+  request.httpMethod = "GET"
+  request.timeoutInterval = 6
+  request.setValue("text/html,application/xhtml+xml", forHTTPHeaderField: "Accept")
+
+  do {
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else { return nil }
+    guard let html = String(data: data, encoding: .utf8), !html.isEmpty else { return nil }
+    guard let href = extractIconHref(from: html) else { return nil }
+    return resolveIconHref(href, baseURL: baseURL)
+  } catch {
+    return nil
+  }
 }
 
 struct LatestItemsWidgetView: View {
@@ -485,63 +629,81 @@ struct LatestItemsWidgetView: View {
   @Environment(\.widgetFamily) private var family
 
   var body: some View {
-    let maxRows: Int = (family == .systemSmall) ? 3 : (family == .systemMedium) ? 5 : 8
-    let visibleSlots: [String] = {
-      switch family {
-      case .systemSmall:
-        return ["title", "subtitle"]
-      case .systemMedium:
-        return ["left", "title", "right"]
-      default:
-        return WidgetConstants.slotOrder
-      }
-    }()
+    // Let WidgetKit apply its native content margins; we only tune internal spacing.
+    let hPad: CGFloat = 0
+    let topPad: CGFloat = 0
+    let bottomPad: CGFloat = 0
+    // Always show left/title/subtitle/right for alignment (Mail-style).
+    let _ = WidgetConstants.slotOrder
 
-    VStack(alignment: .leading, spacing: 10) {
-      HStack(alignment: .center, spacing: 8) {
-        if let s = entry.faviconUrl, let url = URL(string: s) {
-          AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
-            switch phase {
-            case .success(let image):
-              image
-                .resizable()
-                .scaledToFit()
-            default:
-              RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(Color.secondary.opacity(0.25))
+    return GeometryReader { geo in
+      let headerListSpacing: CGFloat = family == .systemSmall ? 6 : 10
+      // Match the Mail-style density: small+medium show 2 rows, large shows 4 rows.
+      let maxRows: Int = {
+        switch family {
+        case .systemSmall, .systemMedium:
+          return 2
+        case .systemLarge:
+          return 4
+        default:
+          return 2
+        }
+      }()
+
+      VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .center, spacing: 8) {
+          if let s = entry.faviconUrl, let url = URL(string: s) {
+            AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
+              switch phase {
+              case .success(let image):
+                image
+                  .resizable()
+                  .scaledToFit()
+              default:
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                  .fill(Color.secondary.opacity(0.25))
+              }
+            }
+            .frame(width: family == .systemSmall ? 14 : 16, height: family == .systemSmall ? 14 : 16)
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+          } else {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+              .fill(Color.secondary.opacity(0.15))
+              .frame(width: family == .systemSmall ? 14 : 16, height: family == .systemSmall ? 14 : 16)
+          }
+
+          Text(entry.configTitle)
+            .font(family == .systemSmall ? .subheadline.weight(.semibold) : .headline)
+            .lineLimit(1)
+
+          Spacer(minLength: 0)
+        }
+        .padding(.vertical, family == .systemSmall ? 3 : 4)
+        // Let the header size naturally to better match native SwiftUI layout.
+
+        if !entry.items.isEmpty {
+          Divider().opacity(0.5)
+          VStack(alignment: .leading, spacing: 0) {
+            let visible = Array(entry.items.prefix(maxRows))
+            ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
+              SlotRowView(item: it, family: family)
+                .padding(.vertical, family == .systemSmall ? 2 : 3)
+              if idx < visible.count - 1 { Divider() }
             }
           }
-          .frame(width: 16, height: 16)
-          .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+          .padding(.top, headerListSpacing)
+        } else {
+          Text(entry.statusMessage ?? "Open the app to refresh")
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
-
-        Text(entry.configTitle)
-          .font(.headline)
-          .lineLimit(1)
-
-        Spacer(minLength: 0)
       }
-
-      if !entry.items.isEmpty {
-        VStack(alignment: .leading, spacing: 0) {
-          ForEach(entry.items.prefix(maxRows), id: \.id) { it in
-            VStack(alignment: .leading, spacing: 6) {
-              SlotRowView(item: it, slotKeys: visibleSlots)
-              Divider().opacity(0.5)
-            }
-            .padding(.vertical, 6)
-          }
-        }
-      } else {
-        Text(entry.statusMessage ?? "Open the app to refresh")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
-
-      Spacer(minLength: 0)
+      .containerBackground(for: .widget) { Color.clear }
+      .padding(.horizontal, hPad)
+      .padding(.top, topPad)
+      .padding(.bottom, bottomPad)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
-    .containerBackground(for: .widget) { Color.clear }
-    .padding(12)
   }
 }
 

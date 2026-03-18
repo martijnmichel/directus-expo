@@ -85,7 +85,7 @@
       "slots": {
         "left": {
           "label": "Links",
-          "hint": "Een waarde die links in de widgetrij wordt getoond, best voor afbeeldingen of icoon."
+          "hint": "Optionele korte tekst links in elke rij (bijv. status zoals gearchiveerd/gelogd of een klein label). Laat leeg om deze kolom te verbergen."
         },
         "title": {
           "label": "Titel",
@@ -97,7 +97,7 @@
         },
         "right": {
           "label": "Rechts",
-          "hint": "Een waarde die rechts in de widgetrij wordt getoond, best voor tekst of getallen."
+          "hint": "Optionele korte tekst rechts in elke rij (bijv. tijd, tellers of een kleine meta-waarde). Laat leeg om deze kolom te verbergen."
         }
       },
       "slotsTitle": "Slots",
