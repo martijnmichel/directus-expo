@@ -372,6 +372,80 @@ module.exports = async function (data) {
     };
   }
 
+  function getFieldValueString(value) {
+    if (value == null) return "";
+    if (Array.isArray(value)) {
+      return value.map(getFieldValueString).filter(Boolean).join(", ");
+    }
+    if (typeof value === "object") {
+      try { return JSON.stringify(value); } catch { return "[Object]"; }
+    }
+    return String(value);
+  }
+
+  function getValuesAtPath(obj, path) {
+    if (obj == null || !path) return [];
+    var segments = String(path).split(".").filter(Boolean);
+    if (segments.length === 0) return [obj];
+    var key = segments[0];
+    var rest = segments.slice(1);
+    var restPath = rest.join(".");
+    var val = (obj && typeof obj === "object" && key in obj) ? obj[key] : undefined;
+    if (rest.length === 0) return val != null ? [val] : [];
+    if (Array.isArray(val)) {
+      var out = [];
+      for (var i = 0; i < val.length; i++) {
+        out = out.concat(getValuesAtPath(val[i], restPath));
+      }
+      return out;
+    }
+    return getValuesAtPath(val, restPath);
+  }
+
+  function toM2AReadPath(path) {
+    var parts = String(path).split(".");
+    if (parts.length < 4) return path;
+    return parts.slice(0, 2).concat(parts.slice(3)).join(".");
+  }
+
+  function getJoinedLeafValuesAtPath(obj, path) {
+    if (!obj || !path) return "";
+    // Normalize Directus M2A colon syntax to dots for read.
+    var normalized = String(path).replace(/(\\w+):/g, "$1.");
+    var values = getValuesAtPath(obj, normalized);
+    var flat = Array.isArray(values) ? values : [values];
+    var leaf = flat.filter(function (v) { return v != null && typeof v !== "object"; });
+    if (leaf.length === 0 && normalized.split(".").filter(Boolean).length >= 4) {
+      values = getValuesAtPath(obj, toM2AReadPath(normalized));
+      flat = Array.isArray(values) ? values : [values];
+      leaf = flat.filter(function (v) { return v != null && typeof v !== "object"; });
+    }
+    return leaf.map(getFieldValueString).filter(Boolean).join(", ");
+  }
+
+  function normalizeSlots(extra) {
+    var defaults = [
+      { key: "left", label: "Left", field: "" },
+      { key: "title", label: "Title", field: "" },
+      { key: "subtitle", label: "Subtitle", field: "" },
+      { key: "right", label: "Right", field: "" },
+    ];
+    var raw = extra && extra.slots && Array.isArray(extra.slots) ? extra.slots : [];
+    var byKey = {};
+    for (var i = 0; i < raw.length; i++) {
+      var s = raw[i];
+      if (!s || typeof s !== "object") continue;
+      var k = s.key != null ? String(s.key) : "";
+      if (!k) continue;
+      byKey[k] = {
+        key: k,
+        label: s.label != null ? String(s.label) : k,
+        field: s.field != null ? String(s.field) : "",
+      };
+    }
+    return defaults.map(function (d) { return byKey[d.key] || d; });
+  }
+
   function asArray(val) {
     if (Array.isArray(val)) return val;
     if (val && typeof val === "object" && Array.isArray(val.data)) return val.data;
@@ -466,7 +540,18 @@ module.exports = async function (data) {
     };
   }
 
-  return { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items }] };
+  var slots = normalizeSlots(widget.extra || {});
+  var formatted = (Array.isArray(items) ? items : []).map(function (it) {
+    var id = it && (it.id != null ? String(it.id) : "");
+    var values = slots.map(function (s) {
+      var path = (s.field || "").trim();
+      var value = path ? getJoinedLeafValuesAtPath(it, path) : "";
+      return { slot: s.key, type: "string", value: value || "" };
+    });
+    return { id: id, values: values };
+  });
+
+  return { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items: formatted }] };
 };`.trim(),
             },
           } as any),

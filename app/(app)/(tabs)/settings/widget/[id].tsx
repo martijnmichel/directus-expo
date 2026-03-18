@@ -25,7 +25,7 @@ import {
 } from "@/constants/widget";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
-import { FieldPathPickerBottomSheet } from "@/components/widgets/FieldPathPickerBottomSheet";
+import { FieldPathPicker } from "@/components/content/FieldPathPicker";
 import {
   readFieldsByCollection,
   updateItem,
@@ -399,7 +399,7 @@ export default function WidgetConfigEditorScreen() {
         </Container>
       </KeyboardAwareScrollView>
 
-      <FieldPathPickerBottomSheet
+      <FieldPathPicker
         open={fieldPickerOpen}
         onClose={() => {
           setFieldPickerOpen(false);

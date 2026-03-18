@@ -5,61 +5,16 @@ import { Text, Muted } from "@/components/display/typography";
 import { Button } from "@/components/display/button";
 import { DirectusIcon } from "@/components/display/directus-icon";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/display/accordion";
-import { useAuth } from "@/contexts/AuthContext";
-import { readFieldsByCollection, readRelations } from "@directus/sdk";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useFields } from "@/state/queries/directus/collection";
+import { useRelations } from "@/state/queries/directus/core";
+import type { CoreSchema } from "@directus/sdk";
 
 type FieldOutput = {
   field: string;
   meta?: { hidden?: boolean };
   schema?: { foreign_key_table?: string | null };
 };
-
-type RelationOutput = {
-  many_collection?: string;
-  many_field?: string;
-  one_collection?: string;
-  one_field?: string;
-};
-
-function useCollectionFields(collection: string | null, enabled: boolean) {
-  const { directus, user } = useAuth();
-  return useQuery({
-    queryKey: ["fieldPathPicker", "fields", collection, user?.id],
-    enabled: !!directus && !!collection && enabled,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const res = await directus!.request(readFieldsByCollection(collection as any));
-      const list = Array.isArray(res) ? res : ((res as any)?.data ?? []);
-      return list as FieldOutput[];
-    },
-  });
-}
-
-function useCollectionRelations(collection: string | null, enabled: boolean) {
-  const { directus, user } = useAuth();
-  return useQuery({
-    queryKey: ["fieldPathPicker", "relations", collection, user?.id],
-    enabled: !!directus && !!collection && enabled,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const res = await directus!.request(
-        readRelations({
-          filter: {
-            _or: [
-              { many_collection: { _eq: collection } },
-              { one_collection: { _eq: collection } },
-            ],
-          },
-          limit: -1,
-        } as any),
-      );
-      const list = Array.isArray(res) ? res : ((res as any)?.data ?? []);
-      return list as RelationOutput[];
-    },
-  });
-}
 
 function FieldTree({
   collection,
@@ -74,26 +29,30 @@ function FieldTree({
   onSelect: (path: string) => void;
   depth: number;
 }) {
-  const fieldsQ = useCollectionFields(collection, true);
-  const relQ = useCollectionRelations(collection, true);
+  const fieldsQ = useFields(collection as keyof CoreSchema);
+  const relQ = useRelations();
 
   const relationTargets = useMemo(() => {
     const manyMap = new Map<string, string>();
     const oneMap = new Map<string, string>();
-    const rels = relQ.data ?? [];
+    const rels = (relQ.data ?? []) as any[];
     for (const r of rels) {
-      if (r?.many_collection === collection && r?.many_field) {
-        if (r.one_collection) manyMap.set(String(r.many_field), String(r.one_collection));
+      if (r?.collection === collection && r?.field) {
+        // many side: collection.field -> related_collection
+        if (r.related_collection) {
+          manyMap.set(String(r.field), String(r.related_collection));
+        }
       }
-      if (r?.one_collection === collection && r?.one_field) {
-        if (r.many_collection) oneMap.set(String(r.one_field), String(r.many_collection));
+      if (r?.related_collection === collection && r?.meta?.one_field) {
+        // one side: related_collection.meta.one_field -> collection
+        oneMap.set(String(r.meta.one_field), String(r.collection));
       }
     }
     return { manyMap, oneMap };
   }, [collection, relQ.data]);
 
   const fields = useMemo(() => {
-    const list = (fieldsQ.data ?? [])
+    const list = ((fieldsQ.data ?? []) as any[])
       .filter((f) => f && typeof f.field === "string")
       .filter((f) => !f.meta?.hidden)
       .filter((f) => !String(f.field).startsWith("_"));
@@ -157,7 +116,7 @@ function FieldTree({
   );
 }
 
-export function FieldPathPickerBottomSheet({
+export function FieldPathPicker({
   open,
   onClose,
   collection,
