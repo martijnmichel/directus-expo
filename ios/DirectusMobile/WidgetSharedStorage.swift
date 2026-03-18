@@ -37,4 +37,35 @@ class WidgetSharedStorage: NSObject, RCTBridgeModule {
     defaults.synchronize()
     resolve(nil)
   }
+
+  @objc
+  func getConfigListFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard let defaults = UserDefaults(suiteName: appGroup) else {
+      reject("APP_GROUP", "App Group not available", nil)
+      return
+    }
+
+    let raw = defaults.string(forKey: configListKey) ?? ""
+    let length = raw.count
+    var count = 0
+    var ids: [String] = []
+
+    if let data = raw.data(using: .utf8), !raw.isEmpty {
+      do {
+        if let arr = try JSONSerialization.jsonObject(with: data, options: []) as? [[String: Any]] {
+          count = arr.count
+          ids = arr.compactMap { ($0["id"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        }
+      } catch {
+        // Ignore parsing errors; return length with empty ids/count.
+      }
+    }
+
+    resolve([
+      "length": length,
+      "count": count,
+      "ids": ids,
+    ])
+  }
 }

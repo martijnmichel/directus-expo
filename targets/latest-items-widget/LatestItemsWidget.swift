@@ -230,18 +230,20 @@ private func readPayload(configId: String, config: WidgetConfigEntry?) -> (title
 // MARK: - Webhook fetch
 
 private func fetchSlotItemsFromWebhook(config: WidgetConfigEntry) async -> [SlotItem]? {
-  guard let urlString = config.webhookUrl,
-        let url = URL(string: urlString) else {
+  guard let baseUrlString = config.webhookUrl,
+        let baseUrl = URL(string: baseUrlString) else {
     return nil
   }
   let idToSend = config.widgetId ?? config.id
 
-  var request = URLRequest(url: url)
-  request.httpMethod = "POST"
-  request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+  var components = URLComponents(url: baseUrl, resolvingAgainstBaseURL: false)
+  var queryItems = components?.queryItems ?? []
+  queryItems.append(URLQueryItem(name: "widget_id", value: idToSend))
+  components?.queryItems = queryItems
+  guard let url = components?.url else { return nil }
 
-  let body: [String: String] = ["widget_id": idToSend]
-  request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+  var request = URLRequest(url: url)
+  request.httpMethod = "GET"
 
   do {
     let (data, response) = try await URLSession.shared.data(for: request)
@@ -256,48 +258,92 @@ private func fetchSlotItemsFromWebhook(config: WidgetConfigEntry) async -> [Slot
   }
 }
 
+private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async -> (items: [SlotItem]?, errorMessage: String?) {
+  guard let urlString = config.webhookUrl, !urlString.isEmpty else {
+    return (nil, "Missing webhook URL. Open the app and re-save this setup.")
+  }
+  guard let baseUrl = URL(string: urlString) else {
+    return (nil, "Invalid webhook URL. Open the app and re-save this setup.")
+  }
+
+  let idToSend = config.widgetId ?? config.id
+
+  var components = URLComponents(url: baseUrl, resolvingAgainstBaseURL: false)
+  var queryItems = components?.queryItems ?? []
+  queryItems.append(URLQueryItem(name: "widget_id", value: idToSend))
+  components?.queryItems = queryItems
+  guard let url = components?.url else {
+    return (nil, "Invalid webhook URL. Open the app and re-save this setup.")
+  }
+
+  var request = URLRequest(url: url)
+  request.httpMethod = "GET"
+  request.timeoutInterval = 10
+
+  do {
+    let (data, response) = try await URLSession.shared.data(for: request)
+    guard let http = response as? HTTPURLResponse else {
+      return (nil, "No response from server.")
+    }
+    guard (200..<300).contains(http.statusCode) else {
+      return (nil, "Webhook error (HTTP \(http.statusCode)).")
+    }
+    let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
+    let items = decodeSlotItemsFromFlowResponse(resp, config: config)
+    return (items, nil)
+  } catch is DecodingError {
+    return (nil, "Webhook returned unexpected JSON.")
+  } catch {
+    return (nil, "Couldn’t refresh (network error).")
+  }
+}
+
 // MARK: - AppIntent (per-widget config picker)
 // Public types so the system can resolve the intent when the user taps "Setup".
 
-public struct LatestItemsConfigEntity: AppEntity, Identifiable {
-  public static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget setup"
-  public static var defaultQuery = LatestItemsConfigQuery()
+@available(iOS 17.0, *)
+struct LatestItemsConfigEntity: AppEntity, Identifiable {
+  static var typeDisplayRepresentation: TypeDisplayRepresentation = "Widget setup"
+  static var defaultQuery = LatestItemsConfigQuery()
 
-  public let id: String
-  public let title: String
+  let id: String
+  let title: String
 
-  public init(id: String, title: String) {
+  init(id: String, title: String) {
     self.id = id
     self.title = title
   }
 
-  public var displayRepresentation: DisplayRepresentation {
+  var displayRepresentation: DisplayRepresentation {
     DisplayRepresentation(title: LocalizedStringResource(stringLiteral: title))
   }
 }
 
-public struct LatestItemsConfigQuery: EntityQuery {
-  public init() {}
+@available(iOS 17.0, *)
+struct LatestItemsConfigQuery: EntityQuery {
+  init() {}
 
-  public func entities(for identifiers: [LatestItemsConfigEntity.ID]) async throws -> [LatestItemsConfigEntity] {
+  func entities(for identifiers: [LatestItemsConfigEntity.ID]) async throws -> [LatestItemsConfigEntity] {
     let all = try await suggestedEntities()
     return all.filter { identifiers.contains($0.id) }
   }
 
-  public func suggestedEntities() async throws -> [LatestItemsConfigEntity] {
+  func suggestedEntities() async throws -> [LatestItemsConfigEntity] {
     let list = readConfigList()
     return list.map { LatestItemsConfigEntity(id: $0.id, title: $0.title) }
   }
 }
 
-public struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationIntent {
-  public static var title: LocalizedStringResource = "Latest Items"
-  public static var description = IntentDescription("Pick which widget setup to show.")
+@available(iOS 17.0, *)
+struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationIntent {
+  static var title: LocalizedStringResource = "Latest Items"
+  static var description = IntentDescription("Pick which widget setup to show.")
 
+  @available(iOS 17.0, *)
   @Parameter(title: "Setup")
-  public var setup: LatestItemsConfigEntity?
+  var setup: LatestItemsConfigEntity?
 
-  public init() {}
+  init() {}
 }
 
 // MARK: - Timeline
@@ -306,13 +352,15 @@ struct Entry: TimelineEntry {
   let date: Date
   let configTitle: String
   let items: [SlotItem]
+  let statusMessage: String?
 }
 
+@available(iOS 17.0, *)
 struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
 
   func placeholder(in context: Context) -> Entry {
-    Entry(date: .now, configTitle: "Latest", items: [])
+    Entry(date: .now, configTitle: "Latest", items: [], statusMessage: nil)
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
@@ -322,10 +370,16 @@ struct Provider: AppIntentTimelineProvider {
 
     var items: [SlotItem] = []
     var titleOverride: String? = nil
+    var status: String? = nil
 
-    if let config = selectedConfig,
-       (config.webhookUrl != nil || config.widgetId != nil) {
-      items = await fetchSlotItemsFromWebhook(config: config) ?? []
+    if selectedConfig == nil {
+      status = "No widget setup found. Open Settings → Widget and add a setup."
+    } else if let config = selectedConfig, (config.webhookUrl == nil || config.webhookUrl?.isEmpty == true) {
+      status = "This setup is missing a webhook URL. Open the app and re-save the setup."
+    } else if let config = selectedConfig {
+      let result = await fetchSlotItemsFromWebhookDetailed(config: config)
+      items = result.items ?? []
+      if items.isEmpty, let msg = result.errorMessage { status = msg }
     }
 
     if items.isEmpty, let config = selectedConfig {
@@ -336,7 +390,7 @@ struct Provider: AppIntentTimelineProvider {
     }
 
     let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
-    return Entry(date: .now, configTitle: title, items: items)
+    return Entry(date: .now, configTitle: title, items: items, statusMessage: status)
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
@@ -395,7 +449,7 @@ struct LatestItemsWidgetView: View {
           }
         }
       } else {
-        Text("Open the app to refresh")
+        Text(entry.statusMessage ?? "Open the app to refresh")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -409,7 +463,8 @@ struct LatestItemsWidgetView: View {
 
 // MARK: - Widget
 
-struct LatestItemsWidget: Widget {
+@available(iOS 17.0, *)
+struct LatestItemsWidgetIOS17: Widget {
   let kind: String = "LatestItemsWidget"
 
   var body: some WidgetConfiguration {
@@ -417,15 +472,78 @@ struct LatestItemsWidget: Widget {
       LatestItemsWidgetView(entry: entry)
     }
     .configurationDisplayName("Latest Items")
-    .description("Shows the same columns and values as the collection data table.")
+    .description("Shows rows with values from the selected collection in 4 slots: left, title, subtitle, right.")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }
 
 @main
+@available(iOS 17.0, *)
 struct LatestItemsWidgetBundle: WidgetBundle {
   var body: some Widget {
-    LatestItemsWidget()
+    LatestItemsWidgetIOS17()
   }
 }
+
+#if DEBUG
+// MARK: - SwiftUI previews (no network)
+
+@available(iOS 17.0, *)
+private func previewEntry(
+  title: String,
+  items: [SlotItem],
+  status: String? = nil
+) -> Entry {
+  Entry(date: .now, configTitle: title, items: items, statusMessage: status)
+}
+
+@available(iOS 17.0, *)
+private let previewItems: [SlotItem] = [
+  SlotItem(
+    id: "1",
+    urlString: "directus://content/articles/1",
+    slots: ["left": "A-01", "title": "Quarterly report", "subtitle": "Updated 2h ago", "right": "Draft"]
+  ),
+  SlotItem(
+    id: "2",
+    urlString: "directus://content/articles/2",
+    slots: ["left": "A-02", "title": "Roadmap", "subtitle": "v1.4 scope", "right": "Approved"]
+  ),
+  SlotItem(
+    id: "3",
+    urlString: "directus://content/articles/3",
+    slots: ["left": "A-03", "title": "Incident postmortem", "subtitle": "SEV-2", "right": "Done"]
+  ),
+  SlotItem(
+    id: "4",
+    urlString: "directus://content/articles/4",
+    slots: ["left": "A-04", "title": "Release notes", "subtitle": "iOS build", "right": "In review"]
+  ),
+]
+
+@available(iOS 17.0, *)
+struct LatestItemsWidgetView_Previews: PreviewProvider {
+  static var previews: some View {
+    Group {
+      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
+        .previewContext(WidgetPreviewContext(family: .systemSmall))
+        .previewDisplayName("Small")
+
+      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
+        .previewContext(WidgetPreviewContext(family: .systemMedium))
+        .previewDisplayName("Medium")
+
+      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
+        .previewContext(WidgetPreviewContext(family: .systemLarge))
+        .previewDisplayName("Large")
+
+      LatestItemsWidgetView(
+        entry: previewEntry(title: "Latest", items: [], status: "Open the app to refresh")
+      )
+      .previewContext(WidgetPreviewContext(family: .systemMedium))
+      .previewDisplayName("Empty")
+    }
+  }
+}
+#endif
 
