@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+# Xcode 26 uses a newer Xcode project `objectVersion` (70+) that older `xcodeproj`
+# can't parse. CocoaPods' latest release may lag behind new Xcode formats, so we
+# pin to the upstream git versions for compatibility.
+gem "cocoapods", git: "https://github.com/CocoaPods/CocoaPods.git"
+gem "xcodeproj", git: "https://github.com/CocoaPods/Xcodeproj.git"
+

@@ -4,10 +4,15 @@ import AppIntents
 
 // MARK: - Shared storage keys (must match JS)
 
-private let appGroup = "group.com.martijnmichel.directusexpo.widgets"
-private let configListKey = "directus.widgets.latestItems.v1.configList"
-private let configListFileName = "configList.json"
-private let payloadPrefix = "directus.widgets.latestItems.v1.payload."
+private enum WidgetConstants {
+  static let appGroup = "group.com.martijnmichel.directusexpo.widgets"
+  static let configListKey = "directus.widgets.latestItems.v1.configList"
+  static let configListFileName = "configList.json"
+  static let payloadPrefix = "directus.widgets.latestItems.v1.payload."
+
+  static let latestItemsType = "latest-items"
+  static let slotOrder: [String] = ["left", "title", "subtitle", "right"]
+}
 
 // MARK: - Models
 //
@@ -44,8 +49,6 @@ struct WidgetConfigEntry: Decodable, Hashable {
 // Directus Flow response (APP_WIDGET_FLOW_VERSION):
 // { ok, status, version, supports, data: [{ type: "latest-items", items: [{ id, values: [{slot,type,value}] }] }] }
 
-private let latestItemsType = "latest-items"
-private let slotOrder: [String] = ["left", "title", "subtitle", "right"]
 
 struct FlowItemValue: Decodable, Hashable {
   let slot: String
@@ -143,17 +146,17 @@ struct SlotItem: Hashable, Identifiable {
 // MARK: - Data access
 
 private func getDefaults() -> UserDefaults? {
-  return UserDefaults(suiteName: appGroup)
+  return UserDefaults(suiteName: WidgetConstants.appGroup)
 }
 
 private func readConfigList() -> [WidgetConfigEntry] {
   var raw: String?
   if let defaults = getDefaults() {
-    raw = defaults.string(forKey: configListKey)
+    raw = defaults.string(forKey: WidgetConstants.configListKey)
   }
   if raw == nil || raw?.isEmpty == true,
-     let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
-    let fileURL = containerURL.appendingPathComponent(configListFileName)
+     let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetConstants.appGroup) {
+    let fileURL = containerURL.appendingPathComponent(WidgetConstants.configListFileName)
     raw = try? String(contentsOf: fileURL, encoding: .utf8)
   }
   var list: [WidgetConfigEntry] = []
@@ -169,7 +172,7 @@ private func readConfigList() -> [WidgetConfigEntry] {
 }
 
 private func decodeSlotItemsFromFlowResponse(_ response: FlowResponse, config: WidgetConfigEntry?) -> [SlotItem] {
-  let items = response.data?.first(where: { $0.type == latestItemsType })?.items ?? []
+  let items = response.data?.first(where: { $0.type == WidgetConstants.latestItemsType })?.items ?? []
   let collection = config?.collection
   let urlBase: String? = collection.map { "directus://content/\($0)/" }
 
@@ -188,7 +191,7 @@ private func decodeSlotItemsFromFlowResponse(_ response: FlowResponse, config: W
 private func decodeSlotItemsFromLegacyPayload(_ payload: LegacyLatestItemsPayload) -> (title: String, items: [SlotItem]) {
   // Best-effort mapping: take up to first 4 columns and map them into known slots.
   let keys = payload.columns.map(\.key)
-  let slotKeys = Array(slotOrder.prefix(min(slotOrder.count, keys.count)))
+  let slotKeys = Array(WidgetConstants.slotOrder.prefix(min(WidgetConstants.slotOrder.count, keys.count)))
 
   let items: [SlotItem] = payload.rows
     .filter { !$0.id.isEmpty }
@@ -206,7 +209,7 @@ private func decodeSlotItemsFromLegacyPayload(_ payload: LegacyLatestItemsPayloa
 
 private func readPayload(configId: String, config: WidgetConfigEntry?) -> (title: String?, items: [SlotItem])? {
   guard let defaults = getDefaults(),
-        let raw = defaults.string(forKey: payloadPrefix + configId),
+        let raw = defaults.string(forKey: WidgetConstants.payloadPrefix + configId),
         let data = raw.data(using: .utf8)
   else { return nil }
 
@@ -351,6 +354,7 @@ struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationInten
 struct Entry: TimelineEntry {
   let date: Date
   let configTitle: String
+  let faviconUrl: String?
   let items: [SlotItem]
   let statusMessage: String?
 }
@@ -360,7 +364,7 @@ struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
 
   func placeholder(in context: Context) -> Entry {
-    Entry(date: .now, configTitle: "Latest", items: [], statusMessage: nil)
+    Entry(date: .now, configTitle: "Latest", faviconUrl: nil, items: [], statusMessage: nil)
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
@@ -390,7 +394,8 @@ struct Provider: AppIntentTimelineProvider {
     }
 
     let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
-    return Entry(date: .now, configTitle: title, items: items, statusMessage: status)
+    let favicon = selectedConfig.flatMap { faviconURLString(instanceUrl: $0.instanceUrl) }
+    return Entry(date: .now, configTitle: title, faviconUrl: favicon, items: items, statusMessage: status)
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
@@ -408,16 +413,71 @@ struct SlotRowView: View {
   let slotKeys: [String]
 
   var body: some View {
-    HStack(alignment: .firstTextBaseline, spacing: 8) {
-      ForEach(slotKeys, id: \.self) { key in
-        Text(item.value(for: key))
-          .font(key == "title" ? .caption : .caption2)
-          .lineLimit(1)
+    let left = item.value(for: "left")
+    let title = item.value(for: "title")
+    let subtitle = item.value(for: "subtitle")
+    let right = item.value(for: "right")
+
+    return Group {
+      if slotKeys == ["title", "subtitle"] {
+        VStack(alignment: .leading, spacing: 2) {
+          Text(title)
+            .font(.caption.weight(.semibold))
+            .lineLimit(1)
+
+          Text(subtitle)
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+        }
+      } else {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+          if slotKeys.contains("left") {
+            Text(left)
+              .font(.caption2)
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .frame(minWidth: 34, alignment: .leading)
+          }
+
+          VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+              .font(.caption.weight(.semibold))
+              .lineLimit(1)
+
+            if slotKeys.contains("subtitle") {
+              Text(subtitle)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            }
+          }
           .frame(maxWidth: .infinity, alignment: .leading)
+
+          if slotKeys.contains("right") {
+            Text(right)
+              .font(.caption2)
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .frame(alignment: .trailing)
+          }
+        }
       }
     }
-    .widgetURL(URL(string: item.urlString ?? ""))
+    .widgetURL(item.urlString.flatMap { URL(string: $0) })
   }
+}
+
+private func faviconURLString(instanceUrl: String?) -> String? {
+  guard var s = instanceUrl?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
+    return nil
+  }
+  // Basic normalization: ensure scheme exists and remove trailing slashes.
+  if !s.lowercased().hasPrefix("http://") && !s.lowercased().hasPrefix("https://") {
+    s = "https://\(s)"
+  }
+  s = s.replacingOccurrences(of: "/+$", with: "", options: .regularExpression)
+  return "\(s)/favicon.ico"
 }
 
 struct LatestItemsWidgetView: View {
@@ -433,19 +493,43 @@ struct LatestItemsWidgetView: View {
       case .systemMedium:
         return ["left", "title", "right"]
       default:
-        return slotOrder
+        return WidgetConstants.slotOrder
       }
     }()
 
-    VStack(alignment: .leading, spacing: 8) {
-      Text(entry.configTitle)
-        .font(.headline)
-        .lineLimit(1)
+    VStack(alignment: .leading, spacing: 10) {
+      HStack(alignment: .center, spacing: 8) {
+        if let s = entry.faviconUrl, let url = URL(string: s) {
+          AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
+            switch phase {
+            case .success(let image):
+              image
+                .resizable()
+                .scaledToFit()
+            default:
+              RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(Color.secondary.opacity(0.25))
+            }
+          }
+          .frame(width: 16, height: 16)
+          .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+        }
+
+        Text(entry.configTitle)
+          .font(.headline)
+          .lineLimit(1)
+
+        Spacer(minLength: 0)
+      }
 
       if !entry.items.isEmpty {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 0) {
           ForEach(entry.items.prefix(maxRows), id: \.id) { it in
-            SlotRowView(item: it, slotKeys: visibleSlots)
+            VStack(alignment: .leading, spacing: 6) {
+              SlotRowView(item: it, slotKeys: visibleSlots)
+              Divider().opacity(0.5)
+            }
+            .padding(.vertical, 6)
           }
         }
       } else {
@@ -456,94 +540,9 @@ struct LatestItemsWidgetView: View {
 
       Spacer(minLength: 0)
     }
-    .containerBackground(for: .widget) { Color(.systemBackground) }
+    .containerBackground(for: .widget) { Color.clear }
     .padding(12)
   }
 }
 
-// MARK: - Widget
-
-@available(iOS 17.0, *)
-struct LatestItemsWidgetIOS17: Widget {
-  let kind: String = "LatestItemsWidget"
-
-  var body: some WidgetConfiguration {
-    AppIntentConfiguration(kind: kind, intent: LatestItemsWidgetConfigurationIntent.self, provider: Provider()) { entry in
-      LatestItemsWidgetView(entry: entry)
-    }
-    .configurationDisplayName("Latest Items")
-    .description("Shows rows with values from the selected collection in 4 slots: left, title, subtitle, right.")
-    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-  }
-}
-
-@main
-@available(iOS 17.0, *)
-struct LatestItemsWidgetBundle: WidgetBundle {
-  var body: some Widget {
-    LatestItemsWidgetIOS17()
-  }
-}
-
-#if DEBUG
-// MARK: - SwiftUI previews (no network)
-
-@available(iOS 17.0, *)
-private func previewEntry(
-  title: String,
-  items: [SlotItem],
-  status: String? = nil
-) -> Entry {
-  Entry(date: .now, configTitle: title, items: items, statusMessage: status)
-}
-
-@available(iOS 17.0, *)
-private let previewItems: [SlotItem] = [
-  SlotItem(
-    id: "1",
-    urlString: "directus://content/articles/1",
-    slots: ["left": "A-01", "title": "Quarterly report", "subtitle": "Updated 2h ago", "right": "Draft"]
-  ),
-  SlotItem(
-    id: "2",
-    urlString: "directus://content/articles/2",
-    slots: ["left": "A-02", "title": "Roadmap", "subtitle": "v1.4 scope", "right": "Approved"]
-  ),
-  SlotItem(
-    id: "3",
-    urlString: "directus://content/articles/3",
-    slots: ["left": "A-03", "title": "Incident postmortem", "subtitle": "SEV-2", "right": "Done"]
-  ),
-  SlotItem(
-    id: "4",
-    urlString: "directus://content/articles/4",
-    slots: ["left": "A-04", "title": "Release notes", "subtitle": "iOS build", "right": "In review"]
-  ),
-]
-
-@available(iOS 17.0, *)
-struct LatestItemsWidgetView_Previews: PreviewProvider {
-  static var previews: some View {
-    Group {
-      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
-        .previewContext(WidgetPreviewContext(family: .systemSmall))
-        .previewDisplayName("Small")
-
-      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
-        .previewContext(WidgetPreviewContext(family: .systemMedium))
-        .previewDisplayName("Medium")
-
-      LatestItemsWidgetView(entry: previewEntry(title: "Latest", items: previewItems))
-        .previewContext(WidgetPreviewContext(family: .systemLarge))
-        .previewDisplayName("Large")
-
-      LatestItemsWidgetView(
-        entry: previewEntry(title: "Latest", items: [], status: "Open the app to refresh")
-      )
-      .previewContext(WidgetPreviewContext(family: .systemMedium))
-      .previewDisplayName("Empty")
-    }
-  }
-}
-#endif
-
+// Widget entrypoint lives in `LatestItemsWidgetBundle.swift`.

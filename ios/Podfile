@@ -56,6 +56,23 @@ target 'DirectusMobile' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Xcode 26.x + newer clang warnings can cause some 3rd-party C pods
+    # (e.g. libdav1d/libwebp) to fail indexing/build if warnings are treated as errors.
+    installer.pods_project.targets.each do |t|
+      t.build_configurations.each do |bc|
+        bc.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+        bc.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+
+        %w[OTHER_CFLAGS OTHER_CPLUSPLUSFLAGS].each do |flags_key|
+          flags = bc.build_settings[flags_key]
+          next if flags.nil?
+          flags = flags.is_a?(Array) ? flags : flags.to_s.split(' ')
+          flags = flags.reject { |f| f == '-Werror' || f.start_with?('-Werror=') }
+          bc.build_settings[flags_key] = flags
+        end
+      end
+    end
   end
 end
 
