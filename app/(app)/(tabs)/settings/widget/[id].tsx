@@ -39,10 +39,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Trash } from "@/components/icons/Trash";
 import { Check } from "@/components/icons";
+import { useStyles } from "react-native-unistyles";
+import { formStyles } from "@/components/interfaces/style";
+import { Divider } from "@/components/layout/divider";
 
 const DEFAULT_SLOTS = APP_WIDGET_LATEST_ITEMS_SLOTS.map((s) => ({
   key: s.key,
-  label: s.label,
+  label: "",
   field: "",
 }));
 
@@ -50,7 +53,7 @@ export default function WidgetConfigEditorScreen() {
   const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === "new";
-
+  const { styles, theme } = useStyles(formStyles);
   const { directus, user } = useAuth();
   const queryClient = useQueryClient();
   const widgetItemsQuery = useWidgetItems({ enabled: true });
@@ -220,14 +223,16 @@ export default function WidgetConfigEditorScreen() {
     <KeyboardAwareLayout>
       <Stack.Screen
         options={{
-          headerTitle: form.title ? form.title : t("pages.settings.widget.addWidgetSetup"),
+          headerTitle: form.title
+            ? form.title
+            : t("pages.settings.widget.addWidgetSetup"),
           headerBackVisible: false,
           ...useHeaderStyles(),
-          
+
           headerRight: () => {
             return (
               <Horizontal>
-                 {!isNew && (
+                {!isNew && (
                   <View style={{ marginLeft: "auto" }}>
                     <Button
                       variant="soft"
@@ -250,7 +255,6 @@ export default function WidgetConfigEditorScreen() {
                 >
                   <Check />
                 </Button>
-               
               </Horizontal>
             );
           },
@@ -260,7 +264,6 @@ export default function WidgetConfigEditorScreen() {
         <Container>
           <Section>
             <Vertical spacing="md">
-              
               <Select
                 label="Type"
                 value={form.type || APP_WIDGET_TYPE_LATEST_ITEMS}
@@ -310,90 +313,92 @@ export default function WidgetConfigEditorScreen() {
                 keyboardType="number-pad"
               />
 
+              <Divider />
+
               {(form.type || APP_WIDGET_TYPE_LATEST_ITEMS) ===
                 APP_WIDGET_TYPE_LATEST_ITEMS && (
                 <Vertical spacing="xs">
+                  <Vertical style={{ gap: 0 }}>
+                    <Text style={[styles.label]}>
+                      {t("widget.latestItems.slotsTitle")}
+                    </Text>
+                    <Text style={[styles.helperText]}>
+                      {t("widget.latestItems.slotsHint")}
+                    </Text>
+                  </Vertical>
                   {(Array.isArray(form.extra?.slots)
                     ? form.extra?.slots
                     : DEFAULT_SLOTS
                   ).map((slot) => (
-                    <Vertical key={slot.key} spacing="xs" style={{ paddingVertical: 6 }}>
-                      <Horizontal spacing="sm" style={{ alignItems: "center" }}>
-                        <View style={{ flex: 1 }}>
-                          <Text numberOfLines={1} style={{ fontWeight: "700" }}>
-                            {slot.label || slot.key}
-                          </Text>
-                          {(() => {
-                            const hint =
-                              APP_WIDGET_LATEST_ITEMS_SLOTS.find(
-                                (s) => s.key === slot.key,
-                              )?.hint ?? "";
-                            return hint ? (
-                              <Muted numberOfLines={1}>{hint}</Muted>
-                            ) : null;
-                          })()}
-                        </View>
-                      </Horizontal>
-
-                      <Horizontal spacing="sm" style={{ alignItems: "center" }}>
-                        <Button
-                          variant="soft"
-                          size="sm"
-                          onPress={() => {
-                            setActiveSlotKey(slot.key);
-                            setFieldPickerOpen(true);
-                          }}
-                          style={{ flex: 1, justifyContent: "flex-start" }}
-                          rightIcon={<DirectusIcon name="chevron_right" />}
-                        >
-                          {slot.field?.trim() ? slot.field : "Select field…"}
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onPress={() =>
-                            setForm((f) => {
-                              const slots = Array.isArray(f.extra?.slots)
-                                ? [...(f.extra!.slots as any[])]
-                                : [...DEFAULT_SLOTS];
-                              const idx = slots.findIndex((s) => s.key === slot.key);
-                              if (idx >= 0) {
-                                const nextLabel = slots[idx].label || slots[idx].key;
-                                slots[idx] = { ...slots[idx], label: nextLabel };
+                    <Vertical
+                      key={slot.key}
+                      spacing="xs"
+                      style={{ paddingVertical: 6 }}
+                    >
+                      <Text numberOfLines={1} style={[styles.label]}>
+                        {(() => {
+                          const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
+                            (s) => s.key === slot.key,
+                          );
+                          return def ? t(def.labelKey) : slot.key;
+                        })()}
+                      </Text>
+                      <Input
+                        value={slot.field?.trim() ? slot.field : ""}
+                        placeholder={t(
+                          "widget.latestItems.selectFieldPlaceholder",
+                        )}
+                        editable={false}
+                        showSoftInputOnFocus={false}
+                        caretHidden
+                        onPressIn={() => {
+                          setActiveSlotKey(slot.key);
+                          setFieldPickerOpen(true);
+                        }}
+                        append={
+                          slot.field?.trim() ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              colorScheme="error"
+                              onPress={() =>
+                                setForm((f) => {
+                                  const slots = Array.isArray(f.extra?.slots)
+                                    ? [...(f.extra!.slots as any[])]
+                                    : [...DEFAULT_SLOTS];
+                                  const idx = slots.findIndex(
+                                    (s) => s.key === slot.key,
+                                  );
+                                  if (idx >= 0)
+                                    slots[idx] = { ...slots[idx], field: "" };
+                                  return {
+                                    ...f,
+                                    extra: { ...(f.extra ?? {}), slots },
+                                  };
+                                })
                               }
-                              return { ...f, extra: { ...(f.extra ?? {}), slots } };
-                            })
-                          }
-                        >
-                          <DirectusIcon name="edit_square" />
-                        </Button>
+                            >
+                              <DirectusIcon name="close" />
+                            </Button>
+                          ) : null
+                        }
+                        style={{ paddingRight: 0 }}
+                      />
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          colorScheme="error"
-                          disabled={!slot.field?.trim()}
-                          onPress={() =>
-                            setForm((f) => {
-                              const slots = Array.isArray(f.extra?.slots)
-                                ? [...(f.extra!.slots as any[])]
-                                : [...DEFAULT_SLOTS];
-                              const idx = slots.findIndex((s) => s.key === slot.key);
-                              if (idx >= 0) slots[idx] = { ...slots[idx], field: "" };
-                              return { ...f, extra: { ...(f.extra ?? {}), slots } };
-                            })
-                          }
-                        >
-                          <DirectusIcon name="close" />
-                        </Button>
-                      </Horizontal>
+                      {(() => {
+                        const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
+                          (s) => s.key === slot.key,
+                        );
+                        if (!def) return null;
+                        const hint = t(def.hintKey);
+                        return hint ? (
+                          <Muted numberOfLines={2}>{hint}</Muted>
+                        ) : null;
+                      })()}
                     </Vertical>
                   ))}
                 </Vertical>
               )}
-
-            
             </Vertical>
           </Section>
         </Container>
@@ -406,7 +411,7 @@ export default function WidgetConfigEditorScreen() {
           setActiveSlotKey(null);
         }}
         collection={form.collection || null}
-        title="Select field"
+        title={t("widget.latestItems.selectFieldTitle")}
         onSelect={(path) => {
           if (!activeSlotKey) return;
           setForm((f) => {

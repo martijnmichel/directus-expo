@@ -60,7 +60,7 @@ import { router } from "expo-router";
 const DEFAULT_FIELDS: string[] = [];
 const DEFAULT_SLOTS = APP_WIDGET_LATEST_ITEMS_SLOTS.map((s) => ({
   key: s.key,
-  label: s.label,
+  label: "",
   field: "",
 }));
 

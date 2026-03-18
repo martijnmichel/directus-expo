@@ -78,7 +78,31 @@
     "removeMessage": "\"{{name}}\" verwijderen van de startschermopties?",
     "removeButton": "Verwijderen",
     "syncToWidget": "Sync naar widget",
-    "synced": "Gesynchronizeerd"
+    "synced": "Gesynchronizeerd",
+    "latestItems": {
+      "selectFieldTitle": "Selecteer veld",
+      "selectFieldPlaceholder": "Selecteer veld…",
+      "slots": {
+        "left": {
+          "label": "Links",
+          "hint": "Een waarde die links in de widgetrij wordt getoond, best voor afbeeldingen of icoon."
+        },
+        "title": {
+          "label": "Titel",
+          "hint": "De hoofdtekst die in de widgetrij wordt getoond, meestal de titel van het item."
+        },
+        "subtitle": {
+          "label": "Subtitel",
+          "hint": "Extra tekst die onder de titel in de widgetrij wordt getoond, die meer context of informatie biedt."
+        },
+        "right": {
+          "label": "Rechts",
+          "hint": "Een waarde die rechts in de widgetrij wordt getoond, best voor tekst of getallen."
+        }
+      },
+      "slotsTitle": "Slots",
+      "slotsHint": "Ondersteunde velden die in de widget worden getoond. Elk veld is optioneel."
+    }
   },
   "push": {
     "title": "Pushmeldingen",

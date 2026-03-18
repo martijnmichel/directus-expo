@@ -125,13 +125,16 @@ function getAliasRelationTargets(args: {
   }
 
   // M2M: many-side points to the related collection
-  // Special-case "translations" junction collections: users typically want to pick fields
-  // from the translation rows themselves (e.g. `translations.title`), not from `languages.*`.
-  const isTranslationsJunction =
-    aliasField === "translations" || junctionCollection.endsWith("_translations");
+  // Derive "translations" behavior from schema metadata (no name heuristics):
+  // Directus marks translation alias fields with `meta.special: ["translations"]`
+  // (and/or `meta.interface: "translations"` depending on version/config).
+  const special = field?.meta?.special;
+  const isTranslationsAlias =
+    (Array.isArray(special) && special.map(String).includes("translations")) ||
+    field?.meta?.interface === "translations";
   return {
     kind: "m2m",
-    relatedCollection: isTranslationsJunction
+    relatedCollection: isTranslationsAlias
       ? junctionCollection
       : String(manySide.related_collection),
   };

@@ -27,10 +27,26 @@ export const APP_WIDGET_SUPPORTED = [APP_WIDGET_TYPE_LATEST_ITEMS] as const;
 
 /** Latest-items slot definitions (single source of truth for UI + flow defaults). */
 export const APP_WIDGET_LATEST_ITEMS_SLOTS = [
-  { key: "left", label: "Left", hint: "Left column" },
-  { key: "title", label: "Title", hint: "Primary text" },
-  { key: "subtitle", label: "Subtitle", hint: "Secondary text" },
-  { key: "right", label: "Right", hint: "Right column" },
+  {
+    key: "left",
+    labelKey: "widget.latestItems.slots.left.label",
+    hintKey: "widget.latestItems.slots.left.hint",
+  },
+  {
+    key: "title",
+    labelKey: "widget.latestItems.slots.title.label",
+    hintKey: "widget.latestItems.slots.title.hint",
+  },
+  {
+    key: "subtitle",
+    labelKey: "widget.latestItems.slots.subtitle.label",
+    hintKey: "widget.latestItems.slots.subtitle.hint",
+  },
+  {
+    key: "right",
+    labelKey: "widget.latestItems.slots.right.label",
+    hintKey: "widget.latestItems.slots.right.hint",
+  },
 ] as const;
 
 /** Flow operation type ids (same as push). */

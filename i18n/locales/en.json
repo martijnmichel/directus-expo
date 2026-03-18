@@ -81,7 +81,31 @@
     "removeMessage": "Remove \"{{name}}\" from home screen options?",
     "removeButton": "Remove",
     "syncToWidget": "Sync to widget",
-    "synced": "Synced"
+    "synced": "Synced",
+    "latestItems": {
+      "selectFieldTitle": "Select field",
+      "selectFieldPlaceholder": "Select field…",
+      "slots": {
+        "left": {
+          "label": "Left",
+          "hint": "A value that appears on the left side of the widget row, best used for images or icons."
+        },
+        "title": {
+          "label": "Title",
+          "hint": "The main text displayed in the widget row, typically the title of the item."
+        },
+        "subtitle": {
+          "label": "Subtitle",
+          "hint": "Additional text that appears below the title in the widget row, providing more context or information."
+        },
+        "right": {
+          "label": "Right",
+          "hint": "A value that appears on the right side of the widget row, best used for text or numbers."
+        }
+      },
+      "slotsTitle": "Slots",
+      "slotsHint": "Supported fields to show in the widget. Each field is optional."
+    }
   },
   "push": {
     "title": "Push notifications",
