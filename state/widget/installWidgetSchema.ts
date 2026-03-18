@@ -346,31 +346,32 @@ module.exports = async function (data) {
             options: {
               code: `
 module.exports = async function (data) {
-  const version = ${APP_WIDGET_FLOW_VERSION};
-  const supports = ${JSON.stringify(APP_WIDGET_SUPPORTED)};
-  const widget = data?.extract_widget_config?.widget ?? ((data.widget_config && Array.isArray(data.widget_config.data))
-    ? data.widget_config.data[0]
-    : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config));
-  if (!widget || !widget.user_id || !widget.collection) {
-    return {
-      ok: false,
-      status: "invalid_config",
-      version,
-      supports,
-      data: [{ type: "latest-items", items: [] }],
-      error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
-    };
-  }
-  if (widget.type && !supports.includes(String(widget.type))) {
-    return {
-      ok: false,
-      status: "invalid_config",
-      version,
-      supports,
-      data: [{ type: "latest-items", items: [] }],
-      error: { code: "UNSUPPORTED_WIDGET_TYPE", message: "Unsupported widget type." },
-    };
-  }
+  try {
+    const version = ${APP_WIDGET_FLOW_VERSION};
+    const supports = ${JSON.stringify(APP_WIDGET_SUPPORTED)};
+    const widget = data?.extract_widget_config?.widget ?? ((data.widget_config && Array.isArray(data.widget_config.data))
+      ? data.widget_config.data[0]
+      : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config));
+    if (!widget || !widget.user_id || !widget.collection) {
+      return {
+        ok: false,
+        status: "invalid_config",
+        version,
+        supports,
+        data: [{ type: "latest-items", items: [] }],
+        error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
+      };
+    }
+    if (widget.type && !supports.includes(String(widget.type))) {
+      return {
+        ok: false,
+        status: "invalid_config",
+        version,
+        supports,
+        data: [{ type: "latest-items", items: [] }],
+        error: { code: "UNSUPPORTED_WIDGET_TYPE", message: "Unsupported widget type." },
+      };
+    }
 
   function getFieldValueString(value) {
     if (value == null) return "";
@@ -460,6 +461,24 @@ module.exports = async function (data) {
   const items = asArray(data.read_collection);
   const relations = asArray(data.read_relations);
   const fieldsMeta = asArray(data.read_fields);
+  const debugEnabled =
+    !!(data && data.extract_query && (String(data.extract_query.debug || "").trim() === "1"));
+  function debugLog(obj) {
+    if (!debugEnabled) return;
+    if (!data.__debug) data.__debug = {};
+    for (var k in obj) data.__debug[k] = obj[k];
+  }
+  debugLog({
+    counts: {
+      permissions: permissions.length,
+      policies: policies.length,
+      roles: roles.length,
+      users: users.length,
+      items: items.length,
+      relations: relations.length,
+      fieldsMeta: fieldsMeta.length,
+    },
+  });
 
   function toPolicyId(p) {
     if (p == null) return null;
@@ -602,8 +621,10 @@ module.exports = async function (data) {
     for (var i = 0; i < pols.length; i++) {
       if (policyIdsWithAdmin.has(String(pols[i]))) return null;
     }
+    // Deny-by-default for nested collections: if there are no matching permission rows
+    // for this user/policies+collection, we must not allow reading any fields.
     var allowed = new Set();
-    var hasAny = false;
+    var matched = false;
     for (var j = 0; j < permissions.length; j++) {
       var p = permissions[j];
       if (!p) continue;
@@ -612,9 +633,14 @@ module.exports = async function (data) {
       var pid = toPolicyId(p.policy);
       if (!pid) continue;
       if (pols.indexOf(String(pid)) === -1) continue;
+      matched = true;
+      // Mirror Directus semantics:
+      // - fields: ["*"] => wildcard allow
+      // - fields: [...] => explicit allow-list
+      // - fields: [] or null/undefined => allow nothing
+      if (p.fields == null) continue;
       var fields = asStringArray(p.fields);
       if (fields.length === 0) continue;
-      hasAny = true;
       for (var f = 0; f < fields.length; f++) {
         var name = String(fields[f] || "").trim();
         if (!name) continue;
@@ -622,14 +648,14 @@ module.exports = async function (data) {
         allowed.add(name);
       }
     }
-    // If we couldn't derive anything, be conservative and allow (collection-level check already passed).
-    if (!hasAny) return null;
-    return allowed;
+    if (!matched) return new Set(); // no permission row => deny all
+    return allowed; // may be empty => deny all
   }
 
   function isFieldAllowed(allowedSetOrNull, fieldName) {
     if (!fieldName) return false;
     if (allowedSetOrNull == null) return true;
+    // empty Set means deny all
     return allowedSetOrNull.has(fieldName);
   }
 
@@ -756,10 +782,142 @@ module.exports = async function (data) {
         var nextColon = nextSeg.indexOf(":");
         var nextFieldName = (nextColon >= 0 ? nextSeg.slice(0, nextColon) : nextSeg).trim();
         var nc = nextCollectionFromSegment(currentCol, fieldName, nextFieldName);
-        if (nc) currentCol = nc;
+        if (nc) {
+          currentCol = nc;
+        } else {
+          // Safety: if there are more segments to evaluate but we can't resolve the relation hop,
+          // deny the path to avoid leaking data under the wrong collection context.
+          if (nextFieldName) return false;
+        }
       }
     }
     return true;
+  }
+
+  function explainPath(uid, baseCol, path) {
+    var p = String(path || "").trim();
+    if (!p) return { ok: false, reason: "empty_path", steps: [] };
+    var steps = [];
+    var currentCol = String(baseCol);
+    var allowedByCol = {};
+    function allowedFor(col) {
+      var k = String(col);
+      if (Object.prototype.hasOwnProperty.call(allowedByCol, k)) return allowedByCol[k];
+      allowedByCol[k] = getAllowedFieldsForUserOnCollection(uid, k);
+      return allowedByCol[k];
+    }
+
+    // Duplicate relation-hop helpers here so debug mode can't crash on scoping.
+    function findRelation(col, fieldName) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var manyCol = (r.collection != null ? r.collection : r.many_collection);
+        var manyField = (r.field != null ? r.field : r.many_field);
+        if (manyCol === col && manyField === fieldName) return r;
+      }
+      return null;
+    }
+
+    function findAliasRelation(col, aliasField) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var oneCol = (r.related_collection != null ? r.related_collection : r.one_collection);
+        var oneField = (r.meta && r.meta.one_field != null ? r.meta.one_field : r.one_field);
+        if (oneCol === col && oneField === aliasField) return r;
+      }
+      return null;
+    }
+
+    var translationsAliasByCollection = {};
+    function isTranslationsAliasField(col, fieldName) {
+      var key = String(col) + ":" + String(fieldName);
+      if (Object.prototype.hasOwnProperty.call(translationsAliasByCollection, key)) {
+        return translationsAliasByCollection[key] === true;
+      }
+      var isTrans = false;
+      for (var i = 0; i < fieldsMeta.length; i++) {
+        var f = fieldsMeta[i];
+        if (!f) continue;
+        var c = f.collection != null ? f.collection : f.many_collection;
+        var ff = f.field != null ? f.field : f.many_field;
+        if (c !== col || ff !== fieldName) continue;
+        var iface = f.meta && f.meta.interface != null ? String(f.meta.interface) : "";
+        if (iface === "translations") { isTrans = true; break; }
+        var sp = f.meta && f.meta.special != null ? f.meta.special : null;
+        if (Array.isArray(sp)) {
+          for (var j = 0; j < sp.length; j++) {
+            if (String(sp[j]) === "translations") { isTrans = true; break; }
+          }
+          if (isTrans) break;
+        }
+      }
+      translationsAliasByCollection[key] = isTrans;
+      return isTrans;
+    }
+
+    function nextCollectionFromSegment(col, fieldName, nextFieldName) {
+      var direct = findRelation(col, fieldName);
+      if (direct) {
+        var related = (direct.related_collection != null ? direct.related_collection : direct.one_collection);
+        if (related) return String(related);
+      }
+
+      var alias = findAliasRelation(col, fieldName);
+      var aliasManyCol = alias
+        ? (alias.collection != null ? alias.collection : alias.many_collection)
+        : null;
+      if (!alias || !aliasManyCol) return null;
+
+      var junctionFieldRaw =
+        alias.meta && alias.meta.junction_field != null ? alias.meta.junction_field : alias.junction_field;
+      if (junctionFieldRaw) {
+        var junctionCollection = String(aliasManyCol);
+        var junctionField = String(junctionFieldRaw);
+
+        if (isTranslationsAliasField(col, fieldName)) {
+          return String(aliasManyCol);
+        }
+
+        if (nextFieldName && String(nextFieldName) === junctionField) {
+          return junctionCollection;
+        }
+
+        var manySide = findRelation(junctionCollection, junctionField);
+        if (manySide) {
+          var related2 = (manySide.related_collection != null ? manySide.related_collection : manySide.one_collection);
+          if (related2) return String(related2);
+        }
+        return null;
+      }
+
+      return String(aliasManyCol);
+    }
+
+    var parts = p.split(".");
+    for (var j = 0; j < parts.length; j++) {
+      var seg = String(parts[j] || "");
+      var colon = seg.indexOf(":");
+      var fieldName = (colon >= 0 ? seg.slice(0, colon) : seg).trim();
+      var allowedSet = allowedFor(currentCol);
+      var allowed = isFieldAllowed(allowedSet, fieldName);
+      steps.push({ col: currentCol, field: fieldName, allowed: allowed, wildcard: allowedSet == null });
+      if (!allowed) return { ok: false, reason: "field_denied", steps: steps };
+      if (colon >= 0) {
+        var nextCol = seg.slice(colon + 1).trim();
+        if (nextCol) currentCol = nextCol;
+      } else {
+        var nextSeg = (j + 1 < parts.length) ? String(parts[j + 1] || "") : "";
+        var nextColon = nextSeg.indexOf(":");
+        var nextFieldName = (nextColon >= 0 ? nextSeg.slice(0, nextColon) : nextSeg).trim();
+        var nc = nextCollectionFromSegment(currentCol, fieldName, nextFieldName);
+        steps.push({ hopFrom: currentCol, via: fieldName, hopTo: nc || null });
+        if (nc) currentCol = nc;
+        else if (nextFieldName) return { ok: false, reason: "unresolved_hop", steps: steps };
+      }
+    }
+    return { ok: true, reason: null, steps: steps };
   }
 
   var slots = normalizeSlots(widget.extra || {});
@@ -771,6 +929,12 @@ module.exports = async function (data) {
       if (path) {
         // Enforce field-level read access for the widget owner.
         // If any field in the path is not readable, return an empty string for that slot.
+        if (debugEnabled) {
+          if (!data.__debug_paths) data.__debug_paths = [];
+          if (data.__debug_paths.length < 25) {
+            data.__debug_paths.push({ path: path, check: explainPath(widget.user_id, collection, path) });
+          }
+        }
         if (isPathAllowedForUser(widget.user_id, collection, path)) {
           value = getJoinedLeafValuesAtPath(it, path) || "";
         } else {
@@ -782,7 +946,24 @@ module.exports = async function (data) {
     return { id: id, values: values };
   });
 
-  return { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items: formatted }] };
+    var resp = { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items: formatted }] };
+    if (debugEnabled) resp.debug = data.__debug || { enabled: true };
+    if (debugEnabled && data.__debug_paths) resp.debug_paths = data.__debug_paths;
+    return resp;
+  } catch (e) {
+    return {
+      ok: false,
+      status: "error",
+      version: ${APP_WIDGET_FLOW_VERSION},
+      supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)},
+      data: [{ type: "latest-items", items: [] }],
+      error: {
+        code: "FLOW_ERROR",
+        message: e && e.message ? String(e.message) : String(e),
+        stack: e && e.stack ? String(e.stack) : null,
+      },
+    };
+  }
 };`.trim(),
             },
           } as any),
@@ -918,6 +1099,20 @@ module.exports = async function (data) {
               collection: "directus_relations",
               permissions: "$full",
               emitEvents: false,
+              query: {
+                limit: -1,
+                fields: [
+                  "id",
+                  "many_collection",
+                  "many_field",
+                  "one_collection",
+                  "one_field",
+                  "one_collection_field",
+                  "one_allowed_collections",
+                  "junction_field",
+                  "sort_field",
+                ],
+              },
             },
           } as any),
         );
@@ -981,13 +1176,14 @@ module.exports = async function (data) {
             options: {
               code: `
 module.exports = async function (data) {
-  const row = (data.widget_config && Array.isArray(data.widget_config.data))
-    ? data.widget_config.data[0]
-    : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config);
-  const widget = row && typeof row === "object" ? row : null;
-  if (!widget) return { ok: false, reason: "missing_row", widget: null };
-  if (!widget.user_id) return { ok: false, reason: "missing_user_id", widget };
-  if (!widget.collection) return { ok: false, reason: "missing_collection", widget };
+  try {
+    const row = (data.widget_config && Array.isArray(data.widget_config.data))
+      ? data.widget_config.data[0]
+      : (Array.isArray(data.widget_config) ? data.widget_config[0] : data.widget_config);
+    const widget = row && typeof row === "object" ? row : null;
+    if (!widget) return { ok: false, reason: "missing_row", widget: null };
+    if (!widget.user_id) return { ok: false, reason: "missing_user_id", widget };
+    if (!widget.collection) return { ok: false, reason: "missing_collection", widget };
 
   // Normalize query inputs so templating never produces "undefined"
   const limit = (widget.limit != null && Number.isFinite(Number(widget.limit))) ? Number(widget.limit) : 10;
@@ -1056,6 +1252,17 @@ module.exports = async function (data) {
       fields_json: JSON.stringify(fields),
     },
   };
+  } catch (e) {
+    return {
+      ok: false,
+      reason: "error",
+      widget: null,
+      error: {
+        message: e && e.message ? String(e.message) : String(e),
+        stack: e && e.stack ? String(e.stack) : null,
+      },
+    };
+  }
 };`.trim(),
             },
           } as any),
@@ -1131,9 +1338,10 @@ module.exports = async function (data) {
 module.exports = async function (data) {
   const q = (data && data.$trigger && data.$trigger.query) ? data.$trigger.query : {};
   const widget_id = q && q.widget_id != null ? String(q.widget_id) : null;
+  const debug = q && q.debug != null ? String(q.debug) : null;
   const uuid = typeof widget_id === "string" ? widget_id.trim() : "";
   const is_uuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(uuid);
-  return { widget_id: is_uuid ? uuid : null };
+  return { widget_id: is_uuid ? uuid : null, debug: debug };
 };`.trim(),
             },
           } as any),
