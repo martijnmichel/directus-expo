@@ -136,6 +136,7 @@ struct SlotItem: Hashable, Identifiable {
   struct SlotValue: Hashable {
     let type: String
     let value: String
+    var imageData: Data?
   }
 
   let id: String
@@ -312,6 +313,51 @@ private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async 
   }
 }
 
+private func prefetchThumbnailImages(in items: [SlotItem], instanceUrl: String?) async -> [SlotItem] {
+  guard let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")), !base.isEmpty else {
+    return items
+  }
+  // Collect (itemId, slotKey, url) tuples for all thumbnail slots
+  var tasks: [(itemId: String, slotKey: String, url: URL)] = []
+  for item in items {
+    for (slotKey, slot) in item.slots where slot.type == "thumbnail" && !slot.value.isEmpty {
+      let urlString = "\(base)/assets/\(slot.value)?width=64&height=64&fit=cover"
+      if let url = URL(string: urlString) {
+        tasks.append((item.id, slotKey, url))
+      }
+    }
+  }
+  guard !tasks.isEmpty else { return items }
+
+  // Fetch all in parallel
+  var fetched: [String: [String: Data]] = [:] // [itemId: [slotKey: data]]
+  await withTaskGroup(of: (String, String, Data?).self) { group in
+    for task in tasks {
+      group.addTask {
+        let data = try? await URLSession.shared.data(from: task.url).0
+        return (task.itemId, task.slotKey, data)
+      }
+    }
+    for await (itemId, slotKey, data) in group {
+      if let data {
+        fetched[itemId, default: [:]][slotKey] = data
+      }
+    }
+  }
+
+  return items.map { item in
+    guard let slotData = fetched[item.id] else { return item }
+    var updatedSlots = item.slots
+    for (slotKey, data) in slotData {
+      if var slot = updatedSlots[slotKey] {
+        slot.imageData = data
+        updatedSlots[slotKey] = slot
+      }
+    }
+    return SlotItem(id: item.id, urlString: item.urlString, slots: updatedSlots)
+  }
+}
+
 // MARK: - AppIntent (per-widget config picker)
 // Public types so the system can resolve the intent when the user taps "Setup".
 
@@ -405,6 +451,8 @@ struct Provider: AppIntentTimelineProvider {
       }
     }
 
+    items = await prefetchThumbnailImages(in: items, instanceUrl: selectedConfig?.instanceUrl)
+
     let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
     var favicon: String? = nil
     let baseFromConfig = selectedConfig.flatMap { cfg in
@@ -429,7 +477,6 @@ struct Provider: AppIntentTimelineProvider {
 struct SlotRowView: View {
   let item: SlotItem
   let family: WidgetFamily
-  let instanceUrl: String?
 
   var body: some View {
     let leftSlot = item.slotValue(for: "left")
@@ -451,7 +498,7 @@ struct SlotRowView: View {
       // Line 1
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
-          SideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading, instanceUrl: instanceUrl)
+          SideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading)
         }
 
         Text(title)
@@ -461,7 +508,7 @@ struct SlotRowView: View {
           .layoutPriority(1)
 
         if hasRight {
-          SideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing, instanceUrl: instanceUrl)
+          SideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing)
         }
       }
 
@@ -481,43 +528,23 @@ private struct SideSlotView: View {
   let slot: SlotItem.SlotValue?
   let maxWidth: CGFloat
   let alignment: Alignment
-  let instanceUrl: String?
 
   var body: some View {
     let type = (slot?.type ?? "string").lowercased()
     let raw = slot?.value ?? ""
-    let imageURLString: String? = {
-      guard type == "thumbnail", !raw.isEmpty else { return nil }
-      let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
-      guard !base.isEmpty else { return nil }
-      return "\(base)/assets/\(raw)"
-    }()
-    if type == "thumbnail", imageURLString == nil {
-      // Debug: thumbnail type but URL couldn't be built (missing instanceUrl or empty value)
-      Text("no-url")
-        .font(.system(size: 7, weight: .medium, design: .monospaced))
-        .foregroundStyle(.orange)
-        .lineLimit(2)
-        .frame(width: 24, height: 24)
-    } else if let urlString = imageURLString, let url = URL(string: urlString) {
-      let _ = { print("[widget] thumbnail url: \(urlString)") }()
-      AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
-        switch phase {
-        case .success(let image):
-          image
-            .resizable()
-            .scaledToFill()
-        case .failure(let err):
-          let _ = { print("[widget] thumbnail load FAILED: \(err)") }()
-          RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(Color.red.opacity(0.6))
-        default:
-          RoundedRectangle(cornerRadius: 4, style: .continuous)
-            .fill(Color.secondary.opacity(0.2))
-        }
+    if type == "thumbnail" {
+      let uiImage: UIImage? = slot?.imageData.flatMap { UIImage(data: $0) }
+      if let uiImage {
+        Image(uiImage: uiImage)
+          .resizable()
+          .scaledToFill()
+          .frame(width: 24, height: 24)
+          .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+      } else {
+        RoundedRectangle(cornerRadius: 4, style: .continuous)
+          .fill(Color.secondary.opacity(0.2))
+          .frame(width: 24, height: 24)
       }
-      .frame(width: 24, height: 24)
-      .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     } else if type == "status", !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       Text(raw)
         .font(.caption2)
@@ -785,7 +812,7 @@ struct LatestItemsWidgetView: View {
           VStack(alignment: .leading, spacing: 0) {
             let visible = Array(entry.items.prefix(maxRows))
             ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
-              SlotRowView(item: it, family: family, instanceUrl: entry.instanceUrl)
+              SlotRowView(item: it, family: family)
                 .padding(.vertical, family == .systemLarge ? 6 : 3)
               if idx < visible.count - 1 { Divider() }
             }
