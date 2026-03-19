@@ -20,7 +20,7 @@ struct LatestItemsWidgetIOS17: Widget {
     }
     .configurationDisplayName("Latest Items")
     .description("Shows rows with values from the selected collection in 4 slots: left, title, subtitle, right.")
-    .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    .supportedFamilies([.systemMedium, .systemLarge])
   }
 }
 

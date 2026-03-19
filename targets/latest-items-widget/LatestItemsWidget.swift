@@ -439,14 +439,14 @@ struct SlotRowView: View {
 
     let title = displayText(for: titleSlot)
     let subtitle = displayText(for: subtitleSlot)
-    let sideMaxWidth: CGFloat = family == .systemSmall ? 60 : 80
+    let sideMaxWidth: CGFloat = 80
     let hasLeft = hasContent(leftSlot)
     let hasRight = hasContent(rightSlot)
 
     // Mail-like 2-line layout:
     // Line 1: left - title - right
     // Line 2: subtitle aligned under title (no left/right texts)
-    let lineSpacing: CGFloat = family == .systemSmall ? 1.5 : 2
+    let lineSpacing: CGFloat = 2
     return VStack(alignment: .leading, spacing: lineSpacing) {
       // Line 1
       HStack(alignment: .center, spacing: 6) {
@@ -487,18 +487,10 @@ private struct SideSlotView: View {
     let type = (slot?.type ?? "string").lowercased()
     let raw = slot?.value ?? ""
     let imageURLString: String? = {
-      guard !raw.isEmpty else { return nil }
-      if type == "thumbnail" {
-        let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
-        guard !base.isEmpty else { return nil }
-        return "\(base)/assets/\(raw)"
-      }
-      if type == "image" {
-        if raw.hasPrefix("http://") || raw.hasPrefix("https://") { return raw }
-        let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
-        return base.isEmpty ? nil : base + (raw.hasPrefix("/") ? raw : "/\(raw)")
-      }
-      return nil
+      guard type == "thumbnail", !raw.isEmpty else { return nil }
+      let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
+      guard !base.isEmpty else { return nil }
+      return "\(base)/assets/\(raw)"
     }()
     if let urlString = imageURLString, let url = URL(string: urlString) {
       AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
@@ -507,6 +499,9 @@ private struct SideSlotView: View {
           image
             .resizable()
             .scaledToFill()
+        case .failure:
+          RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill(Color.red.opacity(0.6))
         default:
           RoundedRectangle(cornerRadius: 4, style: .continuous)
             .fill(Color.secondary.opacity(0.2))
@@ -744,17 +739,7 @@ struct LatestItemsWidgetView: View {
     let _ = WidgetConstants.slotOrder
 
     return GeometryReader { geo in
-      let headerListSpacing: CGFloat = family == .systemSmall ? 6 : 10
-      let maxRows: Int = {
-        switch family {
-        case .systemSmall, .systemMedium:
-          return 2
-        case .systemLarge:
-          return 6
-        default:
-          return 2
-        }
-      }()
+      let maxRows: Int = family == .systemLarge ? 6 : 2
 
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .center, spacing: 8) {
@@ -770,31 +755,21 @@ struct LatestItemsWidgetView: View {
                   .fill(Color.secondary.opacity(0.25))
               }
             }
-            .frame(
-              width: family == .systemSmall ? 14 : 16,
-              height: family == .systemSmall ? 14 : 16
-            )
+            .frame(width: 16, height: 16)
             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
           } else {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
               .fill(Color.secondary.opacity(0.15))
-              .frame(
-                width: family == .systemSmall ? 14 : 16,
-                height: family == .systemSmall ? 14 : 16
-              )
+              .frame(width: 16, height: 16)
           }
 
           Text(entry.configTitle)
-            .font(family == .systemSmall ? .subheadline.weight(.semibold) : .headline)
+            .font(.headline)
             .lineLimit(1)
 
           Spacer(minLength: 0)
         }
-        .padding(
-          .vertical,
-          family == .systemSmall ? 3 : 4
-        )
-        // Let the header size naturally to better match native SwiftUI layout.
+        .padding(.vertical, 4)
 
         if !entry.items.isEmpty {
           Divider().opacity(0.5)
@@ -802,14 +777,11 @@ struct LatestItemsWidgetView: View {
             let visible = Array(entry.items.prefix(maxRows))
             ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
               SlotRowView(item: it, family: family, instanceUrl: entry.instanceUrl)
-                .padding(
-                  .vertical,
-                  family == .systemSmall ? 2 : family == .systemLarge ? 6 : 3
-                )
+                .padding(.vertical, family == .systemLarge ? 6 : 3)
               if idx < visible.count - 1 { Divider() }
             }
           }
-          .padding(.top, headerListSpacing)
+          .padding(.top, 10)
         } else {
           Text(entry.statusMessage ?? "Open the app to refresh")
             .font(.caption)
