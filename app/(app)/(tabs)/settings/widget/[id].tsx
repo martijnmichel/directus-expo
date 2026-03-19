@@ -1,16 +1,15 @@
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, View } from "react-native";
 import { useTranslation } from "react-i18next";
+import { useForm, useWatch } from "react-hook-form";
 import {
   KeyboardAwareLayout,
   KeyboardAwareScrollView,
-  Layout,
 } from "@/components/layout/Layout";
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { Vertical, Horizontal } from "@/components/layout/Stack";
-import { DividerSubtitle } from "@/components/display/subtitle";
 import { Text, Muted } from "@/components/display/typography";
 import { Button } from "@/components/display/button";
 import { Input } from "@/components/interfaces/input";
@@ -26,16 +25,12 @@ import {
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { FieldPathPicker } from "@/components/content/FieldPathPicker";
-import {
-  readFieldsByCollection,
-  updateItem,
-  createItem,
-  deleteItem,
-} from "@directus/sdk";
+import { updateItem, createItem, deleteItem } from "@directus/sdk";
+import { useFields } from "@/state/queries/directus/collection";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import { useWidgetItems } from "@/state/widget/useWidgetItems";
 import { writeLatestItemsWidgetConfigListToCache } from "@/widgets/latestItems/sync";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Trash } from "@/components/icons/Trash";
 import { Check } from "@/components/icons";
@@ -43,17 +38,35 @@ import { useStyles } from "react-native-unistyles";
 import { formStyles } from "@/components/interfaces/style";
 import { Divider } from "@/components/layout/divider";
 
+type FormValues = {
+  type: string;
+  title: string;
+  collection: string;
+  sort: string;
+  extra: {
+    slots: Array<{ key: string; label: string; field: string }>;
+  };
+};
+
 const DEFAULT_SLOTS = APP_WIDGET_LATEST_ITEMS_SLOTS.map((s) => ({
   key: s.key,
   label: "",
   field: "",
 }));
 
+const DEFAULT_VALUES: FormValues = {
+  type: APP_WIDGET_TYPE_LATEST_ITEMS,
+  title: "",
+  collection: "",
+  sort: "-date_updated",
+  extra: { slots: DEFAULT_SLOTS },
+};
+
 export default function WidgetConfigEditorScreen() {
   const { t, i18n } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const isNew = id === "new";
-  const { styles, theme } = useStyles(formStyles);
+  const { styles } = useStyles(formStyles);
   const { directus, user } = useAuth();
   const queryClient = useQueryClient();
   const widgetItemsQuery = useWidgetItems({ enabled: true });
@@ -64,108 +77,107 @@ export default function WidgetConfigEditorScreen() {
   );
 
   const { data: allCollections } = useCollections();
-  const collectionOptions = useMemo(() => {
-    return (Array.isArray(allCollections) ? allCollections : [])
-      .filter(
-        (c: any) =>
-          c &&
-          typeof c.collection === "string" &&
-          !c.collection.startsWith("directus_") &&
-          !!c.meta &&
-          !c.meta?.hidden &&
-          !!c.schema,
-      )
-      .sort(
-        (a: any, b: any) =>
-          Number(a?.meta?.sort ?? 0) - Number(b?.meta?.sort ?? 0),
-      )
-      .map((c: any) => ({
-        value: String(c.collection),
-        text:
-          getCollectionTranslation(c, i18n.language) ?? String(c.collection),
-      }));
-  }, [allCollections, i18n.language]);
+  const collectionOptions = useMemo(
+    () =>
+      (Array.isArray(allCollections) ? allCollections : [])
+        .filter(
+          (c: any) =>
+            c &&
+            typeof c.collection === "string" &&
+            !c.collection.startsWith("directus_") &&
+            !!c.meta &&
+            !c.meta?.hidden &&
+            !!c.schema,
+        )
+        .sort(
+          (a: any, b: any) =>
+            Number(a?.meta?.sort ?? 0) - Number(b?.meta?.sort ?? 0),
+        )
+        .map((c: any) => ({
+          value: String(c.collection),
+          text:
+            getCollectionTranslation(c, i18n.language) ?? String(c.collection),
+        })),
+    [allCollections, i18n.language],
+  );
 
-  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
-  const [activeSlotKey, setActiveSlotKey] = useState<string | null>(null);
+  const { control, handleSubmit, reset, setValue, getValues } =
+    useForm<FormValues>({ defaultValues: DEFAULT_VALUES });
 
-  const [form, setForm] = useState<
-    Partial<LatestItemsWidgetConfig> & { collection: string }
-  >({
-    type: APP_WIDGET_TYPE_LATEST_ITEMS,
-    title: "",
-    collection: "",
-    sort: "-date_updated",
-    extra: { slots: DEFAULT_SLOTS },
-  });
+  const type = useWatch({ control, name: "type" });
+  const collection = useWatch({ control, name: "collection" });
+  const sort = useWatch({ control, name: "sort" });
+  const slots = useWatch({ control, name: "extra.slots" }) ?? DEFAULT_SLOTS;
 
+  // Populate form when an existing config is loaded.
   useEffect(() => {
-    if (isNew) return;
     if (!existing) return;
-    setForm({
-      id: existing.id,
+    reset({
       type: existing.type || APP_WIDGET_TYPE_LATEST_ITEMS,
       title: existing.title ?? "",
       collection: existing.collection ?? "",
-      sort: existing.sort ?? "-date_updated",
+      sort: existing.sort ?? "",
       extra: existing.extra?.slots?.length
         ? existing.extra
         : { slots: DEFAULT_SLOTS },
     });
-  }, [existing, isNew]);
+  }, [existing, reset]);
 
-  const sortOptionsQuery = useQuery({
-    queryKey: ["widgetSortOptions", form.collection, user?.id],
-    enabled: !!directus && !!form.collection,
-    staleTime: 60_000,
-    queryFn: async (): Promise<Array<{ value: string; text: string }>> => {
-      const raw = await directus!.request(
-        readFieldsByCollection(form.collection as any),
-      );
-      const list = Array.isArray(raw) ? raw : ((raw as any)?.data ?? []);
-      const simple = (list as any[])
-        .filter((f) => f && typeof f.field === "string")
-        .filter((f) => !f.meta?.hidden)
-        .filter((f) => !String(f.field).startsWith("_"))
-        .filter(
-          (f) => !Array.isArray(f.meta?.special) || f.meta.special.length === 0,
-        );
+  // Reset sort + slots when collection changes (but not on initial mount).
+  const prevCollection = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevCollection.current === null) {
+      prevCollection.current = collection;
+      return;
+    }
+    if (collection === prevCollection.current) return;
+    prevCollection.current = collection;
+    setValue("sort", "-date_updated");
+    setValue("extra.slots", DEFAULT_SLOTS);
+  }, [collection, setValue]);
 
-      const opts: Array<{ value: string; text: string }> = [];
-      for (const f of simple) {
-        const name = String(f.field);
-        opts.push({ value: `-${name}`, text: `${name} (desc)` });
-        opts.push({ value: name, text: `${name} (asc)` });
-      }
-      return opts;
-    },
-  });
-  const sortOptions = sortOptionsQuery.data ?? [];
+  const { data: rawFields } = useFields(collection as any);
+  const sortOptions = useMemo<Array<{ value: string; text: string }>>(() => {
+    const list = Array.isArray(rawFields) ? rawFields : [];
+    const opts: Array<{ value: string; text: string }> = [];
+    for (const f of list) {
+      if (!f || typeof f.field !== "string") continue;
+      if (f.meta?.hidden) continue;
+      if (String(f.field).startsWith("_")) continue;
+      if (Array.isArray(f.meta?.special) && f.meta.special.length > 0) continue;
+      const name = String(f.field);
+      opts.push({ value: `-${name}`, text: `${name} (desc)` });
+      opts.push({ value: name, text: `${name} (asc)` });
+    }
+    return opts;
+  }, [rawFields]);
+
+  const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
+  const [activeSlotKey, setActiveSlotKey] = useState<string | null>(null);
 
   const writeCacheFromWidgetConfigsQuery = async () => {
     const refreshed = await widgetItemsQuery.refetch();
     await writeLatestItemsWidgetConfigListToCache(
       (refreshed.data as any)?.configs ?? [],
     );
-    // Ensure any screens depending on widgetConfigs update immediately.
     queryClient.invalidateQueries({ queryKey: ["widgetConfigs"] as any });
   };
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (values: FormValues) => {
       if (!directus) throw new Error("Not authenticated with Directus");
       if (!user?.id) throw new Error("Not authenticated (missing user)");
-      if (!form.collection?.trim()) throw new Error("Missing collection");
+      if (!values.collection?.trim()) throw new Error("Missing collection");
 
       const payload: any = {
         user_id: user.id,
-        type: form.type || APP_WIDGET_TYPE_LATEST_ITEMS,
-        collection: form.collection,
-        sort: form.sort,
+        type: values.type || APP_WIDGET_TYPE_LATEST_ITEMS,
+        collection: values.collection,
+        sort: values.sort,
         filter: {},
-        extra: form.extra ?? { slots: DEFAULT_SLOTS },
+        extra: values.extra ?? { slots: DEFAULT_SLOTS },
       };
-      if (form.title?.trim()) payload.title = form.title.trim();
+      if (values.title?.trim()) payload.title = values.title.trim();
 
       if (isNew) {
         await directus.request(
@@ -202,9 +214,10 @@ export default function WidgetConfigEditorScreen() {
 
   const confirmRemove = () => {
     if (isNew) return;
+    const values = getValues();
     Alert.alert(
       t("widget.removeTitle"),
-      t("widget.removeMessage", { name: form.title || form.collection }),
+      t("widget.removeMessage", { name: values.title || values.collection }),
       [
         { text: t("button.cancel"), style: "cancel" },
         {
@@ -220,41 +233,36 @@ export default function WidgetConfigEditorScreen() {
     <KeyboardAwareLayout>
       <Stack.Screen
         options={{
-          headerTitle: form.title
-            ? form.title
-            : t("pages.settings.widget.addWidgetSetup"),
+          headerTitle: getValues("title") || t("pages.settings.widget.addWidgetSetup"),
           headerBackVisible: false,
           ...useHeaderStyles(),
-
-          headerRight: () => {
-            return (
-              <Horizontal>
-                {!isNew && (
-                  <View style={{ marginLeft: "auto" }}>
-                    <Button
-                      variant="soft"
-                      colorScheme="error"
-                      onPress={confirmRemove}
-                      size="sm"
-                      rounded
-                      loading={deleteMutation.isPending}
-                    >
-                      <Trash />
-                    </Button>
-                  </View>
-                )}
-                <Button
-                  onPress={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending || !form.collection?.trim()}
-                  size="sm"
-                  rounded
-                  loading={saveMutation.isPending}
-                >
-                  <Check />
-                </Button>
-              </Horizontal>
-            );
-          },
+          headerRight: () => (
+            <Horizontal>
+              {!isNew && (
+                <View style={{ marginLeft: "auto" }}>
+                  <Button
+                    variant="soft"
+                    colorScheme="error"
+                    onPress={confirmRemove}
+                    size="sm"
+                    rounded
+                    loading={deleteMutation.isPending}
+                  >
+                    <Trash />
+                  </Button>
+                </View>
+              )}
+              <Button
+                onPress={handleSubmit((values) => saveMutation.mutate(values))}
+                disabled={saveMutation.isPending || !collection?.trim()}
+                size="sm"
+                rounded
+                loading={saveMutation.isPending}
+              >
+                <Check />
+              </Button>
+            </Horizontal>
+          ),
         }}
       />
       <KeyboardAwareScrollView>
@@ -263,10 +271,8 @@ export default function WidgetConfigEditorScreen() {
             <Vertical spacing="md">
               <Select
                 label="Type"
-                value={form.type || APP_WIDGET_TYPE_LATEST_ITEMS}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, type: String(val) }))
-                }
+                value={type || APP_WIDGET_TYPE_LATEST_ITEMS}
+                onValueChange={(val) => setValue("type", String(val))}
                 options={APP_WIDGET_TYPES.map((tt) => ({
                   value: tt.value,
                   text: tt.label,
@@ -275,35 +281,32 @@ export default function WidgetConfigEditorScreen() {
 
               <Input
                 label={t("widget.titleLabel")}
-                value={form.title ?? ""}
-                onChangeText={(val) => setForm((f) => ({ ...f, title: val }))}
+                value={useWatch({ control, name: "title" }) ?? ""}
+                onChangeText={(val) => setValue("title", val)}
                 placeholder={t("widget.titlePlaceholder")}
               />
 
               <Select
                 label={t("widget.collectionLabel")}
-                value={form.collection}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, collection: String(val) }))
-                }
+                value={collection}
+                onValueChange={(val) => setValue("collection", String(val))}
                 options={collectionOptions}
                 placeholder={t("widget.collectionPlaceholder")}
               />
 
               <Select
                 label={t("widget.sortLabel")}
-                value={form.sort ?? ""}
-                onValueChange={(val) =>
-                  setForm((f) => ({ ...f, sort: String(val) }))
-                }
-                options={sortOptions.length ? sortOptions : []}
+                value={sort ?? ""}
+                onValueChange={(val) => setValue("sort", String(val))}
+                options={sortOptions}
                 placeholder={t("widget.sortPlaceholder")}
-                disabled={!form.collection}
+                disabled={!collection}
+                
               />
 
               <Divider />
 
-              {(form.type || APP_WIDGET_TYPE_LATEST_ITEMS) ===
+              {(type || APP_WIDGET_TYPE_LATEST_ITEMS) ===
                 APP_WIDGET_TYPE_LATEST_ITEMS && (
                 <Vertical spacing="xs">
                   <Vertical style={{ gap: 0 }}>
@@ -314,10 +317,7 @@ export default function WidgetConfigEditorScreen() {
                       {t("widget.latestItems.slotsHint")}
                     </Text>
                   </Vertical>
-                  {(Array.isArray(form.extra?.slots)
-                    ? form.extra?.slots
-                    : DEFAULT_SLOTS
-                  ).map((slot) => (
+                  {slots.map((slot) => (
                     <Vertical
                       key={slot.key}
                       spacing="xs"
@@ -349,22 +349,13 @@ export default function WidgetConfigEditorScreen() {
                               variant="ghost"
                               size="sm"
                               colorScheme="error"
-                              onPress={() =>
-                                setForm((f) => {
-                                  const slots = Array.isArray(f.extra?.slots)
-                                    ? [...(f.extra!.slots as any[])]
-                                    : [...DEFAULT_SLOTS];
-                                  const idx = slots.findIndex(
-                                    (s) => s.key === slot.key,
-                                  );
-                                  if (idx >= 0)
-                                    slots[idx] = { ...slots[idx], field: "" };
-                                  return {
-                                    ...f,
-                                    extra: { ...(f.extra ?? {}), slots },
-                                  };
-                                })
-                              }
+                              onPress={() => {
+                                const current = getValues("extra.slots");
+                                const updated = current.map((s) =>
+                                  s.key === slot.key ? { ...s, field: "" } : s,
+                                );
+                                setValue("extra.slots", updated);
+                              }}
                             >
                               <DirectusIcon name="close" />
                             </Button>
@@ -372,7 +363,6 @@ export default function WidgetConfigEditorScreen() {
                         }
                         style={{ paddingRight: 0 }}
                       />
-
                       {(() => {
                         const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
                           (s) => s.key === slot.key,
@@ -398,18 +388,15 @@ export default function WidgetConfigEditorScreen() {
           setFieldPickerOpen(false);
           setActiveSlotKey(null);
         }}
-        collection={form.collection || null}
+        collection={collection || null}
         title={t("widget.latestItems.selectFieldTitle")}
         onSelect={(path) => {
           if (!activeSlotKey) return;
-          setForm((f) => {
-            const slots = Array.isArray(f.extra?.slots)
-              ? [...(f.extra!.slots as any[])]
-              : [...DEFAULT_SLOTS];
-            const idx = slots.findIndex((s) => s.key === activeSlotKey);
-            if (idx >= 0) slots[idx] = { ...slots[idx], field: path };
-            return { ...f, extra: { ...(f.extra ?? {}), slots } };
-          });
+          const current = getValues("extra.slots");
+          const updated = current.map((s) =>
+            s.key === activeSlotKey ? { ...s, field: path } : s,
+          );
+          setValue("extra.slots", updated);
         }}
       />
     </KeyboardAwareLayout>
