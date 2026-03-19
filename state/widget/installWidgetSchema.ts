@@ -97,16 +97,7 @@ const WIDGET_FIELDS: Array<{
       note: "Fields array for the widget query (e.g. [\"id\",\"title\"]).",
     },
   },
-  {
-    field: "extra",
-    type: "json",
-    meta: {
-      interface: "input-code",
-      options: { language: "json" },
-      note:
-        "Per-widget-type config (e.g. latest-items field slots). Shape depends on `type`.",
-    },
-  },
+ 
   {
     field: "filter",
     type: "json",
@@ -123,15 +114,7 @@ const WIDGET_FIELDS: Array<{
       interface: "input",
       note: "Directus sort string, e.g. -date_updated.",
     },
-  },
-  {
-    field: "limit",
-    type: "integer",
-    meta: {
-      interface: "numeric",
-      note: "Max number of items to return.",
-    },
-  },
+  }
 ];
 
 /**
@@ -715,9 +698,9 @@ module.exports = async function (data) {
         var c = f.collection != null ? f.collection : f.many_collection;
         var ff = f.field != null ? f.field : f.many_field;
         if (c !== col || ff !== fieldName) continue;
-        var iface = f.meta && f.meta.interface != null ? String(f.meta.interface) : "";
+        var iface = f.interface != null ? String(f.interface) : (f.meta && f.meta.interface != null ? String(f.meta.interface) : "");
         if (iface === "translations") { isTrans = true; break; }
-        var sp = f.meta && f.meta.special != null ? f.meta.special : null;
+        var sp = f.special != null ? f.special : (f.meta && f.meta.special != null ? f.meta.special : null);
         if (Array.isArray(sp)) {
           for (var j = 0; j < sp.length; j++) {
             if (String(sp[j]) === "translations") { isTrans = true; break; }
@@ -852,9 +835,9 @@ module.exports = async function (data) {
         var c = f.collection != null ? f.collection : f.many_collection;
         var ff = f.field != null ? f.field : f.many_field;
         if (c !== col || ff !== fieldName) continue;
-        var iface = f.meta && f.meta.interface != null ? String(f.meta.interface) : "";
+        var iface = f.interface != null ? String(f.interface) : (f.meta && f.meta.interface != null ? String(f.meta.interface) : "");
         if (iface === "translations") { isTrans = true; break; }
-        var sp = f.meta && f.meta.special != null ? f.meta.special : null;
+        var sp = f.special != null ? f.special : (f.meta && f.meta.special != null ? f.meta.special : null);
         if (Array.isArray(sp)) {
           for (var j = 0; j < sp.length; j++) {
             if (String(sp[j]) === "translations") { isTrans = true; break; }
@@ -979,7 +962,7 @@ module.exports = async function (data) {
     var p = parsed.path;
     var transform = parsed.transform;
     if (!p) return "string";
-    if (transform === "thumbnail") return "image";
+    if (transform) return transform;
 
     function findRelation(col, fieldName) {
       for (var i = 0; i < relations.length; i++) {
@@ -1006,7 +989,7 @@ module.exports = async function (data) {
     function isTranslationsAliasField(col, fieldName) {
       var f = getFieldMeta(col, fieldName);
       if (!f) return false;
-      var iface = f.meta && f.meta.interface != null ? String(f.meta.interface).toLowerCase() : "";
+      var iface = f.interface != null ? String(f.interface).toLowerCase() : (f.meta && f.meta.interface != null ? String(f.meta.interface).toLowerCase() : "");
       if (iface === "translations") return true;
       var sp = specialTokens(f);
       return sp.indexOf("translations") >= 0;
@@ -1066,15 +1049,13 @@ module.exports = async function (data) {
     var fm = getFieldMeta(currentCol, lastField);
     if (!fm) return "string";
 
-    var iface = fm.meta && fm.meta.interface != null ? String(fm.meta.interface).toLowerCase() : "";
-    var fieldType = fm.type != null ? String(fm.type).toLowerCase() : "";
+    var iface = fm.interface != null ? String(fm.interface).toLowerCase() : (fm.meta && fm.meta.interface != null ? String(fm.meta.interface).toLowerCase() : "");
     var specials = specialTokens(fm);
 
     if (specials.indexOf("status") >= 0 || String(lastField).toLowerCase() === "status") return "status";
     if (specials.indexOf("file") >= 0 || specials.indexOf("files") >= 0 || specials.indexOf("directus_files") >= 0) return "image";
     if (iface.indexOf("file") >= 0 || iface.indexOf("image") >= 0) return "image";
-    if (fieldType === "date" || fieldType === "dateTime" || fieldType === "timestamp") return "date";
-    if (iface.indexOf("datetime") >= 0 || iface.indexOf("date-time") >= 0 || iface === "datetime" || iface === "date") return "date";
+    if (iface === "datetime" || iface === "date" || iface === "time") return "date";
     return "string";
   }
 
@@ -1093,42 +1074,6 @@ module.exports = async function (data) {
     return "";
   }
 
-  function resolveRequestBaseUrl() {
-    var trig = data && data.$trigger ? data.$trigger : {};
-    var headers = trig && trig.headers && typeof trig.headers === "object" ? trig.headers : {};
-    var candidates = [];
-    if (trig && typeof trig.url === "string") candidates.push(trig.url);
-    if (headers && typeof headers.origin === "string") candidates.push(headers.origin);
-    if (headers && typeof headers.referer === "string") candidates.push(headers.referer);
-
-    var xfHost = headers && (headers["x-forwarded-host"] || headers["X-Forwarded-Host"]);
-    var xfProto = headers && (headers["x-forwarded-proto"] || headers["X-Forwarded-Proto"]);
-    if (xfHost) candidates.push(String((xfProto || "https")) + "://" + String(xfHost));
-
-    for (var i = 0; i < candidates.length; i++) {
-      var raw = String(candidates[i] || "").trim();
-      if (!raw) continue;
-      try {
-        var u = new URL(raw);
-        if (u.origin) return u.origin;
-      } catch (_) {}
-      if (/^https?:\/\//i.test(raw)) return raw.replace(/\/+$/, "");
-    }
-    return "";
-  }
-
-  function applySlotTransform(rawValue, transform) {
-    if (!transform) return rawValue || "";
-    if (String(transform).toLowerCase() === "thumbnail") {
-      var id = extractFileId(rawValue);
-      if (!id) return "";
-      var base = resolveRequestBaseUrl();
-      if (base) return base + "/assets/" + encodeURIComponent(id) + "?key=thumbnail";
-      return "/assets/" + encodeURIComponent(id) + "?key=thumbnail";
-    }
-    return rawValue || "";
-  }
-
   // ─── Per-slot value resolver (generic, shared by all types that use slots) ──
   function resolveSlotValue(it, slotField) {
     var parsed = parsePathAndTransform(slotField || "");
@@ -1137,13 +1082,13 @@ module.exports = async function (data) {
     if (!path) return "";
     if (!isPathAllowedForUser(widget.user_id, collection, path)) return "";
     if (transform) {
-      // For transforms (e.g. $thumbnail) the raw value may be a file object
-      // {id, ...} — getJoinedLeafValuesAtPath strips objects, so use getValuesAtPath.
-      var norm = String(path).replace(/(\w+):/g, "$1.");
+      // For transforms the raw value may be a file object {id, ...} — extract just the ID.
+      var norm = String(path).replace(/(\\w+):/g, "$1.");
       var rawValues = getValuesAtPath(it, norm);
       var rawFlat = Array.isArray(rawValues) ? rawValues : [rawValues];
-      var rawVal = rawFlat.filter(function (v) { return v != null; })[0] ?? null;
-      return applySlotTransform(rawVal, transform);
+      var rawVal = null;
+      for (var ri = 0; ri < rawFlat.length; ri++) { if (rawFlat[ri] != null) { rawVal = rawFlat[ri]; break; } }
+      return rawVal != null ? extractFileId(rawVal) : "";
     }
     return getJoinedLeafValuesAtPath(it, path) || "";
   }
@@ -1225,7 +1170,7 @@ module.exports = async function (data) {
               permissions: "$full",
               emitEvents: false,
               query: {
-                limit: "{{ extract_widget_config.widget.limit }}",
+                limit: 10,
                 sort: "{{ extract_widget_config.widget.sort }}",
                 // Directus expects JSON for filter; provide a JSON string that parses to an object.
                 filter: "{{ extract_widget_config.widget.filter_json }}",
@@ -1373,7 +1318,7 @@ module.exports = async function (data) {
               emitEvents: false,
               query: {
                 limit: -1,
-                fields: ["collection", "field", "type", "interface", "special", "meta.interface", "meta.special"],
+                fields: ["collection", "field", "interface", "special"],
               },
             },
           } as any),

@@ -366,6 +366,7 @@ struct Entry: TimelineEntry {
   let date: Date
   let configTitle: String
   let faviconUrl: String?
+  let instanceUrl: String?
   let items: [SlotItem]
   let statusMessage: String?
 }
@@ -375,7 +376,7 @@ struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
 
   func placeholder(in context: Context) -> Entry {
-    Entry(date: .now, configTitle: "Latest", faviconUrl: nil, items: [], statusMessage: nil)
+    Entry(date: .now, configTitle: "Latest", faviconUrl: nil, instanceUrl: nil, items: [], statusMessage: nil)
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
@@ -412,7 +413,7 @@ struct Provider: AppIntentTimelineProvider {
     if let base = baseFromConfig {
       favicon = await fetchFaviconURL(from: base) ?? fallbackFaviconICO(instanceBaseUrl: base)
     }
-    return Entry(date: .now, configTitle: title, faviconUrl: favicon, items: items, statusMessage: status)
+    return Entry(date: .now, configTitle: title, faviconUrl: favicon, instanceUrl: selectedConfig?.instanceUrl, items: items, statusMessage: status)
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
@@ -428,6 +429,7 @@ struct Provider: AppIntentTimelineProvider {
 struct SlotRowView: View {
   let item: SlotItem
   let family: WidgetFamily
+  let instanceUrl: String?
 
   var body: some View {
     let leftSlot = item.slotValue(for: "left")
@@ -437,20 +439,7 @@ struct SlotRowView: View {
 
     let title = displayText(for: titleSlot)
     let subtitle = displayText(for: subtitleSlot)
-    let leftWidth: CGFloat = {
-      switch family {
-      case .systemSmall: return 38
-      case .systemMedium: return 48
-      default: return 56
-      }
-    }()
-    let rightWidth: CGFloat = {
-      switch family {
-      case .systemSmall: return 52
-      case .systemMedium: return 58
-      default: return 64
-      }
-    }()
+    let sideMaxWidth: CGFloat = family == .systemSmall ? 60 : 80
     let hasLeft = hasContent(leftSlot)
     let hasRight = hasContent(rightSlot)
 
@@ -462,7 +451,7 @@ struct SlotRowView: View {
       // Line 1
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
-          SideSlotView(slot: leftSlot, width: leftWidth, alignment: .leading)
+          SideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading, instanceUrl: instanceUrl)
         }
 
         Text(title)
@@ -472,7 +461,7 @@ struct SlotRowView: View {
           .layoutPriority(1)
 
         if hasRight {
-          SideSlotView(slot: rightSlot, width: rightWidth, alignment: .trailing)
+          SideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing, instanceUrl: instanceUrl)
         }
       }
 
@@ -490,13 +479,28 @@ struct SlotRowView: View {
 
 private struct SideSlotView: View {
   let slot: SlotItem.SlotValue?
-  let width: CGFloat
+  let maxWidth: CGFloat
   let alignment: Alignment
+  let instanceUrl: String?
 
   var body: some View {
     let type = (slot?.type ?? "string").lowercased()
     let raw = slot?.value ?? ""
-    if type == "image", let url = URL(string: raw), !raw.isEmpty {
+    let imageURLString: String? = {
+      guard !raw.isEmpty else { return nil }
+      if type == "thumbnail" {
+        let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
+        guard !base.isEmpty else { return nil }
+        return "\(base)/assets/\(raw)"
+      }
+      if type == "image" {
+        if raw.hasPrefix("http://") || raw.hasPrefix("https://") { return raw }
+        let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/")) ?? ""
+        return base.isEmpty ? nil : base + (raw.hasPrefix("/") ? raw : "/\(raw)")
+      }
+      return nil
+    }()
+    if let urlString = imageURLString, let url = URL(string: urlString) {
       AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
         switch phase {
         case .success(let image):
@@ -508,9 +512,8 @@ private struct SideSlotView: View {
             .fill(Color.secondary.opacity(0.2))
         }
       }
-      .frame(width: 16, height: 16)
+      .frame(width: 24, height: 24)
       .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-      .frame(width: width, alignment: alignment)
     } else if type == "status", !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       Text(raw)
         .font(.caption2)
@@ -518,17 +521,16 @@ private struct SideSlotView: View {
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .foregroundStyle(statusForeground(raw))
-        .background(
-          Capsule(style: .continuous)
-            .fill(statusBackground(raw))
-        )
-        .frame(width: width, alignment: alignment)
+        .background(Capsule(style: .continuous).fill(statusBackground(raw)))
+        .fixedSize()
+        .frame(maxWidth: maxWidth, alignment: alignment)
     } else {
       Text(displayText(for: slot))
         .font(.caption2)
         .foregroundStyle(.secondary)
         .lineLimit(1)
-        .frame(width: width, alignment: alignment)
+        .fixedSize()
+        .frame(maxWidth: maxWidth, alignment: alignment)
     }
   }
 }
@@ -546,9 +548,9 @@ private func displayText(for slot: SlotItem.SlotValue?) -> String {
   switch slot.type.lowercased() {
   case "date":
     return formatDateIfPossible(raw)
-  case "image":
-    // Side slots render the actual image. For title/subtitle fallback to a neutral marker.
-    return "image"
+  case "image", "thumbnail":
+    // Side slots render the actual image; for title/subtitle fall back to a neutral marker.
+    return "·"
   default:
     return raw
   }
@@ -748,7 +750,7 @@ struct LatestItemsWidgetView: View {
         case .systemSmall, .systemMedium:
           return 2
         case .systemLarge:
-          return 4
+          return 6
         default:
           return 2
         }
@@ -799,10 +801,10 @@ struct LatestItemsWidgetView: View {
           VStack(alignment: .leading, spacing: 0) {
             let visible = Array(entry.items.prefix(maxRows))
             ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
-              SlotRowView(item: it, family: family)
+              SlotRowView(item: it, family: family, instanceUrl: entry.instanceUrl)
                 .padding(
                   .vertical,
-                  family == .systemSmall ? 2 : 3
+                  family == .systemSmall ? 2 : family == .systemLarge ? 6 : 3
                 )
               if idx < visible.count - 1 { Divider() }
             }

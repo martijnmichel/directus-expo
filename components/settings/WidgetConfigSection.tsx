@@ -404,7 +404,7 @@ export function WidgetConfigSection() {
       </Button>
 
       {policyGlobals?.admin_access === true &&
-        (flowVersionQuery.data?.needsUpdate || flowVersionQuery.isError) && (
+        (flowVersionQuery.data?.needsUpdate || __DEV__ || flowVersionQuery.isError) && (
           <Button
             variant="soft"
             disabled={!isAdmin || installMutation.isPending}
