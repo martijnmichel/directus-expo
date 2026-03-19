@@ -492,14 +492,23 @@ private struct SideSlotView: View {
       guard !base.isEmpty else { return nil }
       return "\(base)/assets/\(raw)"
     }()
-    if let urlString = imageURLString, let url = URL(string: urlString) {
+    if type == "thumbnail", imageURLString == nil {
+      // Debug: thumbnail type but URL couldn't be built (missing instanceUrl or empty value)
+      Text("no-url")
+        .font(.system(size: 7, weight: .medium, design: .monospaced))
+        .foregroundStyle(.orange)
+        .lineLimit(2)
+        .frame(width: 24, height: 24)
+    } else if let urlString = imageURLString, let url = URL(string: urlString) {
+      let _ = { print("[widget] thumbnail url: \(urlString)") }()
       AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
         switch phase {
         case .success(let image):
           image
             .resizable()
             .scaledToFill()
-        case .failure:
+        case .failure(let err):
+          let _ = { print("[widget] thumbnail load FAILED: \(err)") }()
           RoundedRectangle(cornerRadius: 4, style: .continuous)
             .fill(Color.red.opacity(0.6))
         default:
