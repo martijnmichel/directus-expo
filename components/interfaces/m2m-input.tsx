@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import {
+  useCollection,
   useDocument,
   useDocuments,
   useFields,
@@ -114,6 +115,9 @@ export const M2MInput = ({
     (r) =>
       r.field === junction?.meta.junction_field &&
       r.collection === junction.meta.many_collection
+  );
+  const { data: relatedCollectionMeta } = useCollection(
+    relation?.related_collection as keyof CoreSchema,
   );
 
   const relationPermission =
@@ -234,10 +238,32 @@ export const M2MInput = ({
     isSortable?: boolean;
   }) => {
     const { data: fields } = useFields(relation.related_collection as any);
+    const { data: junctionFields } = useFields(
+      junction?.meta.many_collection as any,
+    );
+    const { data: relatedCollection } = useCollection(
+      relation.related_collection as keyof CoreSchema,
+    );
+    const interfaceTemplate = template || "";
+    const effectiveTemplate =
+      interfaceTemplate ||
+      (relatedCollection?.meta?.display_template as string | undefined) ||
+      "";
     const pk = getPrimaryKey(fields);
-    const templatePaths = getFieldPathsFromTemplate(template);
-    const requestFields =
-      templatePaths.length > 0 ? [pk, ...templatePaths] : ["*.*"];
+    const junctionField = String(junction.meta.junction_field);
+    const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+      .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+      .filter(Boolean);
+    const prefixedTemplatePaths = templatePaths.map((p) =>
+      p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
+    );
+    const requestFields = uniq([
+      pk,
+      junctionField,
+      ...templatePaths,
+      ...prefixedTemplatePaths,
+      "*.*.*",
+    ]).filter(Boolean);
 
     const {
       data: doc,
@@ -278,6 +304,25 @@ export const M2MInput = ({
       );
     }
 
+    const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
+    const parsedFromRelated = parseTemplate(
+      effectiveTemplate,
+      ((doc as any)?.[junctionField] ?? doc) as any,
+      fields,
+    );
+    const text =
+      interfaceTemplate.length > 0 ? parsedFromDoc : parsedFromRelated || parsedFromDoc;
+    const relatedPk = getPrimaryKey(fields) as string;
+    const junctionPk = (getPrimaryKey(junctionFields) as string) || "id";
+    const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
+    const editId =
+      rawJunctionValue != null &&
+      typeof rawJunctionValue === "object"
+        ? ((rawJunctionValue as Record<string, unknown>)?.[relatedPk] ??
+          (rawJunctionValue as Record<string, unknown>)?.[junctionPk] ??
+          docId)
+        : rawJunctionValue ?? docId;
+
     return doc ? (
       <RelatedListItem
         isDeselected={isDeselected}
@@ -291,11 +336,7 @@ export const M2MInput = ({
                 params: {
                   collection: relation.related_collection,
                   uuid,
-                  id: (
-                    doc?.[
-                      junction.meta.junction_field as keyof typeof doc
-                    ] as CoreSchemaDocument
-                  )?.[getPrimaryKey(fields) as any],
+                  id: editId as string | number,
                 },
               }}
               asChild
@@ -323,7 +364,7 @@ export const M2MInput = ({
           </>
         }
       >
-        {parseTemplate(template, doc, fields)}
+        {text}
       </RelatedListItem>
     ) : null;
   };
@@ -358,12 +399,21 @@ export const M2MInput = ({
                 relation?.field in junctionDoc
                   ? (junctionDoc as any)[relation?.field]
                   : junctionDoc;
-              const id: number | string =
+              const rawId: unknown =
                 typeof relatedDoc === "number" || typeof relatedDoc === "string"
                   ? relatedDoc
                   : primaryKey in relatedDoc
                   ? relatedDoc[primaryKey]
-                  : relatedDoc.id;
+                  : (relatedDoc as Record<string, unknown>)?.id;
+              const id: number | string =
+                rawId != null && typeof rawId === "object"
+                  ? ((rawId as Record<string, unknown>)[primaryKey] as
+                      | number
+                      | string) ??
+                    ((junctionDoc as Record<string, unknown>).id as
+                      | number
+                      | string)
+                  : (rawId as number | string);
 
               const isDeselected = value.delete?.some((doc) => doc === id);
               const isNew = isInitial ? false : !junctionDoc.id;
@@ -379,10 +429,17 @@ export const M2MInput = ({
                 }); */
 
               const text = parseTemplate(
-                item.meta.options?.template,
-                {
-                  ...junctionDoc,
-                },
+                item.meta.options?.template ||
+                  (relatedCollectionMeta?.meta?.display_template as
+                    | string
+                    | undefined),
+                item.meta.options?.template
+                  ? {
+                      ...junctionDoc,
+                    }
+                  : ((junctionDoc as any)?.[relation?.field as string] ?? {
+                      ...junctionDoc,
+                    }),
                 fields
               );
 
@@ -432,6 +489,7 @@ export const M2MInput = ({
                   key={id + "draggable"}
                   id={id?.toString() + "existing"}
                   disabled={!sortField}
+                  activationDelay={200}
                 >
                   <Item
                     key={id}

@@ -45,7 +45,12 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
-import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
+import {
+  getAllPathsFromTemplate,
+  getFieldPathsFromTemplate,
+  getValuesAtPath,
+  parseTemplate,
+} from "@/helpers/document/template";
 import {
   getPrimaryKey,
   getPrimaryKeyFromAllFields,
@@ -209,15 +214,19 @@ export const M2AInput = ({
     relation,
   }); */
 
-  const NewItem = ({ collection, item }: { collection: string; item: any }) => {
+  const NewItem = ({ collection, item: newItem }: { collection: string; item: any }) => {
     const { data } = useCollection(collection as keyof CoreSchema);
 
     const { data: fields } = useFields(data?.collection as any);
+    const effectiveTemplate =
+      item?.meta?.options?.template ||
+      (data?.meta?.display_template as string | undefined) ||
+      "";
 
     const primaryKey = getPrimaryKey(fields);
     const text = parseTemplate(
-      data?.meta.display_template as string,
-      item as { [key: string]: any },
+      effectiveTemplate,
+      newItem as { [key: string]: any },
       fields
     );
 
@@ -241,7 +250,7 @@ export const M2AInput = ({
                 create: value.create.filter(
                   (v) =>
                     v?.[relation?.field as any]?.[primaryKey] !==
-                    item?.[primaryKey]
+                    newItem?.[primaryKey]
                 ),
               });
             }}
@@ -274,7 +283,9 @@ export const M2AInput = ({
       junctionDocMinimal?.collection as keyof CoreSchema
     );
 
-    const displayTemplate = collection?.meta?.display_template as string | undefined;
+    const displayTemplate =
+      item?.meta?.options?.template ||
+      (collection?.meta?.display_template as string | undefined);
     const templatePaths = getFieldPathsFromTemplate(displayTemplate);
     const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.["collection"] as string | undefined;
     const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[junctionItemField];
@@ -287,8 +298,15 @@ export const M2AInput = ({
     const primaryKey = getPrimaryKey(fields);
     const relatedFields =
       templatePaths.length > 0
-        ? [primaryKey, ...templatePaths.map((p) => (p.includes(".$") ? p.split(".$")[0] : p)).filter(Boolean)]
-        : [primaryKey, "*"];
+        ? [
+            primaryKey,
+            ...templatePaths
+              .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+              .filter(Boolean),
+            // Keep preview labels reliable for nested M2M/M2A display templates (e.g. block_bentogrid.items)
+            "*.*.*",
+          ]
+        : [primaryKey, "*.*.*"];
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
@@ -305,6 +323,33 @@ export const M2AInput = ({
       itemData as { [key: string]: any },
       fields
     );
+
+    // Template-driven fallback for complex aliases/lists:
+    // collect all leaf values referenced by display_template paths.
+    const templateLeafValues = (() => {
+      if (!displayTemplate || !itemData) return [] as string[];
+      const paths = getAllPathsFromTemplate(displayTemplate)
+        .map((p) => p.replace(/^item\./, ""))
+        .filter(Boolean);
+      const values = paths.flatMap((path) => {
+        const raw = getValuesAtPath(itemData, path);
+        return (Array.isArray(raw) ? raw : [raw]).filter(
+          (v) => v != null && typeof v !== "object",
+        );
+      });
+      return uniq(values.map((v) => String(v).trim()).filter(Boolean));
+    })();
+
+    if (
+      templateLeafValues.length > 0 &&
+      (!text ||
+        (typeof text === "string" &&
+          (!text.trim() ||
+            text === String(itemId) ||
+            text === String((junctionDoc as Record<string, unknown>)?.["id"] ?? ""))))
+    ) {
+      text = templateLeafValues.join(", ");
+    }
     if (!text || (typeof text === "string" && !text.trim())) {
       text =
         itemId != null

@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import {
+  useCollection,
   useDocument,
   useDocuments,
   useFields,
@@ -89,6 +90,13 @@ function O2MItemRow({
   sortField,
   template,
 }: O2MItemRowProps) {
+  const { data: relatedCollectionMeta } = useCollection(
+    relatedCollection as keyof CoreSchema,
+  );
+  const effectiveTemplate =
+    template ||
+    (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
+    "";
   const {
     data: doc,
     error,
@@ -163,7 +171,7 @@ function O2MItemRow({
         </>
       }
     >
-      {parseTemplate(template, doc, fields)}
+      {parseTemplate(effectiveTemplate, doc, fields)}
     </RelatedListItem>
   );
 }
@@ -197,6 +205,9 @@ export const O2MInput = ({
     (r) =>
       r.related_collection === item.collection &&
       r.meta.one_field === item.field
+  );
+  const { data: relatedCollectionMeta } = useCollection(
+    relation?.collection as keyof CoreSchema,
   );
 
   const relatedPk = usePrimaryKey(relation?.collection as any);
@@ -369,7 +380,8 @@ export const O2MInput = ({
                 : !((initialValue as number[]) || []).includes(id as number);
 
               const text = parseTemplate<any>(
-                item.meta.options?.template,
+                item.meta.options?.template ||
+                  (relatedCollectionMeta?.meta?.display_template as string | undefined),
                 relatedDoc,
                 fields
               );
