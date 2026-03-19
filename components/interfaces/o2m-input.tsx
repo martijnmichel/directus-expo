@@ -43,7 +43,11 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { DragIcon, Trash } from "../icons";
 import { parseTemplate } from "@/helpers/document/template";
-import { getPrimaryKey, usePrimaryKey } from "@/hooks/usePrimaryKey";
+import {
+  getPrimaryKey,
+  getPrimaryKeyValue,
+  usePrimaryKey,
+} from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
@@ -305,7 +309,7 @@ export const O2MInput = ({
     () =>
       JSON.stringify({
         update: value.update
-          .map((v) => (v as any)?.[relatedPk] ?? (v as any)?.id)
+          .map((v) => getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]))
           .filter(Boolean)
           .sort(),
         create: value.create
@@ -365,19 +369,23 @@ export const O2MInput = ({
           >
             {orderBy(
               [...value.create, ...value.update, ...value.delete],
-              sortField || relation?.schema?.foreign_key_column || "id"
+              sortField || relation?.schema?.foreign_key_column || relatedPk || "id"
             ).map((relatedDoc, index) => {
               const primaryKey = relation?.schema?.foreign_key_column;
 
               const id: number | string =
-                typeof relatedDoc === "number" || typeof relatedDoc === "string"
-                  ? relatedDoc
-                  : (relatedDoc as any)?.[relatedPk || ""];
+                (getPrimaryKeyValue(
+                  relatedDoc,
+                  fields,
+                  (relatedDoc as any)?.[relatedPk || ""],
+                ) as number | string) ?? "";
 
               const isDeselected = value.delete?.some((doc) => doc === id);
               const isNew = isInitial
                 ? false
-                : !((initialValue as number[]) || []).includes(id as number);
+                : !((initialValue as (string | number)[]) || [])
+                    .map((v) => String(v))
+                    .includes(String(id));
 
               const text = parseTemplate<any>(
                 item.meta.options?.template ||
@@ -483,8 +491,12 @@ export const O2MInput = ({
                   related_field: relation.field,
                   uuid,
                   current_value: [
-                    ...map(value.update, (v) => (v as any)?.[relatedPk]),
-                    ...map(value.create, (v) => (v as any)?.[relatedPk]),
+                    ...map(value.update, (v) =>
+                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]),
+                    ),
+                    ...map(value.create, (v) =>
+                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]),
+                    ),
                   ].join(","),
                   doc_id: docId,
                   item_field: item.field,

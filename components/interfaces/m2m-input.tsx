@@ -45,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey, getPrimaryKeyValue } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { RelatedListItem } from "../display/related-listitem";
@@ -173,7 +173,9 @@ export const M2MInput = ({
         ...doc,
         [sortField as string]: findIndex(
           newOrderIds,
-          (id) => id === `${doc.id}existing`
+          (id) =>
+            id ===
+            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`
         ),
       })),
       delete: value.delete,
@@ -312,16 +314,11 @@ export const M2MInput = ({
     );
     const text =
       interfaceTemplate.length > 0 ? parsedFromDoc : parsedFromRelated || parsedFromDoc;
-    const relatedPk = getPrimaryKey(fields) as string;
-    const junctionPk = (getPrimaryKey(junctionFields) as string) || "id";
     const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
     const editId =
-      rawJunctionValue != null &&
-      typeof rawJunctionValue === "object"
-        ? ((rawJunctionValue as Record<string, unknown>)?.[relatedPk] ??
-          (rawJunctionValue as Record<string, unknown>)?.[junctionPk] ??
-          docId)
-        : rawJunctionValue ?? docId;
+      getPrimaryKeyValue(rawJunctionValue, fields) ??
+      getPrimaryKeyValue(rawJunctionValue, junctionFields, docId) ??
+      getPrimaryKeyValue(docId, junctionFields);
 
     return doc ? (
       <RelatedListItem
@@ -404,19 +401,19 @@ export const M2MInput = ({
                   ? relatedDoc
                   : primaryKey in relatedDoc
                   ? relatedDoc[primaryKey]
-                  : (relatedDoc as Record<string, unknown>)?.id;
+                  : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
               const id: number | string =
-                rawId != null && typeof rawId === "object"
-                  ? ((rawId as Record<string, unknown>)[primaryKey] as
-                      | number
-                      | string) ??
-                    ((junctionDoc as Record<string, unknown>).id as
-                      | number
-                      | string)
-                  : (rawId as number | string);
+                (getPrimaryKeyValue(rawId, fields) ??
+                  getPrimaryKeyValue(
+                    junctionDoc,
+                    undefined,
+                    getPrimaryKeyValue(rawId, undefined, ""),
+                  ) ??
+                  "") as number | string;
 
               const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew = isInitial ? false : !junctionDoc.id;
+              const isNew =
+                isInitial ? false : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
 
               /** console.log({
                   junctionDoc,
@@ -500,12 +497,13 @@ export const M2MInput = ({
                     isSortable={!!sortField}
                     onAdd={(item) => {
                       console.log({ item });
+                      const addedId = getPrimaryKeyValue(item, fields, item);
                       props.onChange({
                         ...value,
                         update: [
                           ...value.update,
                           {
-                            id: item.id as number,
+                            id: addedId as number | string,
                             ...(sortField && {
                               [sortField]: item[sortField as string],
                             }),
@@ -516,11 +514,15 @@ export const M2MInput = ({
                     }}
                     onDelete={(item) => {
                       console.log({ item });
+                      const deleteId = getPrimaryKeyValue(item, fields, id);
 
                       props.onChange({
                         ...value,
-                        update: value.update.filter((v) => v?.id !== id),
-                        delete: [...value.delete, id as number],
+                        update: value.update.filter(
+                          (v) =>
+                            getPrimaryKeyValue(v, undefined, (v as any)?.id) !== deleteId,
+                        ),
+                        delete: [...value.delete, deleteId as number],
                       });
                     }}
                     isNew={isNew}
