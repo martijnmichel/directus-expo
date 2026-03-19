@@ -11,11 +11,9 @@
 		3A7C48FC5252A087DE7CA7FF /* libPods-DirectusMobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 411E5A7E77423A495A9AEBE6 /* libPods-DirectusMobile.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		4E33B11BFD3EB3B571EF33DB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E37B6D336AD98AA6F7F6622C /* PrivacyInfo.xcprivacy */; };
-		8CEC004A7AE9E4C8B91D049B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CB302E13B1554685FFA73457 /* Foundation.framework */; };
-		94E80E692BBD1CE876E18326 /* LatestItemsWidgetLabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D35352AAB31DE4D36156097 /* LatestItemsWidgetLabView.swift */; };
+		8CEC004A7AE9E4C8B91D049B /* Foundation.framework in [missing build phase] */ = {isa = PBXBuildFile; fileRef = CB302E13B1554685FFA73457 /* Foundation.framework */; };
 		990F8E77FBE4DADAD81F0D77 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54B0D68FF048F3674E3215C9 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C7428DA0051E317166A0199F /* WidgetLabHostApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98A098E1F00DED9DC84A5EB4 /* WidgetLabHostApp.swift */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F21748442D0307B40044C1D9 /* WidgetSharedStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */; };
 		XX12B55A1EDABF083C3B51XX /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */; };
@@ -55,10 +53,7 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = DirectusMobile/Info.plist; sourceTree = "<group>"; };
 		1AD825F633DD9C17A8CF70AC /* Pods-DirectusMobile.debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DirectusMobile.debug.xcconfig"; path = "Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		411E5A7E77423A495A9AEBE6 /* libPods-DirectusMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; fileEncoding = 4; includeInIndex = 0; path = "libPods-DirectusMobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		42ED889948DD331FD2DAC332 /* WidgetLabHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = WidgetLabHost.app; path = WidgetLabHost.app; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = 4; };
 		54B0D68FF048F3674E3215C9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DirectusMobile/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		98A098E1F00DED9DC84A5EB4 /* WidgetLabHostApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetLabHostApp.swift; sourceTree = "<group>"; fileEncoding = 4; };
-		9D35352AAB31DE4D36156097 /* LatestItemsWidgetLabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LatestItemsWidgetLabView.swift; sourceTree = "<group>"; fileEncoding = 4; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DirectusMobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		CB302E13B1554685FFA73457 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; fileEncoding = 4; includeInIndex = undefined; };
@@ -92,8 +87,7 @@
 			exceptions = (
 				XXA9E7B2C1BEFFA35B4823XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			explicitFileTypes = {
-			};
+			explicitFileTypes = {};
 			explicitFolders = (
 			);
 			path = "latest-items-widget";
@@ -107,14 +101,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				3A7C48FC5252A087DE7CA7FF /* libPods-DirectusMobile.a in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		64F78DB0C239BAC109FB3409 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8CEC004A7AE9E4C8B91D049B /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -186,7 +172,6 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				85767A300417630FD870D447 /* Pods */,
 				DCE255C4B6A6E8A0F4C6DCAA /* ExpoModulesProviders */,
-				FEBC081CA744FF37D2D03B5F /* WidgetLabHost */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -198,7 +183,6 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* DirectusMobile.app */,
 				XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */,
-				42ED889948DD331FD2DAC332 /* WidgetLabHost.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -237,16 +221,6 @@
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
-		FEBC081CA744FF37D2D03B5F /* WidgetLabHost */ = {
-			isa = PBXGroup;
-			children = (
-				98A098E1F00DED9DC84A5EB4 /* WidgetLabHostApp.swift */,
-				9D35352AAB31DE4D36156097 /* LatestItemsWidgetLabView.swift */,
-			);
-			name = WidgetLabHost;
-			path = WidgetLabHost;
-			sourceTree = "<group>";
-		};
 		XX3E41C1850246162C0061XX /* expo:targets */ = {
 			isa = PBXGroup;
 			children = (
@@ -259,23 +233,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		09DD69F60EB15999BF410181 /* WidgetLabHost */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 273AB89FB2D779FA6964EAE9 /* Build configuration list for PBXNativeTarget "WidgetLabHost" */;
-			buildPhases = (
-				61D609E8FE70B68FADA71828 /* Sources */,
-				64F78DB0C239BAC109FB3409 /* Frameworks */,
-				FC8FA7D6F6DE215861F838C7 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = WidgetLabHost;
-			productName = WidgetLabHost;
-			productReference = 42ED889948DD331FD2DAC332 /* WidgetLabHost.app */;
-			productType = "com.apple.product-type.application";
-		};
 		13B07F861A680F5B00A75B9A /* DirectusMobile */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "DirectusMobile" */;
@@ -337,11 +294,6 @@
 						DevelopmentTeam = MK33A88HLB;
 						ProvisioningStyle = Automatic;
 					};
-					09DD69F60EB15999BF410181 = {
-						CreatedOnToolsVersion = 14.3;
-						ProvisioningStyle = Automatic;
-						DevelopmentTeam = U94SNGSSX7;
-					};
 				};
 			};
 			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "DirectusMobile" */;
@@ -359,7 +311,6 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* DirectusMobile */,
 				XXD37895CDE99FCC696EE0XX /* latest-items-widget */,
-				09DD69F60EB15999BF410181 /* WidgetLabHost */,
 			);
 		};
 /* End PBXProject section */
@@ -373,13 +324,6 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				4E33B11BFD3EB3B571EF33DB /* PrivacyInfo.xcprivacy in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		FC8FA7D6F6DE215861F838C7 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -549,15 +493,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		61D609E8FE70B68FADA71828 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C7428DA0051E317166A0199F /* WidgetLabHostApp.swift in Sources */,
-				94E80E692BBD1CE876E18326 /* LatestItemsWidgetLabView.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		XXE45443DC38DCFE1DB622XX /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -647,34 +582,6 @@
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
-		};
-		474A39CD6B81C710970E67FD /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U94SNGSSX7;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo;
-				PRODUCT_NAME = DirectusMobile;
-				SDKROOT = iphoneos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				MARKETING_VERSION = 0.10.1;
-				CODE_SIGN_ENTITLEMENTS = DirectusMobile/DirectusMobile.entitlements;
-			};
-			name = Debug;
 		};
 		83CBBA201A601CBA00E9B192 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -794,35 +701,6 @@
 			};
 			name = Release;
 		};
-		E51F7A7E7D0D84901626BB62 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = U94SNGSSX7;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo;
-				PRODUCT_NAME = DirectusMobile;
-				SDKROOT = iphoneos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-				MARKETING_VERSION = 0.10.1;
-				CODE_SIGN_ENTITLEMENTS = DirectusMobile/DirectusMobile.entitlements;
-			};
-			name = Release;
-		};
 		XX250EB8403F42C5AB5159XX /* Release */ = {
 			isa = XCBuildConfiguration;
 			name = Release;
@@ -913,15 +791,6 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		273AB89FB2D779FA6964EAE9 /* Build configuration list for PBXNativeTarget "WidgetLabHost" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				E51F7A7E7D0D84901626BB62 /* Release */,
-				474A39CD6B81C710970E67FD /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
