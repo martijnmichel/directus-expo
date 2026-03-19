@@ -103,6 +103,7 @@
           "hint": "Optional short text shown on the right of each row (e.g. time, counters, or a small meta value). Leave empty to hide this column."
         }
       },
+      "thumbnailTransform": "Thumbnail",
       "slotsTitle": "Slots",
       "slotsHint": "Supported fields to show in the widget. Each field is optional."
     }
