@@ -1,9 +1,9 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
+	objectVersion = 70;
 	classes = {
 	};
-	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -55,28 +55,28 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = DirectusMobile/Info.plist; sourceTree = "<group>"; };
 		1AD825F633DD9C17A8CF70AC /* Pods-DirectusMobile.debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DirectusMobile.debug.xcconfig"; path = "Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile.debug.xcconfig"; sourceTree = "<group>"; };
 		411E5A7E77423A495A9AEBE6 /* libPods-DirectusMobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; fileEncoding = 4; includeInIndex = 0; path = "libPods-DirectusMobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		42ED889948DD331FD2DAC332 /* WidgetLabHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = WidgetLabHost.app; path = WidgetLabHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		42ED889948DD331FD2DAC332 /* WidgetLabHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = WidgetLabHost.app; path = WidgetLabHost.app; sourceTree = BUILT_PRODUCTS_DIR; fileEncoding = 4; };
 		54B0D68FF048F3674E3215C9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-DirectusMobile/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		98A098E1F00DED9DC84A5EB4 /* WidgetLabHostApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetLabHostApp.swift; sourceTree = "<group>"; };
-		9D35352AAB31DE4D36156097 /* LatestItemsWidgetLabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LatestItemsWidgetLabView.swift; sourceTree = "<group>"; };
+		98A098E1F00DED9DC84A5EB4 /* WidgetLabHostApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetLabHostApp.swift; sourceTree = "<group>"; fileEncoding = 4; };
+		9D35352AAB31DE4D36156097 /* LatestItemsWidgetLabView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LatestItemsWidgetLabView.swift; sourceTree = "<group>"; fileEncoding = 4; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = DirectusMobile/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		CB302E13B1554685FFA73457 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		CB302E13B1554685FFA73457 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; fileEncoding = 4; includeInIndex = undefined; };
 		E2B1BA577600F367F26873AC /* Pods-DirectusMobile.release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DirectusMobile.release.xcconfig"; path = "Target Support Files/Pods-DirectusMobile/Pods-DirectusMobile.release.xcconfig"; sourceTree = "<group>"; };
 		E37B6D336AD98AA6F7F6622C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = undefined; name = PrivacyInfo.xcprivacy; path = DirectusMobile/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = DirectusMobile/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* DirectusMobile-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "DirectusMobile-Bridging-Header.h"; path = "DirectusMobile/DirectusMobile-Bridging-Header.h"; sourceTree = "<group>"; };
 		F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = WidgetSharedStorage.m; path = DirectusMobile/WidgetSharedStorage.m; sourceTree = "<group>"; };
-		XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
-		XX4DFF38D47332D6BF0183XX /* SwiftUI.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		XX4DFF38D47332D6BF0183XX /* SwiftUI.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = "latest-items-widget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
-		XXA12889081EB894481655XX /* AppIntents.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
-		XXCAF23C3FC41F82140FA1XX /* ActivityKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
+		XXA12889081EB894481655XX /* AppIntents.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
+		XXCAF23C3FC41F82140FA1XX /* ActivityKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		XXA9E7B2C1BEFFA35B4823XX /* Exceptions for "latest-items-widget" folder in "latest-items-widget" target */ = {
+		XXA9E7B2C1BEFFA35B4823XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				"expo-target.config.js",
@@ -90,7 +90,7 @@
 		XX6A905F2D857E4B511F1FXX /* latest-items-widget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				XXA9E7B2C1BEFFA35B4823XX /* Exceptions for "latest-items-widget" folder in "latest-items-widget" target */,
+				XXA9E7B2C1BEFFA35B4823XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			explicitFileTypes = {
 			};
@@ -252,7 +252,7 @@
 			children = (
 				XX6A905F2D857E4B511F1FXX /* latest-items-widget */,
 			);
-			name = "expo:targets";
+			name = expo:targets;
 			path = ../targets;
 			sourceTree = "<group>";
 		};
@@ -336,6 +336,11 @@
 						CreatedOnToolsVersion = 14.3;
 						DevelopmentTeam = MK33A88HLB;
 						ProvisioningStyle = Automatic;
+					};
+					09DD69F60EB15999BF410181 = {
+						CreatedOnToolsVersion = 14.3;
+						ProvisioningStyle = Automatic;
+						DevelopmentTeam = U94SNGSSX7;
 					};
 				};
 			};
@@ -659,13 +664,15 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo.WidgetLabHost;
-				PRODUCT_NAME = WidgetLabHost;
+				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo;
+				PRODUCT_NAME = DirectusMobile;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				MARKETING_VERSION = 0.10.1;
+				CODE_SIGN_ENTITLEMENTS = DirectusMobile/DirectusMobile.entitlements;
 			};
 			name = Debug;
 		};
@@ -803,19 +810,22 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo.WidgetLabHost;
-				PRODUCT_NAME = WidgetLabHost;
+				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo;
+				PRODUCT_NAME = DirectusMobile;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
+				MARKETING_VERSION = 0.10.1;
+				CODE_SIGN_ENTITLEMENTS = DirectusMobile/DirectusMobile.entitlements;
 			};
 			name = Release;
 		};
 		XX250EB8403F42C5AB5159XX /* Release */ = {
 			isa = XCBuildConfiguration;
+			name = Release;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = $accent;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -825,12 +835,10 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = U94SNGSSX7;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "../targets/latest-items-widget/Info.plist";
@@ -847,16 +855,18 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.martijnmichel.directusexpo.latest-items-widget";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
-			name = Release;
 		};
 		XX3AE400A0D1A4C65DD0D4XX /* Debug */ = {
 			isa = XCBuildConfiguration;
+			name = Debug;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = $accent;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -866,11 +876,9 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 8;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = U94SNGSSX7;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "../targets/latest-items-widget/Info.plist";
@@ -893,8 +901,9 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
+				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
-			name = Debug;
 		};
 /* End XCBuildConfiguration section */
 
@@ -928,11 +937,11 @@
 		};
 		XX6F5BFFD26D2CBBC3E53DXX /* Build configuration list for PBXNativeTarget "latest-items-widget" */ = {
 			isa = XCConfigurationList;
+			defaultConfigurationIsVisible = 0;
 			buildConfigurations = (
 				XX3AE400A0D1A4C65DD0D4XX /* Debug */,
 				XX250EB8403F42C5AB5159XX /* Release */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

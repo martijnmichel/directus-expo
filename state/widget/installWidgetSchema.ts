@@ -325,7 +325,7 @@ module.exports = async function (data) {
     status: "not_found",
     version: ${APP_WIDGET_FLOW_VERSION},
     supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)},
-    data: [{ type: "latest-items", items: [] }],
+    data: [],
     error: {
       code: "WIDGET_NOT_FOUND",
       message: reason
@@ -367,7 +367,7 @@ module.exports = async function (data) {
         status: "invalid_config",
         version,
         supports,
-        data: [{ type: "latest-items", items: [] }],
+        data: [],
         error: { code: "INVALID_WIDGET_CONFIG", message: "Missing user_id or collection on widget config." },
       };
     }
@@ -377,7 +377,7 @@ module.exports = async function (data) {
         status: "invalid_config",
         version,
         supports,
-        data: [{ type: "latest-items", items: [] }],
+        data: [],
         error: { code: "UNSUPPORTED_WIDGET_TYPE", message: "Unsupported widget type." },
       };
     }
@@ -565,7 +565,7 @@ module.exports = async function (data) {
       status: "forbidden",
       version,
       supports,
-      data: [{ type: "latest-items", items: [] }],
+      data: [],
       error: { code: "FORBIDDEN", message: "Widget owner does not have read access to this collection." },
     };
   }
@@ -929,43 +929,272 @@ module.exports = async function (data) {
     return { ok: true, reason: null, steps: steps };
   }
 
-  var slots = normalizeSlots(widget.extra || {});
-  var formatted = (Array.isArray(items) ? items : []).map(function (it) {
-    var id = it && (it.id != null ? String(it.id) : "");
-    var values = slots.map(function (s) {
-      var path = (s.field || "").trim();
-      var value = "";
-      if (path) {
-        // Enforce field-level read access for the widget owner.
-        // If any field in the path is not readable, return an empty string for that slot.
-        if (debugEnabled) {
-          if (!data.__debug_paths) data.__debug_paths = [];
-          if (data.__debug_paths.length < 25) {
-            data.__debug_paths.push({ path: path, check: explainPath(widget.user_id, collection, path) });
-          }
-        }
-        if (isPathAllowedForUser(widget.user_id, collection, path)) {
-          value = getJoinedLeafValuesAtPath(it, path) || "";
-        } else {
-          value = "";
-        }
-      }
-      return { slot: s.key, type: "string", value: value || "" };
-    });
-    return { id: id, values: values };
-  });
+  function specialTokens(fieldMeta) {
+    var out = [];
+    if (!fieldMeta || typeof fieldMeta !== "object") return out;
+    var top = fieldMeta.special != null ? fieldMeta.special : null;
+    var metaSp = fieldMeta.meta && fieldMeta.meta.special != null ? fieldMeta.meta.special : null;
+    var src = [];
+    if (Array.isArray(top)) src = src.concat(top);
+    else if (top != null) src.push(top);
+    if (Array.isArray(metaSp)) src = src.concat(metaSp);
+    else if (metaSp != null) src.push(metaSp);
+    for (var i = 0; i < src.length; i++) {
+      var token = String(src[i] == null ? "" : src[i]).trim().toLowerCase();
+      if (token) out.push(token);
+    }
+    return out;
+  }
 
-    var resp = { ok: true, status: "ok", version, supports, data: [{ type: "latest-items", items: formatted }] };
-    if (debugEnabled) resp.debug = data.__debug || { enabled: true };
-    if (debugEnabled && data.__debug_paths) resp.debug_paths = data.__debug_paths;
-    return resp;
+  function getFieldMeta(col, fieldName) {
+    for (var i = 0; i < fieldsMeta.length; i++) {
+      var f = fieldsMeta[i];
+      if (!f) continue;
+      var c = f.collection != null ? f.collection : f.many_collection;
+      var ff = f.field != null ? f.field : f.many_field;
+      if (String(c) === String(col) && String(ff) === String(fieldName)) return f;
+    }
+    return null;
+  }
+
+  function parsePathAndTransform(path) {
+    var p = String(path || "").trim();
+    if (!p) return { path: "", transform: null };
+    var parts = p.split(".").map(function (x) { return String(x || "").trim(); }).filter(Boolean);
+    var transform = null;
+    var baseParts = [];
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i];
+      if (part.charAt(0) === "$") {
+        if (!transform) transform = part.slice(1).toLowerCase();
+        continue;
+      }
+      baseParts.push(part);
+    }
+    return { path: baseParts.join("."), transform: transform };
+  }
+
+  function inferSlotTypeFromPath(baseCol, path) {
+    var parsed = parsePathAndTransform(path);
+    var p = parsed.path;
+    var transform = parsed.transform;
+    if (!p) return "string";
+    if (transform === "thumbnail") return "image";
+
+    function findRelation(col, fieldName) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var manyCol = (r.collection != null ? r.collection : r.many_collection);
+        var manyField = (r.field != null ? r.field : r.many_field);
+        if (String(manyCol) === String(col) && String(manyField) === String(fieldName)) return r;
+      }
+      return null;
+    }
+
+    function findAliasRelation(col, aliasField) {
+      for (var i = 0; i < relations.length; i++) {
+        var r = relations[i];
+        if (!r) continue;
+        var oneCol = (r.related_collection != null ? r.related_collection : r.one_collection);
+        var oneField = (r.meta && r.meta.one_field != null ? r.meta.one_field : r.one_field);
+        if (String(oneCol) === String(col) && String(oneField) === String(aliasField)) return r;
+      }
+      return null;
+    }
+
+    function isTranslationsAliasField(col, fieldName) {
+      var f = getFieldMeta(col, fieldName);
+      if (!f) return false;
+      var iface = f.meta && f.meta.interface != null ? String(f.meta.interface).toLowerCase() : "";
+      if (iface === "translations") return true;
+      var sp = specialTokens(f);
+      return sp.indexOf("translations") >= 0;
+    }
+
+    function nextCollectionFromSegment(col, fieldName, nextFieldName) {
+      var direct = findRelation(col, fieldName);
+      if (direct) {
+        var related = (direct.related_collection != null ? direct.related_collection : direct.one_collection);
+        if (related) return String(related);
+      }
+      var alias = findAliasRelation(col, fieldName);
+      var aliasManyCol = alias
+        ? (alias.collection != null ? alias.collection : alias.many_collection)
+        : null;
+      if (!alias || !aliasManyCol) return null;
+
+      var junctionFieldRaw =
+        alias.meta && alias.meta.junction_field != null ? alias.meta.junction_field : alias.junction_field;
+      if (junctionFieldRaw) {
+        var junctionCollection = String(aliasManyCol);
+        var junctionField = String(junctionFieldRaw);
+        if (isTranslationsAliasField(col, fieldName)) return String(aliasManyCol);
+        if (nextFieldName && String(nextFieldName) === junctionField) return junctionCollection;
+        var manySide = findRelation(junctionCollection, junctionField);
+        if (manySide) {
+          var related2 = (manySide.related_collection != null ? manySide.related_collection : manySide.one_collection);
+          if (related2) return String(related2);
+        }
+        return null;
+      }
+      return String(aliasManyCol);
+    }
+
+    var currentCol = String(baseCol);
+    var parts = p.split(".");
+    var lastField = "";
+    for (var j = 0; j < parts.length; j++) {
+      var seg = String(parts[j] || "").trim();
+      if (!seg) continue;
+      var colon = seg.indexOf(":");
+      var fieldName = (colon >= 0 ? seg.slice(0, colon) : seg).trim();
+      if (fieldName) lastField = fieldName;
+      if (colon >= 0) {
+        var explicitCol = seg.slice(colon + 1).trim();
+        if (explicitCol) currentCol = explicitCol;
+      } else {
+        var nextSeg = (j + 1 < parts.length) ? String(parts[j + 1] || "") : "";
+        var nextColon = nextSeg.indexOf(":");
+        var nextFieldName = (nextColon >= 0 ? nextSeg.slice(0, nextColon) : nextSeg).trim();
+        var nc = nextCollectionFromSegment(currentCol, fieldName, nextFieldName);
+        if (nc) currentCol = nc;
+      }
+    }
+
+    if (!lastField) return "string";
+    var fm = getFieldMeta(currentCol, lastField);
+    if (!fm) return "string";
+
+    var iface = fm.meta && fm.meta.interface != null ? String(fm.meta.interface).toLowerCase() : "";
+    var fieldType = fm.type != null ? String(fm.type).toLowerCase() : "";
+    var specials = specialTokens(fm);
+
+    if (specials.indexOf("status") >= 0 || String(lastField).toLowerCase() === "status") return "status";
+    if (specials.indexOf("file") >= 0 || specials.indexOf("files") >= 0 || specials.indexOf("directus_files") >= 0) return "image";
+    if (iface.indexOf("file") >= 0 || iface.indexOf("image") >= 0) return "image";
+    if (fieldType === "date" || fieldType === "dateTime" || fieldType === "timestamp") return "date";
+    if (iface.indexOf("datetime") >= 0 || iface.indexOf("date-time") >= 0 || iface === "datetime" || iface === "date") return "date";
+    return "string";
+  }
+
+  function extractFileId(value) {
+    if (value == null) return "";
+    if (typeof value === "string" || typeof value === "number") return String(value);
+    if (typeof value === "object") {
+      var id =
+        value.id != null ? value.id
+          : (value.directus_files_id != null ? value.directus_files_id : null);
+      if (id != null && typeof id === "object") {
+        if (id.id != null) id = id.id;
+      }
+      return id != null ? String(id) : "";
+    }
+    return "";
+  }
+
+  function resolveRequestBaseUrl() {
+    var trig = data && data.$trigger ? data.$trigger : {};
+    var headers = trig && trig.headers && typeof trig.headers === "object" ? trig.headers : {};
+    var candidates = [];
+    if (trig && typeof trig.url === "string") candidates.push(trig.url);
+    if (headers && typeof headers.origin === "string") candidates.push(headers.origin);
+    if (headers && typeof headers.referer === "string") candidates.push(headers.referer);
+
+    var xfHost = headers && (headers["x-forwarded-host"] || headers["X-Forwarded-Host"]);
+    var xfProto = headers && (headers["x-forwarded-proto"] || headers["X-Forwarded-Proto"]);
+    if (xfHost) candidates.push(String((xfProto || "https")) + "://" + String(xfHost));
+
+    for (var i = 0; i < candidates.length; i++) {
+      var raw = String(candidates[i] || "").trim();
+      if (!raw) continue;
+      try {
+        var u = new URL(raw);
+        if (u.origin) return u.origin;
+      } catch (_) {}
+      if (/^https?:\/\//i.test(raw)) return raw.replace(/\/+$/, "");
+    }
+    return "";
+  }
+
+  function applySlotTransform(rawValue, transform) {
+    if (!transform) return rawValue || "";
+    if (String(transform).toLowerCase() === "thumbnail") {
+      var id = extractFileId(rawValue);
+      if (!id) return "";
+      var base = resolveRequestBaseUrl();
+      if (base) return base + "/assets/" + encodeURIComponent(id) + "?key=thumbnail";
+      return "/assets/" + encodeURIComponent(id) + "?key=thumbnail";
+    }
+    return rawValue || "";
+  }
+
+  // ─── Per-slot value resolver (generic, shared by all types that use slots) ──
+  function resolveSlotValue(it, slotField) {
+    var parsed = parsePathAndTransform(slotField || "");
+    var path = parsed.path;
+    var transform = parsed.transform;
+    if (!path) return "";
+    if (!isPathAllowedForUser(widget.user_id, collection, path)) return "";
+    if (transform) {
+      // For transforms (e.g. $thumbnail) the raw value may be a file object
+      // {id, ...} — getJoinedLeafValuesAtPath strips objects, so use getValuesAtPath.
+      var norm = String(path).replace(/(\w+):/g, "$1.");
+      var rawValues = getValuesAtPath(it, norm);
+      var rawFlat = Array.isArray(rawValues) ? rawValues : [rawValues];
+      var rawVal = rawFlat.filter(function (v) { return v != null; })[0] ?? null;
+      return applySlotTransform(rawVal, transform);
+    }
+    return getJoinedLeafValuesAtPath(it, path) || "";
+  }
+
+  function resolveSlotDebug(path, transform) {
+    if (!debugEnabled) return;
+    if (!data.__debug_paths) data.__debug_paths = [];
+    if (data.__debug_paths.length < 25) {
+      data.__debug_paths.push({ path: path, transform: transform, check: explainPath(widget.user_id, collection, path) });
+    }
+  }
+
+  // ─── Per-type response formatter ─────────────────────────────────────────────
+  // Each case receives the permission-filtered items and returns the typed data
+  // payload for the widget response.  Add a new "case" for each new widget type.
+  function formatItemsForType(widgetType, rawExtra) {
+    switch (widgetType) {
+      case "latest-items":
+      default: {
+        var slots = (rawExtra && Array.isArray(rawExtra.slots)) ? rawExtra.slots : [];
+        var formatted = (Array.isArray(items) ? items : []).map(function (it) {
+          var id = it && (it.id != null ? String(it.id) : "");
+          var values = slots.map(function (s) {
+            var parsed = parsePathAndTransform(s.field || "");
+            resolveSlotDebug(parsed.path, parsed.transform);
+            return {
+              slot: s.key,
+              type: inferSlotTypeFromPath(collection, s.field || ""),
+              value: resolveSlotValue(it, s.field || ""),
+            };
+          });
+          return { id: id, values: values };
+        });
+        return [{ type: "latest-items", items: formatted }];
+      }
+    }
+  }
+
+  var widgetType = widget.type != null ? String(widget.type) : "latest-items";
+  var responseData = formatItemsForType(widgetType, widget.extra || {});
+  var resp = { ok: true, status: "ok", version, supports, data: responseData };
+  if (debugEnabled) resp.debug = data.__debug || { enabled: true };
+  if (debugEnabled && data.__debug_paths) resp.debug_paths = data.__debug_paths;
+  return resp;
   } catch (e) {
     return {
       ok: false,
       status: "error",
       version: ${APP_WIDGET_FLOW_VERSION},
       supports: ${JSON.stringify(APP_WIDGET_SUPPORTED)},
-      data: [{ type: "latest-items", items: [] }],
+      data: [],
       error: {
         code: "FLOW_ERROR",
         message: e && e.message ? String(e.message) : String(e),
@@ -1144,7 +1373,7 @@ module.exports = async function (data) {
               emitEvents: false,
               query: {
                 limit: -1,
-                fields: ["collection", "field", "meta.interface", "meta.special"],
+                fields: ["collection", "field", "type", "interface", "special", "meta.interface", "meta.special"],
               },
             },
           } as any),
@@ -1207,43 +1436,45 @@ module.exports = async function (data) {
     return { ok: false, reason: "unsupported_type", widget };
   }
 
-  function normalizeSlots(input) {
-    const defaults = [
-      { key: "left", label: "Left", field: "" },
-      { key: "title", label: "Title", field: "" },
-      { key: "subtitle", label: "Subtitle", field: "" },
-      { key: "right", label: "Right", field: "" },
-    ];
-    const raw = input && Array.isArray(input.slots) ? input.slots : [];
-    const byKey = {};
-    for (var i = 0; i < raw.length; i++) {
-      var s = raw[i];
-      if (!s || typeof s !== "object") continue;
-      var k = s.key != null ? String(s.key) : "";
-      if (!k) continue;
-      byKey[k] = {
-        key: k,
-        label: s.label != null ? String(s.label) : k,
-        field: s.field != null ? String(s.field) : "",
-      };
-    }
-    return defaults.map(function (d) { return byKey[d.key] || d; });
-  }
-
-  const slots = normalizeSlots(extra);
-
+  // Strip $transform segments from a field path so only the real field path
+  // is used when building the Directus fields query.
   function sanitizePath(p) {
     if (!p || typeof p !== "string") return "";
-    // Keep Directus dot paths and M2A colon syntax; strip transforms like .$upper
-    const parts = p.split(".").filter(Boolean).filter(function (seg) { return seg[0] !== "$"; });
-    return parts.join(".");
+    return p.split(".").filter(Boolean).filter(function (seg) { return seg[0] !== "$"; }).join(".");
   }
 
-  var fieldsSet = new Set(["id"]);
-  for (var j = 0; j < slots.length; j++) {
-    var path = sanitizePath(slots[j].field);
-    if (path) fieldsSet.add(path);
+  // ─── Per-type extra normalisation ───────────────────────────────────────────
+  // Each widget type returns { normalizedExtra, fieldPaths } where fieldPaths
+  // is the deduplicated list of base paths to request from Directus (no transforms).
+  // Add a new "case" here when a new widget type is introduced.
+  function normalizeExtraForType(widgetType, rawExtra) {
+    switch (widgetType) {
+      case "latest-items":
+      default: {
+        var slotDefaults = [
+          { key: "left",     label: "Left",     field: "" },
+          { key: "title",    label: "Title",    field: "" },
+          { key: "subtitle", label: "Subtitle", field: "" },
+          { key: "right",    label: "Right",    field: "" },
+        ];
+        var raw = rawExtra && Array.isArray(rawExtra.slots) ? rawExtra.slots : [];
+        var byKey = {};
+        for (var i = 0; i < raw.length; i++) {
+          var s = raw[i];
+          if (!s || typeof s !== "object") continue;
+          var k = s.key != null ? String(s.key) : "";
+          if (!k) continue;
+          byKey[k] = { key: k, label: s.label != null ? String(s.label) : k, field: s.field != null ? String(s.field) : "" };
+        }
+        var slots = slotDefaults.map(function (d) { return byKey[d.key] || d; });
+        var paths = slots.map(function (sl) { return sanitizePath(sl.field); }).filter(Boolean);
+        return { normalizedExtra: { slots: slots }, fieldPaths: paths };
+      }
+    }
   }
+
+  var normalized = normalizeExtraForType(type, extra);
+  var fieldsSet = new Set(["id"].concat(normalized.fieldPaths));
   var fields = Array.from(fieldsSet);
   const fields_csv = fields.map(String).join(",");
 
@@ -1252,7 +1483,7 @@ module.exports = async function (data) {
     reason: null,
     widget: {
       ...widget,
-      extra: { slots: slots },
+      extra: normalized.normalizedExtra,
       limit,
       sort,
       filter,

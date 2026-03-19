@@ -14,6 +14,7 @@ import { ScrollView } from "react-native-gesture-handler";
 type FieldOutput = {
   field: string;
   meta?: { hidden?: boolean };
+  special?: string[] | string | null;
   schema?: { foreign_key_table?: string | null };
   type?: string;
 };
@@ -194,6 +195,19 @@ function FieldTree({
     <Vertical spacing="xs" style={{ paddingLeft: depth > 0 ? 8 : 0 }}>
       {fields.map((f) => {
         const fieldName = String(f.field);
+        const fullPath = `${basePath}${fieldName}`;
+        const specialRaw = (f as any)?.meta?.special ?? (f as any)?.special;
+        const specials = Array.isArray(specialRaw)
+          ? specialRaw.map((x) => String(x).toLowerCase())
+          : specialRaw != null
+            ? [String(specialRaw).toLowerCase()]
+            : [];
+        const iface = String((f as any)?.meta?.interface ?? "").toLowerCase();
+        const isFileField =
+          specials.includes("file") ||
+          specials.includes("files") ||
+          specials.includes("directus_files") ||
+          iface.includes("file-image");
         const relations = ((relQ.data ?? []) as any[]) || [];
         const isAlias = f.type === "alias";
         // Important: alias fields (m2m/m2a/o2m aliases) should NOT be resolved via the generic
@@ -304,16 +318,26 @@ function FieldTree({
           }
 
           return (
-            <Button
-              key={`${collection}.${basePath}${fieldName}`}
-              variant="ghost"
-              size="sm"
-              onPress={() => onSelect(`${basePath}${fieldName}`)}
-              rightIcon={related ? <DirectusIcon name="chevron_right" /> : undefined}
-              style={{ justifyContent: "flex-start" }}
-            >
-              {fieldName}
-            </Button>
+            <Horizontal key={`${collection}.${basePath}${fieldName}`} spacing="xs">
+              <Button
+                variant="ghost"
+                size="sm"
+                onPress={() => onSelect(fullPath)}
+                rightIcon={related ? <DirectusIcon name="chevron_right" /> : undefined}
+                style={{ justifyContent: "flex-start", flex: 1 }}
+              >
+                {fieldName}
+              </Button>
+              {isFileField ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onPress={() => onSelect(`${fullPath}.$thumbnail`)}
+                >
+                  $thumbnail
+                </Button>
+              ) : null}
+            </Horizontal>
           );
         }
 

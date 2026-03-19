@@ -19,22 +19,24 @@ struct LatestItemsWidgetLabView: View {
   // Style constants - tweak these directly while styling.
   private let rowSpacing: CGFloat = 6
   private let headerGap: CGFloat = 10
-  private let leftWidth: CGFloat = 48
+  private let leftWidth: CGFloat = 36
   private let rightWidth: CGFloat = 58
-  private let titleFont: Font = .headline.weight(.semibold)
+  private let titleFont: Font = .headline
   private let subtitleFont: Font = .subheadline
 
   private let sample: [WidgetLabItem] = [
     .init(id: "1", left: "13:10", title: "Bloomberg Technology", subtitle: "The felonious F12 key", right: "13:10"),
     .init(id: "2", left: "Gisteren", title: "Apple Deutschland", subtitle: "APPLE: Apple Services bereichern das ganz…", right: "Gisteren"),
     .init(id: "3", left: "2 wkn", title: "Third row", subtitle: "Only visible on large", right: "2 wkn"),
-    .init(id: "4", left: "4 d", title: "Fourth row", subtitle: "Large family should show this one too", right: "4 d"),
+    .init(id: "4", left: "4 d", title: "Fourth row something with a very long title which truncates", subtitle: "Large family should show this one too", right: "4 d"),
+    .init(id: "5", left: "4 d", title: "Fourth row", subtitle: "Large family should show this one too", right: "4 d"),
+    .init(id: "6", left: "4 d", title: "Fourth row", subtitle: "Large family should show this one too", right: "4 d"),
   ]
 
   private var maxRows: Int {
     switch family {
     case .small, .medium: return 2
-    case .large: return 4
+    case .large: return 6
     }
   }
 
@@ -47,11 +49,11 @@ struct LatestItemsWidgetLabView: View {
         Text("Alle")
           .font(family == .small ? .subheadline.weight(.semibold) : .headline)
           .lineLimit(1)
-        Spacer(minLength: 0)
+          
       }
       .padding(.vertical, family == .small ? 3 : 4)
 
-      Divider().opacity(0.5)
+     
 
       VStack(alignment: .leading, spacing: 0) {
         let visible = Array(sample.prefix(maxRows))
@@ -59,7 +61,7 @@ struct LatestItemsWidgetLabView: View {
           VStack(alignment: .leading, spacing: family == .small ? 1.5 : 2) {
             HStack(alignment: .center, spacing: rowSpacing) {
               Text(it.left)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: leftWidth, alignment: .leading)
@@ -68,7 +70,7 @@ struct LatestItemsWidgetLabView: View {
                 .lineLimit(1)
                 .frame(maxWidth: .infinity, alignment: .leading)
               Text(it.right)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .frame(width: rightWidth, alignment: .trailing)
@@ -93,17 +95,14 @@ struct LatestItemsWidgetLabView: View {
 #if DEBUG
 #Preview("Small") {
   LatestItemsWidgetLabView(family: .small)
-    .previewContext(WidgetPreviewContext(family: .systemSmall))
 }
 
 #Preview("Medium") {
   LatestItemsWidgetLabView(family: .medium)
-    .previewContext(WidgetPreviewContext(family: .systemMedium))
 }
 
 #Preview("Large") {
   LatestItemsWidgetLabView(family: .large)
-    .previewContext(WidgetPreviewContext(family: .systemLarge))
 }
 #endif
 

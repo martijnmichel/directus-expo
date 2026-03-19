@@ -133,13 +133,22 @@ struct LegacyLatestItemsPayload: Decodable {
 // MARK: - View model
 
 struct SlotItem: Hashable, Identifiable {
+  struct SlotValue: Hashable {
+    let type: String
+    let value: String
+  }
+
   let id: String
   let urlString: String?
-  let slots: [String: String]
+  let slots: [String: SlotValue]
 
   func value(for slot: String) -> String {
-    let v = slots[slot] ?? ""
+    let v = slots[slot]?.value ?? ""
     return v.isEmpty ? "–" : v
+  }
+
+  func slotValue(for slot: String) -> SlotValue? {
+    slots[slot]
   }
 }
 
@@ -179,9 +188,11 @@ private func decodeSlotItemsFromFlowResponse(_ response: FlowResponse, config: W
   return items
     .filter { !$0.id.isEmpty }
     .map { it in
-      var map: [String: String] = [:]
+      var map: [String: SlotItem.SlotValue] = [:]
       for v in it.values {
-        if !v.slot.isEmpty { map[v.slot] = v.value }
+        if !v.slot.isEmpty {
+          map[v.slot] = .init(type: (v.type ?? "string").lowercased(), value: v.value)
+        }
       }
       let url = (urlBase != nil) ? (urlBase! + it.id) : nil
       return SlotItem(id: it.id, urlString: url, slots: map)
@@ -196,10 +207,10 @@ private func decodeSlotItemsFromLegacyPayload(_ payload: LegacyLatestItemsPayloa
   let items: [SlotItem] = payload.rows
     .filter { !$0.id.isEmpty }
     .map { row in
-      var map: [String: String] = [:]
+      var map: [String: SlotItem.SlotValue] = [:]
       for (idx, slot) in slotKeys.enumerated() {
         let colKey = keys[idx]
-        map[slot] = row.cells[colKey] ?? ""
+        map[slot] = .init(type: "string", value: row.cells[colKey] ?? "")
       }
       return SlotItem(id: row.id, urlString: row.deepLink, slots: map)
     }
@@ -419,16 +430,13 @@ struct SlotRowView: View {
   let family: WidgetFamily
 
   var body: some View {
-    let leftRaw = item.value(for: "left")
-    let titleRaw = item.value(for: "title")
-    let subtitleRaw = item.value(for: "subtitle")
-    let rightRaw = item.value(for: "right")
+    let leftSlot = item.slotValue(for: "left")
+    let titleSlot = item.slotValue(for: "title")
+    let subtitleSlot = item.slotValue(for: "subtitle")
+    let rightSlot = item.slotValue(for: "right")
 
-    // If a slot contains a date string, format it nicely (time for today, relative day otherwise).
-    let left = formatDateIfPossible(leftRaw)
-    let title = formatDateIfPossible(titleRaw)
-    let subtitle = formatDateIfPossible(subtitleRaw)
-    let right = formatDateIfPossible(rightRaw)
+    let title = displayText(for: titleSlot)
+    let subtitle = displayText(for: subtitleSlot)
     let leftWidth: CGFloat = {
       switch family {
       case .systemSmall: return 38
@@ -443,8 +451,8 @@ struct SlotRowView: View {
       default: return 64
       }
     }()
-    let hasLeft = leftRaw != "–"
-    let hasRight = rightRaw != "–"
+    let hasLeft = hasContent(leftSlot)
+    let hasRight = hasContent(rightSlot)
 
     // Mail-like 2-line layout:
     // Line 1: left - title - right
@@ -454,11 +462,7 @@ struct SlotRowView: View {
       // Line 1
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
-          Text(left)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(width: leftWidth, alignment: .leading)
+          SideSlotView(slot: leftSlot, width: leftWidth, alignment: .leading)
         }
 
         Text(title)
@@ -468,11 +472,7 @@ struct SlotRowView: View {
           .layoutPriority(1)
 
         if hasRight {
-          Text(right)
-            .font(.caption2)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(width: rightWidth, alignment: .trailing)
+          SideSlotView(slot: rightSlot, width: rightWidth, alignment: .trailing)
         }
       }
 
@@ -485,6 +485,98 @@ struct SlotRowView: View {
         .layoutPriority(1)
     }
     .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))
+  }
+}
+
+private struct SideSlotView: View {
+  let slot: SlotItem.SlotValue?
+  let width: CGFloat
+  let alignment: Alignment
+
+  var body: some View {
+    let type = (slot?.type ?? "string").lowercased()
+    let raw = slot?.value ?? ""
+    if type == "image", let url = URL(string: raw), !raw.isEmpty {
+      AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
+        switch phase {
+        case .success(let image):
+          image
+            .resizable()
+            .scaledToFill()
+        default:
+          RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill(Color.secondary.opacity(0.2))
+        }
+      }
+      .frame(width: 16, height: 16)
+      .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+      .frame(width: width, alignment: alignment)
+    } else if type == "status", !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+      Text(raw)
+        .font(.caption2)
+        .lineLimit(1)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 2)
+        .foregroundStyle(statusForeground(raw))
+        .background(
+          Capsule(style: .continuous)
+            .fill(statusBackground(raw))
+        )
+        .frame(width: width, alignment: alignment)
+    } else {
+      Text(displayText(for: slot))
+        .font(.caption2)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .frame(width: width, alignment: alignment)
+    }
+  }
+}
+
+private func hasContent(_ slot: SlotItem.SlotValue?) -> Bool {
+  guard let slot else { return false }
+  return !slot.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+}
+
+private func displayText(for slot: SlotItem.SlotValue?) -> String {
+  guard let slot else { return "–" }
+  let raw = slot.value.trimmingCharacters(in: .whitespacesAndNewlines)
+  guard !raw.isEmpty else { return "–" }
+
+  switch slot.type.lowercased() {
+  case "date":
+    return formatDateIfPossible(raw)
+  case "image":
+    // Side slots render the actual image. For title/subtitle fallback to a neutral marker.
+    return "image"
+  default:
+    return raw
+  }
+}
+
+private func statusBackground(_ value: String) -> Color {
+  switch value.lowercased() {
+  case "published":
+    return Color.green.opacity(0.18)
+  case "archived":
+    return Color.gray.opacity(0.22)
+  case "draft":
+    return Color.orange.opacity(0.18)
+  default:
+    return Color.secondary.opacity(0.16)
+  }
+}
+
+private func statusForeground(_ value: String) -> Color {
+  switch value.lowercased() {
+  case "published":
+    return Color.green
+  case "archived":
+    return Color.secondary
+  case "draft":
+    return Color.orange
+  default:
+    return Color.primary
   }
 }
 
