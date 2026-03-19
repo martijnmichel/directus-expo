@@ -4,7 +4,7 @@ import SwiftUI
 struct WidgetLabHostApp: App {
   var body: some Scene {
     WindowGroup {
-      LatestItemsWidgetLabView()
+      LatestItemsWidgetLabView(family: .medium)
     }
   }
 }
