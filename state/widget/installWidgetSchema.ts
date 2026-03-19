@@ -1129,7 +1129,16 @@ module.exports = async function (data) {
 
   var widgetType = widget.type != null ? String(widget.type) : "latest-items";
   var responseData = formatItemsForType(widgetType, widget.extra || {});
+
+  var faviconId = null;
+  try {
+    var sd = data.read_settings;
+    var settingsRow = sd ? (Array.isArray(sd.data) ? sd.data[0] : (Array.isArray(sd) ? sd[0] : sd)) : null;
+    if (settingsRow && settingsRow.public_favicon) faviconId = String(settingsRow.public_favicon);
+  } catch (_) {}
+
   var resp = { ok: true, status: "ok", version, supports, data: responseData };
+  if (faviconId) resp.favicon = faviconId;
   if (debugEnabled) resp.debug = data.__debug || { enabled: true };
   if (debugEnabled && data.__debug_paths) resp.debug_paths = data.__debug_paths;
   return resp;
@@ -1155,6 +1164,28 @@ module.exports = async function (data) {
         if (!filterItemsId) throw new Error("Filter items operation created but no id");
         log("created op", "filter_items", filterItemsId);
 
+        // Read Directus settings (public_favicon file ID).
+        const opReadSettings = await directus.request(
+          createOperation({
+            flow: flowId,
+            key: "read_settings",
+            type: opTypes.readData,
+            name: "Read settings",
+            position_x: 70,
+            position_y: 0,
+            resolve: filterItemsId,
+            options: {
+              collection: "directus_settings",
+              permissions: "$full",
+              emitEvents: false,
+              query: { limit: 1, fields: ["public_favicon"] },
+            },
+          } as any),
+        );
+        const readSettingsId = idOf(opReadSettings);
+        if (!readSettingsId) throw new Error("Read settings operation created but no id");
+        log("created op", "read_settings", readSettingsId);
+
         // Read the target collection items via Read Data, using normalized values (no `||` / no "undefined").
         const opReadCollection = await directus.request(
           createOperation({
@@ -1164,7 +1195,7 @@ module.exports = async function (data) {
             name: "Read collection",
             position_x: 60,
             position_y: 0,
-            resolve: filterItemsId,
+            resolve: readSettingsId,
             options: {
               collection: "{{ extract_widget_config.widget.collection }}",
               permissions: "$full",

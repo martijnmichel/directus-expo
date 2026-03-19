@@ -106,6 +106,7 @@ struct FlowResponse: Decodable {
   let version: Int?
   let supports: [String]?
   let data: [FlowDataEntry]?
+  let favicon: String?
 }
 
 // MARK: - Legacy payload (fallback only)
@@ -273,12 +274,12 @@ private func fetchSlotItemsFromWebhook(config: WidgetConfigEntry) async -> [Slot
   }
 }
 
-private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async -> (items: [SlotItem]?, errorMessage: String?) {
+private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async -> (items: [SlotItem]?, errorMessage: String?, flowResponse: FlowResponse?) {
   guard let urlString = config.webhookUrl, !urlString.isEmpty else {
-    return (nil, "Missing webhook URL. Open the app and re-save this setup.")
+    return (nil, "Missing webhook URL. Open the app and re-save this setup.", nil)
   }
   guard let baseUrl = URL(string: urlString) else {
-    return (nil, "Invalid webhook URL. Open the app and re-save this setup.")
+    return (nil, "Invalid webhook URL. Open the app and re-save this setup.", nil)
   }
 
   let idToSend = config.widgetId ?? config.id
@@ -288,7 +289,7 @@ private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async 
   queryItems.append(URLQueryItem(name: "widget_id", value: idToSend))
   components?.queryItems = queryItems
   guard let url = components?.url else {
-    return (nil, "Invalid webhook URL. Open the app and re-save this setup.")
+    return (nil, "Invalid webhook URL. Open the app and re-save this setup.", nil)
   }
 
   var request = URLRequest(url: url)
@@ -298,16 +299,16 @@ private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async 
   do {
     let (data, response) = try await URLSession.shared.data(for: request)
     guard let http = response as? HTTPURLResponse else {
-      return (nil, "No response from server.")
+      return (nil, "No response from server.", nil)
     }
     guard (200..<300).contains(http.statusCode) else {
-      return (nil, "Webhook error (HTTP \(http.statusCode)).")
+      return (nil, "Webhook error (HTTP \(http.statusCode)).", nil))
     }
     let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
     let items = decodeSlotItemsFromFlowResponse(resp, config: config)
-    return (items, nil)
+    return (items, nil, resp)
   } catch is DecodingError {
-    return (nil, "Webhook returned unexpected JSON.")
+    return (nil, "Webhook returned unexpected JSON.", nil)
   } catch {
     return (nil, "Couldn’t refresh (network error).")
   }
@@ -411,7 +412,7 @@ struct LatestItemsWidgetConfigurationIntent: AppIntent, WidgetConfigurationInten
 struct Entry: TimelineEntry {
   let date: Date
   let configTitle: String
-  let faviconUrl: String?
+  let faviconImageData: Data?
   let instanceUrl: String?
   let items: [SlotItem]
   let statusMessage: String?
@@ -422,7 +423,7 @@ struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
 
   func placeholder(in context: Context) -> Entry {
-    Entry(date: .now, configTitle: "Latest", faviconUrl: nil, instanceUrl: nil, items: [], statusMessage: nil)
+    Entry(date: .now, configTitle: "Latest", faviconImageData: nil, instanceUrl: nil, items: [], statusMessage: nil)
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
@@ -433,6 +434,7 @@ struct Provider: AppIntentTimelineProvider {
     var items: [SlotItem] = []
     var titleOverride: String? = nil
     var status: String? = nil
+    var flowResp: FlowResponse? = nil
 
     if selectedConfig == nil {
       status = "No widget setup found. Open Settings → Widget and add a setup."
@@ -442,6 +444,7 @@ struct Provider: AppIntentTimelineProvider {
       let result = await fetchSlotItemsFromWebhookDetailed(config: config)
       items = result.items ?? []
       if items.isEmpty, let msg = result.errorMessage { status = msg }
+      flowResp = result.flowResponse
     }
 
     if items.isEmpty, let config = selectedConfig {
@@ -454,14 +457,12 @@ struct Provider: AppIntentTimelineProvider {
     items = await prefetchThumbnailImages(in: items, instanceUrl: selectedConfig?.instanceUrl)
 
     let title = titleOverride ?? configuration.setup?.title ?? selectedConfig?.title ?? "Latest"
-    var favicon: String? = nil
-    let baseFromConfig = selectedConfig.flatMap { cfg in
-      faviconURLString(instanceUrl: cfg.instanceUrl) ?? instanceBaseURLString(from: cfg.webhookUrl)
-    }
-    if let base = baseFromConfig {
-      favicon = await fetchFaviconURL(from: base) ?? fallbackFaviconICO(instanceBaseUrl: base)
-    }
-    return Entry(date: .now, configTitle: title, faviconUrl: favicon, instanceUrl: selectedConfig?.instanceUrl, items: items, statusMessage: status)
+    let faviconImageData = await prefetchFaviconImage(
+      faviconFileId: flowResp?.favicon,
+      instanceUrl: selectedConfig?.instanceUrl,
+      webhookUrl: selectedConfig?.webhookUrl
+    )
+    return Entry(date: .now, configTitle: title, faviconImageData: faviconImageData, instanceUrl: selectedConfig?.instanceUrl, items: items, statusMessage: status)
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
@@ -693,6 +694,31 @@ private func parseDateIfPossible(_ s: String) -> Date? {
   return nil
 }
 
+private func prefetchFaviconImage(faviconFileId: String?, instanceUrl: String?, webhookUrl: String?) async -> Data? {
+  let base = instanceUrl?.trimmingCharacters(in: .init(charactersIn: "/"))
+    ?? instanceBaseURLString(from: webhookUrl)?.trimmingCharacters(in: .init(charactersIn: "/"))
+  guard let base, !base.isEmpty else { return nil }
+
+  // Prefer the Directus-managed favicon file from directus_settings.public_favicon
+  if let fileId = faviconFileId, !fileId.isEmpty {
+    let urlString = "\(base)/assets/\(fileId)?width=64&height=64&fit=cover"
+    if let url = URL(string: urlString),
+       let data = try? await URLSession.shared.data(from: url).0,
+       !data.isEmpty {
+      return data
+    }
+  }
+
+  // Fallback: try /favicon.ico directly
+  let icoUrl = "\(base)/favicon.ico"
+  if let url = URL(string: icoUrl),
+     let data = try? await URLSession.shared.data(from: url).0,
+     !data.isEmpty {
+    return data
+  }
+  return nil
+}
+
 private func faviconURLString(instanceUrl: String?) -> String? {
   guard var s = instanceUrl?.trimmingCharacters(in: .whitespacesAndNewlines), !s.isEmpty else {
     return nil
@@ -779,20 +805,12 @@ struct LatestItemsWidgetView: View {
 
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .center, spacing: 8) {
-          if let s = entry.faviconUrl, let url = URL(string: s) {
-            AsyncImage(url: url, transaction: Transaction(animation: .none)) { phase in
-              switch phase {
-              case .success(let image):
-                image
-                  .resizable()
-                  .scaledToFit()
-              default:
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                  .fill(Color.secondary.opacity(0.25))
-              }
-            }
-            .frame(width: 16, height: 16)
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+          if let data = entry.faviconImageData, let uiImage = UIImage(data: data) {
+            Image(uiImage: uiImage)
+              .resizable()
+              .scaledToFit()
+              .frame(width: 16, height: 16)
+              .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
           } else {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
               .fill(Color.secondary.opacity(0.15))
