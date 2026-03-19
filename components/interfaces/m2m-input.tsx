@@ -392,6 +392,7 @@ export const M2MInput = ({
                     key={JSON.stringify(junctionDoc) + "new"}
                     id={JSON.stringify(junctionDoc) + "new"}
                     disabled={!sortField}
+                    activationDelay={200}
                   >
                     <RelatedListItem
                       isNew
@@ -432,6 +433,7 @@ export const M2MInput = ({
                   key={id + "draggable"}
                   id={id?.toString() + "existing"}
                   disabled={!sortField}
+                  activationDelay={200}
                 >
                   <Item
                     key={id}

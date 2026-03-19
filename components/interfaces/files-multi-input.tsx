@@ -281,6 +281,7 @@ export const FilesMultiInput = ({
                   key={id + "draggable"}
                   id={id.toString()}
                   disabled={!sortField}
+                  activationDelay={200}
                 >
                   <Item
                     key={id}

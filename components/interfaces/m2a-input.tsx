@@ -508,6 +508,7 @@ export const M2AInput = ({
                     key={JSON.stringify(junctionDoc) + "new"}
                     id={JSON.stringify(junctionDoc) + "new"}
                     disabled={!sortField}
+                    activationDelay={300}
                   >
                     <NewItem
                       collection={(junctionDoc as any).collection}
@@ -522,6 +523,7 @@ export const M2AInput = ({
                   key={id + "draggable"}
                   id={id?.toString() + "existing"}
                   disabled={!sortField}
+                  activationDelay={300}
                 >
                   <Item id={id} isNew={isNew} isDeselected={isDeselected} />
                 </Draggable>

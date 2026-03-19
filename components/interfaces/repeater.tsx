@@ -107,6 +107,7 @@ export const RepeaterInput = ({
               id={index.toString()}
               disabled={!!item.meta?.options?.sortable}
               data={repeaterItem}
+              activationDelay={200}
               style={[styles.listItem, styles.fullWidth]}
             >
               <View style={styles.dragHandle}>

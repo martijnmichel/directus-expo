@@ -380,6 +380,7 @@ export const O2MInput = ({
                     key={JSON.stringify(relatedDoc)}
                     id={JSON.stringify(relatedDoc)}
                     disabled={!sortField}
+                    activationDelay={200}
                   >
                     <RelatedListItem
                       isNew
@@ -415,6 +416,7 @@ export const O2MInput = ({
                   key={JSON.stringify(relatedDoc)}
                   id={JSON.stringify(relatedDoc)}
                   disabled={!sortField}
+                  activationDelay={200}
                 >
                   <O2MItemRow
                     collection={relation.collection ?? ""}
