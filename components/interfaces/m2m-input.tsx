@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import {
+  useCollection,
   useDocument,
   useDocuments,
   useFields,
@@ -44,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey, getPrimaryKeyValue } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { RelatedListItem } from "../display/related-listitem";
@@ -115,6 +116,9 @@ export const M2MInput = ({
       r.field === junction?.meta.junction_field &&
       r.collection === junction.meta.many_collection
   );
+  const { data: relatedCollectionMeta } = useCollection(
+    relation?.related_collection as keyof CoreSchema,
+  );
 
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
@@ -169,7 +173,9 @@ export const M2MInput = ({
         ...doc,
         [sortField as string]: findIndex(
           newOrderIds,
-          (id) => id === `${doc.id}existing`
+          (id) =>
+            id ===
+            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`
         ),
       })),
       delete: value.delete,
@@ -234,10 +240,32 @@ export const M2MInput = ({
     isSortable?: boolean;
   }) => {
     const { data: fields } = useFields(relation.related_collection as any);
+    const { data: junctionFields } = useFields(
+      junction?.meta.many_collection as any,
+    );
+    const { data: relatedCollection } = useCollection(
+      relation.related_collection as keyof CoreSchema,
+    );
+    const interfaceTemplate = template || "";
+    const effectiveTemplate =
+      interfaceTemplate ||
+      (relatedCollection?.meta?.display_template as string | undefined) ||
+      "";
     const pk = getPrimaryKey(fields);
-    const templatePaths = getFieldPathsFromTemplate(template);
-    const requestFields =
-      templatePaths.length > 0 ? [pk, ...templatePaths] : ["*.*"];
+    const junctionField = String(junction.meta.junction_field);
+    const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+      .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+      .filter(Boolean);
+    const prefixedTemplatePaths = templatePaths.map((p) =>
+      p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
+    );
+    const requestFields = uniq([
+      pk,
+      junctionField,
+      ...templatePaths,
+      ...prefixedTemplatePaths,
+      "*.*.*",
+    ]).filter(Boolean);
 
     const {
       data: doc,
@@ -278,6 +306,20 @@ export const M2MInput = ({
       );
     }
 
+    const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
+    const parsedFromRelated = parseTemplate(
+      effectiveTemplate,
+      ((doc as any)?.[junctionField] ?? doc) as any,
+      fields,
+    );
+    const text =
+      interfaceTemplate.length > 0 ? parsedFromDoc : parsedFromRelated || parsedFromDoc;
+    const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
+    const editId =
+      getPrimaryKeyValue(rawJunctionValue, fields) ??
+      getPrimaryKeyValue(rawJunctionValue, junctionFields, docId) ??
+      getPrimaryKeyValue(docId, junctionFields);
+
     return doc ? (
       <RelatedListItem
         isDeselected={isDeselected}
@@ -291,11 +333,7 @@ export const M2MInput = ({
                 params: {
                   collection: relation.related_collection,
                   uuid,
-                  id: (
-                    doc?.[
-                      junction.meta.junction_field as keyof typeof doc
-                    ] as CoreSchemaDocument
-                  )?.[getPrimaryKey(fields) as any],
+                  id: editId as string | number,
                 },
               }}
               asChild
@@ -323,7 +361,7 @@ export const M2MInput = ({
           </>
         }
       >
-        {parseTemplate(template, doc, fields)}
+        {text}
       </RelatedListItem>
     ) : null;
   };
@@ -358,15 +396,24 @@ export const M2MInput = ({
                 relation?.field in junctionDoc
                   ? (junctionDoc as any)[relation?.field]
                   : junctionDoc;
-              const id: number | string =
+              const rawId: unknown =
                 typeof relatedDoc === "number" || typeof relatedDoc === "string"
                   ? relatedDoc
                   : primaryKey in relatedDoc
                   ? relatedDoc[primaryKey]
-                  : relatedDoc.id;
+                  : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
+              const id: number | string =
+                (getPrimaryKeyValue(rawId, fields) ??
+                  getPrimaryKeyValue(
+                    junctionDoc,
+                    undefined,
+                    getPrimaryKeyValue(rawId, undefined, ""),
+                  ) ??
+                  "") as number | string;
 
               const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew = isInitial ? false : !junctionDoc.id;
+              const isNew =
+                isInitial ? false : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
 
               /** console.log({
                   junctionDoc,
@@ -379,10 +426,17 @@ export const M2MInput = ({
                 }); */
 
               const text = parseTemplate(
-                item.meta.options?.template,
-                {
-                  ...junctionDoc,
-                },
+                item.meta.options?.template ||
+                  (relatedCollectionMeta?.meta?.display_template as
+                    | string
+                    | undefined),
+                item.meta.options?.template
+                  ? {
+                      ...junctionDoc,
+                    }
+                  : ((junctionDoc as any)?.[relation?.field as string] ?? {
+                      ...junctionDoc,
+                    }),
                 fields
               );
 
@@ -444,12 +498,13 @@ export const M2MInput = ({
                     isSortable={!!sortField}
                     onAdd={(item) => {
                       console.log({ item });
+                      const addedId = getPrimaryKeyValue(item, fields, item);
                       props.onChange({
                         ...value,
                         update: [
                           ...value.update,
                           {
-                            id: item.id as number,
+                            id: addedId as number | string,
                             ...(sortField && {
                               [sortField]: item[sortField as string],
                             }),
@@ -460,11 +515,15 @@ export const M2MInput = ({
                     }}
                     onDelete={(item) => {
                       console.log({ item });
+                      const deleteId = getPrimaryKeyValue(item, fields, id);
 
                       props.onChange({
                         ...value,
-                        update: value.update.filter((v) => v?.id !== id),
-                        delete: [...value.delete, id as number],
+                        update: value.update.filter(
+                          (v) =>
+                            getPrimaryKeyValue(v, undefined, (v as any)?.id) !== deleteId,
+                        ),
+                        delete: [...value.delete, deleteId as number],
                       });
                     }}
                     isNew={isNew}

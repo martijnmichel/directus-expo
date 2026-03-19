@@ -42,6 +42,8 @@ function toQueryField(
   relations: ReadRelationOutput<CoreSchema>[] | undefined
 ): string {
   if (!path.includes(".") || !relations?.length) return path;
+  // Already in Directus M2A query syntax (e.g. item:block_heading.*); avoid double conversion.
+  if (path.includes(":")) return path;
   const rootFieldName = path.split(".")[0];
   const junction = relations.find(
     (r) =>

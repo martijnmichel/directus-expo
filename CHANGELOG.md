@@ -1,3 +1,11 @@
+## [0.10.1](https://github.com/martijnmichel/directus-expo/compare/v0.10.0...v0.10.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* object on junction table modal close ([44d2cf7](https://github.com/martijnmichel/directus-expo/commit/44d2cf727e6e9e3c316cc1124efa09bf04ac3a89))
+* related items display values ([a371ae8](https://github.com/martijnmichel/directus-expo/commit/a371ae80fde004a2d911fc9b6d8144cdabea0328))
+
 # [0.10.0](https://github.com/martijnmichel/directus-expo/compare/v0.9.0...v0.10.0) (2026-03-14)
 
 # [0.9.0](https://github.com/martijnmichel/directus-expo/compare/v0.8.9...v0.9.0) (2026-03-13)

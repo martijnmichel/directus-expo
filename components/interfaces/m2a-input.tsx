@@ -45,10 +45,16 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { count } from "console";
 import { DragIcon, Trash } from "../icons";
-import { getFieldPathsFromTemplate, parseTemplate } from "@/helpers/document/template";
+import {
+  getAllPathsFromTemplate,
+  getFieldPathsFromTemplate,
+  getValuesAtPath,
+  parseTemplate,
+} from "@/helpers/document/template";
 import {
   getPrimaryKey,
   getPrimaryKeyFromAllFields,
+  getPrimaryKeyValue,
 } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
@@ -164,7 +170,9 @@ export const M2AInput = ({
         ...doc,
         [sortField as string]: findIndex(
           newOrderIds,
-          (id) => id === `${doc.id}existing`
+          (id) =>
+            id ===
+            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`
         ),
       })),
       delete: value.delete,
@@ -209,15 +217,19 @@ export const M2AInput = ({
     relation,
   }); */
 
-  const NewItem = ({ collection, item }: { collection: string; item: any }) => {
+  const NewItem = ({ collection, item: newItem }: { collection: string; item: any }) => {
     const { data } = useCollection(collection as keyof CoreSchema);
 
     const { data: fields } = useFields(data?.collection as any);
+    const effectiveTemplate =
+      item?.meta?.options?.template ||
+      (data?.meta?.display_template as string | undefined) ||
+      "";
 
     const primaryKey = getPrimaryKey(fields);
     const text = parseTemplate(
-      data?.meta.display_template as string,
-      item as { [key: string]: any },
+      effectiveTemplate,
+      newItem as { [key: string]: any },
       fields
     );
 
@@ -241,7 +253,7 @@ export const M2AInput = ({
                 create: value.create.filter(
                   (v) =>
                     v?.[relation?.field as any]?.[primaryKey] !==
-                    item?.[primaryKey]
+                    newItem?.[primaryKey]
                 ),
               });
             }}
@@ -274,21 +286,27 @@ export const M2AInput = ({
       junctionDocMinimal?.collection as keyof CoreSchema
     );
 
-    const displayTemplate = collection?.meta?.display_template as string | undefined;
+    const displayTemplate =
+      item?.meta?.options?.template ||
+      (collection?.meta?.display_template as string | undefined);
     const templatePaths = getFieldPathsFromTemplate(displayTemplate);
     const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.["collection"] as string | undefined;
     const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[junctionItemField];
-    const itemId =
-      rawItem != null && typeof rawItem === "object" && "id" in rawItem
-        ? (rawItem as { id: string | number }).id
-        : rawItem;
+    const itemId = getPrimaryKeyValue(rawItem, undefined, rawItem);
 
     const { data: fields } = useFields(collection?.collection as any);
     const primaryKey = getPrimaryKey(fields);
     const relatedFields =
       templatePaths.length > 0
-        ? [primaryKey, ...templatePaths.map((p) => (p.includes(".$") ? p.split(".$")[0] : p)).filter(Boolean)]
-        : [primaryKey, "*"];
+        ? [
+            primaryKey,
+            ...templatePaths
+              .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+              .filter(Boolean),
+            // Keep preview labels reliable for nested M2M/M2A display templates (e.g. block_bentogrid.items)
+            "*.*.*",
+          ]
+        : [primaryKey, "*.*.*"];
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
@@ -305,12 +323,56 @@ export const M2AInput = ({
       itemData as { [key: string]: any },
       fields
     );
+
+    // Template-driven fallback for complex aliases/lists:
+    // collect all leaf values referenced by display_template paths.
+    const templateLeafValues = (() => {
+      if (!displayTemplate || !itemData) return [] as string[];
+      const paths = getAllPathsFromTemplate(displayTemplate)
+        .map((p) => p.replace(/^item\./, ""))
+        .filter(Boolean);
+      const values = paths.flatMap((path) => {
+        const raw = getValuesAtPath(itemData, path);
+        return (Array.isArray(raw) ? raw : [raw]).filter(
+          (v) => v != null && typeof v !== "object",
+        );
+      });
+      return uniq(values.map((v) => String(v).trim()).filter(Boolean));
+    })();
+
+    if (
+      templateLeafValues.length > 0 &&
+      (!text ||
+        (typeof text === "string" &&
+          (!text.trim() ||
+            text === String(itemId) ||
+            text ===
+              String(
+                getPrimaryKeyValue(
+                  junctionDoc as Record<string, unknown>,
+                  undefined,
+                  "",
+                ) ?? "",
+              ))))
+    ) {
+      text = templateLeafValues.join(", ");
+    }
     if (!text || (typeof text === "string" && !text.trim())) {
       text =
         itemId != null
           ? String(itemId)
-          : (junctionDoc as Record<string, unknown>)?.["id"] != null
-            ? String((junctionDoc as Record<string, unknown>).id)
+          : getPrimaryKeyValue(
+                junctionDoc as Record<string, unknown>,
+                undefined,
+                undefined,
+              ) != null
+            ? String(
+                getPrimaryKeyValue(
+                  junctionDoc as Record<string, unknown>,
+                  undefined,
+                  "",
+                ),
+              )
             : String(id);
     }
 
@@ -355,9 +417,10 @@ export const M2AInput = ({
                   item_field: item.field,
                   id: (() => {
                     const raw = (junctionDoc as Record<string, unknown>)?.[junctionItemField];
-                    return (typeof raw === "object" && raw != null && primaryKey in raw
-                      ? (raw as Record<string, unknown>)[primaryKey]
-                      : raw) as string | number;
+                    return (
+                      getPrimaryKeyValue(raw, fields, raw) ??
+                      getPrimaryKeyValue(junctionDoc, undefined, id)
+                    ) as string | number;
                   })(),
                 },
               }}
@@ -392,7 +455,9 @@ export const M2AInput = ({
                 } else {
                   props.onChange({
                     ...value,
-                    update: value.update.filter((v) => v?.id !== id),
+                    update: value.update.filter(
+                      (v) => getPrimaryKeyValue(v, undefined, (v as any)?.id) !== id,
+                    ),
                     delete: [...value.delete, id as number],
                   });
                 }
@@ -438,13 +503,11 @@ export const M2AInput = ({
                   ...(pickedItems?.items?.map((i: any) => {
                     const raw = i?.[junction.meta.junction_field as string];
                     if (raw == null) return undefined;
-                    return typeof raw === "object" && raw !== null && "id" in raw
-                      ? (raw as { id: string | number }).id
-                      : raw;
+                    return getPrimaryKeyValue(raw, undefined, raw);
                   }) ?? []),
                   ...value.create.map((i: any) => {
                     const v = i?.[junctionItemField];
-                    return typeof v === "object" && v != null && "id" in v ? (v as { id?: unknown }).id : v;
+                    return getPrimaryKeyValue(v, undefined, v);
                   }),
                 ]
                   .filter(Boolean)
@@ -487,20 +550,21 @@ export const M2AInput = ({
               if (typeof junctionDoc === "number") {
                 junctionDoc = { id: junctionDoc };
               }
-              const primaryKey = "id";
-
               const relatedDoc =
                 typeof junctionDoc === "object" &&
                 relation?.field in junctionDoc
                   ? (junctionDoc as any)[relation?.field]
                   : junctionDoc;
               const id: number | string =
-                typeof relatedDoc === "number" || typeof relatedDoc === "string"
-                  ? relatedDoc
-                  : relatedDoc.id;
+                (getPrimaryKeyValue(
+                  relatedDoc,
+                  undefined,
+                  getPrimaryKeyValue(junctionDoc, undefined, ""),
+                ) as number | string) ?? "";
 
               const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew = isInitial ? false : !junctionDoc.id;
+              const isNew =
+                isInitial ? false : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
 
               if (isNew) {
                 return (
