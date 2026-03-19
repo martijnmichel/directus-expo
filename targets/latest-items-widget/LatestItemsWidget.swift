@@ -431,16 +431,16 @@ struct SlotRowView: View {
     let right = formatDateIfPossible(rightRaw)
     let leftWidth: CGFloat = {
       switch family {
-      case .systemSmall: return 52
-      case .systemMedium: return 58
-      default: return 64
+      case .systemSmall: return 38
+      case .systemMedium: return 48
+      default: return 56
       }
     }()
     let rightWidth: CGFloat = {
       switch family {
-      case .systemSmall: return 38
-      case .systemMedium: return 48
-      default: return 56
+      case .systemSmall: return 52
+      case .systemMedium: return 58
+      default: return 64
       }
     }()
     let hasLeft = leftRaw != "–"
@@ -452,7 +452,7 @@ struct SlotRowView: View {
     let lineSpacing: CGFloat = family == .systemSmall ? 1.5 : 2
     return VStack(alignment: .leading, spacing: lineSpacing) {
       // Line 1
-      HStack(alignment: .center, spacing: 10) {
+      HStack(alignment: .center, spacing: 6) {
         if hasLeft {
           Text(left)
             .font(.caption2)
@@ -484,7 +484,20 @@ struct SlotRowView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .layoutPriority(1)
     }
-    .widgetURL(item.urlString.flatMap { URL(string: $0) })
+    .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))
+  }
+}
+
+private struct LatestItemsWidgetURLIfNotPreviewModifier: ViewModifier {
+  let url: URL?
+
+  func body(content: Content) -> some View {
+    let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
+    if isPreview || url == nil {
+      content
+    } else {
+      content.widgetURL(url!)
+    }
   }
 }
 
@@ -638,7 +651,6 @@ struct LatestItemsWidgetView: View {
 
     return GeometryReader { geo in
       let headerListSpacing: CGFloat = family == .systemSmall ? 6 : 10
-      // Match the Mail-style density: small+medium show 2 rows, large shows 4 rows.
       let maxRows: Int = {
         switch family {
         case .systemSmall, .systemMedium:
@@ -664,12 +676,18 @@ struct LatestItemsWidgetView: View {
                   .fill(Color.secondary.opacity(0.25))
               }
             }
-            .frame(width: family == .systemSmall ? 14 : 16, height: family == .systemSmall ? 14 : 16)
+            .frame(
+              width: family == .systemSmall ? 14 : 16,
+              height: family == .systemSmall ? 14 : 16
+            )
             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
           } else {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
               .fill(Color.secondary.opacity(0.15))
-              .frame(width: family == .systemSmall ? 14 : 16, height: family == .systemSmall ? 14 : 16)
+              .frame(
+                width: family == .systemSmall ? 14 : 16,
+                height: family == .systemSmall ? 14 : 16
+              )
           }
 
           Text(entry.configTitle)
@@ -678,7 +696,10 @@ struct LatestItemsWidgetView: View {
 
           Spacer(minLength: 0)
         }
-        .padding(.vertical, family == .systemSmall ? 3 : 4)
+        .padding(
+          .vertical,
+          family == .systemSmall ? 3 : 4
+        )
         // Let the header size naturally to better match native SwiftUI layout.
 
         if !entry.items.isEmpty {
@@ -687,7 +708,10 @@ struct LatestItemsWidgetView: View {
             let visible = Array(entry.items.prefix(maxRows))
             ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
               SlotRowView(item: it, family: family)
-                .padding(.vertical, family == .systemSmall ? 2 : 3)
+                .padding(
+                  .vertical,
+                  family == .systemSmall ? 2 : 3
+                )
               if idx < visible.count - 1 { Divider() }
             }
           }
@@ -698,11 +722,22 @@ struct LatestItemsWidgetView: View {
             .foregroundStyle(.secondary)
         }
       }
-      .containerBackground(for: .widget) { Color.clear }
+      .modifier(LatestItemsContainerBackgroundIfNotPreviewModifier())
       .padding(.horizontal, hPad)
       .padding(.top, topPad)
       .padding(.bottom, bottomPad)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+  }
+}
+
+private struct LatestItemsContainerBackgroundIfNotPreviewModifier: ViewModifier {
+  func body(content: Content) -> some View {
+    let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
+    if isPreview {
+      content
+    } else {
+      content.containerBackground(for: .widget) { Color.clear }
     }
   }
 }
