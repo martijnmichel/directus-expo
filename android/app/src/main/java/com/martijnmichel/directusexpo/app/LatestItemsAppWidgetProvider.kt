@@ -37,7 +37,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   // Keep this intentionally low for stability.
   // RemoteViews widgets run in-process, so we must strictly cap bitmap decoding.
   // 64x64 thumbs still allocate, so keep this small.
-  private val maxThumbnailsToLoadPerUpdate = 2
+  private val maxThumbnailsToLoadPerUpdate = 6
   private val bitmapInSampleSize = 4
   private val shouldLoadFaviconBitmap = true
 
@@ -121,17 +121,30 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     return out
   }
 
-  private fun inferMaxRows(appWidgetManager: AppWidgetManager, widgetId: Int): Int {
+  private fun inferMaxRows(
+    context: Context,
+    appWidgetManager: AppWidgetManager,
+    widgetId: Int
+  ): Int {
     val options = appWidgetManager.getAppWidgetOptions(widgetId)
     val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 0
     val maxHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: minHeight
-    val height = maxOf(minHeight, maxHeight)
-    // iOS: systemLarge shows 6 rows, otherwise show 2 rows.
-    // On Android, minHeight is often much lower than iOS, so use a tiered threshold.
+    // AppWidgetOptions heights are effectively "px" on this device.
+    // Convert to dp so our thresholds behave consistently across densities.
+    val heightPx = maxOf(minHeight, maxHeight)
+    val density = context.resources.displayMetrics.density.takeIf { it > 0f } ?: 1f
+    val heightDp = heightPx / density
+
+    // Desired behavior:
+    // - smallest: ~3 rows
+    // - medium: ~4 rows
+    // - large: ~6 rows
     return when {
-      height >= 170 -> 6
-      height >= 130 -> 4
-      else -> 2
+      // These thresholds are tuned for our current RemoteViews layout/paddings.
+      // If you still see the wrong row count, we can log heightPx/heightDp per widgetId and retune.
+      heightDp >= 90f -> 6
+      heightDp >= 70f -> 4
+      else -> 3
     }
   }
 
@@ -213,7 +226,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         val instanceBase = resolveInstanceBaseUrl(cfg.instanceUrl, cfg.webhookUrl)
 
         val maxRowsByWidget: Map<Int, Int> =
-          entries.associate { (widgetId, _) -> widgetId to inferMaxRows(appWidgetManager, widgetId) }
+          entries.associate { (widgetId, _) -> widgetId to inferMaxRows(context, appWidgetManager, widgetId) }
 
         val result = fetchFlowForConfig(prefs, cfg, instanceBase)
         val items = result.items
@@ -305,12 +318,11 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         }
       }
       "status" -> {
-        views.setViewVisibility(sideImageId, View.GONE)
-        views.setViewVisibility(sideTextId, View.VISIBLE)
+        views.setViewVisibility(sideImageId, View.VISIBLE)
+        views.setViewVisibility(sideTextId, View.GONE)
 
-        views.setTextViewText(sideTextId, value)
-        views.setInt(sideTextId, "setBackgroundColor", statusBackgroundColor(value))
-        views.setInt(sideTextId, "setTextColor", statusForegroundColor(value))
+        val dotRes = statusDotDrawable(value)
+        views.setImageViewResource(sideImageId, dotRes)
       }
       else -> {
         views.setViewVisibility(sideImageId, View.GONE)
@@ -320,6 +332,15 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         views.setInt(sideTextId, "setBackgroundColor", Color.TRANSPARENT)
         views.setInt(sideTextId, "setTextColor", Color.parseColor("#666666"))
       }
+    }
+  }
+
+  private fun statusDotDrawable(value: String): Int {
+    return when (value.trim().lowercase(Locale.US)) {
+      "published" -> R.drawable.widget_status_dot_published
+      "archived" -> R.drawable.widget_status_dot_archived
+      "draft" -> R.drawable.widget_status_dot_draft
+      else -> R.drawable.widget_status_dot_unknown
     }
   }
 
@@ -510,7 +531,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     maxToLoad: Int,
   ): Map<String, Bitmap> {
     if (instanceBase.isNullOrBlank()) return emptyMap()
-    val fileIdsNeeded = HashSet<String>()
+    // Use LinkedHashSet so decoding is deterministic (and matches item order).
+    val fileIdsNeeded = LinkedHashSet<String>()
     for (item in items) {
       for (entry in item.slots.entries) {
         if (entry.value.type.lowercase(Locale.US) == "thumbnail") {
@@ -534,13 +556,32 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     if (instanceBase.isNullOrBlank()) return null
     val base = instanceBase
 
-    // Try the Directus-managed favicon first (should usually be an image),
-    // but fall back to /favicon.ico since BitmapFactory can't decode everything.
+    fun tryUrls(urls: List<String>): Bitmap? {
+      for (u in urls) {
+        val bmp = fetchBitmap(u)
+        if (bmp != null) return bmp
+      }
+      return null
+    }
+
     return if (faviconFileId.isNullOrBlank()) {
-      fetchBitmap("$base/favicon.ico")
+      tryUrls(
+        listOf(
+          "$base/favicon.ico",
+          "$base/favicon.png",
+        ),
+      )
     } else {
-      val urlString = "$base/assets/$faviconFileId?width=64&height=64&fit=cover"
-      fetchBitmap(urlString) ?: fetchBitmap("$base/favicon.ico")
+      // Some formats/types don’t decode when passed through the Directus transform params.
+      // Try both transformed and raw asset URLs.
+      tryUrls(
+        listOf(
+          "$base/assets/$faviconFileId?width=64&height=64&fit=cover",
+          "$base/assets/$faviconFileId?width=32&height=32&fit=cover",
+          "$base/assets/$faviconFileId",
+          "$base/favicon.ico",
+        ),
+      )
     }
   }
 

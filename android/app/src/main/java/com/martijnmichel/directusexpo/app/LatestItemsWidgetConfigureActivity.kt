@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.LinearLayout
@@ -110,7 +111,13 @@ class LatestItemsWidgetConfigureActivity : Activity() {
 
     val adapter = object : ArrayAdapter<Config>(this, android.R.layout.simple_list_item_2, configs) {
       override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
-        val row = super.getView(position, convertView, parent)
+        // Don't call super.getView(): ArrayAdapter assumes the row layout is a TextView,
+        // but `android.R.layout.simple_list_item_2` is a TwoLineListItem (not a TextView).
+        val row = convertView ?: LayoutInflater.from(context).inflate(
+          android.R.layout.simple_list_item_2,
+          parent,
+          false
+        )
         val cfg = getItem(position)
         val t1 = row.findViewById<TextView>(android.R.id.text1)
         val t2 = row.findViewById<TextView>(android.R.id.text2)
@@ -189,7 +196,8 @@ class LatestItemsWidgetConfigureActivity : Activity() {
       out.add(
         Config(
           id = id,
-          title = title,
+          // Fallback: if user didn't provide a custom title, show the collection name.
+          title = title ?: collection,
           collection = collection,
           instanceBase = normalizeBaseUrl(instanceUrl),
         ),
