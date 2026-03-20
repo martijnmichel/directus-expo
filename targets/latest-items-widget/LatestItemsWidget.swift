@@ -490,7 +490,8 @@ struct SlotRowView: View {
     let sideMaxWidth: CGFloat = 80
     let hasLeft = hasContent(leftSlot)
     let hasRight = hasContent(rightSlot)
-
+    let hasSubtitle = hasContent(subtitleSlot)
+    
     // Mail-like 2-line layout:
     // Line 1: left - title - right
     // Line 2: subtitle aligned under title (no left/right texts)
@@ -514,12 +515,14 @@ struct SlotRowView: View {
       }
 
       // Line 2
-      Text(subtitle)
+     if hasSubtitle {
+       Text(subtitle)
         .font(.subheadline)
         .foregroundStyle(.secondary)
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .layoutPriority(1)
+     }
     }
     .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))
   }

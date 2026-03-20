@@ -1810,6 +1810,7 @@ module.exports = async function (data) {
               options: {
                 // Synchronous: wait for flow to finish and return $last.
                 async: false,
+                cache: false,
                 response_body: "$last",
               },
             } as any),
