@@ -1686,13 +1686,18 @@ module.exports = async function (data) {
                 "Widget webhook (GET-only). GET with no params returns {version,supports}. GET with ?widget_id=... returns widget data.",
               status: "active",
               trigger: "webhook",
-              options: { async: false, cache: false, response_body: "$last" },
+              options: { async: false, cacheEnabled: false, response_body: "$last" },
             } as any),
           );
 
           // Detach entrypoint before deleting operations (prevents FK/constraint issues on delete)
           try {
-            await directus.request(updateFlow(existingFlowId, { operation: null } as any));
+            await directus.request(
+              updateFlow(existingFlowId, {
+                operation: null,
+                options: { async: false, cacheEnabled: false, response_body: "$last" },
+              } as any),
+            );
           } catch {
             // ignore; best effort
           }
@@ -1798,7 +1803,12 @@ module.exports = async function (data) {
           }
 
           const { extractId } = await createCanonicalFlowOperations(existingFlowId);
-          await directus.request(updateFlow(existingFlowId, { operation: extractId } as any));
+          await directus.request(
+            updateFlow(existingFlowId, {
+              operation: extractId,
+              options: { async: false, cacheEnabled: false, response_body: "$last" },
+            } as any),
+          );
         }
 
         if (!flowExists) {
@@ -1813,7 +1823,7 @@ module.exports = async function (data) {
               options: {
                 // Synchronous: wait for flow to finish and return $last.
                 async: false,
-                cache: false,
+                cacheEnabled: false,
                 response_body: "$last",
               },
             } as any),
@@ -1826,7 +1836,12 @@ module.exports = async function (data) {
           createdFlowId = flowId;
 
           const { extractId } = await createCanonicalFlowOperations(flowId);
-          await directus.request(updateFlow(flowId, { operation: extractId } as any));
+          await directus.request(
+            updateFlow(flowId, {
+              operation: extractId,
+              options: { async: false, cacheEnabled: false, response_body: "$last" },
+            } as any),
+          );
         }
 
         // Create a policy that allows users to manage only their own widget rows.
