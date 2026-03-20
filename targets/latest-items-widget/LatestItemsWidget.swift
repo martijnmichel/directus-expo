@@ -302,7 +302,7 @@ private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async 
       return (nil, "No response from server.", nil)
     }
     guard (200..<300).contains(http.statusCode) else {
-      return (nil, "Webhook error (HTTP \(http.statusCode)).", nil))
+      return (nil, "Webhook error (HTTP \(http.statusCode)).", nil)
     }
     let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
     let items = decodeSlotItemsFromFlowResponse(resp, config: config)
@@ -310,7 +310,7 @@ private func fetchSlotItemsFromWebhookDetailed(config: WidgetConfigEntry) async 
   } catch is DecodingError {
     return (nil, "Webhook returned unexpected JSON.", nil)
   } catch {
-    return (nil, "Couldn’t refresh (network error).")
+    return (nil, "Couldn’t refresh (network error).", nil)
   }
 }
 
