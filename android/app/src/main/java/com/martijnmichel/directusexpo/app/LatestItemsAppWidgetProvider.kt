@@ -35,8 +35,11 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   // AppWidgetProvider runs inside the host app process. Downloading/decoding too
   // many bitmaps can OOM the app, especially on low-swap devices.
   // Keep this intentionally low for stability.
-  private val maxThumbnailsToLoadPerUpdate = 0
-  private val bitmapInSampleSize = 4 // unused when maxThumbnailsToLoadPerUpdate=0
+  // RemoteViews widgets run in-process, so we must strictly cap bitmap decoding.
+  // 64x64 thumbs still allocate, so keep this small.
+  private val maxThumbnailsToLoadPerUpdate = 2
+  private val bitmapInSampleSize = 4
+  private val shouldLoadFaviconBitmap = true
 
   private val prefsName = "directus_widgets_latest_items"
   private val configListKey = "directus.widgets.latestItems.v1.configList"
@@ -121,8 +124,15 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   private fun inferMaxRows(appWidgetManager: AppWidgetManager, widgetId: Int): Int {
     val options = appWidgetManager.getAppWidgetOptions(widgetId)
     val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 0
+    val maxHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: minHeight
+    val height = maxOf(minHeight, maxHeight)
     // iOS: systemLarge shows 6 rows, otherwise show 2 rows.
-    return if (minHeight >= 200) 6 else 2
+    // On Android, minHeight is often much lower than iOS, so use a tiered threshold.
+    return when {
+      height >= 170 -> 6
+      height >= 130 -> 4
+      else -> 2
+    }
   }
 
   private fun withAlpha(color: Int, alpha: Int): Int {
@@ -171,13 +181,18 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       val selectedConfig = configByWidgetId[widgetId]
       val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
       views.setImageViewResource(R.id.widget_favicon, R.drawable.widget_thumb_placeholder)
+      val instanceBase = selectedConfig?.let { resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl) }
+      val setupText = "Open app to add a widget setup"
+
+      if (!instanceBase.isNullOrBlank()) {
+        views.setViewVisibility(R.id.widget_subtitle, View.GONE)
+      } else {
+        views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
+        views.setTextViewText(R.id.widget_subtitle, setupText)
+      }
       views.setTextViewText(
         R.id.widget_title,
         selectedConfig?.title ?: context.getString(R.string.widget_latest_items_title)
-      )
-      views.setTextViewText(
-        R.id.widget_subtitle,
-        selectedConfig?.let { resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl) } ?: "Open app to add a widget setup"
       )
       appWidgetManager.updateAppWidget(widgetId, views)
     }
@@ -225,11 +240,18 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
           views.setTextViewText(R.id.widget_title, titleOverride ?: cfg.title)
 
           if (items.isEmpty()) {
+            views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
             views.setTextViewText(R.id.widget_subtitle, statusMessage ?: "Open the app to refresh")
             renderEmptyRows(views)
           } else {
-            // Header subtitle: which Directus instance this widget is bound to.
-            views.setTextViewText(R.id.widget_subtitle, instanceBase ?: "")
+            // We don't need to show the instance URL here.
+            // Hide the subtitle when we successfully resolved the instance; otherwise show setup text.
+            if (!instanceBase.isNullOrBlank()) {
+              views.setViewVisibility(R.id.widget_subtitle, View.GONE)
+            } else {
+              views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
+              views.setTextViewText(R.id.widget_subtitle, "Open app to add a widget setup")
+            }
             renderRows(context, views, maxRows, items, cfg, instanceBase, thumbBitmapsByFileId)
           }
 
@@ -419,11 +441,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       val rightSlot = item.slots["right"]
 
       views.setTextViewText(titleTextIds[i], displayText(titleSlot?.type, titleSlot?.value))
-      // Row subtitle: always show the Directus instance base URL for clarity.
-      views.setTextViewText(
-        subtitleTextIds[i],
-        instanceBase ?: displayText(subtitleSlot?.type, subtitleSlot?.value)
-      )
+      // Row subtitle: show the flow-provided `subtitle` slot.
+      views.setTextViewText(subtitleTextIds[i], displayText(subtitleSlot?.type, subtitleSlot?.value))
 
       renderSideSlot(views, leftContainerIds[i], leftImageIds[i], leftTextIds[i], leftSlot, thumbBitmapsByFileId)
       renderSideSlot(views, rightContainerIds[i], rightImageIds[i], rightTextIds[i], rightSlot, thumbBitmapsByFileId)
@@ -472,13 +491,14 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       conn.connectTimeout = 4000
       conn.readTimeout = 4000
       conn.instanceFollowRedirects = true
-      val stream = BufferedInputStream(conn.inputStream)
       val opts = BitmapFactory.Options().apply {
         inPreferredConfig = Bitmap.Config.RGB_565
         inDither = false
         inSampleSize = bitmapInSampleSize
       }
-      BitmapFactory.decodeStream(stream, null, opts)
+      BufferedInputStream(conn.inputStream).use { stream ->
+        BitmapFactory.decodeStream(stream, null, opts)
+      }
     } catch (_: Exception) {
       null
     }
@@ -512,11 +532,15 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
   private fun fetchFaviconBitmap(instanceBase: String?, faviconFileId: String?): Bitmap? {
     if (instanceBase.isNullOrBlank()) return null
+    val base = instanceBase
+
+    // Try the Directus-managed favicon first (should usually be an image),
+    // but fall back to /favicon.ico since BitmapFactory can't decode everything.
     return if (faviconFileId.isNullOrBlank()) {
-      fetchBitmap("${instanceBase}/favicon.ico")
+      fetchBitmap("$base/favicon.ico")
     } else {
-      val urlString = "${instanceBase}/assets/${faviconFileId}?width=64&height=64&fit=cover"
-      fetchBitmap(urlString)
+      val urlString = "$base/assets/$faviconFileId?width=64&height=64&fit=cover"
+      fetchBitmap(urlString) ?: fetchBitmap("$base/favicon.ico")
     }
   }
 
@@ -553,6 +577,10 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       items.add(SlotItem(id = id, deepLink = deepLink, slots = slotMap))
     }
 
+    // Widget appears to show items in opposite order on Android vs your expectation.
+    // Match iOS/flow ordering by reversing here.
+    items.reverse()
+
     val faviconFileId = resp.optString("favicon").takeIf { it.isNotBlank() }
     return Pair(items, faviconFileId)
   }
@@ -562,11 +590,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       val obj = JSONObject(raw)
       if (obj.has("data")) {
         val (items, faviconFileId) = decodeSlotItemsFromFlowResponse(obj, cfg)
-        val faviconBitmap = if (maxThumbnailsToLoadPerUpdate > 0) {
-          fetchFaviconBitmap(instanceBase, faviconFileId)
-        } else {
-          null
-        }
+        val faviconBitmap =
+          if (shouldLoadFaviconBitmap) fetchFaviconBitmap(instanceBase, faviconFileId) else null
         FetchResult(items, faviconBitmap, null, null)
       } else if (obj.has("rows") && obj.has("columns")) {
         val legacyTitle = obj.optString("title").takeIf { it.isNotBlank() }
@@ -611,7 +636,41 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  private fun tryFetchWebhookJson(webhookUrl: String, widgetId: String): String? {
+  private data class WebhookFetchResult(
+    val raw: String?,
+    val httpCode: Int?,
+  )
+
+  private fun mapWebhookHttpError(httpCode: Int): String {
+    return when (httpCode) {
+      401 -> "Webhook unauthorized (401)."
+      403 -> "Webhook forbidden (403)."
+      404 -> "Webhook not found (404)."
+      else -> "Webhook error (HTTP $httpCode)."
+    }
+  }
+
+  private fun extractErrorMessageFromRaw(raw: String): String? {
+    return try {
+      val obj = JSONObject(raw)
+      // Directus often returns: { "errors": [ { "message": "..."} ] }
+      if (obj.has("errors")) {
+        val errors = obj.optJSONArray("errors") ?: return null
+        val messages = (0 until errors.length())
+          .mapNotNull { i ->
+            val e = errors.optJSONObject(i) ?: return@mapNotNull null
+            e.optString("message").takeIf { it.isNotBlank() }
+          }
+        messages.takeIf { it.isNotEmpty() }?.joinToString("; ")
+      } else {
+        obj.optString("message").takeIf { it.isNotBlank() }
+      }
+    } catch (_: Exception) {
+      null
+    }
+  }
+
+  private fun tryFetchWebhookJson(webhookUrl: String, widgetId: String): WebhookFetchResult {
     return try {
       val base = Uri.parse(webhookUrl)
       val url = base.buildUpon().appendQueryParameter("widget_id", widgetId).build().toString()
@@ -624,13 +683,14 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
       val code = conn.responseCode
       val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-      if (stream == null) return null
+      if (stream == null) return WebhookFetchResult(raw = null, httpCode = code)
+
       val br = BufferedReader(InputStreamReader(stream))
       val text = br.use { it.readText() }
-      if (text.isBlank()) return null
-      text
+      val raw = text.takeIf { it.isNotBlank() }
+      WebhookFetchResult(raw = raw, httpCode = code)
     } catch (_: Exception) {
-      null
+      WebhookFetchResult(raw = null, httpCode = null)
     }
   }
 
@@ -655,14 +715,29 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       )
     }
 
-    val raw = tryFetchWebhookJson(webhookUrl, cfg.widgetId)
+    val webhookResult = tryFetchWebhookJson(webhookUrl, cfg.widgetId)
+    val raw = webhookResult.raw
+    val httpCode = webhookResult.httpCode
+
     if (raw.isNullOrBlank()) {
       val cached = prefs.getString(payloadPrefix + cfg.id, null)
       if (!cached.isNullOrBlank()) {
         val decoded = decodeCachedPayload(cached, cfg, instanceBase)
         if (decoded.items.isNotEmpty()) return decoded
       }
-      return FetchResult(emptyList(), null, "Webhook returned unexpected JSON.", null)
+
+      val statusMessage = when {
+        httpCode != null -> mapWebhookHttpError(httpCode)
+        else -> "Couldn’t refresh (network error)."
+      }
+      return FetchResult(emptyList(), null, statusMessage, null)
+    }
+
+    // If the webhook returned a non-2xx status, prefer showing HTTP error even if the body isn't JSON.
+    if (httpCode != null && (httpCode !in 200..299)) {
+      val extracted = extractErrorMessageFromRaw(raw)
+      val statusMessage = extracted ?: mapWebhookHttpError(httpCode)
+      return FetchResult(emptyList(), null, statusMessage, null)
     }
 
     val resp = try {
@@ -681,11 +756,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       return FetchResult(items, null, "Open the app to refresh", null)
     }
 
-    val faviconBitmap = if (maxThumbnailsToLoadPerUpdate > 0) {
-      fetchFaviconBitmap(instanceBase, faviconFileId)
-    } else {
-      null
-    }
+    val faviconBitmap =
+      if (shouldLoadFaviconBitmap) fetchFaviconBitmap(instanceBase, faviconFileId) else null
     return FetchResult(items, faviconBitmap, null, null)
   }
 

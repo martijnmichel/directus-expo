@@ -19,7 +19,8 @@
       android:background="@drawable/widget_thumb_placeholder"
       android:scaleType="centerCrop"
       android:contentDescription="@null"
-      android:src="@android:color/transparent" />
+      android:src="@android:color/transparent"
+      android:clipToOutline="true" />
 
     <TextView
       android:id="@+id/widget_title"
@@ -67,18 +68,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_0_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_0_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_0_left_text"
@@ -113,18 +115,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_0_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_0_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_0_right_text"
@@ -181,18 +184,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_1_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_1_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_1_left_text"
@@ -227,18 +231,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_1_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_1_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_1_right_text"
@@ -295,18 +300,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_2_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_2_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_2_left_text"
@@ -341,18 +347,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_2_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_2_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_2_right_text"
@@ -409,18 +416,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_3_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_3_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_3_left_text"
@@ -455,18 +463,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_3_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_3_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_3_right_text"
@@ -523,18 +532,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_4_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_4_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_4_left_text"
@@ -569,18 +579,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_4_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_4_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_4_right_text"
@@ -637,18 +648,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_5_left_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_5_left_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_5_left_text"
@@ -683,18 +695,19 @@
 
         <FrameLayout
           android:id="@+id/widget_row_5_right_container"
-          android:layout_width="32dp"
+          android:layout_width="28dp"
           android:layout_height="wrap_content">
 
           <ImageView
             android:id="@+id/widget_row_5_right_image"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:background="@drawable/widget_thumb_placeholder"
             android:scaleType="centerCrop"
             android:contentDescription="@null"
             android:src="@android:color/transparent"
-            android:visibility="gone" />
+            android:visibility="gone"
+            android:clipToOutline="true" />
 
           <TextView
             android:id="@+id/widget_row_5_right_text"
