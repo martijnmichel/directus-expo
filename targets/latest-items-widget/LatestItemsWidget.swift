@@ -804,7 +804,15 @@ struct LatestItemsWidgetView: View {
     let _ = WidgetConstants.slotOrder
 
     return GeometryReader { geo in
-      let maxRows: Int = family == .systemLarge ? 6 : 2
+      let usesSubtitle = entry.items.contains { $0.slotValue(for: "subtitle") != nil }
+      let maxRows: Int = {
+        switch family {
+        case .systemLarge:
+          return usesSubtitle ? 6 : 9
+        default:
+          return usesSubtitle ? 2 : 3
+        }
+      }()
 
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .center, spacing: 8) {

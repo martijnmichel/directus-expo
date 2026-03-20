@@ -1111,15 +1111,18 @@ module.exports = async function (data) {
         var slots = (rawExtra && Array.isArray(rawExtra.slots)) ? rawExtra.slots : [];
         var formatted = (Array.isArray(items) ? items : []).map(function (it) {
           var id = it && (it.id != null ? String(it.id) : "");
-          var values = slots.map(function (s) {
-            var parsed = parsePathAndTransform(s.field || "");
+          var values = slots.reduce(function (acc, s) {
+            var field = (s && s.field != null) ? String(s.field) : "";
+            if (!field.trim()) return acc;
+            var parsed = parsePathAndTransform(field);
             resolveSlotDebug(parsed.path, parsed.transform);
-            return {
+            acc.push({
               slot: s.key,
-              type: inferSlotTypeFromPath(collection, s.field || ""),
-              value: resolveSlotValue(it, s.field || ""),
-            };
-          });
+              type: inferSlotTypeFromPath(collection, field),
+              value: resolveSlotValue(it, field),
+            });
+            return acc;
+          }, []);
           return { id: id, values: values };
         });
         return [{ type: "latest-items", items: formatted }];
@@ -1683,7 +1686,7 @@ module.exports = async function (data) {
                 "Widget webhook (GET-only). GET with no params returns {version,supports}. GET with ?widget_id=... returns widget data.",
               status: "active",
               trigger: "webhook",
-              options: { async: false, response_body: "$last" },
+              options: { async: false, cache: false, response_body: "$last" },
             } as any),
           );
 
