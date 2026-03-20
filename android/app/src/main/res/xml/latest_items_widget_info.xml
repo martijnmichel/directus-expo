@@ -6,6 +6,7 @@
   android:targetCellHeight="2"
   android:updatePeriodMillis="1800000"
   android:initialLayout="@layout/widget_latest_items"
+  android:configure="com.martijnmichel.directusexpo.app.LatestItemsWidgetConfigureActivity"
   android:resizeMode="horizontal|vertical"
   android:widgetCategory="home_screen"
   android:description="@string/widget_latest_items_description" />

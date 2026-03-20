@@ -25,7 +25,6 @@ import {
   getConfigListFromAppGroup,
   getConfigListIdsFromAppGroup,
 } from "@/widgets/shared/widgetCache";
-import { requestAddWidgetToHomeScreen } from "@/widgets/shared/requestAddWidgetToHomeScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
@@ -297,28 +296,7 @@ export function WidgetConfigSection() {
             ? t("widget.addToHomeScreenHintAndroid")
             : t("widget.addToHomeScreenHintIos")
         }
-        action={
-          Platform.OS === "android" ? (
-            <Button
-              variant="soft"
-              size="sm"
-              onPress={async () => {
-                const { requested, error } =
-                  await requestAddWidgetToHomeScreen();
-                if (error) {
-                  Alert.alert(t("widget.addErrorTitle"), error);
-                } else if (requested) {
-                  Alert.alert(
-                    t("widget.addConfirmTitle"),
-                    t("widget.addConfirmMessage"),
-                  );
-                }
-              }}
-            >
-              <DirectusIcon name="add" />
-            </Button>
-          ) : undefined
-        }
+        action={undefined}
       />
       {configs.length === 0 && (
         <InlineAlert status="warning" message={t("widget.setupPickerHint")} />
