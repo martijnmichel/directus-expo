@@ -113,6 +113,9 @@ export const LoginForm = () => {
   const instanceIdW = watch("api.id");
   const sessionIdW = watch("api.sessionId");
   const typeW = watch("type");
+  const emailW = watch("email");
+  const passwordW = watch("password");
+  const apiKeyW = watch("apiKey");
   const apiW = watch("api");
   const selectedApi = (apisList ?? []).find((a) => a.id === instanceIdW);
 
@@ -130,6 +133,16 @@ export const LoginForm = () => {
   const canSubmitLogin =
     (!isSavedApiKeySession || apiKeyEditUnlocked) &&
     (!isSavedEmailSession || emailReloginUnlocked);
+
+  const hasApiSelected = !!instanceIdW?.trim();
+  const credentialsComplete =
+    typeW === "email"
+      ? !!emailW?.trim() && !!passwordW?.trim()
+      : !!apiKeyW?.trim();
+  const loginSubmitDisabled =
+    !hasApiSelected ||
+    !loginBaseUrl ||
+    !credentialsComplete;
 
   useEffect(() => {
     if (!instanceIdW?.trim() || !hasDirectusHost(url ?? "")) {
@@ -371,11 +384,7 @@ export const LoginForm = () => {
               label={t("form.apiKey")}
               error={error?.message}
               disabled={isSavedApiKeySession && !apiKeyEditUnlocked}
-              helper={
-                isSavedApiKeySession && !apiKeyEditUnlocked
-                  ? t("form.apiKeyLockedHint")
-                  : undefined
-              }
+              
               append={
                 isSavedApiKeySession && !apiKeyEditUnlocked ? (
                   <Pressable
@@ -437,7 +446,11 @@ export const LoginForm = () => {
 
       <Vertical>
         {canSubmitLogin && (
-          <Button loading={isSubmitting} onPress={handleSubmit(onSubmit)}>
+          <Button
+            loading={isSubmitting}
+            disabled={loginSubmitDisabled}
+            onPress={handleSubmit(onSubmit)}
+          >
             {t("form.login")}
           </Button>
         )}
