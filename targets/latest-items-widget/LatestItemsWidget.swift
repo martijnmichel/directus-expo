@@ -1,5 +1,6 @@
 import WidgetKit
 import SwiftUI
+import UIKit
 import AppIntents
 
 // MARK: - Shared storage keys (must match JS)
@@ -12,6 +13,9 @@ private enum WidgetConstants {
 
   static let latestItemsType = "latest-items"
   static let slotOrder: [String] = ["left", "title", "subtitle", "right"]
+
+  /// Directus asset transform: request raster output so `UIImage` can decode (SVG sources often ignore this).
+  static let directusAssetRasterQuery = "width=64&height=64&fit=cover&format=png"
 }
 
 // MARK: - Models
@@ -322,7 +326,7 @@ private func prefetchThumbnailImages(in items: [SlotItem], instanceUrl: String?)
   var tasks: [(itemId: String, slotKey: String, url: URL)] = []
   for item in items {
     for (slotKey, slot) in item.slots where slot.type == "thumbnail" && !slot.value.isEmpty {
-      let urlString = "\(base)/assets/\(slot.value)?width=64&height=64&fit=cover"
+      let urlString = "\(base)/assets/\(slot.value)?\(WidgetConstants.directusAssetRasterQuery)"
       if let url = URL(string: urlString) {
         tasks.append((item.id, slotKey, url))
       }
@@ -340,7 +344,7 @@ private func prefetchThumbnailImages(in items: [SlotItem], instanceUrl: String?)
       }
     }
     for await (itemId, slotKey, data) in group {
-      if let data {
+      if let data, !data.isEmpty, UIImage(data: data) != nil {
         fetched[itemId, default: [:]][slotKey] = data
       }
     }
@@ -701,21 +705,25 @@ private func prefetchFaviconImage(faviconFileId: String?, instanceUrl: String?, 
     ?? instanceBaseURLString(from: webhookUrl)?.trimmingCharacters(in: .init(charactersIn: "/"))
   guard let base, !base.isEmpty else { return nil }
 
+  func rasterData(from url: URL) async -> Data? {
+    guard let data = try? await URLSession.shared.data(from: url).0,
+          !data.isEmpty,
+          UIImage(data: data) != nil
+    else { return nil }
+    return data
+  }
+
   // Prefer the Directus-managed favicon file from directus_settings.public_favicon
   if let fileId = faviconFileId, !fileId.isEmpty {
-    let urlString = "\(base)/assets/\(fileId)?width=64&height=64&fit=cover"
-    if let url = URL(string: urlString),
-       let data = try? await URLSession.shared.data(from: url).0,
-       !data.isEmpty {
+    let urlString = "\(base)/assets/\(fileId)?\(WidgetConstants.directusAssetRasterQuery)"
+    if let url = URL(string: urlString), let data = await rasterData(from: url) {
       return data
     }
   }
 
-  // Fallback: try /favicon.ico directly
+  // Fallback: site favicon (no format=png; skip if not decodable as UIImage)
   let icoUrl = "\(base)/favicon.ico"
-  if let url = URL(string: icoUrl),
-     let data = try? await URLSession.shared.data(from: url).0,
-     !data.isEmpty {
+  if let url = URL(string: icoUrl), let data = await rasterData(from: url) {
     return data
   }
   return nil
@@ -821,10 +829,6 @@ struct LatestItemsWidgetView: View {
               .scaledToFit()
               .frame(width: 16, height: 16)
               .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-          } else {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-              .fill(WidgetNativeTheme.Colors.chromeMutedFill)
-              .frame(width: 16, height: 16)
           }
 
           Text(entry.configTitle)

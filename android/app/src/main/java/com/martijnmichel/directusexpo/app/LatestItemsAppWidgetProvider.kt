@@ -30,6 +30,9 @@ import kotlin.math.abs
 class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   companion object {
     private val executor = Executors.newSingleThreadExecutor()
+
+    /** Directus asset transform: prefer raster output for BitmapFactory decode (SVG often unchanged). */
+    private const val DIRECTUS_ASSET_RASTER_QUERY = "width=64&height=64&fit=cover&format=png"
   }
 
   // AppWidgetProvider runs inside the host app process. Downloading/decoding too
@@ -193,7 +196,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     for (widgetId in appWidgetIds) {
       val selectedConfig = configByWidgetId[widgetId]
       val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
-      views.setImageViewResource(R.id.widget_favicon, R.drawable.widget_thumb_placeholder)
+      views.setViewVisibility(R.id.widget_favicon, View.GONE)
       val instanceBase = selectedConfig?.let { resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl) }
       val setupText = "Open app to add a widget setup"
 
@@ -247,8 +250,12 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
           val maxRows = maxRowsByWidget[widgetId] ?: 2
           val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
 
-          views.setImageViewResource(R.id.widget_favicon, R.drawable.widget_thumb_placeholder)
-          faviconBitmap?.let { views.setImageViewBitmap(R.id.widget_favicon, it) }
+          if (faviconBitmap != null) {
+            views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
+            views.setImageViewBitmap(R.id.widget_favicon, faviconBitmap)
+          } else {
+            views.setViewVisibility(R.id.widget_favicon, View.GONE)
+          }
 
           views.setTextViewText(R.id.widget_title, titleOverride ?: cfg.title)
 
@@ -545,7 +552,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     val bitmaps = HashMap<String, Bitmap>()
     val limited = fileIdsNeeded.toList().take(maxToLoad)
     for (fileId in limited) {
-      val urlString = "${instanceBase}/assets/${fileId}?width=64&height=64&fit=cover"
+      val urlString = "${instanceBase}/assets/${fileId}?$DIRECTUS_ASSET_RASTER_QUERY"
       val bmp = fetchBitmap(urlString)
       if (bmp != null) bitmaps[fileId] = bmp
     }
@@ -576,9 +583,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       // Try both transformed and raw asset URLs.
       tryUrls(
         listOf(
-          "$base/assets/$faviconFileId?width=64&height=64&fit=cover",
-          "$base/assets/$faviconFileId?width=32&height=32&fit=cover",
-          "$base/assets/$faviconFileId",
+          "$base/assets/$faviconFileId?$DIRECTUS_ASSET_RASTER_QUERY",
+          "$base/assets/$faviconFileId?width=32&height=32&fit=cover&format=png",
+          "$base/assets/$faviconFileId?format=png",
           "$base/favicon.ico",
         ),
       )
