@@ -43,8 +43,13 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     /** Title + padding + optional subtitle (dp) — subtract from host height for list area. */
     private const val WIDGET_LIST_HEADER_RESERVE_DP = 88f
 
-    /** Approximate list row height incl. divider margins (dp); tune if rows clip or look sparse. */
-    private const val WIDGET_LIST_ROW_BUDGET_DP = 50f
+    /**
+     * Approximate list row height incl. divider margins (dp). Without a subtitle line, rows are
+     * shorter — use a smaller budget so more rows fit (aligns with iOS 2↔3 and 6↔9 for med/large).
+     */
+    private const val WIDGET_LIST_ROW_BUDGET_WITH_SUBTITLE_DP = 50f
+
+    private const val WIDGET_LIST_ROW_BUDGET_NO_SUBTITLE_DP = 50f * 2f / 3f
 
     private val resizeRefreshHandler = Handler(Looper.getMainLooper())
     private val pendingResizeRunnables = ConcurrentHashMap<Int, Runnable>()
@@ -55,7 +60,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   // Keep this intentionally low for stability.
   // RemoteViews widgets run in-process, so we must strictly cap bitmap decoding.
   // 64x64 thumbs still allocate, so keep this small.
-  /** Match max list rows we can show (see [maxRowsForWidgetOptions] + size-keyed [RemoteViews]). */
+  /** Match max list rows we can show (height + subtitle-aware row budget). */
   private val maxThumbnailsToLoadPerUpdate = 12
   private val bitmapInSampleSize = 4
   private val shouldLoadFaviconBitmap = true
@@ -199,19 +204,24 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
    * [Determine a size](https://developer.android.com/develop/ui/views/appwidgets/layouts#anatomy_determining_size)
    * is still useful for XML `minResize*`; here we only use **dp** from `OPTION_*` / [SizeF].
    */
-  private fun listRowsForWidgetHeightDp(heightDp: Float): Int {
+  /**
+   * @param usesSubtitleInPayload `true` when any item includes a `subtitle` slot key (same idea as
+   *   iOS `entry.items.contains { $0.slotValue(for: "subtitle") != nil }`).
+   */
+  private fun listRowsForWidgetHeightDp(heightDp: Float, usesSubtitleInPayload: Boolean): Int {
     val maxR = WIDGET_ROW_LAST_INDEX + 1
     if (heightDp <= 0f) {
       return 4.coerceAtMost(maxR)
     }
+    val rowBudget =
+      if (usesSubtitleInPayload) {
+        WIDGET_LIST_ROW_BUDGET_WITH_SUBTITLE_DP
+      } else {
+        WIDGET_LIST_ROW_BUDGET_NO_SUBTITLE_DP
+      }
     val listDp = (heightDp - WIDGET_LIST_HEADER_RESERVE_DP).coerceAtLeast(0f)
-    val rows = ceil(listDp.toDouble() / WIDGET_LIST_ROW_BUDGET_DP.toDouble()).toInt()
+    val rows = ceil(listDp.toDouble() / rowBudget.toDouble()).toInt()
     return rows.coerceIn(2, maxR)
-  }
-
-  /** List rows for this widget instance from its current host-reported height. */
-  private fun maxRowsForWidgetOptions(options: Bundle): Int {
-    return listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
   }
 
   /**
@@ -219,14 +229,20 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
    * Avoid `RemoteViews(Map<SizeF, RemoteViews>)`: that API registers fixed size breakpoints and
    * commonly disables continuous horizontal resize on Pixel / other launchers.
    */
+  /**
+   * @param usesSubtitleForRowBudget When null, assume subtitle rows (conservative) — e.g. before payload is known.
+   */
   private fun updateLatestItemsAppWidget(
     context: Context,
     appWidgetManager: AppWidgetManager,
     widgetId: Int,
+    usesSubtitleForRowBudget: Boolean? = null,
     populate: (RemoteViews, maxRows: Int) -> Unit,
   ) {
     val options = appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle()
-    val maxRows = listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
+    val usesSubtitle = usesSubtitleForRowBudget ?: true
+    val maxRows =
+      listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options), usesSubtitle)
     val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
     populate(views, maxRows)
     appWidgetManager.updateAppWidget(widgetId, views)
@@ -298,15 +314,22 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         val instanceBase =
           DirectusWidgetUrls.resolveInstanceBaseUrl(cfg.instanceUrl, cfg.webhookUrl)
 
-        val maxRowsByWidget: Map<Int, Int> =
-          entries.associate { (widgetId, _) ->
-            widgetId to maxRowsForWidgetOptions(appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle())
-          }
-
         val result = flowRepo.fetch(cfg.toFlowSetup(), instanceBase)
         val items = result.items
         val faviconBitmap = result.faviconBitmap
         val statusMessage = result.statusMessage
+
+        val usesSubtitleInPayload =
+          items.isNotEmpty() && items.any { it.slots.containsKey("subtitle") }
+
+        val maxRowsByWidget: Map<Int, Int> =
+          entries.associate { (widgetId, _) ->
+            widgetId to
+              listRowsForWidgetHeightDp(
+                widgetHeightDpFromOptions(appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle()),
+                if (items.isEmpty()) true else usesSubtitleInPayload,
+              )
+          }
 
         val maxThumbItems = (maxRowsByWidget.values.maxOrNull() ?: 3)
         val thumbBitmapsByFileId: Map<String, Bitmap> =
@@ -319,7 +342,12 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
         val widgetIds = entries.map { it.key }
         for (widgetId in widgetIds) {
-          updateLatestItemsAppWidget(context, appWidgetManager, widgetId) { views, maxRows ->
+          updateLatestItemsAppWidget(
+            context,
+            appWidgetManager,
+            widgetId,
+            usesSubtitleForRowBudget = if (items.isEmpty()) true else usesSubtitleInPayload,
+          ) { views, maxRows ->
             val headerIcon = faviconBitmap ?: defaultLatestItemsWidgetHeaderIcon(context)
             views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
             views.setImageViewBitmap(R.id.widget_favicon, headerIcon)
