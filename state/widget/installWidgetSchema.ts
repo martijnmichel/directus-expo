@@ -419,7 +419,7 @@ module.exports = async function (data) {
   /** Default UI options for slots that support them (keep in sync with APP_WIDGET_LATEST_ITEMS_SLOTS). */
   function defaultSlotOptionsByKey(slotKey) {
     if (slotKey === "left" || slotKey === "right") {
-      return { widthBehaviour: "fixed", width: 24 };
+      return { widthBehaviour: "fit", width: 24 };
     }
     return null;
   }
@@ -435,19 +435,20 @@ module.exports = async function (data) {
     }
     if (rawOpts && typeof rawOpts === "object" && !Array.isArray(rawOpts)) {
       var wb = rawOpts.widthBehaviour;
-      if (wb === "fit" || wb === "fixed" || wb === "stretch") {
+      if (wb === "stretch" || rawOpts.stretch === true) {
+        out.widthBehaviour = "fixed";
+      } else if (wb === "fit" || wb === "fixed") {
         out.widthBehaviour = wb;
-      } else if (rawOpts.stretch === true) {
-        out.widthBehaviour = "stretch";
       }
       for (var rk in rawOpts) {
         if (!Object.prototype.hasOwnProperty.call(rawOpts, rk)) continue;
         if (!SLOT_OPTION_KEYS[rk]) continue;
         out[rk] = rawOpts[rk];
       }
-      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed" && out.widthBehaviour !== "stretch") {
+      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed") {
         out.widthBehaviour = "fixed";
       }
+      if (out.widthBehaviour === "stretch") out.widthBehaviour = "fixed";
     }
     delete out.stretch;
     return out;
@@ -1165,7 +1166,14 @@ module.exports = async function (data) {
               type: inferSlotTypeFromPath(collection, field),
               value: resolveSlotValue(it, field),
             };
-            if (s.options && typeof s.options === "object") row.options = s.options;
+            // Layout options (widthBehaviour / width) apply only to left & right; title & subtitle always use remaining width.
+            if (
+              s.options &&
+              typeof s.options === "object" &&
+              (s.key === "left" || s.key === "right")
+            ) {
+              row.options = s.options;
+            }
             acc.push(row);
             return acc;
           }, []);
@@ -1474,7 +1482,7 @@ module.exports = async function (data) {
   // Add a new "case" here when a new widget type is introduced.
   function defaultSlotOptionsByKey(slotKey) {
     if (slotKey === "left" || slotKey === "right") {
-      return { widthBehaviour: "fixed", width: 24 };
+      return { widthBehaviour: "fit", width: 24 };
     }
     return null;
   }
@@ -1490,19 +1498,20 @@ module.exports = async function (data) {
     }
     if (rawOpts && typeof rawOpts === "object" && !Array.isArray(rawOpts)) {
       var wb = rawOpts.widthBehaviour;
-      if (wb === "fit" || wb === "fixed" || wb === "stretch") {
+      if (wb === "stretch" || rawOpts.stretch === true) {
+        out.widthBehaviour = "fixed";
+      } else if (wb === "fit" || wb === "fixed") {
         out.widthBehaviour = wb;
-      } else if (rawOpts.stretch === true) {
-        out.widthBehaviour = "stretch";
       }
       for (var rk in rawOpts) {
         if (!Object.prototype.hasOwnProperty.call(rawOpts, rk)) continue;
         if (!SLOT_OPTION_KEYS_PUSH[rk]) continue;
         out[rk] = rawOpts[rk];
       }
-      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed" && out.widthBehaviour !== "stretch") {
+      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed") {
         out.widthBehaviour = "fixed";
       }
+      if (out.widthBehaviour === "stretch") out.widthBehaviour = "fixed";
     }
     delete out.stretch;
     return out;

@@ -86,11 +86,10 @@
       "options": {
         "widthBehaviour": {
           "label": "Width behaviour",
-          "hint": "How this column uses horizontal space in each widget row.",
+          "hint": "Fit content (wrap) or a fixed share of the row (%). The main title always uses the remaining space.",
           "opt": {
             "fit": "Fit content",
-            "fixed": "Fixed share (%)",
-            "stretch": "Stretch to fill"
+            "fixed": "Fixed share (%)"
           }
         },
         "width": {

@@ -8,10 +8,11 @@ export const APP_WIDGET_FLOW_NAME = "App widgets data";
  * Contract version for the widget webhook response.
  * Keep this in sync with the Directus Flow script.
  *
- * v103: left/right `options` use `widthBehaviour` (`fit` | `fixed` | `stretch`) + `width` (0–100) when `fixed`.
- * Legacy `stretch: boolean` is migrated in the app and flow merge.
+ * v104: `widthBehaviour` is only `fit` | `fixed` (no `stretch` — it broke Android title layout).
+ * Default for left/right is `fit` so side columns hug content and the title uses remaining width.
+ * Legacy `stretch` / `widthBehaviour: "stretch"` / `stretch: true` → `fixed`. Title/subtitle: no options.
  */
-export const APP_WIDGET_FLOW_VERSION = 103;
+export const APP_WIDGET_FLOW_VERSION = 104;
 
 /** Widget type identifier used across app + Directus flow. */
 export const APP_WIDGET_TYPE_LATEST_ITEMS = "latest-items" as const;
@@ -50,12 +51,8 @@ export type AppWidgetSlotOptionDef = {
   dependsOn?: Record<string, boolean | number | string>;
 };
 
-/** Allowed `widthBehaviour` values for left/right slots (flow + native). */
-export const APP_WIDGET_SLOT_WIDTH_BEHAVIOUR_VALUES = [
-  "fit",
-  "fixed",
-  "stretch",
-] as const;
+/** Allowed `widthBehaviour` values — only used for **left** and **right** slots (not title/subtitle). */
+export const APP_WIDGET_SLOT_WIDTH_BEHAVIOUR_VALUES = ["fit", "fixed"] as const;
 
 export type AppWidgetSlotWidthBehaviour =
   (typeof APP_WIDGET_SLOT_WIDTH_BEHAVIOUR_VALUES)[number];
@@ -66,16 +63,12 @@ export const APP_WIDGET_SLOT_OPTIONS = {
     type: "select",
     label: "widget.slot.options.widthBehaviour.label",
     hint: "widget.slot.options.widthBehaviour.hint",
-    default: "fixed",
+    default: "fit",
     selectOptions: [
       { value: "fit", labelKey: "widget.slot.options.widthBehaviour.opt.fit" },
       {
         value: "fixed",
         labelKey: "widget.slot.options.widthBehaviour.opt.fixed",
-      },
-      {
-        value: "stretch",
-        labelKey: "widget.slot.options.widthBehaviour.opt.stretch",
       },
     ],
   },
@@ -174,15 +167,15 @@ export function normalizeLatestItemsSlotsFromSaved(
       if (found.options) {
         const fo = found.options as Record<string, unknown>;
         const wbRaw = fo.widthBehaviour;
-        if (
+        if (fo.stretch === true || wbRaw === "stretch") {
+          mergedOpts.widthBehaviour = "fixed";
+        } else if (
           typeof wbRaw === "string" &&
           (APP_WIDGET_SLOT_WIDTH_BEHAVIOUR_VALUES as readonly string[]).includes(
             wbRaw,
           )
         ) {
           mergedOpts.widthBehaviour = wbRaw;
-        } else if (fo.stretch === true) {
-          mergedOpts.widthBehaviour = "stretch";
         }
         delete (mergedOpts as Record<string, unknown>).stretch;
 
@@ -233,9 +226,12 @@ export function resolvedOptionsForSlotRow(
     out[opt.key] =
       v !== undefined && v !== null ? v : (opt.default ?? null);
   }
-  const wb = out.widthBehaviour;
+  let wb = out.widthBehaviour;
+  if (wb === "stretch") wb = "fixed";
   if (!isValidWidthBehaviour(wb)) {
     out.widthBehaviour = "fixed";
+  } else {
+    out.widthBehaviour = wb;
   }
   return out;
 }
@@ -255,11 +251,13 @@ export const APP_WIDGET_LATEST_ITEMS_SLOTS = [
     key: "title",
     labelKey: "widget.latestItems.slots.title.label",
     hintKey: "widget.latestItems.slots.title.hint",
+    // No `options`: title always expands to fill space between left and right (native + flow).
   },
   {
     key: "subtitle",
     labelKey: "widget.latestItems.slots.subtitle.label",
     hintKey: "widget.latestItems.slots.subtitle.hint",
+    // No `options`: subtitle is full-width below the title row.
   },
   {
     key: "right",

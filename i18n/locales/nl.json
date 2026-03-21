@@ -83,11 +83,10 @@
       "options": {
         "widthBehaviour": {
           "label": "Breedtegedrag",
-          "hint": "Hoe deze kolom horizontale ruimte gebruikt in elke widgetrij.",
+          "hint": "Inhoud (wrap) of vast aandeel van de rij (%). De titel gebruikt altijd de resterende ruimte.",
           "opt": {
             "fit": "Inhoud",
-            "fixed": "Vast aandeel (%)",
-            "stretch": "Uitrekken"
+            "fixed": "Vast aandeel (%)"
           }
         },
         "width": {

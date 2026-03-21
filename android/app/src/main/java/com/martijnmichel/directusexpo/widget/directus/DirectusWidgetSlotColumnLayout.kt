@@ -2,7 +2,6 @@ package com.martijnmichel.directusexpo.widget.directus
 
 import android.os.Build
 import android.util.TypedValue
-import android.view.ViewGroup
 import android.widget.RemoteViews
 import org.json.JSONObject
 
@@ -10,18 +9,23 @@ import org.json.JSONObject
  * Left/right column width from flow `options` (`widthBehaviour`, `width`), aligned with
  * `constants/widget.ts` and iOS `WidgetSlotSideColumnLayout`.
  *
- * API 31+ ([RemoteViews.setViewLayoutWidth]): apply exact widths / wrap_content.
- * Below 31, row XML weights are used (see [widget_latest_items_row.xml]).
+ * API 31+ ([RemoteViews.setViewLayoutWidth]): only **fixed** behaviour sets a dip width from
+ * `width` (% of row). **fit** does not call RemoteViews at all — row XML `wrap_content` + the
+ * stored numeric `width` must not affect layout (avoids measuring as if fixed).
  */
 object DirectusWidgetSlotColumnLayout {
 
   fun behaviour(opt: JSONObject?): String {
-    val raw = opt?.optString("widthBehaviour", "")?.trim()?.lowercase().orEmpty()
-    if (raw == "fit" || raw == "fixed" || raw == "stretch") return raw
-    if (opt?.optBoolean("stretch", false) == true) return "stretch"
-    return "fixed"
+    if (opt == null) return "fit"
+    val raw = opt.optString("widthBehaviour", "").trim().lowercase()
+    return when (raw) {
+      "fixed" -> "fixed"
+      "fit" -> "fit"
+      else -> "fit"
+    }
   }
 
+  /** Percent of row width for **fixed** slots only — never read for `fit` (see [applyContainerWidth]). */
   fun widthPercent(opt: JSONObject?): Float {
     if (opt == null || !opt.has("width")) return 24f
     return when (val v = opt.opt("width")) {
@@ -31,31 +35,11 @@ object DirectusWidgetSlotColumnLayout {
     }
   }
 
-  /** Rough width of the other column (dp) for stretch calculations. */
-  fun roughPeerWidthDp(slot: DirectusWidgetSlotValue?, rowWidthDp: Float): Float {
-    val s = slot ?: return 0f
-    val v = s.value.trim()
-    if (v.isEmpty()) return 0f
-    val opt = s.options
-    return when (behaviour(opt)) {
-      "fixed" -> rowWidthDp * widthPercent(opt) / 100f
-      "fit" -> 96f
-      "stretch" -> rowWidthDp * 0.28f
-      else -> rowWidthDp * 0.24f
-    }
-  }
-
-  private fun stretchWidthDp(rowWidthDp: Float, peerDp: Float): Float {
-    val titleReserve = rowWidthDp * 0.5f
-    return (rowWidthDp - titleReserve - peerDp).coerceIn(44f, rowWidthDp * 0.48f)
-  }
-
   fun applyContainerWidth(
     rowRv: RemoteViews,
     containerId: Int,
     slot: DirectusWidgetSlotValue?,
     rowWidthDp: Float,
-    peerWidthDp: Float,
   ) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
     val s = slot ?: return
@@ -63,16 +47,15 @@ object DirectusWidgetSlotColumnLayout {
     if (v.isEmpty()) return
 
     val opt = s.options
-    val beh = behaviour(opt)
-    val (widthValue, units) =
-      when (beh) {
-        "fit" ->
-          Pair(ViewGroup.LayoutParams.WRAP_CONTENT.toFloat(), TypedValue.COMPLEX_UNIT_PX)
-        "stretch" ->
-          Pair(stretchWidthDp(rowWidthDp, peerWidthDp), TypedValue.COMPLEX_UNIT_DIP)
-        else ->
-          Pair(rowWidthDp * widthPercent(opt) / 100f, TypedValue.COMPLEX_UNIT_DIP)
+    when (behaviour(opt)) {
+      "fit" -> {
+        // Do not call setViewLayoutWidth — rely on XML wrap_content. Never use `width` % here.
+        return
       }
-    rowRv.setViewLayoutWidth(containerId, widthValue, units)
+      else -> {
+        val widthDp = rowWidthDp * widthPercent(opt) / 100f
+        rowRv.setViewLayoutWidth(containerId, widthDp, TypedValue.COMPLEX_UNIT_DIP)
+      }
+    }
   }
 }

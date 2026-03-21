@@ -422,21 +422,17 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       )
 
       val rowW = rowWidthDp.coerceAtLeast(120f)
-      val peerRight = DirectusWidgetSlotColumnLayout.roughPeerWidthDp(rightSlot, rowW)
-      val peerLeft = DirectusWidgetSlotColumnLayout.roughPeerWidthDp(leftSlot, rowW)
       DirectusWidgetSlotColumnLayout.applyContainerWidth(
         rowRv,
         R.id.widget_row_left_container,
         leftSlot,
         rowW,
-        peerRight,
       )
       DirectusWidgetSlotColumnLayout.applyContainerWidth(
         rowRv,
         R.id.widget_row_right_container,
         rightSlot,
         rowW,
-        peerLeft,
       )
 
       rowRv.setViewVisibility(

@@ -5,16 +5,17 @@ import SwiftUI
 enum WidgetSlotWidthBehaviour: String {
   case fit
   case fixed
-  case stretch
 
   static func parse(options: [String: FlowJsonScalar]?) -> Self {
-    guard let options else { return .fixed }
+    guard let options else { return .fit }
     if case .string(let raw) = options["widthBehaviour"] {
       let s = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+      if s == "stretch" { return .fixed }
       if let b = Self(rawValue: s) { return b }
     }
-    if case .bool(let on) = options["stretch"], on { return .stretch }
-    return .fixed
+    // Legacy `stretch: true` or removed "stretch" behaviour → fixed % width
+    if case .bool(let on) = options["stretch"], on { return .fixed }
+    return .fit
   }
 
   static func widthPercent(options: [String: FlowJsonScalar]?) -> CGFloat {
@@ -42,10 +43,6 @@ struct WidgetSideSlotColumnModifier: ViewModifier {
         .containerRelativeFrame(.horizontal, alignment: alignment) { len, _ in
           len * (widthPercent / 100)
         }
-    case .stretch:
-      content
-        .frame(maxWidth: .infinity, alignment: alignment)
-        .layoutPriority(0)
     case .fit:
       content
         .fixedSize(horizontal: true, vertical: false)

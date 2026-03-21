@@ -144,7 +144,7 @@ struct SlotRowView: View {
     let hasSubtitle = DirectusWidgetSideSlot.hasContent(subtitleSlot)
 
     return VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
-      HStack(alignment: .center, spacing: 6) {
+      HStack(alignment: .center, spacing: WidgetNativeTheme.Layout.columnGap) {
         if hasLeft {
           DirectusWidgetSideSlotView(slot: leftSlot, alignment: .leading)
             .modifier(
@@ -156,9 +156,12 @@ struct SlotRowView: View {
             )
         }
 
+        // Title fills remaining row width; same leading edge as subtitle when no left column.
         Text(title)
           .font(WidgetNativeTheme.Typography.rowTitle)
           .lineLimit(1)
+          .truncationMode(.tail)
+          .multilineTextAlignment(.leading)
           .frame(maxWidth: .infinity, alignment: .leading)
           .layoutPriority(1)
 
@@ -180,7 +183,7 @@ struct SlotRowView: View {
           .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
           .lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .leading)
-          .layoutPriority(1)
+          .layoutPriority(1) // Full width under the title row; no slot layout options.
       }
     }
     .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))

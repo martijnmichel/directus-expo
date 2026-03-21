@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One list row; host adds N instances via RemoteViews.addView (API 24+).
-     Right column gets higher layout_weight than left so relative dates get more width than the left label. -->
+     Side columns wrap_content; title is the only flex child (weight 1) so it fills space up to the right label.
+     Gap between columns via marginEnd on left + title. API 31+ may set exact widths on side FrameLayouts. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/widget_row_item_root"
   android:layout_width="match_parent"
@@ -18,9 +19,9 @@
 
     <FrameLayout
       android:id="@+id/widget_row_left_container"
-      android:layout_width="0dp"
+      android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_weight="24">
+      android:layout_marginEnd="6dp">
 
       <ImageView
         android:id="@+id/widget_row_left_image"
@@ -36,7 +37,7 @@
 
       <TextView
         android:id="@+id/widget_row_left_text"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="."
         android:textSize="12sp"
@@ -45,32 +46,34 @@
         android:background="@android:color/transparent"
         android:textColor="#666666"
         android:paddingLeft="0dp"
-        android:paddingRight="4dp"
-        android:paddingTop="1dp"
-        android:paddingBottom="1dp"
+        android:paddingRight="0dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
         android:visibility="gone"
         android:gravity="start|center_vertical" />
     </FrameLayout>
 
+    <!-- Title: always flex (weight); widthBehaviour only applies to left/right FrameLayouts. -->
     <TextView
       android:id="@+id/widget_row_title"
       android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_weight="52"
+      android:layout_weight="1"
+      android:minWidth="0dp"
       android:text="-"
       android:textSize="13sp"
       android:textStyle="bold"
       android:maxLines="1"
       android:ellipsize="end"
-      android:layout_marginStart="6dp"
+      android:paddingLeft="0dp"
+      android:paddingRight="0dp"
       android:layout_marginEnd="6dp"
       android:gravity="start|center_vertical" />
 
     <FrameLayout
       android:id="@+id/widget_row_right_container"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="24">
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content">
 
       <ImageView
         android:id="@+id/widget_row_right_image"
@@ -86,7 +89,7 @@
 
       <TextView
         android:id="@+id/widget_row_right_text"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="."
         android:textSize="12sp"
@@ -94,16 +97,18 @@
         android:ellipsize="end"
         android:background="@android:color/transparent"
         android:textColor="#666666"
-        android:paddingLeft="6dp"
-        android:paddingRight="6dp"
-        android:paddingTop="1dp"
-        android:paddingBottom="1dp"
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
         android:visibility="gone"
-        android:gravity="end|center_vertical" />
+        android:gravity="end|center_vertical"
+        android:layout_gravity="end|center_vertical" />
     </FrameLayout>
 
   </LinearLayout>
 
+  <!-- Subtitle: full width; no per-slot layout options. -->
   <TextView
     android:id="@+id/widget_row_subtitle"
     android:layout_width="match_parent"
@@ -113,6 +118,8 @@
     android:textColor="#666666"
     android:maxLines="1"
     android:ellipsize="end"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
     android:layout_marginTop="2dp" />
 
   <TextView

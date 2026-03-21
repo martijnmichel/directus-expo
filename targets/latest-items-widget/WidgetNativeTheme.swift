@@ -35,5 +35,8 @@ enum WidgetNativeTheme {
   enum Layout {
     /// Vertical spacing between title and subtitle within a row.
     static let rowLineSpacing: CGFloat = 2
+
+    /// Horizontal gap between row columns (left | title | right). No padding on slot text — spacing only here.
+    static let columnGap: CGFloat = 6
   }
 }

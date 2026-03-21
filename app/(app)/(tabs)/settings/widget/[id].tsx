@@ -356,6 +356,7 @@ export default function WidgetConfigEditorScreen() {
                       def && slotOptions
                         ? resolvedOptionsForSlotRow(slot, def)
                         : {};
+                    const hasSlotField = Boolean(slot.field?.trim());
 
                     return (
                       <View key={slot.key} style={styles.slotCard}>
@@ -383,7 +384,8 @@ export default function WidgetConfigEditorScreen() {
                             });
                           }}
                         />
-                        {slotOptions?.map((opt: AppWidgetSlotOptionDef) => {
+                        {hasSlotField &&
+                          slotOptions?.map((opt: AppWidgetSlotOptionDef) => {
                           if (!slotOptionShouldShow(opt, resolved)) return null;
                           if (opt.type === "boolean") {
                             return (
