@@ -1,0 +1,67 @@
+export const metadata = {
+  title: "Push Notifications Guide",
+  description:
+    "How to set up and use Directus Mobile push notifications, for admins and end users.",
+  audience: ["Admins", "End users"],
+};
+
+# Push Notifications in Directus Mobile
+
+Directus Mobile supports native push notifications on iOS and Android.
+This guide explains setup for admins and daily usage for end users.
+
+## For admins
+
+### 1) Install push backend once per Directus server
+
+In the app, go to **Settings -> Push notifications** and install the push backend.
+This installs the required Directus collection + flow resources used by the app.
+
+### 2) Configure push delivery credentials
+
+Your push sender (API route/server) needs valid platform credentials:
+
+- **iOS (APNs):** key, team id, key id, bundle id
+- **Android (FCM):** Firebase service account
+
+Without these, notifications cannot be delivered to devices.
+
+### 3) Grant correct Directus permissions
+
+Permissions remain controlled by Directus roles/policies.
+Make sure intended roles can access the push device/subscription collection created by setup.
+
+### 4) Keep server-side trigger logic explicit
+
+Use Directus flows to decide when notifications are sent (create/update/delete or custom conditions).
+Directus Mobile only receives what your flow chooses to send.
+
+## For end users
+
+### 1) Enable notifications in app and system settings
+
+Open **Settings -> Push notifications** and enable notifications.
+If permission is denied, enable it in iOS/Android system settings.
+
+### 2) Subscribe to collections/events
+
+Use the in-app subscriptions screen to choose what you want to receive:
+
+- per collection
+- per event type (create/update/delete)
+
+### 3) Open notifications
+
+Tapping a notification opens the app and routes to the related content when available.
+
+## Security and data behavior
+
+- Notification routing still follows Directus access rules.
+- The app does not grant extra data access beyond your Directus permissions.
+- Your project data and push logic stay connected to your own Directus/server setup.
+
+## Troubleshooting
+
+- **No notifications received:** verify APNs/FCM credentials and server logs.
+- **Permission errors in setup:** check Directus role/policy access for push collections.
+- **Notifications sent but open wrong/missing content:** verify payload links and collection/item ids in the flow.

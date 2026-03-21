@@ -26,3 +26,15 @@ export async function getPageSlugs(): Promise<string[]> {
     return [];
   }
 }
+
+export async function getDocsSlugs(): Promise<string[]> {
+  const dir = path.join(CONTENT_DIR, "docs");
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    return entries
+      .filter((e) => e.isFile() && /\.(md|mdx)$/.test(e.name))
+      .map((e) => e.name.replace(/\.(md|mdx)$/, ""));
+  } catch {
+    return [];
+  }
+}

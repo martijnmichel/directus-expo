@@ -80,6 +80,12 @@ export default function RootLayout({
               >
                 Blog
               </Link>
+              <Link
+                href="/docs"
+                className="hover:text-pink-500  transition-colors"
+              >
+                Docs
+              </Link>
             </nav>
 
             <div className="flex items-center gap-2">
