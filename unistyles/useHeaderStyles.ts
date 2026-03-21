@@ -19,11 +19,7 @@ export const useHeaderStyles = (
       paddingTop: 14, // This will add space below the header
       backgroundColor: theme.colors.background,
     },
-    tabBarStyle: {
-      backgroundColor: theme.colors.background,
-    },
-    tabBarLabelStyle: {
-      color: theme.colors.textPrimary,
-    },
+    // Do not set tabBar* here: nested Stack screens spread these options and
+    // they bubble to the parent Tabs, overriding tabBarIcon / tab bar colors.
   };
 };

@@ -4,7 +4,6 @@ import { Users } from "@/components/icons/Users";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, Redirect, Tabs, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { Text } from "@/components/display/typography";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import {
@@ -69,7 +68,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings/index"
+        name="settings"
         options={{
           title: t("components.tabs.settings"),
           tabBarIcon: ({ color }) => <Cog size={32} color={color} />,
