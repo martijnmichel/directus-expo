@@ -203,6 +203,24 @@ private struct LatestItemsWidgetURLIfNotPreviewModifier: ViewModifier {
   }
 }
 
+@ViewBuilder
+private func latestItemsWidgetHeaderFavicon(entry: Entry) -> some View {
+  let corner = RoundedRectangle(cornerRadius: 4, style: .continuous)
+  if let data = entry.faviconImageData, let uiImage = UIImage(data: data) {
+    Image(uiImage: uiImage)
+      .resizable()
+      .scaledToFit()
+      .frame(width: 16, height: 16)
+      .clipShape(corner)
+  } else if let fallback = UIImage(named: "WidgetAppIcon") {
+    Image(uiImage: fallback)
+      .resizable()
+      .scaledToFit()
+      .frame(width: 16, height: 16)
+      .clipShape(corner)
+  }
+}
+
 struct LatestItemsWidgetView: View {
   var entry: Provider.Entry
   @Environment(\.widgetFamily) private var family
@@ -225,13 +243,7 @@ struct LatestItemsWidgetView: View {
 
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .center, spacing: 8) {
-          if let data = entry.faviconImageData, let uiImage = UIImage(data: data) {
-            Image(uiImage: uiImage)
-              .resizable()
-              .scaledToFit()
-              .frame(width: 16, height: 16)
-              .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-          }
+          latestItemsWidgetHeaderFavicon(entry: entry)
 
           Text(entry.configTitle)
             .font(WidgetNativeTheme.Typography.widgetHeaderTitle)

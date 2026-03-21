@@ -12,6 +12,8 @@ import android.os.Handler
 import android.os.Looper
 import android.util.SizeF
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
@@ -260,7 +262,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         selectedConfig?.title ?: context.getString(R.string.widget_latest_items_title)
 
       updateLatestItemsAppWidget(context, appWidgetManager, widgetId) { views, _ ->
-        views.setViewVisibility(R.id.widget_favicon, View.GONE)
+        views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
+        views.setImageViewBitmap(R.id.widget_favicon, defaultLatestItemsWidgetHeaderIcon(context))
         if (!instanceBase.isNullOrBlank()) {
           views.setViewVisibility(R.id.widget_subtitle, View.GONE)
         } else {
@@ -317,12 +320,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         val widgetIds = entries.map { it.key }
         for (widgetId in widgetIds) {
           updateLatestItemsAppWidget(context, appWidgetManager, widgetId) { views, maxRows ->
-            if (faviconBitmap != null) {
-              views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
-              views.setImageViewBitmap(R.id.widget_favicon, faviconBitmap)
-            } else {
-              views.setViewVisibility(R.id.widget_favicon, View.GONE)
-            }
+            val headerIcon = faviconBitmap ?: defaultLatestItemsWidgetHeaderIcon(context)
+            views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
+            views.setImageViewBitmap(R.id.widget_favicon, headerIcon)
 
             views.setTextViewText(R.id.widget_title, cfg.title)
 
@@ -464,6 +464,27 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
       views.addView(R.id.widget_rows_container, rowRv)
     }
+  }
+
+  /**
+   * Shown next to the widget title when the Directus favicon is missing or failed to load.
+   * Uses `@mipmap/ic_launcher` (decode or drawable rasterize for adaptive icons).
+   */
+  private fun defaultLatestItemsWidgetHeaderIcon(context: Context): Bitmap {
+    val res = context.resources
+    BitmapFactory.decodeResource(res, R.mipmap.ic_launcher)?.let { return it }
+
+    val dr =
+      res.getDrawable(R.mipmap.ic_launcher, context.theme)
+        ?: return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+
+    val w = if (dr.intrinsicWidth > 0) dr.intrinsicWidth else 96
+    val h = if (dr.intrinsicHeight > 0) dr.intrinsicHeight else 96
+    val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    dr.setBounds(0, 0, w, h)
+    dr.draw(canvas)
+    return bitmap
   }
 
   override fun onAppWidgetOptionsChanged(
