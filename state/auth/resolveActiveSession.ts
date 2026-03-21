@@ -67,12 +67,14 @@ export type ResolvedActiveSession = {
   api: API;
 };
 
-export async function resolveActiveSessionContext(): Promise<ResolvedActiveSession | null> {
-  await ensureLegacyActiveSessionMigrated();
-  const sessionId = await readActiveSessionId();
-  if (!sessionId) return null;
+/** Resolve API + wrapper for a known session id (e.g. from a deep link). */
+export async function resolveSessionContextForSessionId(
+  sessionId: string,
+): Promise<ResolvedActiveSession | null> {
+  const sid = sessionId.trim();
+  if (!sid) return null;
 
-  const wrapper = await readSessionWrapper(sessionId);
+  const wrapper = await readSessionWrapper(sid);
   if (!wrapper?.apiId) return null;
 
   const apisRaw = await AsyncStorage.getItem(LocalStorageKeys.DIRECTUS_APIS);
@@ -95,5 +97,12 @@ export async function resolveActiveSessionContext(): Promise<ResolvedActiveSessi
     sessionIds: api?.sessionIds ?? [],
   };
 
-  return { sessionId, wrapper, api: mergedApi };
+  return { sessionId: sid, wrapper, api: mergedApi };
+}
+
+export async function resolveActiveSessionContext(): Promise<ResolvedActiveSession | null> {
+  await ensureLegacyActiveSessionMigrated();
+  const sessionId = await readActiveSessionId();
+  if (!sessionId) return null;
+  return resolveSessionContextForSessionId(sessionId);
 }

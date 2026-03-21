@@ -65,7 +65,9 @@ export function useWidgetItems(params: {
       if (!directus || !instanceUrl?.toString() || !userId) return { configs: [] };
 
       const webhookUrl = await getWebhookUrlForInstance(directus);
-
+      const activeSessionId = await readActiveSessionId();
+      const sessionIdForLinks =
+        activeSessionId?.trim() ? activeSessionId.trim() : undefined;
 
       // Directus-first list, filtered by current user.
       const rowsRaw = await directus.request(
@@ -90,7 +92,7 @@ export function useWidgetItems(params: {
           webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
           extra: parseExtraField(row.extra) as LatestItemsWidgetConfig["extra"],
-          sessionId,
+          sessionId: sessionIdForLinks,
         }))
         .filter((c) => c.id.length > 0);
 

@@ -77,12 +77,18 @@ export async function applyInitialDeepLinkFromUrl(
     await queryClient.invalidateQueries({
       queryKey: ["resolved-active-session"],
     });
+    await queryClient.invalidateQueries({
+      queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
+    });
   }
   setPendingDeepLinkHref(parsed.href);
 }
 
 /**
- * Warm open: persist session + pending target from URL.
+ * Warm open while app is running: persist optional `sessionId` from URL.
+ * Does **not** set {@link pendingDeepLinkHref} — the in-app handler navigates after
+ * `refreshSession`, otherwise a separate effect can consume pending first and open the
+ * item with the previous Directus client.
  */
 export async function handleIncomingDeepLinkUrl(
   url: string,
@@ -98,8 +104,10 @@ export async function handleIncomingDeepLinkUrl(
     await queryClient.invalidateQueries({
       queryKey: ["resolved-active-session"],
     });
+    await queryClient.invalidateQueries({
+      queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
+    });
   }
-  setPendingDeepLinkHref(parsed.href);
   return parsed;
 }
 
