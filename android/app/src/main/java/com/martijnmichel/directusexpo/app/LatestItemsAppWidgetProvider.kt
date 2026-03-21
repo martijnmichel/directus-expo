@@ -12,34 +12,28 @@ import android.os.Handler
 import android.os.Looper
 import android.util.SizeF
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
 import com.martijnmichel.directusexpo.app.R
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetBitmapLoader
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowRepository
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowSetup
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetJson
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotDisplay
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotItem
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotValue
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetUrls
 import org.json.JSONArray
-import org.json.JSONObject
-import java.io.BufferedInputStream
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.URL
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import kotlin.math.abs
 import kotlin.math.ceil
 
 class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   companion object {
     private val executor = Executors.newSingleThreadExecutor()
-
-    /** Directus asset transform: prefer raster output for BitmapFactory decode (SVG often unchanged). */
-    private const val DIRECTUS_ASSET_RASTER_QUERY = "width=64&height=64&fit=cover&format=png"
 
     /** Last row index in widget_latest_items.xml (rows 0..8 ⇒ 9 rows). */
     private const val WIDGET_ROW_LAST_INDEX = 8
@@ -77,27 +71,13 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     val webhookUrl: String?,
   )
 
-  private data class SlotValue(val type: String, val value: String)
-  private data class SlotItem(
-    val id: String,
-    val deepLink: String?,
-    val slots: Map<String, SlotValue>,
-  )
-
-  private data class FetchResult(
-    val items: List<SlotItem>,
-    val faviconBitmap: Bitmap?,
-    val statusMessage: String?,
-    val titleOverride: String?,
-  )
-
-  private fun safeStr(s: Any?): String {
-    return when (s) {
-      null -> ""
-      is String -> s
-      else -> s.toString()
-    }
-  }
+  private fun SelectedConfig.toFlowSetup(): DirectusWidgetFlowSetup =
+    DirectusWidgetFlowSetup(
+      id = id,
+      collection = collection,
+      widgetId = widgetId,
+      webhookUrl = webhookUrl,
+    )
 
   private fun widgetConfigKey(widgetId: Int): String =
     "directus.widgets.latestItems.v1.widgetConfig.$widgetId"
@@ -116,19 +96,20 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     val out = ArrayList<SelectedConfig>(arr.length())
     for (i in 0 until arr.length()) {
       val obj = arr.optJSONObject(i) ?: continue
-      val id = safeStr(obj.opt("id")).trim()
+      val id = DirectusWidgetJson.string(obj.opt("id")).trim()
       if (id.isEmpty()) continue
 
-      val collection = safeStr(obj.opt("collection")).trim()
-      val title = safeStr(obj.opt("title")).takeIf { it.isNotBlank() }
+      val collection = DirectusWidgetJson.string(obj.opt("collection")).trim()
+      val title = DirectusWidgetJson.string(obj.opt("title")).takeIf { it.isNotBlank() }
         ?: collection.takeIf { it.isNotBlank() }
         ?: "Latest"
 
       val instanceUrl =
-        obj.opt("instanceUrl")?.let { safeStr(it) }?.takeIf { it.isNotBlank() }
-      val widgetId = safeStr(obj.opt("widgetId")).takeIf { it.isNotBlank() } ?: id
+        obj.opt("instanceUrl")?.let { DirectusWidgetJson.string(it) }?.takeIf { it.isNotBlank() }
+      val widgetId =
+        DirectusWidgetJson.string(obj.opt("widgetId")).takeIf { it.isNotBlank() } ?: id
       val webhookUrl =
-        obj.opt("webhookUrl")?.let { safeStr(it) }?.takeIf { it.isNotBlank() }
+        obj.opt("webhookUrl")?.let { DirectusWidgetJson.string(it) }?.takeIf { it.isNotBlank() }
 
       out.add(
         SelectedConfig(
@@ -285,7 +266,10 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     // Optimistically render a header immediately; then refresh content in background.
     for (widgetId in appWidgetIds) {
       val selectedConfig = configByWidgetId[widgetId]
-      val instanceBase = selectedConfig?.let { resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl) }
+      val instanceBase =
+        selectedConfig?.let {
+          DirectusWidgetUrls.resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl)
+        }
       val setupText = "Open app to add a widget setup"
       val titleText =
         selectedConfig?.title ?: context.getString(R.string.widget_latest_items_title)
@@ -309,31 +293,40 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
       if (cfgByWidgetId.isEmpty()) return@execute
 
+      val flowRepo =
+        DirectusWidgetFlowRepository(
+          prefs,
+          payloadPrefix,
+          shouldLoadFaviconBitmap,
+          bitmapInSampleSize,
+        )
+
       // Group by config so we fetch at most once per setup.
       val groupsByConfigId: Map<String, List<Map.Entry<Int, SelectedConfig>>> =
         cfgByWidgetId.entries.groupBy { it.value.id }
 
       for ((_, entries) in groupsByConfigId) {
         val cfg = entries.first().value
-        val instanceBase = resolveInstanceBaseUrl(cfg.instanceUrl, cfg.webhookUrl)
+        val instanceBase =
+          DirectusWidgetUrls.resolveInstanceBaseUrl(cfg.instanceUrl, cfg.webhookUrl)
 
         val maxRowsByWidget: Map<Int, Int> =
           entries.associate { (widgetId, _) ->
             widgetId to maxRowsForWidgetOptions(appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle())
           }
 
-        val result = fetchFlowForConfig(prefs, cfg, instanceBase)
+        val result = flowRepo.fetch(cfg.toFlowSetup(), instanceBase)
         val items = result.items
         val faviconBitmap = result.faviconBitmap
         val statusMessage = result.statusMessage
-        val titleOverride = result.titleOverride
 
         val maxThumbItems = (maxRowsByWidget.values.maxOrNull() ?: 3)
         val thumbBitmapsByFileId: Map<String, Bitmap> =
-          preloadThumbBitmaps(
+          DirectusWidgetBitmapLoader.preloadThumbnailBitmaps(
             items.take(maxThumbItems),
             instanceBase,
             maxThumbnailsToLoadPerUpdate,
+            bitmapInSampleSize,
           )
 
         val widgetIds = entries.map { it.key }
@@ -346,7 +339,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
               views.setViewVisibility(R.id.widget_favicon, View.GONE)
             }
 
-            views.setTextViewText(R.id.widget_title, titleOverride ?: cfg.title)
+            views.setTextViewText(R.id.widget_title, cfg.title)
 
             if (items.isEmpty()) {
               views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
@@ -393,7 +386,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     sideContainerId: Int,
     sideImageId: Int,
     sideTextId: Int,
-    slot: SlotValue?,
+    slot: DirectusWidgetSlotValue?,
     thumbBitmapsByFileId: Map<String, Bitmap>,
   ) {
     val value = slot?.value?.trim().orEmpty()
@@ -429,7 +422,10 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         views.setViewVisibility(sideImageId, View.GONE)
         views.setViewVisibility(sideTextId, View.VISIBLE)
 
-        views.setTextViewText(sideTextId, displayText(slot.type, slot.value))
+        views.setTextViewText(
+          sideTextId,
+          DirectusWidgetSlotDisplay.displayText(slot.type, slot.value),
+        )
         views.setInt(sideTextId, "setBackgroundColor", Color.TRANSPARENT)
         views.setInt(sideTextId, "setTextColor", Color.parseColor("#666666"))
       }
@@ -445,23 +441,11 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  private fun displayText(type: String?, value: String?): String {
-    val raw = value?.trim().orEmpty()
-    if (raw.isEmpty()) return "-"
-
-    val t = type?.trim()?.lowercase(Locale.US).orEmpty()
-    return when (t) {
-      "date" -> formatDateIfPossible(raw)
-      "image", "thumbnail" -> "."
-      else -> raw
-    }
-  }
-
   private fun renderRows(
     context: Context,
     views: RemoteViews,
     widgetMaxRows: Int,
-    items: List<SlotItem>,
+    items: List<DirectusWidgetSlotItem>,
     cfg: SelectedConfig,
     instanceBase: String?,
     thumbBitmapsByFileId: Map<String, Bitmap>,
@@ -592,9 +576,15 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       val subtitleSlot = item.slots["subtitle"]
       val rightSlot = item.slots["right"]
 
-      views.setTextViewText(titleTextIds[i], displayText(titleSlot?.type, titleSlot?.value))
+      views.setTextViewText(
+        titleTextIds[i],
+        DirectusWidgetSlotDisplay.displayText(titleSlot?.type, titleSlot?.value),
+      )
       // Row subtitle: show the flow-provided `subtitle` slot.
-      views.setTextViewText(subtitleTextIds[i], displayText(subtitleSlot?.type, subtitleSlot?.value))
+      views.setTextViewText(
+        subtitleTextIds[i],
+        DirectusWidgetSlotDisplay.displayText(subtitleSlot?.type, subtitleSlot?.value),
+      )
 
       renderSideSlot(views, leftContainerIds[i], leftImageIds[i], leftTextIds[i], leftSlot, thumbBitmapsByFileId)
       renderSideSlot(views, rightContainerIds[i], rightImageIds[i], rightTextIds[i], rightSlot, thumbBitmapsByFileId)
@@ -612,393 +602,6 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         views.setOnClickPendingIntent(rowContainers[i], pendingIntent)
       }
     }
-  }
-
-  private fun resolveInstanceBaseUrl(instanceUrl: String?, webhookUrl: String?): String? {
-    fun normalize(s: String?): String? {
-      if (s == null) return null
-      var v = s.trim()
-      if (v.isEmpty()) return null
-      if (!v.startsWith("http://") && !v.startsWith("https://")) v = "https://$v"
-      return v.replace(Regex("/+$"), "")
-    }
-
-    return normalize(instanceUrl)
-      ?: run {
-        val w = webhookUrl?.trim().orEmpty()
-        if (w.isEmpty()) return null
-        val url = try { URL(w) } catch (_: Exception) { return null }
-        val scheme = url.protocol ?: "https"
-        val host = url.host ?: return null
-        val port = url.port
-        if (port > 0) "$scheme://$host:$port" else "$scheme://$host"
-      }
-  }
-
-  private fun fetchBitmap(urlString: String): Bitmap? {
-    return try {
-      val url = URL(urlString)
-      val conn = url.openConnection() as HttpURLConnection
-      conn.requestMethod = "GET"
-      conn.connectTimeout = 4000
-      conn.readTimeout = 4000
-      conn.instanceFollowRedirects = true
-      val opts = BitmapFactory.Options().apply {
-        inPreferredConfig = Bitmap.Config.RGB_565
-        inDither = false
-        inSampleSize = bitmapInSampleSize
-      }
-      BufferedInputStream(conn.inputStream).use { stream ->
-        BitmapFactory.decodeStream(stream, null, opts)
-      }
-    } catch (_: Exception) {
-      null
-    }
-  }
-
-  private fun preloadThumbBitmaps(
-    items: List<SlotItem>,
-    instanceBase: String?,
-    maxToLoad: Int,
-  ): Map<String, Bitmap> {
-    if (instanceBase.isNullOrBlank()) return emptyMap()
-    // Use LinkedHashSet so decoding is deterministic (and matches item order).
-    val fileIdsNeeded = LinkedHashSet<String>()
-    for (item in items) {
-      for (entry in item.slots.entries) {
-        if (entry.value.type.lowercase(Locale.US) == "thumbnail") {
-          val id = entry.value.value.trim()
-          if (id.isNotEmpty()) fileIdsNeeded.add(id)
-        }
-      }
-    }
-
-    val bitmaps = HashMap<String, Bitmap>()
-    val limited = fileIdsNeeded.toList().take(maxToLoad)
-    for (fileId in limited) {
-      val urlString = "${instanceBase}/assets/${fileId}?$DIRECTUS_ASSET_RASTER_QUERY"
-      val bmp = fetchBitmap(urlString)
-      if (bmp != null) bitmaps[fileId] = bmp
-    }
-    return bitmaps
-  }
-
-  private fun fetchFaviconBitmap(instanceBase: String?, faviconFileId: String?): Bitmap? {
-    if (instanceBase.isNullOrBlank()) return null
-    val base = instanceBase
-
-    fun tryUrls(urls: List<String>): Bitmap? {
-      for (u in urls) {
-        val bmp = fetchBitmap(u)
-        if (bmp != null) return bmp
-      }
-      return null
-    }
-
-    return if (faviconFileId.isNullOrBlank()) {
-      tryUrls(
-        listOf(
-          "$base/favicon.ico",
-          "$base/favicon.png",
-        ),
-      )
-    } else {
-      // Some formats/types don’t decode when passed through the Directus transform params.
-      // Try both transformed and raw asset URLs.
-      tryUrls(
-        listOf(
-          "$base/assets/$faviconFileId?$DIRECTUS_ASSET_RASTER_QUERY",
-          "$base/assets/$faviconFileId?width=32&height=32&fit=cover&format=png",
-          "$base/assets/$faviconFileId?format=png",
-          "$base/favicon.ico",
-        ),
-      )
-    }
-  }
-
-  private fun decodeSlotItemsFromFlowResponse(resp: JSONObject, cfg: SelectedConfig): Pair<List<SlotItem>, String?> {
-    val dataArr = resp.optJSONArray("data") ?: return Pair(emptyList(), null)
-    var latestObj: JSONObject? = null
-    for (i in 0 until dataArr.length()) {
-      val entry = dataArr.optJSONObject(i) ?: continue
-      if (entry.optString("type", "") == "latest-items") {
-        latestObj = entry
-        break
-      }
-    }
-    val itemsArr = latestObj?.optJSONArray("items") ?: JSONArray()
-    val items = mutableListOf<SlotItem>()
-
-    for (i in 0 until itemsArr.length()) {
-      val itemObj = itemsArr.optJSONObject(i) ?: continue
-      val id = safeStr(itemObj.opt("id")).trim()
-      if (id.isEmpty()) continue
-
-      val valuesArr = itemObj.optJSONArray("values") ?: JSONArray()
-      val slotMap = HashMap<String, SlotValue>()
-      for (vi in 0 until valuesArr.length()) {
-        val vObj = valuesArr.optJSONObject(vi) ?: continue
-        val slotKey = safeStr(vObj.opt("slot")).trim()
-        if (slotKey.isEmpty()) continue
-        val type = safeStr(vObj.opt("type")).trim().lowercase(Locale.US).ifEmpty { "string" }
-        val value = safeStr(vObj.opt("value"))
-        slotMap[slotKey] = SlotValue(type, value)
-      }
-
-      val deepLink = if (cfg.collection.isNotBlank()) "directus://content/${cfg.collection}/$id" else null
-      items.add(SlotItem(id = id, deepLink = deepLink, slots = slotMap))
-    }
-
-    // Widget appears to show items in opposite order on Android vs your expectation.
-    // Match iOS/flow ordering by reversing here.
-    items.reverse()
-
-    val faviconFileId = resp.optString("favicon").takeIf { it.isNotBlank() }
-    return Pair(items, faviconFileId)
-  }
-
-  private fun decodeCachedPayload(raw: String, cfg: SelectedConfig, instanceBase: String?): FetchResult {
-    return try {
-      val obj = JSONObject(raw)
-      if (obj.has("data")) {
-        val (items, faviconFileId) = decodeSlotItemsFromFlowResponse(obj, cfg)
-        val faviconBitmap =
-          if (shouldLoadFaviconBitmap) fetchFaviconBitmap(instanceBase, faviconFileId) else null
-        FetchResult(items, faviconBitmap, null, null)
-      } else if (obj.has("rows") && obj.has("columns")) {
-        val legacyTitle = obj.optString("title").takeIf { it.isNotBlank() }
-        val columns = obj.optJSONArray("columns") ?: JSONArray()
-        val rows = obj.optJSONArray("rows") ?: JSONArray()
-        val slotKeys = arrayOf("left", "title", "subtitle", "right")
-
-        val items = mutableListOf<SlotItem>()
-        for (ri in 0 until rows.length()) {
-          val row = rows.optJSONObject(ri) ?: continue
-          val id = safeStr(row.opt("id")).trim()
-          if (id.isEmpty()) continue
-
-          val cells = row.optJSONObject("cells")
-          val deepLink = row.optString("deepLink", "").takeIf { it.isNotBlank() }
-          val slotMap = HashMap<String, SlotValue>()
-
-          for (si in 0 until slotKeys.size) {
-            if (si >= columns.length()) break
-            val colObj = columns.optJSONObject(si) ?: continue
-            val colKey = safeStr(colObj.opt("key")).trim()
-            if (colKey.isEmpty()) continue
-            val cellVal = cells?.opt(colKey)?.toString() ?: ""
-            slotMap[slotKeys[si]] = SlotValue("string", cellVal)
-          }
-
-          items.add(
-            SlotItem(
-              id = id,
-              deepLink = deepLink ?: "directus://content/${cfg.collection}/${id}",
-              slots = slotMap
-            )
-          )
-        }
-
-        FetchResult(items, null, null, legacyTitle)
-      } else {
-        FetchResult(emptyList(), null, null, null)
-      }
-    } catch (_: Exception) {
-      FetchResult(emptyList(), null, null, null)
-    }
-  }
-
-  private data class WebhookFetchResult(
-    val raw: String?,
-    val httpCode: Int?,
-  )
-
-  private fun mapWebhookHttpError(httpCode: Int): String {
-    return when (httpCode) {
-      401 -> "Webhook unauthorized (401)."
-      403 -> "Webhook forbidden (403)."
-      404 -> "Webhook not found (404)."
-      else -> "Webhook error (HTTP $httpCode)."
-    }
-  }
-
-  private fun extractErrorMessageFromRaw(raw: String): String? {
-    return try {
-      val obj = JSONObject(raw)
-      // Directus often returns: { "errors": [ { "message": "..."} ] }
-      if (obj.has("errors")) {
-        val errors = obj.optJSONArray("errors") ?: return null
-        val messages = (0 until errors.length())
-          .mapNotNull { i ->
-            val e = errors.optJSONObject(i) ?: return@mapNotNull null
-            e.optString("message").takeIf { it.isNotBlank() }
-          }
-        messages.takeIf { it.isNotEmpty() }?.joinToString("; ")
-      } else {
-        obj.optString("message").takeIf { it.isNotBlank() }
-      }
-    } catch (_: Exception) {
-      null
-    }
-  }
-
-  private fun tryFetchWebhookJson(webhookUrl: String, widgetId: String): WebhookFetchResult {
-    return try {
-      val base = Uri.parse(webhookUrl)
-      val url = base.buildUpon().appendQueryParameter("widget_id", widgetId).build().toString()
-
-      val conn = URL(url).openConnection() as HttpURLConnection
-      conn.requestMethod = "GET"
-      conn.connectTimeout = 8000
-      conn.readTimeout = 8000
-      conn.instanceFollowRedirects = true
-
-      val code = conn.responseCode
-      val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-      if (stream == null) return WebhookFetchResult(raw = null, httpCode = code)
-
-      val br = BufferedReader(InputStreamReader(stream))
-      val text = br.use { it.readText() }
-      val raw = text.takeIf { it.isNotBlank() }
-      WebhookFetchResult(raw = raw, httpCode = code)
-    } catch (_: Exception) {
-      WebhookFetchResult(raw = null, httpCode = null)
-    }
-  }
-
-  private fun fetchFlowForConfig(
-    prefs: SharedPreferences,
-    cfg: SelectedConfig,
-    instanceBase: String?,
-  ): FetchResult {
-    // First try fetch via webhook (matches iOS).
-    val webhookUrl = cfg.webhookUrl
-    if (webhookUrl.isNullOrBlank()) {
-      val cached = prefs.getString(payloadPrefix + cfg.id, null)
-      if (!cached.isNullOrBlank()) {
-        val decoded = decodeCachedPayload(cached, cfg, instanceBase)
-        if (decoded.items.isNotEmpty()) return decoded
-      }
-      return FetchResult(
-        items = emptyList(),
-        faviconBitmap = null,
-        statusMessage = "Missing webhook URL. Open the app and re-save this setup.",
-        titleOverride = null,
-      )
-    }
-
-    val webhookResult = tryFetchWebhookJson(webhookUrl, cfg.widgetId)
-    val raw = webhookResult.raw
-    val httpCode = webhookResult.httpCode
-
-    if (raw.isNullOrBlank()) {
-      val cached = prefs.getString(payloadPrefix + cfg.id, null)
-      if (!cached.isNullOrBlank()) {
-        val decoded = decodeCachedPayload(cached, cfg, instanceBase)
-        if (decoded.items.isNotEmpty()) return decoded
-      }
-
-      val statusMessage = when {
-        httpCode != null -> mapWebhookHttpError(httpCode)
-        else -> "Couldn’t refresh (network error)."
-      }
-      return FetchResult(emptyList(), null, statusMessage, null)
-    }
-
-    // If the webhook returned a non-2xx status, prefer showing HTTP error even if the body isn't JSON.
-    if (httpCode != null && (httpCode !in 200..299)) {
-      val extracted = extractErrorMessageFromRaw(raw)
-      val statusMessage = extracted ?: mapWebhookHttpError(httpCode)
-      return FetchResult(emptyList(), null, statusMessage, null)
-    }
-
-    val resp = try {
-      JSONObject(raw)
-    } catch (_: Exception) {
-      return FetchResult(emptyList(), null, "Webhook returned unexpected JSON.", null)
-    }
-
-    val (items, faviconFileId) = decodeSlotItemsFromFlowResponse(resp, cfg)
-    if (items.isEmpty()) {
-      val cached = prefs.getString(payloadPrefix + cfg.id, null)
-      if (!cached.isNullOrBlank()) {
-        val decoded = decodeCachedPayload(cached, cfg, instanceBase)
-        if (decoded.items.isNotEmpty()) return decoded
-      }
-      return FetchResult(items, null, "Open the app to refresh", null)
-    }
-
-    val faviconBitmap =
-      if (shouldLoadFaviconBitmap) fetchFaviconBitmap(instanceBase, faviconFileId) else null
-    return FetchResult(items, faviconBitmap, null, null)
-  }
-
-  private fun formatDateIfPossible(raw: String): String {
-    val t = raw.trim()
-    if (t.isEmpty() || t == "-") return "-"
-
-    val digits = t.filter { it.isDigit() }
-    if (digits.isNotEmpty() && (digits.length == 10 || digits.length == 13)) {
-      return formatDateFromEpoch(digits)
-    }
-
-    val patterns = listOf(
-      "yyyy-MM-dd",
-      "yyyy-MM-dd HH:mm",
-      "yyyy-MM-dd HH:mm:ss",
-      "yyyy-MM-dd'T'HH:mm",
-      "yyyy-MM-dd'T'HH:mm:ss",
-      "yyyy-MM-dd'T'HH:mm:ss.SSS"
-    )
-
-    for (pattern in patterns) {
-      try {
-        val sdf = SimpleDateFormat(pattern, Locale.US)
-        sdf.timeZone = TimeZone.getDefault()
-        val date = sdf.parse(t) ?: continue
-        return formatDateForWidget(date, t)
-      } catch (_: Exception) {
-        // continue
-      }
-    }
-
-    return raw
-  }
-
-  private fun formatDateFromEpoch(digits: String): String {
-    val epochMs = if (digits.length == 13) digits.toLong() else digits.toLong() * 1000L
-    val date = Date(epochMs)
-    return formatDateForWidget(date, digits)
-  }
-
-  private fun formatDateForWidget(date: Date, originalRaw: String): String {
-    val now = Date()
-    val diffDays = ((startOfDay(now).time - startOfDay(date).time) / 86400000L).toInt()
-    val hasTimeComponent = originalRaw.contains(":")
-    if (hasTimeComponent && diffDays == 0) {
-      val df = SimpleDateFormat("HH:mm", Locale.getDefault())
-      return df.format(date)
-    }
-
-    return when (diffDays) {
-      0 -> "Today"
-      1 -> "Yesterday"
-      -1 -> "Tomorrow"
-      else -> {
-        val n = abs(diffDays)
-        if (diffDays > 1) "$n days ago" else "in $n days"
-      }
-    }
-  }
-
-  private fun startOfDay(d: Date): Date {
-    val cal = java.util.Calendar.getInstance()
-    cal.time = d
-    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-    cal.set(java.util.Calendar.MINUTE, 0)
-    cal.set(java.util.Calendar.SECOND, 0)
-    cal.set(java.util.Calendar.MILLISECOND, 0)
-    return cal.time
   }
 
   override fun onAppWidgetOptionsChanged(
