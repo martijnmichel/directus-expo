@@ -1,6 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import {
-  auth,
   authentication,
   AuthenticationClient,
   AuthenticationData,
@@ -17,97 +16,94 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import { UnistylesRuntime } from "react-native-unistyles";
-import { LoginFormData } from "@/components/LoginForm";
+import {
+  clearSessionStorage,
+  readSessionWrapper,
+  writeSessionWrapper,
+} from "@/state/auth/directusSessionStorage";
+import {
+  readActiveSessionId,
+  resolveActiveSessionContext,
+} from "@/state/auth/resolveActiveSession";
 
-/** Current user's policy globals from GET /policies/me/globals (Directus v11+). */
 export interface PolicyGlobals {
   app_access: boolean;
   admin_access: boolean;
   enforce_tfa: boolean;
 }
 
+export type RefreshSessionTarget = { url: string; sessionId: string };
+
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: DirectusUser | null;
-  /** Policy globals (admin_access, app_access, enforce_tfa). Null until fetched or on older Directus. */
   policyGlobals: PolicyGlobals | null;
   directus:
     | (DirectusClient<CoreSchema> &
         AuthenticationClient<CoreSchema> &
         RestClient<CoreSchema>)
     | null;
-  login: (email: string, password: string, apiUrl: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    apiUrl: string,
+    sessionId: string,
+    apiId: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   token: string | null;
-  setApiKey: (apiKey: string, apiUrl: string) => Promise<void>;
-  refreshSession: (overrideApi?: { url: string }) => Promise<{
-    ok: boolean;
-    authType?: "email" | "apiKey";
-  }>;
+  setApiKey: (
+    apiKey: string,
+    apiUrl: string,
+    sessionId: string,
+    apiId: string,
+  ) => Promise<void>;
+  refreshSession: (
+    override?: RefreshSessionTarget,
+  ) => Promise<{ ok: boolean; authType?: "email" | "apiKey" }>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const PLACEHOLDER_URL = "https://directus.invalid";
+const PLACEHOLDER_SESSION_ID = "__bootstrap__";
+const PLACEHOLDER_API_ID = "";
+
+function getUserLabel(me: DirectusUser): string | undefined {
+  const first = String((me as { first_name?: unknown }).first_name ?? "").trim();
+  const last = String((me as { last_name?: unknown }).last_name ?? "").trim();
+  const full = `${first} ${last}`.trim();
+  if (full) return full;
+  const email = String((me as { email?: unknown }).email ?? "").trim();
+  if (email) return email;
+  return undefined;
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const getSessionStorageKey = (apiUrl?: string) => {
-    const keyPart = apiUrl ? encodeURIComponent(apiUrl) : "default";
-    return `directus_session_token:${keyPart}`;
-  };
-
-  const getApiKeyStorageKey = (apiUrl?: string) =>
-    apiUrl
-      ? `directus_api_key:${encodeURIComponent(apiUrl)}`
-      : "directus_api_key";
-
-  const initDirectus = (url?: string) => {
-    const sessionKey = getSessionStorageKey(url);
-    return createDirectus(url || "https://directus.example.com")
-      .with(
-        authentication("json", {
-          autoRefresh: true,
-          credentials: "include",
-          storage: {
-            get: async () => {
-              try {
-                return JSON.parse(
-                  (await AsyncStorage.getItem(sessionKey)) as string,
-                ) as AuthenticationData;
-              } catch (e) {
-                console.error(e);
-                return null;
-              }
-            },
-            set: async (value) =>
-              await AsyncStorage.setItem(sessionKey, JSON.stringify(value)),
-          },
-        }),
-      )
-      .with(
-        rest({
-          onResponse: async (response) => {
-            if (response.status === 401) {
-              console.log(response);
-              await logout();
-              router.push("/login");
-            }
-            return response;
-          },
-        }),
-      );
-  };
-  const [directus, setDirectus] = useState(initDirectus());
+  const [directus, setDirectus] = useState<
+    DirectusClient<CoreSchema> &
+      AuthenticationClient<CoreSchema> &
+      RestClient<CoreSchema>
+  >(() =>
+    createDirectusClient(
+      PLACEHOLDER_URL,
+      PLACEHOLDER_SESSION_ID,
+      PLACEHOLDER_API_ID,
+    ),
+  );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<DirectusUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [policyGlobals, setPolicyGlobals] = useState<PolicyGlobals | null>(null);
+  const [policyGlobals, setPolicyGlobals] = useState<PolicyGlobals | null>(
+    null,
+  );
 
   const fetchAndSetPolicyGlobals = async (
     client: DirectusClient<CoreSchema> &
       AuthenticationClient<CoreSchema> &
-      RestClient<CoreSchema>
+      RestClient<CoreSchema>,
   ) => {
     try {
       const data = await client.request(readPolicyGlobals());
@@ -130,97 +126,169 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const logoutFrom401 = async () => {
+    try {
+      const sid = await readActiveSessionId();
+      if (sid) {
+        await clearSessionStorage(sid);
+        await AsyncStorage.removeItem(
+          LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+        );
+      }
+      setIsAuthenticated(false);
+      setToken(null);
+      setUser(null);
+      setPolicyGlobals(null);
+      setDirectus(
+        createDirectusClient(
+          PLACEHOLDER_URL,
+          PLACEHOLDER_SESSION_ID,
+          PLACEHOLDER_API_ID,
+        ),
+      );
+      router.push("/login");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  function createDirectusClient(
+    url: string,
+    sessionId: string,
+    apiId: string,
+  ): DirectusClient<CoreSchema> &
+    AuthenticationClient<CoreSchema> &
+    RestClient<CoreSchema> {
+    return createDirectus(url)
+      .with(
+        authentication("json", {
+          autoRefresh: true,
+          credentials: "include",
+          storage: {
+            get: async () => {
+              try {
+                const w = await readSessionWrapper(sessionId);
+                return (w?.sdk ?? null) as AuthenticationData | null;
+              } catch {
+                return null;
+              }
+            },
+            set: async (value) => {
+              const prev = await readSessionWrapper(sessionId);
+              const next = {
+                apiId: apiId || prev?.apiId || "",
+                authType: "email" as const,
+                sdk: value ?? null,
+                apiKey: prev?.apiKey ?? null,
+                userLabel: prev?.userLabel,
+                instanceUrl: prev?.instanceUrl ?? url,
+              };
+              await writeSessionWrapper(sessionId, next);
+            },
+          },
+        }),
+      )
+      .with(
+        rest({
+          onResponse: async (response) => {
+            if (response.status === 401) {
+              await logoutFrom401();
+            }
+            return response;
+          },
+        }),
+      );
+  }
+
   useEffect(() => {
     initializeDirectus();
   }, []);
 
   const initializeDirectus = async () => {
     try {
-      const re = await AsyncStorage.getItem(
-        LocalStorageKeys.DIRECTUS_API_ACTIVE,
-      );
-      if (!re) {
+      const ctx = await resolveActiveSessionContext();
+      if (!ctx) {
         setIsLoading(false);
         return;
       }
 
-      const activeApi = JSON.parse(re) as {
-        url?: string;
-        authType?: "email" | "apiKey";
-      };
+      const { sessionId, api, wrapper } = ctx;
+      const url = api.url;
+      const apiId = api.id ?? wrapper.apiId;
+      const authType = wrapper.authType;
 
-      switch (activeApi?.authType) {
+      switch (authType) {
         case "email":
           try {
-            console.log({ api: activeApi });
+            const client = createDirectusClient(url, sessionId, apiId);
+            setDirectus(client);
 
-            const directus = initDirectus(activeApi.url);
-            setDirectus(directus);
+            const wrapper = await readSessionWrapper(sessionId);
+            if (!wrapper?.sdk) break;
 
-            // Email/password sessions are persisted by the Directus SDK in the per-instance
-            // `directus_session_token:<apiUrl>` storage key.
-            const sessionRaw = await AsyncStorage.getItem(
-              getSessionStorageKey(activeApi.url),
-            );
-            if (!sessionRaw) break;
+            await client.refresh();
 
-            // Refresh if possible (will use refresh_token if present)
-            await directus.refresh();
-
-            const freshToken = await directus.getToken();
+            const freshToken = await client.getToken();
             if (!freshToken) break;
 
-            const user = await directus.request(readMe());
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const settings = await directus.request(readSettings());
+            const me = await client.request(readMe());
+            await client.request(readSettings());
 
             setToken(freshToken);
-            setUser(user as DirectusUser);
+            setUser(me as DirectusUser);
             setIsAuthenticated(true);
-            await fetchAndSetPolicyGlobals(directus);
-          } catch (error) {
-            // Session is invalid/expired; clear it for the active instance
+            await fetchAndSetPolicyGlobals(client);
+          } catch {
             try {
-              await AsyncStorage.removeItem(
-                getSessionStorageKey(activeApi?.url),
-              );
-            } catch (e) {
-              // ignore
+              await clearSessionStorage(sessionId);
+            } catch {
+              /* ignore */
             }
           }
           break;
         case "apiKey": {
           try {
-            const storedKey = await AsyncStorage.getItem(
-              getApiKeyStorageKey(activeApi.url!),
-            );
+            const wrapper = await readSessionWrapper(sessionId);
+            const storedKey = wrapper?.apiKey;
             if (!storedKey) break;
 
-            const directus = initDirectus(activeApi.url);
-            setDirectus(directus);
-            await directus.setToken(storedKey);
-            const user = await directus.request(readMe());
-            const token = await directus.getToken();
-            if (!token) break;
+            const client = createDirectus(url)
+              .with(authentication())
+              .with(
+                rest({
+                  onResponse: async (response) => {
+                    if (response.status === 401) {
+                      await logoutFrom401();
+                    }
+                    return response;
+                  },
+                }),
+              );
+            setDirectus(client as typeof client & RestClient<CoreSchema>);
+            await client.setToken(storedKey);
+            const me = await client.request(readMe());
+            const tok = await client.getToken();
+            if (!tok) break;
 
-            setToken(token);
-            setUser(user as DirectusUser);
+            setToken(tok);
+            setUser(me as DirectusUser);
             setIsAuthenticated(true);
-            await fetchAndSetPolicyGlobals(directus);
+            await fetchAndSetPolicyGlobals(
+              client as DirectusClient<CoreSchema> &
+                AuthenticationClient<CoreSchema> &
+                RestClient<CoreSchema>,
+            );
           } catch {
             try {
-              await AsyncStorage.removeItem(
-                getApiKeyStorageKey(activeApi?.url!),
-              );
-            } catch (e) {
-              // ignore
+              await clearSessionStorage(sessionId);
+            } catch {
+              /* ignore */
             }
           }
           break;
         }
         default: {
-          const directus = initDirectus(activeApi.url);
-          setDirectus(directus);
+          setDirectus(createDirectusClient(url, sessionId, apiId));
           break;
         }
       }
@@ -228,62 +296,127 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
     } catch (error) {
       console.error("Failed to initialize Directus:", error);
+      setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string, apiUrl: string) => {
-    try {
-      const directus = initDirectus(apiUrl);
-      setDirectus(directus);
-      await directus.login(email, password);
-      const token = await directus.getToken();
-      if (!token) throw new Error("Missing access token");
-      const user = await directus.request(readMe());
-      setUser(user as DirectusUser);
-      setToken(token);
-      setIsAuthenticated(true);
-      await fetchAndSetPolicyGlobals(directus);
-    } catch (error) {
-      throw new Error("Login failed");
-    }
+  const login = async (
+    email: string,
+    password: string,
+    apiUrl: string,
+    sessionId: string,
+    apiId: string,
+  ) => {
+    const client = createDirectusClient(apiUrl, sessionId, apiId);
+    setDirectus(client);
+    await client.login(email, password);
+    const tok = await client.getToken();
+    if (!tok) throw new Error("Missing access token");
+    const me = await client.request(readMe());
+    const prev = await readSessionWrapper(sessionId);
+    await writeSessionWrapper(sessionId, {
+      apiId,
+      authType: "email",
+      sdk: prev?.sdk ?? null,
+      apiKey: prev?.apiKey ?? null,
+      userLabel: getUserLabel(me as DirectusUser),
+      instanceUrl: apiUrl,
+    });
+    setUser(me as DirectusUser);
+    setToken(tok);
+    setIsAuthenticated(true);
+    await fetchAndSetPolicyGlobals(client);
   };
 
-  const refreshSession = async (overrideApi?: { url: string }) => {
+  const refreshSession = async (override?: RefreshSessionTarget) => {
     try {
-      const apiUrl = overrideApi?.url;
-      if (!apiUrl) {
-        const activeApiRaw = await AsyncStorage.getItem(
-          LocalStorageKeys.DIRECTUS_API_ACTIVE,
-        );
-        if (!activeApiRaw) return { ok: false };
-        const activeApi = JSON.parse(activeApiRaw) as { url?: string };
-        if (!activeApi?.url) return { ok: false };
-        return refreshSessionForUrl(activeApi.url);
+      let sessionId: string | undefined;
+      let apiUrl: string | undefined;
+      if (override?.sessionId && override?.url) {
+        sessionId = override.sessionId;
+        apiUrl = override.url;
+      } else {
+        const ctx = await resolveActiveSessionContext();
+        if (!ctx) return { ok: false };
+        sessionId = ctx.sessionId;
+        apiUrl = ctx.api.url;
       }
-      return refreshSessionForUrl(apiUrl);
-    } catch (e) {
+      if (!sessionId || !apiUrl) return { ok: false };
+      return refreshSessionForSession(sessionId, apiUrl);
+    } catch {
       return { ok: false };
     }
   };
 
-  const refreshSessionForUrl = async (
+  const refreshSessionForSession = async (
+    sessionId: string,
     apiUrl: string,
   ): Promise<{ ok: boolean; authType?: "email" | "apiKey" }> => {
     try {
-      const sessionRaw = await AsyncStorage.getItem(
-        getSessionStorageKey(apiUrl),
-      );
-      const session = sessionRaw
-        ? (JSON.parse(sessionRaw) as AuthenticationData | null)
-        : null;
+      const wrapper = await readSessionWrapper(sessionId);
 
-      if (session?.refresh_token) {
-        const client = initDirectus(apiUrl);
+      // Static-token sessions first so leftover sdk fields never trigger OAuth refresh.
+      if (wrapper?.authType === "apiKey") {
+        const key = wrapper.apiKey?.trim();
+        if (!key) return { ok: false };
+        const client = createDirectus(apiUrl)
+          .with(authentication())
+          .with(
+            rest({
+              onResponse: async (response) => {
+                if (response.status === 401) {
+                  await logoutFrom401();
+                }
+                return response;
+              },
+            }),
+          );
+        setDirectus(client as DirectusClient<CoreSchema> &
+          AuthenticationClient<CoreSchema> &
+          RestClient<CoreSchema>);
+        await client.setToken(key);
+        const tok = await client.getToken();
+        if (tok) {
+          const me = await client.request(readMe());
+          await writeSessionWrapper(sessionId, {
+            apiId: wrapper.apiId ?? "",
+            authType: "apiKey",
+            sdk: null,
+            apiKey: key,
+            userLabel: getUserLabel(me as DirectusUser),
+            instanceUrl: apiUrl,
+          });
+          setUser(me as DirectusUser);
+          setToken(tok);
+          setIsAuthenticated(true);
+          return { ok: true, authType: "apiKey" };
+        }
+        return { ok: false };
+      }
+
+      // Email / legacy: OAuth refresh via stored refresh_token only (unchanged behavior).
+      const isEmailAuth =
+        !wrapper?.authType || wrapper.authType === "email";
+      if (isEmailAuth && wrapper?.sdk?.refresh_token) {
+        const client = createDirectusClient(
+          apiUrl,
+          sessionId,
+          wrapper.apiId ?? "",
+        );
         setDirectus(client);
         await client.refresh();
         const freshToken = await client.getToken();
         if (freshToken) {
           const me = await client.request(readMe());
+          const afterRefresh = await readSessionWrapper(sessionId);
+          await writeSessionWrapper(sessionId, {
+            apiId: wrapper.apiId ?? "",
+            authType: "email",
+            sdk: afterRefresh?.sdk ?? wrapper.sdk ?? null,
+            apiKey: wrapper.apiKey ?? null,
+            userLabel: getUserLabel(me as DirectusUser),
+            instanceUrl: apiUrl,
+          });
           setUser(me as DirectusUser);
           setToken(freshToken);
           setIsAuthenticated(true);
@@ -291,75 +424,77 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
-      const storedApiKey = await AsyncStorage.getItem(
-        getApiKeyStorageKey(apiUrl),
-      );
-      if (storedApiKey) {
-        const client = initDirectus(apiUrl);
-        setDirectus(client);
-        await client.setToken(storedApiKey);
-        const token = await client.getToken();
-        if (token) {
-          const me = await client.request(readMe());
-          setUser(me as DirectusUser);
-          setToken(token);
-          setIsAuthenticated(true);
-          return { ok: true, authType: "apiKey" };
-        }
-      }
-
       return { ok: false };
-    } catch (e) {
+    } catch {
       return { ok: false };
     }
   };
 
-  const setApiKey = async (apiKey: string, apiUrl: string) => {
-    try {
-      const directus = createDirectus(apiUrl)
-        .with(authentication())
-        .with(rest());
-      setDirectus(directus);
-      await directus.setToken(apiKey);
-      const user = await directus.request(readMe());
-      setToken(apiKey);
-      setUser(user as DirectusUser);
-      setIsAuthenticated(true);
-      await fetchAndSetPolicyGlobals(directus);
-      await AsyncStorage.setItem(getApiKeyStorageKey(apiUrl), apiKey);
-    } catch (error) {
-      throw new Error("Login failed");
-    }
+  const setApiKey = async (
+    apiKey: string,
+    apiUrl: string,
+    sessionId: string,
+    apiId: string,
+  ) => {
+    const client = createDirectus(apiUrl)
+      .with(authentication())
+      .with(
+        rest({
+          onResponse: async (response) => {
+            if (response.status === 401) {
+              await logoutFrom401();
+            }
+            return response;
+          },
+        }),
+      );
+    setDirectus(client as DirectusClient<CoreSchema> &
+      AuthenticationClient<CoreSchema> &
+      RestClient<CoreSchema>);
+    await client.setToken(apiKey);
+    const me = await client.request(readMe());
+    setToken(apiKey);
+    setUser(me as DirectusUser);
+    setIsAuthenticated(true);
+    await fetchAndSetPolicyGlobals(
+      client as DirectusClient<CoreSchema> &
+        AuthenticationClient<CoreSchema> &
+        RestClient<CoreSchema>,
+    );
+    await writeSessionWrapper(sessionId, {
+      apiId,
+      authType: "apiKey",
+      sdk: null,
+      apiKey,
+      userLabel: getUserLabel(me as DirectusUser),
+      instanceUrl: apiUrl,
+    });
   };
 
   const logout = async () => {
     try {
-      const activeApi = await AsyncStorage.getItem(
-        LocalStorageKeys.DIRECTUS_API_ACTIVE,
-      );
-
-      if (activeApi) {
+      const sid = await readActiveSessionId();
+      const wrapper = sid ? await readSessionWrapper(sid) : null;
+      if (wrapper?.authType === "email" && directus) {
         try {
-          const api = JSON.parse(activeApi) as {
-            url?: string;
-            authType?: "email" | "apiKey";
-          };
-          if (api?.authType === "email") {
-            await directus?.logout();
-          }
-          
-          await AsyncStorage.removeItem(getSessionStorageKey(api?.url));
-
-          await AsyncStorage.removeItem(getApiKeyStorageKey(api.url));
-        } catch (e) {
-          // ignore parsing errors
+          await directus.logout();
+        } catch {
+          /* ignore */
         }
       }
+      if (sid) {
+        await clearSessionStorage(sid);
+        await AsyncStorage.removeItem(
+          LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+        );
+      }
 
-      //await AsyncStorage.removeItem(LocalStorageKeys.DIRECTUS_API_ACTIVE);
-      setDirectus(initDirectus());
+      setDirectus(
+        createDirectusClient(PLACEHOLDER_URL, PLACEHOLDER_SESSION_ID, PLACEHOLDER_API_ID),
+      );
       setIsAuthenticated(false);
       setToken(null);
+      setUser(null);
       setPolicyGlobals(null);
     } catch (error) {
       console.error("Logout failed:", error);

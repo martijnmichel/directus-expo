@@ -18,9 +18,7 @@ import { ExternalLink } from "@/components/ExternalLink";
 import { PushNotifications } from "@/components/settings/PushNotifications";
 import { Switch } from "@/components/icons/Switch";
 import { WidgetConfigSection } from "@/components/settings/WidgetConfigSection";
-import { useLocalStorage } from "@/state/local/useLocalStorage";
-import { LocalStorageKeys } from "@/state/local/useLocalStorage";
-import type { API } from "@/components/APIForm";
+import { useResolvedActiveSession } from "@/hooks/useResolvedActiveSession";
 import { Toggle } from "@/components/interfaces/toggle";
 import { LocaleSelect } from "@/components/settings/locale-switch";
 import { DirectusIcon, DirectusIconName } from "@/components/display/directus-icon";
@@ -29,7 +27,8 @@ export default function SettingsScreen() {
   const { logout, user } = useAuth();
   const { toggleTheme, currentTheme } = useThemeToggle();
   const { data: health } = useServerHealth();
-  const { data: api } = useLocalStorage<API>(LocalStorageKeys.DIRECTUS_API_ACTIVE);
+  const { data: resolved } = useResolvedActiveSession();
+  const api = resolved?.api;
   const { t } = useTranslation();
 
   const { isUpdateAvailable } = Updates.useUpdates();

@@ -5,8 +5,7 @@ import {
   DirectusIconName,
 } from "@/components/display/directus-icon";
 import { Horizontal, Vertical } from "@/components/layout/Stack";
-import { useLocalStorage } from "@/state/local/useLocalStorage";
-import { LocalStorageKeys } from "@/state/local/useLocalStorage";
+import { useResolvedActiveSession } from "@/hooks/useResolvedActiveSession";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
@@ -66,9 +65,7 @@ export function WidgetConfigSection() {
   const { styles: listItemStyles } = useStyles(listStyles);
   const { data: allCollections } = useCollections();
   const installMutation = useInstallWidgetSchema();
-  const { data: activeApi } = useLocalStorage<{ url: string }>(
-    LocalStorageKeys.DIRECTUS_API_ACTIVE,
-  );
+  const { data: resolved } = useResolvedActiveSession();
   const { theme } = useStyles();
   const isAdmin = policyGlobals?.admin_access === true;
   const [idsInAppGroup, setIdsInAppGroup] = useState<string[]>([]);
@@ -76,7 +73,7 @@ export function WidgetConfigSection() {
     null,
   );
   const flowVersionQuery = useFlowVersion(
-    activeApi?.url ?? null,
+    resolved?.api.url ?? null,
     Platform.OS === "ios",
   );
 

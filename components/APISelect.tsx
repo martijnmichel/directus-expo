@@ -3,21 +3,33 @@ import {
   mutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
-import { useStyles } from "react-native-unistyles";
-import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Horizontal, Vertical } from "./layout/Stack";
 import { Modal } from "./display/modal";
 import { Button } from "./display/button";
-import { Alert } from "react-native";
-import { Check, Edit, Plus, Trash } from "./icons";
-import { useEffect } from "react";
+import { Edit, Plus, Trash } from "./icons";
 import { API, APIForm } from "./APIForm";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { ConfirmDialog } from "./display/confirm-dialog";
-import { Text } from "./display/typography";
 import { Select } from "./interfaces/select";
-import { useServerHealth } from "@/state/queries/directus/server";
+import { clearSessionStorage } from "@/state/auth/directusSessionStorage";
+
+function normalizeApis(apis: API[] | undefined): API[] {
+  return (apis ?? []).map((a) => ({
+    ...a,
+    sessionIds: a.sessionIds ?? [],
+  }));
+}
+
+function encodePick(row: API): string | undefined {
+  if (!row.id) return undefined;
+  return row.id;
+}
+
+function decodePick(v: string, apis: API[]): API | undefined {
+  return apis.find((a) => a.id === v);
+}
+
 export function APISelect({
   value,
   onChange,
@@ -30,32 +42,39 @@ export function APISelect({
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
     undefined,
-    []
+    [],
   );
   const confirm = useConfirmDialog();
-  const mutateApi = mutateLocalStorage(LocalStorageKeys.DIRECTUS_API_ACTIVE);
+  const mutateActiveSessionId = mutateLocalStorage(
+    LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+  );
   const mutateApis = mutateLocalStorage(LocalStorageKeys.DIRECTUS_APIS);
+  const { data: activeSessionId = "" } = useLocalStorage<string>(
+    LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+    undefined,
+    "",
+  );
 
   const { t } = useTranslation();
+
+  const apis = normalizeApis(data);
+  const selectValue = value ? encodePick(value) : undefined;
 
   return (
     <Vertical>
       <Select
-        onValueChange={(_, index) => {
-          const selected = data?.[index];
+        onValueChange={(v) => {
+          const selected = decodePick(String(v), apis);
           if (selected) {
             onChange?.(selected);
-            mutateApi.mutate(selected);
           }
         }}
-        options={
-          data?.map((api) => ({
-            value: api.url,
-            text: api.name,
-          })) ?? []
-        }
-        disabled={!data?.length}
-        value={value?.url}
+        options={apis.map((api) => ({
+          value: encodePick(api)!,
+          text: api.name,
+        }))}
+        disabled={!apis.length}
+        value={selectValue}
         placeholder={t("form.api")}
         label={t("form.api")}
         error={error}
@@ -72,14 +91,16 @@ export function APISelect({
               <APIForm
                 onSuccess={(api) => {
                   close();
-                  onChange?.(api);
+                  if (api.id) {
+                    onChange?.({ ...api, sessionIds: api.sessionIds ?? [] });
+                  }
                 }}
               />
             )}
           </Modal.Content>
         </Modal>
 
-        {!!value && (
+        {!!value?.id && (
           <>
             <Modal>
               <Modal.Trigger>
@@ -88,9 +109,13 @@ export function APISelect({
                 </Button>
               </Modal.Trigger>
               <Modal.Content title={t("components.apiSelect.editApi")}>
-                {({ close }) => (
-                  <APIForm defaultValues={value} onSuccess={() => close()} />
-                )}
+                {({ close }) => {
+                  const inst = apis.find((a) => a.id === value.id);
+                  if (!inst) return null;
+                  return (
+                    <APIForm defaultValues={inst} onSuccess={() => close()} />
+                  );
+                }}
               </Modal.Content>
             </Modal>
 
@@ -106,12 +131,21 @@ export function APISelect({
                 description={t("components.apiSelect.confirmDelete")}
                 variant="danger"
                 onConfirm={async () => {
-                  const isActive = data?.find((api) => api.id === value.id);
-                  if (isActive) {
-                    mutateApi.mutate(undefined);
+                  if (!value?.id) return;
+                  const row = apis.find((a) => a.id === value.id);
+                  for (const sid of row?.sessionIds ?? []) {
+                    await clearSessionStorage(sid);
+                  }
+                  const sid = String(activeSessionId ?? "").trim();
+                  if (
+                    sid &&
+                    (row?.sessionIds?.includes(sid) ?? false)
+                  ) {
+                    mutateActiveSessionId.mutate(undefined);
                     onChange?.(undefined);
                   }
-                  mutateApis.mutate(data?.filter((api) => api.id !== value.id));
+                  mutateApis.mutate(apis.filter((api) => api.id !== value.id));
+                  refetch();
                 }}
               />
             </ConfirmDialog>

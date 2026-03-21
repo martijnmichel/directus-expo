@@ -3,35 +3,35 @@ import {
   mutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
-import { useStyles } from "react-native-unistyles";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Horizontal, Vertical } from "./layout/Stack";
 import { Modal } from "./display/modal";
 import { Button } from "./display/button";
-import { Alert } from "react-native";
 import { Check, Edit } from "./icons";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { Input } from "./interfaces/input";
+
 export type API = {
   name: string;
   url: string;
   id?: string;
+  /** Login slots for this instance; tokens live in `directus_session:<id>` */
+  sessionIds?: string[];
 };
+
 export const APIForm = ({
   defaultValues,
-  id,
   onSuccess,
 }: {
   defaultValues?: API;
-  id?: string;
   onSuccess?: (api: API) => void;
 }) => {
   const { data, refetch } = useLocalStorage<API[]>(
     LocalStorageKeys.DIRECTUS_APIS,
     undefined,
-    []
+    [],
   );
 
   const form = useForm<API>({
@@ -39,16 +39,14 @@ export const APIForm = ({
   });
 
   const { mutate: mutateApis } = mutateLocalStorage(
-    LocalStorageKeys.DIRECTUS_APIS
+    LocalStorageKeys.DIRECTUS_APIS,
   );
 
   const onSubmit = async (newApi: API) => {
-    /** test working api */
-
     try {
       const url = new URL(newApi.url);
       newApi.url = url.href.replace(/\/$/, "");
-    } catch (error) {
+    } catch {
       form.setError("url", { message: "Invalid URL" }, { shouldFocus: true });
       return;
     }
@@ -56,20 +54,33 @@ export const APIForm = ({
       const test = await fetch(`${newApi.url}/server/health`);
       if (!test.ok) {
         throw new Error(
-          "Host is not reachable. There might be something wrong with your config."
+          "Host is not reachable. There might be something wrong with your config.",
         );
       }
-      if (!newApi.id) {
-        mutateApis([...(data ?? []), { ...newApi, id: uuidv4() }]);
+
+      const existingId = defaultValues?.id;
+      const existingRow =
+        data?.find((a) => a.id === existingId) ?? defaultValues;
+      const sessionIds =
+        existingId && existingRow?.sessionIds
+          ? [...existingRow.sessionIds]
+          : newApi.sessionIds ?? [];
+
+      const saved: API = !existingId
+        ? { ...newApi, id: uuidv4(), sessionIds: [] }
+        : { ...newApi, id: existingId, sessionIds };
+
+      if (!existingId) {
+        mutateApis([...(data ?? []), saved]);
       } else {
         mutateApis([
-          ...(data ?? []).filter((api) => api.id !== newApi.id),
-          newApi,
+          ...(data ?? []).filter((api) => api.id !== existingId),
+          saved,
         ]);
       }
       form.reset();
       refetch();
-      onSuccess?.(newApi);
+      onSuccess?.(saved);
     } catch (error) {
       if (error instanceof Error) {
         form.setError(
@@ -77,7 +88,7 @@ export const APIForm = ({
           {
             message: `${error.message}. Check the /server/health path of your instance.`,
           },
-          { shouldFocus: true }
+          { shouldFocus: true },
         );
       }
     }

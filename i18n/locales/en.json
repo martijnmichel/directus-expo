@@ -13,14 +13,27 @@
       "apiNotHealthy": "API is not online, or incorrect.",
       "apiNotValid": "API is not valid",
       "apiKeyRequired": "Api key is required",
-      "loginTypeRequired": "Login type is required"
+      "loginTypeRequired": "Login type is required",
+      "refreshMissingTarget": "Select a server with a valid URL for this session."
     },
     "api": "Directus API",
     "enterUrl": "Enter a URL",
     "apiName": "Name",
-    "apiKey": "Api key",
+    "apiKey": "Token",
     "loginType": "Login Type",
-    "apiKeyPlaceholder": "123ABC"
+    "loginTypeEmail": "Email & password",
+    "loginTypeApiKey": "Static token",
+    "loginTypeFromSavedAccount": "This login method is fixed for the selected account. Pick “New account” to use the other method.",
+    "refreshSession": "Refresh",
+    "refreshFailedTitle": "Cannot refresh",
+    "refreshFailedBody": "Could not restore this session. Sign in again.",
+    "refreshErrorGeneric": "Failed to refresh session.",
+    "apiKeyLockedHint": "This saved account already has a stored token. Use Refresh, or unlock to replace the token.",
+    "unlockApiKeyInput": "Insert new API key",
+    "apiKeyPlaceholder": "123ABC",
+    "userSession": "Account",
+    "newAccount": "New account",
+    "savedSession": "Saved session"
   },
   "navigation": {
     "content": "Content",

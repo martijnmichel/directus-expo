@@ -11,13 +11,27 @@
       "loginFailed": "Inloggen mislukt. Controleer uw gegevens.",
       "invalidApiUrl": "Ongeldige API URL",
       "apiNotHealthy": "API is niet online of onjuist.",
-      "apiNotValid": "API is niet geldig"
+      "apiNotValid": "API is niet geldig",
+      "refreshMissingTarget": "Kies een server met een geldige URL voor deze sessie."
     },
     "api": "Directus API",
     "placeholder": {
       "enterUrl": "Voer een URL in"
     },
-    "apiName": "Naam"
+    "apiName": "Naam",
+    "loginType": "Inlogmethode",
+    "loginTypeEmail": "E-mail en wachtwoord",
+    "loginTypeApiKey": "Statische token",
+    "loginTypeFromSavedAccount": "Deze inlogmethode hoort bij het gekozen account. Kies “Nieuw account” om de andere methode te gebruiken.",
+    "refreshSession": "Vernieuwen",
+    "refreshFailedTitle": "Kan niet vernieuwen",
+    "refreshFailedBody": "Deze sessie kon niet worden hersteld. Log opnieuw in.",
+    "refreshErrorGeneric": "Sessie vernieuwen mislukt.",
+    "apiKeyLockedHint": "Voor dit opgeslagen account is al een token bewaard. Gebruik Vernieuwen, of ontgrendel om de token te vervangen.",
+    "unlockApiKeyInput": "API-sleutel invoer ontgrendelen",
+    "userSession": "Account",
+    "newAccount": "Nieuw account",
+    "savedSession": "Opgeslagen sessie"
   },
   "navigation": {
     "content": "Inhoud",

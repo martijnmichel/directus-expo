@@ -1,4 +1,4 @@
-import { API } from "@/components/APIForm";
+import type { API } from "@/components/APIForm";
 import { LoginFormData } from "@/components/LoginForm";
 import { AppSettings } from "@/hooks/useAppSettings";
 import { queryClient } from "@/utils/react-query";
@@ -13,14 +13,15 @@ import {
 export enum LocalStorageKeys {
   APP_SETTINGS = "@app-settings",
   DIRECTUS_APIS = "@directus-apis",
-  DIRECTUS_API_ACTIVE = "@directus-api-active",
+  /** Active login: plain session UUID (see `directus_session:<id>`) */
+  DIRECTUS_ACTIVE_SESSION_ID = "@directus-active-session-id",
   CONTENT_PATH = "@content-path",
 }
 
 export type LocalStorageTyp = {
   [LocalStorageKeys.APP_SETTINGS]: AppSettings;
   [LocalStorageKeys.DIRECTUS_APIS]: API[];
-  [LocalStorageKeys.DIRECTUS_API_ACTIVE]: API & { authType?: "email" | "apiKey" };
+  [LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID]: string;
   [LocalStorageKeys.CONTENT_PATH]: string;
 };
 
@@ -31,8 +32,8 @@ function getDefaultForKey(key: LocalStorageKeys): Record<string, unknown> | [] |
       return {};
     case LocalStorageKeys.DIRECTUS_APIS:
       return [];
-    case LocalStorageKeys.DIRECTUS_API_ACTIVE:
-      return {};
+    case LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID:
+      return "";
     case LocalStorageKeys.CONTENT_PATH:
       return "";
     default:
@@ -94,6 +95,14 @@ export const mutateLocalStorage = (key: LocalStorageKeys) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["local-storage", key] });
+      if (
+        key === LocalStorageKeys.DIRECTUS_APIS ||
+        key === LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID
+      ) {
+        queryClient.invalidateQueries({
+          queryKey: ["resolved-active-session"],
+        });
+      }
     },
   });
 };
