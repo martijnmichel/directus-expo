@@ -90,6 +90,8 @@ export default function SettingsScreen() {
     { label: t("push.title"), type: "push" },
     { type: "spacing" },
     { label: "Widgets", type: "widgets" },
+
+    { type: "spacing" },
     {
       label: t("settings.sections.options"),
       type: "heading",

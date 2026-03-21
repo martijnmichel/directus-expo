@@ -162,7 +162,6 @@ export const mapFields = ({
           </Collapsible>
         );
       } else {
-        console.log("fallbackInterface", fallbackInterface);
         // Type-based switch statement from previous code
         if (!item.type && fallbackInterface === "input") {
           return (

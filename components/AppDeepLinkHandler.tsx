@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -28,6 +28,9 @@ function getServerLabel(rawUrl: string): string {
 export function AppDeepLinkHandler() {
   const { isAuthenticated, isLoading, refreshSession } = useAuth();
   const router = useRouter();
+  const inFlightRef = useRef(false);
+  const lastHandledUrlRef = useRef<string | null>(null);
+  const lastHandledAtRef = useRef(0);
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
@@ -40,43 +43,56 @@ export function AppDeepLinkHandler() {
   useEffect(() => {
     const { remove } = subscribeToDeepLinks((url) => {
       if (!parseDirectusDeepLink(url)) return;
+      const now = Date.now();
+      const isDuplicate =
+        lastHandledUrlRef.current === url && now - lastHandledAtRef.current < 1500;
+      if (isDuplicate || inFlightRef.current) return;
 
       void (async () => {
-        const previousCtx = await resolveActiveSessionContext();
-        const parsed = await handleIncomingDeepLinkUrl(url);
-        if (!parsed) return;
+        inFlightRef.current = true;
+        lastHandledUrlRef.current = url;
+        lastHandledAtRef.current = now;
+        try {
+          const previousCtx = await resolveActiveSessionContext();
+          const parsed = await handleIncomingDeepLinkUrl(url);
+          if (!parsed) return;
 
-        const sidFromLink = parsed.sessionId?.trim();
-        const deepLinkCtx = sidFromLink
-          ? await resolveSessionContextForSessionId(sidFromLink)
-          : null;
-        const ctx = deepLinkCtx ?? (await resolveActiveSessionContext());
-        if (!ctx) {
+          const sidFromLink = parsed.sessionId?.trim();
+          const deepLinkCtx = sidFromLink
+            ? await resolveSessionContextForSessionId(sidFromLink)
+            : null;
+          const ctx = deepLinkCtx ?? (await resolveActiveSessionContext());
+          if (!ctx) {
+            router.replace("/login");
+            return;
+          }
+          const switchedSessionOrServer =
+            !!previousCtx &&
+            (previousCtx.sessionId !== ctx.sessionId ||
+              previousCtx.api.url !== ctx.api.url);
+          router.replace({
+            pathname: "/deeplink-loading",
+            params: {
+              collection: parsed.collection,
+              switching: switchedSessionOrServer ? "1" : "0",
+              server: getServerLabel(ctx.api.url),
+              account: ctx.wrapper.userLabel?.trim() || "",
+            },
+          } as any);
+          const result = await refreshSession({
+            url: ctx.api.url,
+            sessionId: ctx.sessionId,
+          });
+          if (result.ok) {
+            setPendingDeepLinkHref(null);
+            router.replace(parsed.href as any);
+          } else {
+            router.replace("/login");
+          }
+        } catch {
           router.replace("/login");
-          return;
-        }
-        const switchedSessionOrServer =
-          !!previousCtx &&
-          (previousCtx.sessionId !== ctx.sessionId ||
-            previousCtx.api.url !== ctx.api.url);
-        router.replace({
-          pathname: "/deeplink-loading",
-          params: {
-            collection: parsed.collection,
-            switching: switchedSessionOrServer ? "1" : "0",
-            server: getServerLabel(ctx.api.url),
-            account: ctx.wrapper.userLabel?.trim() || "",
-          },
-        } as any);
-        const result = await refreshSession({
-          url: ctx.api.url,
-          sessionId: ctx.sessionId,
-        });
-        if (result.ok) {
-          setPendingDeepLinkHref(null);
-          router.replace(parsed.href as any);
-        } else {
-          router.replace("/login");
+        } finally {
+          inFlightRef.current = false;
         }
       })();
     });

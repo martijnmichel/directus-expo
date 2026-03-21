@@ -367,7 +367,6 @@ export function WidgetConfigSection() {
         ))}
       </Vertical>
       <Button
-        variant="soft"
         onPress={openAdd}
         leftIcon={<DirectusIcon name="add" />}
       >
@@ -375,7 +374,7 @@ export function WidgetConfigSection() {
       </Button>
 
       {policyGlobals?.admin_access === true &&
-        (flowVersionQuery.data?.needsUpdate || __DEV__ || flowVersionQuery.isError) && (
+        (flowVersionQuery.data?.needsUpdate || flowVersionQuery.isError) && (
           <Button
             variant="soft"
             disabled={!isAdmin || installMutation.isPending}

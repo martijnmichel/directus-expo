@@ -38,7 +38,7 @@ struct DirectusWidgetSideSlotView: View {
       Text(raw)
         .font(WidgetNativeTheme.Typography.sideSlot)
         .lineLimit(1)
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 5)
         .padding(.vertical, 2)
         .foregroundStyle(DirectusWidgetSlotDisplay.statusForeground(for: raw))
         .background(Capsule(style: .continuous).fill(DirectusWidgetSlotDisplay.statusBackground(for: raw)))
