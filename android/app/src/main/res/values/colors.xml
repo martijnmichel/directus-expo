@@ -1,6 +1,7 @@
 <resources>
   <color name="splashscreen_background">#ffffff</color>
-  <color name="iconBackground">#ffffff</color>
+  <!-- Matches average brand pink from app icon artwork (adaptive-icon background layer). -->
+  <color name="iconBackground">#EF41E2</color>
   <color name="colorPrimary">#023c69</color>
   <color name="colorPrimaryDark">#ffffff</color>
   <color name="notification_icon_color">#ffffff</color>

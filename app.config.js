@@ -42,7 +42,8 @@ export default () => ({
       // Same artwork as iOS (`expo.icon` / Xcode AppIcon) — do not use a separate adaptive file.
       adaptiveIcon: {
         foregroundImage: "./assets/images/icon.png",
-        backgroundColor: "#ffffff",
+        // Match android `values/colors.xml` iconBackground (brand pink behind adaptive mask).
+        backgroundColor: "#EF41E2",
       },
       versionCode: buildNumber,
       package: "com.martijnmichel.directusexpo.app",
