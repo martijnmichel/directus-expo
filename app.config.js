@@ -39,8 +39,9 @@ export default () => ({
       },
     },
     android: {
+      // Same artwork as iOS (`expo.icon` / Xcode AppIcon) — do not use a separate adaptive file.
       adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
+        foregroundImage: "./assets/images/icon.png",
         backgroundColor: "#ffffff",
       },
       versionCode: buildNumber,
