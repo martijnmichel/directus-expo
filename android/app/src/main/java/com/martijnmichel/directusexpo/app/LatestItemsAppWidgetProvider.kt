@@ -6,6 +6,11 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.SizeF
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -24,8 +29,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.math.abs
+import kotlin.math.ceil
 
 class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   companion object {
@@ -33,6 +40,18 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
     /** Directus asset transform: prefer raster output for BitmapFactory decode (SVG often unchanged). */
     private const val DIRECTUS_ASSET_RASTER_QUERY = "width=64&height=64&fit=cover&format=png"
+
+    /** Last row index in widget_latest_items.xml (rows 0..8 ⇒ 9 rows). */
+    private const val WIDGET_ROW_LAST_INDEX = 8
+
+    /** Title + padding + optional subtitle (dp) — subtract from host height for list area. */
+    private const val WIDGET_LIST_HEADER_RESERVE_DP = 88f
+
+    /** Approximate list row height incl. divider margins (dp); tune if rows clip or look sparse. */
+    private const val WIDGET_LIST_ROW_BUDGET_DP = 50f
+
+    private val resizeRefreshHandler = Handler(Looper.getMainLooper())
+    private val pendingResizeRunnables = ConcurrentHashMap<Int, Runnable>()
   }
 
   // AppWidgetProvider runs inside the host app process. Downloading/decoding too
@@ -40,7 +59,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   // Keep this intentionally low for stability.
   // RemoteViews widgets run in-process, so we must strictly cap bitmap decoding.
   // 64x64 thumbs still allocate, so keep this small.
-  private val maxThumbnailsToLoadPerUpdate = 6
+  /** Match max list rows we can show (see [maxRowsForWidgetOptions] + size-keyed [RemoteViews]). */
+  private val maxThumbnailsToLoadPerUpdate = 12
   private val bitmapInSampleSize = 4
   private val shouldLoadFaviconBitmap = true
 
@@ -124,30 +144,114 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     return out
   }
 
-  private fun inferMaxRows(
+  /**
+   * Widget height in **dp** from host-reported options ([AppWidgetManager]).
+   *
+   * **API 31+:** Prefer [AppWidgetManager.OPTION_APPWIDGET_SIZES] — each [SizeF] is in **dips**; use
+   * the largest height among reported sizes (typical when the host lists portrait/landscape variants).
+   *
+   * **Fallback:** [AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT] /
+   * [AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT] are documented as **dips**; use `max(min, max)`.
+   */
+  @Suppress("DEPRECATION")
+  private fun widgetHeightDpFromOptions(options: Bundle): Float {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      val sizes: ArrayList<SizeF>? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
+        } else {
+          options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+        }
+      if (!sizes.isNullOrEmpty()) {
+        return sizes.maxOf { it.height }
+      }
+    }
+
+    val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+    val maxH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minH)
+    val dp = maxOf(minH, maxH)
+    return if (dp > 0) dp.toFloat() else 0f
+  }
+
+  /**
+   * List rows from host **height in dp** (same signal as [widgetHeightDpFromOptions]).
+   *
+   * This mirrors the idea in
+   * [Provide responsive layouts](https://developer.android.com/develop/ui/views/appwidgets/layouts#provide-responsive-layouts):
+   * pick density based on **reported size** rather than rounding to an integer “cell span” (which
+   * collapsed spans 2 and 3 to the same row count and stuck many sizes at 3 rows).
+   *
+   * Cell geometry from
+   * [Determine a size](https://developer.android.com/develop/ui/views/appwidgets/layouts#anatomy_determining_size)
+   * is still useful for XML `minResize*`; here we only use **dp** from `OPTION_*` / [SizeF].
+   */
+  private fun listRowsForWidgetHeightDp(heightDp: Float): Int {
+    val maxR = WIDGET_ROW_LAST_INDEX + 1
+    if (heightDp <= 0f) {
+      return 4.coerceAtMost(maxR)
+    }
+    val listDp = (heightDp - WIDGET_LIST_HEADER_RESERVE_DP).coerceAtLeast(0f)
+    val rows = ceil(listDp.toDouble() / WIDGET_LIST_ROW_BUDGET_DP.toDouble()).toInt()
+    return rows.coerceIn(2, maxR)
+  }
+
+  /**
+   * [AppWidgetManager.OPTION_APPWIDGET_SIZES] when the launcher provides it (API 31+).
+   * If null/empty, use [singleRemoteViewsUpdate] path instead of size-keyed [RemoteViews].
+   *
+   * @see [Provide exact layouts](https://developer.android.com/develop/ui/views/appwidgets/layouts#provide-exact-layouts)
+   */
+  @Suppress("DEPRECATION")
+  private fun optionAppWidgetSizesList(options: Bundle): List<SizeF>? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
+    val sizes: ArrayList<SizeF>? =
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
+      } else {
+        options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+      }
+    if (sizes.isNullOrEmpty()) return null
+    return sizes.toList()
+  }
+
+  /** Max list rows needed for this widget (max across size profiles when multiple). */
+  private fun maxRowsForWidgetOptions(options: Bundle): Int {
+    val profiles = optionAppWidgetSizesList(options)
+    return if (!profiles.isNullOrEmpty()) {
+      profiles.maxOf { listRowsForWidgetHeightDp(it.height) }
+    } else {
+      listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
+    }
+  }
+
+  /**
+   * API 31+: one [RemoteViews] per launcher [SizeF] so row count matches each reported size.
+   * Otherwise a single [RemoteViews] using [widgetHeightDpFromOptions].
+   *
+   * @see [Provide responsive layouts](https://developer.android.com/develop/ui/views/appwidgets/layouts#provide-responsive-layouts)
+   */
+  private fun updateLatestItemsAppWidget(
     context: Context,
     appWidgetManager: AppWidgetManager,
-    widgetId: Int
-  ): Int {
-    val options = appWidgetManager.getAppWidgetOptions(widgetId)
-    val minHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) ?: 0
-    val maxHeight = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT) ?: minHeight
-    // AppWidgetOptions heights are effectively "px" on this device.
-    // Convert to dp so our thresholds behave consistently across densities.
-    val heightPx = maxOf(minHeight, maxHeight)
-    val density = context.resources.displayMetrics.density.takeIf { it > 0f } ?: 1f
-    val heightDp = heightPx / density
-
-    // Desired behavior:
-    // - smallest: ~3 rows
-    // - medium: ~4 rows
-    // - large: ~6 rows
-    return when {
-      // These thresholds are tuned for our current RemoteViews layout/paddings.
-      // If you still see the wrong row count, we can log heightPx/heightDp per widgetId and retune.
-      heightDp >= 90f -> 6
-      heightDp >= 70f -> 4
-      else -> 3
+    widgetId: Int,
+    populate: (RemoteViews, maxRows: Int) -> Unit,
+  ) {
+    val options = appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle()
+    val profiles = optionAppWidgetSizesList(options)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !profiles.isNullOrEmpty()) {
+      val viewBySize = linkedMapOf<SizeF, RemoteViews>()
+      for (size in profiles) {
+        val maxRows = listRowsForWidgetHeightDp(size.height)
+        val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
+        populate(views, maxRows)
+        viewBySize[size] = views
+      }
+      appWidgetManager.updateAppWidget(widgetId, RemoteViews(viewBySize))
+    } else {
+      val maxRows = listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
+      val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
+      populate(views, maxRows)
+      appWidgetManager.updateAppWidget(widgetId, views)
     }
   }
 
@@ -181,22 +285,21 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     // Optimistically render a header immediately; then refresh content in background.
     for (widgetId in appWidgetIds) {
       val selectedConfig = configByWidgetId[widgetId]
-      val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
-      views.setViewVisibility(R.id.widget_favicon, View.GONE)
       val instanceBase = selectedConfig?.let { resolveInstanceBaseUrl(it.instanceUrl, it.webhookUrl) }
       val setupText = "Open app to add a widget setup"
-
-      if (!instanceBase.isNullOrBlank()) {
-        views.setViewVisibility(R.id.widget_subtitle, View.GONE)
-      } else {
-        views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
-        views.setTextViewText(R.id.widget_subtitle, setupText)
-      }
-      views.setTextViewText(
-        R.id.widget_title,
+      val titleText =
         selectedConfig?.title ?: context.getString(R.string.widget_latest_items_title)
-      )
-      appWidgetManager.updateAppWidget(widgetId, views)
+
+      updateLatestItemsAppWidget(context, appWidgetManager, widgetId) { views, _ ->
+        views.setViewVisibility(R.id.widget_favicon, View.GONE)
+        if (!instanceBase.isNullOrBlank()) {
+          views.setViewVisibility(R.id.widget_subtitle, View.GONE)
+        } else {
+          views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
+          views.setTextViewText(R.id.widget_subtitle, setupText)
+        }
+        views.setTextViewText(R.id.widget_title, titleText)
+      }
     }
 
     executor.execute {
@@ -215,7 +318,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         val instanceBase = resolveInstanceBaseUrl(cfg.instanceUrl, cfg.webhookUrl)
 
         val maxRowsByWidget: Map<Int, Int> =
-          entries.associate { (widgetId, _) -> widgetId to inferMaxRows(context, appWidgetManager, widgetId) }
+          entries.associate { (widgetId, _) ->
+            widgetId to maxRowsForWidgetOptions(appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle())
+          }
 
         val result = fetchFlowForConfig(prefs, cfg, instanceBase)
         val items = result.items
@@ -223,7 +328,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         val statusMessage = result.statusMessage
         val titleOverride = result.titleOverride
 
-        val maxThumbItems = (maxRowsByWidget.values.maxOrNull() ?: 2)
+        val maxThumbItems = (maxRowsByWidget.values.maxOrNull() ?: 3)
         val thumbBitmapsByFileId: Map<String, Bitmap> =
           preloadThumbBitmaps(
             items.take(maxThumbItems),
@@ -233,35 +338,30 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
 
         val widgetIds = entries.map { it.key }
         for (widgetId in widgetIds) {
-          val maxRows = maxRowsByWidget[widgetId] ?: 2
-          val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
-
-          if (faviconBitmap != null) {
-            views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
-            views.setImageViewBitmap(R.id.widget_favicon, faviconBitmap)
-          } else {
-            views.setViewVisibility(R.id.widget_favicon, View.GONE)
-          }
-
-          views.setTextViewText(R.id.widget_title, titleOverride ?: cfg.title)
-
-          if (items.isEmpty()) {
-            views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
-            views.setTextViewText(R.id.widget_subtitle, statusMessage ?: "Open the app to refresh")
-            renderEmptyRows(views)
-          } else {
-            // We don't need to show the instance URL here.
-            // Hide the subtitle when we successfully resolved the instance; otherwise show setup text.
-            if (!instanceBase.isNullOrBlank()) {
-              views.setViewVisibility(R.id.widget_subtitle, View.GONE)
+          updateLatestItemsAppWidget(context, appWidgetManager, widgetId) { views, maxRows ->
+            if (faviconBitmap != null) {
+              views.setViewVisibility(R.id.widget_favicon, View.VISIBLE)
+              views.setImageViewBitmap(R.id.widget_favicon, faviconBitmap)
             } else {
-              views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
-              views.setTextViewText(R.id.widget_subtitle, "Open app to add a widget setup")
+              views.setViewVisibility(R.id.widget_favicon, View.GONE)
             }
-            renderRows(context, views, maxRows, items, cfg, instanceBase, thumbBitmapsByFileId)
-          }
 
-          appWidgetManager.updateAppWidget(widgetId, views)
+            views.setTextViewText(R.id.widget_title, titleOverride ?: cfg.title)
+
+            if (items.isEmpty()) {
+              views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
+              views.setTextViewText(R.id.widget_subtitle, statusMessage ?: "Open the app to refresh")
+              renderEmptyRows(views)
+            } else {
+              if (!instanceBase.isNullOrBlank()) {
+                views.setViewVisibility(R.id.widget_subtitle, View.GONE)
+              } else {
+                views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
+                views.setTextViewText(R.id.widget_subtitle, "Open app to add a widget setup")
+              }
+              renderRows(context, views, maxRows, items, cfg, instanceBase, thumbBitmapsByFileId)
+            }
+          }
         }
       }
     }
@@ -274,12 +374,18 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     views.setViewVisibility(R.id.widget_row_3_container, View.GONE)
     views.setViewVisibility(R.id.widget_row_4_container, View.GONE)
     views.setViewVisibility(R.id.widget_row_5_container, View.GONE)
+    views.setViewVisibility(R.id.widget_row_6_container, View.GONE)
+    views.setViewVisibility(R.id.widget_row_7_container, View.GONE)
+    views.setViewVisibility(R.id.widget_row_8_container, View.GONE)
 
     views.setViewVisibility(R.id.widget_row_0_divider, View.GONE)
     views.setViewVisibility(R.id.widget_row_1_divider, View.GONE)
     views.setViewVisibility(R.id.widget_row_2_divider, View.GONE)
     views.setViewVisibility(R.id.widget_row_3_divider, View.GONE)
     views.setViewVisibility(R.id.widget_row_4_divider, View.GONE)
+    views.setViewVisibility(R.id.widget_row_5_divider, View.GONE)
+    views.setViewVisibility(R.id.widget_row_6_divider, View.GONE)
+    views.setViewVisibility(R.id.widget_row_7_divider, View.GONE)
   }
 
   private fun renderSideSlot(
@@ -369,6 +475,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_container,
       R.id.widget_row_4_container,
       R.id.widget_row_5_container,
+      R.id.widget_row_6_container,
+      R.id.widget_row_7_container,
+      R.id.widget_row_8_container,
     )
     val rowDividers = intArrayOf(
       R.id.widget_row_0_divider,
@@ -376,6 +485,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_2_divider,
       R.id.widget_row_3_divider,
       R.id.widget_row_4_divider,
+      R.id.widget_row_5_divider,
+      R.id.widget_row_6_divider,
+      R.id.widget_row_7_divider,
     )
     val leftContainerIds = intArrayOf(
       R.id.widget_row_0_left_container,
@@ -384,6 +496,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_left_container,
       R.id.widget_row_4_left_container,
       R.id.widget_row_5_left_container,
+      R.id.widget_row_6_left_container,
+      R.id.widget_row_7_left_container,
+      R.id.widget_row_8_left_container,
     )
     val rightContainerIds = intArrayOf(
       R.id.widget_row_0_right_container,
@@ -392,6 +507,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_right_container,
       R.id.widget_row_4_right_container,
       R.id.widget_row_5_right_container,
+      R.id.widget_row_6_right_container,
+      R.id.widget_row_7_right_container,
+      R.id.widget_row_8_right_container,
     )
     val leftImageIds = intArrayOf(
       R.id.widget_row_0_left_image,
@@ -400,6 +518,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_left_image,
       R.id.widget_row_4_left_image,
       R.id.widget_row_5_left_image,
+      R.id.widget_row_6_left_image,
+      R.id.widget_row_7_left_image,
+      R.id.widget_row_8_left_image,
     )
     val leftTextIds = intArrayOf(
       R.id.widget_row_0_left_text,
@@ -408,6 +529,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_left_text,
       R.id.widget_row_4_left_text,
       R.id.widget_row_5_left_text,
+      R.id.widget_row_6_left_text,
+      R.id.widget_row_7_left_text,
+      R.id.widget_row_8_left_text,
     )
     val rightImageIds = intArrayOf(
       R.id.widget_row_0_right_image,
@@ -416,6 +540,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_right_image,
       R.id.widget_row_4_right_image,
       R.id.widget_row_5_right_image,
+      R.id.widget_row_6_right_image,
+      R.id.widget_row_7_right_image,
+      R.id.widget_row_8_right_image,
     )
     val rightTextIds = intArrayOf(
       R.id.widget_row_0_right_text,
@@ -424,6 +551,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_right_text,
       R.id.widget_row_4_right_text,
       R.id.widget_row_5_right_text,
+      R.id.widget_row_6_right_text,
+      R.id.widget_row_7_right_text,
+      R.id.widget_row_8_right_text,
     )
     val titleTextIds = intArrayOf(
       R.id.widget_row_0_title,
@@ -432,6 +562,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_title,
       R.id.widget_row_4_title,
       R.id.widget_row_5_title,
+      R.id.widget_row_6_title,
+      R.id.widget_row_7_title,
+      R.id.widget_row_8_title,
     )
     val subtitleTextIds = intArrayOf(
       R.id.widget_row_0_subtitle,
@@ -440,6 +573,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       R.id.widget_row_3_subtitle,
       R.id.widget_row_4_subtitle,
       R.id.widget_row_5_subtitle,
+      R.id.widget_row_6_subtitle,
+      R.id.widget_row_7_subtitle,
+      R.id.widget_row_8_subtitle,
     )
 
     for (i in 0 until rowContainers.size) {
@@ -863,5 +999,26 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     cal.set(java.util.Calendar.SECOND, 0)
     cal.set(java.util.Calendar.MILLISECOND, 0)
     return cal.time
+  }
+
+  override fun onAppWidgetOptionsChanged(
+    context: Context,
+    appWidgetManager: AppWidgetManager,
+    appWidgetId: Int,
+    newOptions: Bundle?
+  ) {
+    super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+    // Launchers may still be applying bounds; debounce so OPTION_* min/max reflect the new size.
+    val appCtx = context.applicationContext
+    pendingResizeRunnables.remove(appWidgetId)?.let { resizeRefreshHandler.removeCallbacks(it) }
+    val r = Runnable {
+      try {
+        onUpdate(appCtx, appWidgetManager, intArrayOf(appWidgetId))
+      } finally {
+        pendingResizeRunnables.remove(appWidgetId)
+      }
+    }
+    pendingResizeRunnables[appWidgetId] = r
+    resizeRefreshHandler.postDelayed(r, 250L)
   }
 }

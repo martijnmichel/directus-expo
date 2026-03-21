@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Sizing notes (see https://developer.android.com/develop/ui/views/appwidgets/layouts ):
+  - Avoid targetCellWidth/Height here: some launchers treat them as a fixed grid and resize handles
+    feel "stuck". Default size comes from minWidth × minHeight instead.
+  - minResizeWidth/Height should be small enough that the launcher can step the widget across grid
+    cells (incl. one column wider). Caps on maxResize* can block growth — omit them so the host decides.
+  - API 31+: when OPTION_APPWIDGET_SIZES is set, LatestItemsAppWidgetProvider uses one RemoteViews per
+    SizeF (responsive layouts guide). Otherwise a single RemoteViews + listRowsForWidgetHeightDp.
+-->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-  android:minWidth="180dp"
-  android:minHeight="110dp"
-  android:targetCellWidth="3"
-  android:targetCellHeight="2"
+  android:minWidth="250dp"
+  android:minHeight="160dp"
+  android:minResizeWidth="70dp"
+  android:minResizeHeight="90dp"
   android:updatePeriodMillis="1800000"
   android:initialLayout="@layout/widget_latest_items"
   android:configure="com.martijnmichel.directusexpo.app.LatestItemsWidgetConfigureActivity"
