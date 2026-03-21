@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 
 /// Plain-text rules for flow slot `type` + `value` (matches Android `DirectusWidgetSlotDisplay`).
+/// Side-slot UI: `DirectusWidgetSideSlotView` / Android `DirectusWidgetSlotRemoteViews`.
 enum DirectusWidgetSlotDisplay {
   static func text(for slot: SlotItem.SlotValue?) -> String {
     guard let slot else { return "–" }

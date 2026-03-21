@@ -12,7 +12,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.SizeF
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.net.Uri
 import android.view.View
 import android.widget.RemoteViews
@@ -21,7 +20,7 @@ import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetBitmapLoader
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowRepository
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowSetup
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetJson
-import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotDisplay
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotRemoteViews
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotItem
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotValue
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetUrls
@@ -204,15 +203,6 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     appWidgetManager.updateAppWidget(widgetId, views)
   }
 
-  private fun statusForegroundColor(value: String): Int {
-    return when (value.trim().lowercase(Locale.US)) {
-      "published" -> Color.parseColor("#2E7D32")
-      "archived" -> Color.parseColor("#616161")
-      "draft" -> Color.parseColor("#F57C00")
-      else -> Color.parseColor("#111111")
-    }
-  }
-
   override fun onUpdate(
     context: Context,
     appWidgetManager: AppWidgetManager,
@@ -343,66 +333,6 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  private fun renderSideSlot(
-    views: RemoteViews,
-    sideContainerId: Int,
-    sideImageId: Int,
-    sideTextId: Int,
-    slot: DirectusWidgetSlotValue?,
-    thumbBitmapsByFileId: Map<String, Bitmap>,
-  ) {
-    val value = slot?.value?.trim().orEmpty()
-    if (slot == null || value.isEmpty()) {
-      views.setViewVisibility(sideContainerId, View.GONE)
-      return
-    }
-
-    views.setViewVisibility(sideContainerId, View.VISIBLE)
-
-    when (slot.type.lowercase(Locale.US)) {
-      "thumbnail" -> {
-        views.setViewVisibility(sideImageId, View.VISIBLE)
-        views.setViewVisibility(sideTextId, View.GONE)
-
-        // Set placeholder first so we clear stale bitmaps from previous renders.
-        views.setImageViewResource(sideImageId, R.drawable.widget_thumb_placeholder)
-
-        thumbBitmapsByFileId[value]?.let { bmp ->
-          views.setImageViewBitmap(sideImageId, bmp)
-        }
-      }
-      "status" -> {
-        // Match iOS: capsule with status label text (not a dot).
-        views.setViewVisibility(sideImageId, View.GONE)
-        views.setViewVisibility(sideTextId, View.VISIBLE)
-
-        views.setTextViewText(sideTextId, value)
-        views.setInt(sideTextId, "setTextColor", statusForegroundColor(value))
-        views.setInt(sideTextId, "setBackgroundResource", statusPillDrawable(value))
-      }
-      else -> {
-        views.setViewVisibility(sideImageId, View.GONE)
-        views.setViewVisibility(sideTextId, View.VISIBLE)
-
-        views.setTextViewText(
-          sideTextId,
-          DirectusWidgetSlotDisplay.displayText(slot.type, slot.value),
-        )
-        views.setInt(sideTextId, "setBackgroundColor", Color.TRANSPARENT)
-        views.setInt(sideTextId, "setTextColor", Color.parseColor("#666666"))
-      }
-    }
-  }
-
-  private fun statusPillDrawable(value: String): Int {
-    return when (value.trim().lowercase(Locale.US)) {
-      "published" -> R.drawable.widget_status_pill_published
-      "archived" -> R.drawable.widget_status_pill_archived
-      "draft" -> R.drawable.widget_status_pill_draft
-      else -> R.drawable.widget_status_pill_unknown
-    }
-  }
-
   private fun renderRows(
     context: Context,
     views: RemoteViews,
@@ -428,30 +358,36 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       val subtitleSlot = item.slots["subtitle"]
       val rightSlot = item.slots["right"]
 
-      rowRv.setTextViewText(
+      DirectusWidgetSlotRemoteViews.renderSlot(
+        rowRv,
         R.id.widget_row_title,
-        DirectusWidgetSlotDisplay.displayText(titleSlot?.type, titleSlot?.value),
+        titleSlot,
+        transformSlotTypes = false,
       )
-      rowRv.setTextViewText(
+      DirectusWidgetSlotRemoteViews.renderSlot(
+        rowRv,
         R.id.widget_row_subtitle,
-        DirectusWidgetSlotDisplay.displayText(subtitleSlot?.type, subtitleSlot?.value),
+        subtitleSlot,
+        transformSlotTypes = false,
       )
 
-      renderSideSlot(
+      DirectusWidgetSlotRemoteViews.renderSlot(
         rowRv,
-        R.id.widget_row_left_container,
-        R.id.widget_row_left_image,
         R.id.widget_row_left_text,
         leftSlot,
-        thumbBitmapsByFileId,
+        transformSlotTypes = true,
+        containerId = R.id.widget_row_left_container,
+        imageId = R.id.widget_row_left_image,
+        thumbBitmapsByFileId = thumbBitmapsByFileId,
       )
-      renderSideSlot(
+      DirectusWidgetSlotRemoteViews.renderSlot(
         rowRv,
-        R.id.widget_row_right_container,
-        R.id.widget_row_right_image,
         R.id.widget_row_right_text,
         rightSlot,
-        thumbBitmapsByFileId,
+        transformSlotTypes = true,
+        containerId = R.id.widget_row_right_container,
+        imageId = R.id.widget_row_right_image,
+        thumbBitmapsByFileId = thumbBitmapsByFileId,
       )
 
       rowRv.setViewVisibility(

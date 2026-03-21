@@ -7,7 +7,10 @@ import java.util.TimeZone
 import kotlin.math.abs
 
 /**
- * Plain-text rendering for flow slot `type` + `value` (RemoteViews / notifications / logging).
+ * Plain-text rules for flow slot `type` + `value` (shared with iOS `DirectusWidgetSlotDisplay.swift`).
+ *
+ * Row binding: Android `DirectusWidgetSlotRemoteViews.renderSlot(transformSlotTypes = …)` / iOS
+ * title+subtitle use `text(for:)` only; side columns use `DirectusWidgetSideSlotView`.
  */
 object DirectusWidgetSlotDisplay {
   fun displayText(type: String?, value: String?): String {

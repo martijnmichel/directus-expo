@@ -140,14 +140,14 @@ struct SlotRowView: View {
     let title = DirectusWidgetSlotDisplay.text(for: titleSlot)
     let subtitle = DirectusWidgetSlotDisplay.text(for: subtitleSlot)
     let sideMaxWidth: CGFloat = 80
-    let hasLeft = hasContent(leftSlot)
-    let hasRight = hasContent(rightSlot)
-    let hasSubtitle = hasContent(subtitleSlot)
+    let hasLeft = DirectusWidgetSideSlot.hasContent(leftSlot)
+    let hasRight = DirectusWidgetSideSlot.hasContent(rightSlot)
+    let hasSubtitle = DirectusWidgetSideSlot.hasContent(subtitleSlot)
 
     return VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
-          SideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading)
+          DirectusWidgetSideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading)
         }
 
         Text(title)
@@ -157,7 +157,7 @@ struct SlotRowView: View {
           .layoutPriority(1)
 
         if hasRight {
-          SideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing)
+          DirectusWidgetSideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing)
         }
       }
 
@@ -172,53 +172,6 @@ struct SlotRowView: View {
     }
     .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))
   }
-}
-
-private struct SideSlotView: View {
-  let slot: SlotItem.SlotValue?
-  let maxWidth: CGFloat
-  let alignment: Alignment
-
-  var body: some View {
-    let type = (slot?.type ?? "string").lowercased()
-    let raw = slot?.value ?? ""
-    if type == "thumbnail" {
-      let uiImage: UIImage? = slot?.imageData.flatMap { UIImage(data: $0) }
-      if let uiImage {
-        Image(uiImage: uiImage)
-          .resizable()
-          .scaledToFill()
-          .frame(width: 24, height: 24)
-          .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-      } else {
-        RoundedRectangle(cornerRadius: 4, style: .continuous)
-          .fill(WidgetNativeTheme.Colors.thumbnailPlaceholderFill)
-          .frame(width: 24, height: 24)
-      }
-    } else if type == "status", !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-      Text(raw)
-        .font(WidgetNativeTheme.Typography.sideSlot)
-        .lineLimit(1)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .foregroundStyle(DirectusWidgetSlotDisplay.statusForeground(for: raw))
-        .background(Capsule(style: .continuous).fill(DirectusWidgetSlotDisplay.statusBackground(for: raw)))
-        .fixedSize()
-        .frame(maxWidth: maxWidth, alignment: alignment)
-    } else {
-      Text(DirectusWidgetSlotDisplay.text(for: slot))
-        .font(WidgetNativeTheme.Typography.sideSlot)
-        .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
-        .lineLimit(1)
-        .fixedSize()
-        .frame(maxWidth: maxWidth, alignment: alignment)
-    }
-  }
-}
-
-private func hasContent(_ slot: SlotItem.SlotValue?) -> Bool {
-  guard let slot else { return false }
-  return !slot.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
 }
 
 private struct LatestItemsWidgetURLIfNotPreviewModifier: ViewModifier {
