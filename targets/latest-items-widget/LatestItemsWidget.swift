@@ -495,8 +495,7 @@ struct SlotRowView: View {
     // Mail-like 2-line layout:
     // Line 1: left - title - right
     // Line 2: subtitle aligned under title (no left/right texts)
-    let lineSpacing: CGFloat = 2
-    return VStack(alignment: .leading, spacing: lineSpacing) {
+    return VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
       // Line 1
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
@@ -504,7 +503,7 @@ struct SlotRowView: View {
         }
 
         Text(title)
-          .font(.headline.weight(.semibold))
+          .font(WidgetNativeTheme.Typography.rowTitle)
           .lineLimit(1)
           .frame(maxWidth: .infinity, alignment: .leading)
           .layoutPriority(1)
@@ -517,8 +516,8 @@ struct SlotRowView: View {
       // Line 2
      if hasSubtitle {
        Text(subtitle)
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+        .font(WidgetNativeTheme.Typography.rowSubtitle)
+        .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
         .lineLimit(1)
         .frame(maxWidth: .infinity, alignment: .leading)
         .layoutPriority(1)
@@ -546,12 +545,12 @@ private struct SideSlotView: View {
           .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
       } else {
         RoundedRectangle(cornerRadius: 4, style: .continuous)
-          .fill(Color.secondary.opacity(0.2))
+          .fill(WidgetNativeTheme.Colors.thumbnailPlaceholderFill)
           .frame(width: 24, height: 24)
       }
     } else if type == "status", !raw.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
       Text(raw)
-        .font(.caption2)
+        .font(WidgetNativeTheme.Typography.sideSlot)
         .lineLimit(1)
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
@@ -561,8 +560,8 @@ private struct SideSlotView: View {
         .frame(maxWidth: maxWidth, alignment: alignment)
     } else {
       Text(displayText(for: slot))
-        .font(.caption2)
-        .foregroundStyle(.secondary)
+        .font(WidgetNativeTheme.Typography.sideSlot)
+        .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
         .lineLimit(1)
         .fixedSize()
         .frame(maxWidth: maxWidth, alignment: alignment)
@@ -824,12 +823,12 @@ struct LatestItemsWidgetView: View {
               .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
           } else {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
-              .fill(Color.secondary.opacity(0.15))
+              .fill(WidgetNativeTheme.Colors.chromeMutedFill)
               .frame(width: 16, height: 16)
           }
 
           Text(entry.configTitle)
-            .font(.headline)
+            .font(WidgetNativeTheme.Typography.widgetHeaderTitle)
             .lineLimit(1)
 
           Spacer(minLength: 0)
@@ -849,8 +848,8 @@ struct LatestItemsWidgetView: View {
           .padding(.top, 10)
         } else {
           Text(entry.statusMessage ?? "Open the app to refresh")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(WidgetNativeTheme.Typography.statusMessage)
+            .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
         }
       }
       .modifier(LatestItemsContainerBackgroundIfNotPreviewModifier())
