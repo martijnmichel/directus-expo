@@ -61,7 +61,7 @@ const DEFAULT_VALUES: FormValues = {
   type: APP_WIDGET_TYPE_LATEST_ITEMS,
   title: "",
   collection: "",
-  sort: "-date_updated",
+  sort: "",
   extra: { slots: DEFAULT_SLOTS },
 };
 
@@ -138,7 +138,7 @@ export default function WidgetConfigEditorScreen() {
     const prev = getValues("collection");
     setValue("collection", next);
     if (prev !== next) {
-      setValue("sort", "-date_updated");
+      setValue("sort", "");
       setValue("extra.slots", DEFAULT_SLOTS);
     }
   };
