@@ -10,11 +10,10 @@ import {
 import { Container } from "@/components/layout/Container";
 import { Section } from "@/components/layout/Section";
 import { Vertical, Horizontal } from "@/components/layout/Stack";
-import { Text, Muted } from "@/components/display/typography";
+import { Text } from "@/components/display/typography";
 import { Button } from "@/components/display/button";
 import { Input } from "@/components/interfaces/input";
 import { Select } from "@/components/interfaces/select";
-import { DirectusIcon } from "@/components/display/directus-icon";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   APP_WIDGET_CONFIG_COLLECTION,
@@ -25,6 +24,7 @@ import {
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
 import { FieldPathPicker } from "@/components/content/FieldPathPicker";
+import { FieldPathSelect } from "@/components/content/FieldPathSelect";
 import { updateItem, createItem, deleteItem } from "@directus/sdk";
 import { useFields } from "@/state/queries/directus/collection";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
@@ -317,64 +317,39 @@ export default function WidgetConfigEditorScreen() {
                       {t("widget.latestItems.slotsHint")}
                     </Text>
                   </Vertical>
-                  {slots.map((slot) => (
-                    <Vertical
-                      key={slot.key}
-                      spacing="xs"
-                      style={{ paddingVertical: 6 }}
-                    >
-                      <Text numberOfLines={1} style={[styles.label]}>
-                        {(() => {
-                          const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
-                            (s) => s.key === slot.key,
-                          );
-                          return def ? t(def.labelKey) : slot.key;
-                        })()}
-                      </Text>
-                      <Input
-                        value={slot.field?.trim() ? slot.field : ""}
+                  {slots.map((slot) => {
+                    const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
+                      (s) => s.key === slot.key,
+                    );
+                    const slotLabel = def ? t(def.labelKey) : slot.key;
+                    const slotInfo = def ? t(def.hintKey) : "";
+                    return (
+                      <FieldPathSelect
+                        key={slot.key}
+                        style={{ paddingVertical: 6 }}
+                        label={slotLabel}
+                        info={slotInfo || undefined}
+                        value={slot.field ?? ""}
                         placeholder={t(
                           "widget.latestItems.selectFieldPlaceholder",
                         )}
-                        editable={false}
-                        showSoftInputOnFocus={false}
-                        caretHidden
-                        onPressIn={() => {
+                        onPress={() => {
                           setActiveSlotKey(slot.key);
                           setFieldPickerOpen(true);
                         }}
-                        append={
-                          slot.field?.trim() ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              colorScheme="error"
-                              onPress={() => {
-                                const current = getValues("extra.slots");
-                                const updated = current.map((s) =>
-                                  s.key === slot.key ? { ...s, field: "" } : s,
-                                );
-                                setValue("extra.slots", updated);
-                              }}
-                            >
-                              <DirectusIcon name="close" />
-                            </Button>
-                          ) : null
-                        }
-                        style={{ paddingRight: 0 }}
+                        onClear={() => {
+                          const current = getValues("extra.slots");
+                          const updated = current.map((s) =>
+                            s.key === slot.key ? { ...s, field: "" } : s,
+                          );
+                          setValue("extra.slots", updated, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                          });
+                        }}
                       />
-                      {(() => {
-                        const def = APP_WIDGET_LATEST_ITEMS_SLOTS.find(
-                          (s) => s.key === slot.key,
-                        );
-                        if (!def) return null;
-                        const hint = t(def.hintKey);
-                        return hint ? (
-                          <Muted numberOfLines={2}>{hint}</Muted>
-                        ) : null;
-                      })()}
-                    </Vertical>
-                  ))}
+                    );
+                  })}
                 </Vertical>
               )}
             </Vertical>
@@ -396,7 +371,10 @@ export default function WidgetConfigEditorScreen() {
           const updated = current.map((s) =>
             s.key === activeSlotKey ? { ...s, field: path } : s,
           );
-          setValue("extra.slots", updated);
+          setValue("extra.slots", updated, {
+            shouldDirty: true,
+            shouldTouch: true,
+          });
         }}
       />
     </KeyboardAwareLayout>
