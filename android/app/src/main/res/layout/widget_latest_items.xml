@@ -28,7 +28,7 @@
       android:layout_height="wrap_content"
       android:layout_weight="1"
       android:text="@string/widget_latest_items_title"
-      android:textSize="14sp"
+      android:textSize="16sp"
       android:textStyle="bold"
       android:maxLines="1"
       android:ellipsize="end"

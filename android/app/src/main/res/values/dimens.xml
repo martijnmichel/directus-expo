@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Status capsule in latest-items widget rows (RemoteViews + shape background). -->
+  <dimen name="widget_status_pill_padding_horizontal">8dp</dimen>
+  <dimen name="widget_status_pill_padding_vertical">2dp</dimen>
+</resources>

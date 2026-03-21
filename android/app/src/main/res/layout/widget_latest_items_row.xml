@@ -61,7 +61,7 @@
       android:layout_weight="1"
       android:minWidth="0dp"
       android:text="-"
-      android:textSize="13sp"
+      android:textSize="15sp"
       android:textStyle="bold"
       android:maxLines="1"
       android:ellipsize="end"

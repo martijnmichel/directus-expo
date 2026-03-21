@@ -1,5 +1,6 @@
 package com.martijnmichel.directusexpo.widget.directus
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.view.View
@@ -24,12 +25,14 @@ object DirectusWidgetSlotRemoteViews {
    * @param textViewId Target [TextView] (always updated for text modes; for thumbnails it is hidden).
    * @param transformSlotTypes If true, interpret `thumbnail` / `status` / etc.; requires [containerId]
    *   and [imageId]. If false, only [DirectusWidgetSlotDisplay.displayText] is written to [textViewId].
+   * @param context Required when [transformSlotTypes] is true (status pill padding in px).
    */
   fun renderSlot(
     views: RemoteViews,
     textViewId: Int,
     slot: DirectusWidgetSlotValue?,
     transformSlotTypes: Boolean,
+    context: Context? = null,
     containerId: Int? = null,
     imageId: Int? = null,
     thumbBitmapsByFileId: Map<String, Bitmap> = emptyMap(),
@@ -51,10 +54,16 @@ object DirectusWidgetSlotRemoteViews {
       return
     }
 
+    val ctx = context ?: error("renderSlot: context required when transformSlotTypes=true")
     views.setViewVisibility(c, View.VISIBLE)
+
+    val res = ctx.resources
+    val statusPadH = res.getDimensionPixelSize(R.dimen.widget_status_pill_padding_horizontal)
+    val statusPadV = res.getDimensionPixelSize(R.dimen.widget_status_pill_padding_vertical)
 
     when (slot.type.lowercase(Locale.US)) {
       "thumbnail" -> {
+        views.setViewPadding(textViewId, 0, 0, 0, 0)
         views.setViewVisibility(img, View.VISIBLE)
         views.setViewVisibility(textViewId, View.GONE)
         views.setImageViewResource(img, R.drawable.widget_thumb_placeholder)
@@ -63,11 +72,13 @@ object DirectusWidgetSlotRemoteViews {
       "status" -> {
         views.setViewVisibility(img, View.GONE)
         views.setViewVisibility(textViewId, View.VISIBLE)
+        views.setViewPadding(textViewId, statusPadH, statusPadV, statusPadH, statusPadV)
         views.setTextViewText(textViewId, value)
         views.setInt(textViewId, "setTextColor", statusForegroundColor(value))
         views.setInt(textViewId, "setBackgroundResource", statusPillDrawableRes(value))
       }
       else -> {
+        views.setViewPadding(textViewId, 0, 0, 0, 0)
         views.setViewVisibility(img, View.GONE)
         views.setViewVisibility(textViewId, View.VISIBLE)
         views.setTextViewText(textViewId, DirectusWidgetSlotDisplay.displayText(slot.type, slot.value))
