@@ -12,9 +12,9 @@ enum DirectusWidgetSideSlot {
 }
 
 /// Side column: thumbnail, status capsule, or secondary text (`DirectusWidgetSlotDisplay`).
+/// Width / flex comes from the parent (`WidgetSideSlotColumnModifier`).
 struct DirectusWidgetSideSlotView: View {
   let slot: SlotItem.SlotValue?
-  let maxWidth: CGFloat
   let alignment: Alignment
 
   var body: some View {
@@ -42,15 +42,15 @@ struct DirectusWidgetSideSlotView: View {
         .padding(.vertical, 2)
         .foregroundStyle(DirectusWidgetSlotDisplay.statusForeground(for: raw))
         .background(Capsule(style: .continuous).fill(DirectusWidgetSlotDisplay.statusBackground(for: raw)))
-        .fixedSize()
-        .frame(maxWidth: maxWidth, alignment: alignment)
+        .lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: alignment)
     } else {
       Text(DirectusWidgetSlotDisplay.text(for: slot))
         .font(WidgetNativeTheme.Typography.sideSlot)
         .foregroundStyle(WidgetNativeTheme.Colors.secondaryForeground)
         .lineLimit(1)
-        .fixedSize()
-        .frame(maxWidth: maxWidth, alignment: alignment)
+        .truncationMode(.tail)
+        .frame(maxWidth: .infinity, alignment: alignment)
     }
   }
 }

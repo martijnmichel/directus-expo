@@ -102,9 +102,31 @@ export const formStyles = createStyleSheet((theme) => ({
     alignItems: "center",
     marginVertical: 4,
   },
+  /** Row for single Checkbox: box + caption (replaces ad-hoc Pressable styles). */
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing.sm,
+  },
+  /** Inline label next to the checkbox (same weight as field labels). */
+  checkboxCaption: {
+    flex: 1,
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.label.fontSize,
+    fontWeight: theme.typography.label.fontWeight,
+    fontFamily: theme.typography.label.fontFamily,
+  },
   checkboxLabel: {
     marginLeft: 8,
     color: theme.colors.textPrimary,
+  },
+  /** Grouped block (e.g. widget slot editor) — matches alert/input surface tokens. */
+  slotCard: {
+    backgroundColor: theme.colors.backgroundAlt,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: theme.borderWidth.sm,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.md,
   },
   checkboxContainer: {
     width: 24,

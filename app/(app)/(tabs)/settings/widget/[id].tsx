@@ -1,5 +1,5 @@
 import { useLocalSearchParams, router, Stack } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useForm, useWatch } from "react-hook-form";
@@ -20,6 +20,12 @@ import {
   APP_WIDGET_TYPE_LATEST_ITEMS,
   APP_WIDGET_TYPES,
   APP_WIDGET_LATEST_ITEMS_SLOTS,
+  buildDefaultLatestItemsFormSlots,
+  normalizeLatestItemsSlotsFromSaved,
+  resolvedOptionsForSlotRow,
+  slotOptionShouldShow,
+  type LatestItemsWidgetFormSlot,
+  type AppWidgetSlotOptionDef,
 } from "@/constants/widget";
 import { useCollections } from "@/state/queries/directus/core";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
@@ -37,6 +43,7 @@ import { Check } from "@/components/icons";
 import { useStyles } from "react-native-unistyles";
 import { formStyles } from "@/components/interfaces/style";
 import { Divider } from "@/components/layout/divider";
+import { Checkbox } from "@/components/interfaces/checkbox";
 
 type FormValues = {
   type: string;
@@ -44,15 +51,11 @@ type FormValues = {
   collection: string;
   sort: string;
   extra: {
-    slots: Array<{ key: string; label: string; field: string }>;
+    slots: LatestItemsWidgetFormSlot[];
   };
 };
 
-const DEFAULT_SLOTS = APP_WIDGET_LATEST_ITEMS_SLOTS.map((s) => ({
-  key: s.key,
-  label: "",
-  field: "",
-}));
+const DEFAULT_SLOTS = buildDefaultLatestItemsFormSlots();
 
 const DEFAULT_VALUES: FormValues = {
   type: APP_WIDGET_TYPE_LATEST_ITEMS,
@@ -112,29 +115,33 @@ export default function WidgetConfigEditorScreen() {
   // Populate form when an existing config is loaded.
   useEffect(() => {
     if (!existing) return;
+    const col = existing.collection ?? "";
+    const rawSlots = existing.extra?.slots;
     reset({
       type: existing.type || APP_WIDGET_TYPE_LATEST_ITEMS,
       title: existing.title ?? "",
-      collection: existing.collection ?? "",
+      collection: col,
       sort: existing.sort ?? "",
-      extra: existing.extra?.slots?.length
-        ? existing.extra
-        : { slots: DEFAULT_SLOTS },
+      extra:
+        Array.isArray(rawSlots) && rawSlots.length > 0
+          ? {
+              slots: normalizeLatestItemsSlotsFromSaved(
+                rawSlots as LatestItemsWidgetFormSlot[],
+              ),
+            }
+          : { slots: DEFAULT_SLOTS },
     });
   }, [existing, reset]);
 
-  // Reset sort + slots when collection changes (but not on initial mount).
-  const prevCollection = useRef<string | null>(null);
-  useEffect(() => {
-    if (prevCollection.current === null) {
-      prevCollection.current = collection;
-      return;
+  const onCollectionChange = (val: string | number) => {
+    const next = String(val);
+    const prev = getValues("collection");
+    setValue("collection", next);
+    if (prev !== next) {
+      setValue("sort", "-date_updated");
+      setValue("extra.slots", DEFAULT_SLOTS);
     }
-    if (collection === prevCollection.current) return;
-    prevCollection.current = collection;
-    setValue("sort", "-date_updated");
-    setValue("extra.slots", DEFAULT_SLOTS);
-  }, [collection, setValue]);
+  };
 
   const { data: rawFields } = useFields(collection as any);
   const sortOptions = useMemo<Array<{ value: string; text: string }>>(() => {
@@ -211,6 +218,24 @@ export default function WidgetConfigEditorScreen() {
       router.back();
     },
   });
+
+  const patchSlotOption = (
+    slotKey: string,
+    optionKey: string,
+    value: boolean | number | string,
+  ) => {
+    const current = getValues("extra.slots");
+    const updated = current.map((s) => {
+      if (s.key !== slotKey) return s;
+      const prev = { ...(s.options ?? {}) };
+      prev[optionKey] = value;
+      return { ...s, options: prev };
+    });
+    setValue("extra.slots", updated, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+  };
 
   const confirmRemove = () => {
     if (isNew) return;
@@ -289,7 +314,7 @@ export default function WidgetConfigEditorScreen() {
               <Select
                 label={t("widget.collectionLabel")}
                 value={collection}
-                onValueChange={(val) => setValue("collection", String(val))}
+                onValueChange={onCollectionChange}
                 options={collectionOptions}
                 placeholder={t("widget.collectionPlaceholder")}
               />
@@ -323,31 +348,108 @@ export default function WidgetConfigEditorScreen() {
                     );
                     const slotLabel = def ? t(def.labelKey) : slot.key;
                     const slotInfo = def ? t(def.hintKey) : "";
+                    const slotOptions =
+                      def && "options" in def && def.options
+                        ? def.options
+                        : null;
+                    const resolved =
+                      def && slotOptions
+                        ? resolvedOptionsForSlotRow(slot, def)
+                        : {};
+
                     return (
-                      <FieldPathSelect
-                        key={slot.key}
-                        style={{ paddingVertical: 6 }}
-                        label={slotLabel}
-                        info={slotInfo || undefined}
-                        value={slot.field ?? ""}
-                        placeholder={t(
-                          "widget.latestItems.selectFieldPlaceholder",
-                        )}
-                        onPress={() => {
-                          setActiveSlotKey(slot.key);
-                          setFieldPickerOpen(true);
-                        }}
-                        onClear={() => {
-                          const current = getValues("extra.slots");
-                          const updated = current.map((s) =>
-                            s.key === slot.key ? { ...s, field: "" } : s,
-                          );
-                          setValue("extra.slots", updated, {
-                            shouldDirty: true,
-                            shouldTouch: true,
-                          });
-                        }}
-                      />
+                      <View key={slot.key} style={styles.slotCard}>
+                        <Vertical spacing="lg">
+                        <FieldPathSelect
+                          style={{ paddingVertical: 6 }}
+                          label={slotLabel}
+                          info={slotInfo || undefined}
+                          value={slot.field ?? ""}
+                          placeholder={t(
+                            "widget.latestItems.selectFieldPlaceholder",
+                          )}
+                          onPress={() => {
+                            setActiveSlotKey(slot.key);
+                            setFieldPickerOpen(true);
+                          }}
+                          onClear={() => {
+                            const current = getValues("extra.slots");
+                            const updated = current.map((s) =>
+                              s.key === slot.key ? { ...s, field: "" } : s,
+                            );
+                            setValue("extra.slots", updated, {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                            });
+                          }}
+                        />
+                        {slotOptions?.map((opt: AppWidgetSlotOptionDef) => {
+                          if (!slotOptionShouldShow(opt, resolved)) return null;
+                          if (opt.type === "boolean") {
+                            return (
+                              <Checkbox
+                                key={`${slot.key}-${opt.key}`}
+                                label={t(opt.label)}
+                                helper={opt.hint ? t(opt.hint) : undefined}
+                                checked={Boolean(resolved[opt.key])}
+                                onChange={(next) =>
+                                  patchSlotOption(slot.key, opt.key, next)
+                                }
+                              />
+                            );
+                          }
+                          if (opt.type === "select" && opt.selectOptions) {
+                            const cur = resolved[opt.key];
+                            const value =
+                              typeof cur === "string"
+                                ? cur
+                                : String(opt.default ?? "");
+                            return (
+                              <Select
+                                key={`${slot.key}-${opt.key}`}
+                                label={t(opt.label)}
+                                helper={opt.hint ? t(opt.hint) : undefined}
+                                value={value}
+                                onValueChange={(val) =>
+                                  patchSlotOption(slot.key, opt.key, String(val))
+                                }
+                                options={opt.selectOptions.map((c) => ({
+                                  value: c.value,
+                                  text: t(c.labelKey),
+                                }))}
+                              />
+                            );
+                          }
+                          if (opt.type === "number") {
+                            const n = Number(resolved[opt.key]);
+                            const safe = Number.isFinite(n)
+                              ? n
+                              : Number(opt.default ?? 0);
+                            return (
+                              <Input
+                                key={`${slot.key}-${opt.key}`}
+                                label={t(opt.label)}
+                                helper={opt.hint ? t(opt.hint) : undefined}
+                                value={String(safe)}
+                                keyboardType="numeric"
+                                onChangeText={(text) => {
+                                  const raw = parseInt(text.replace(/[^\d-]/g, ""), 10);
+                                  if (!Number.isFinite(raw)) return;
+                                  const min = opt.min ?? 0;
+                                  const max = opt.max ?? 100;
+                                  patchSlotOption(
+                                    slot.key,
+                                    opt.key,
+                                    Math.min(max, Math.max(min, raw)),
+                                  );
+                                }}
+                              />
+                            );
+                          }
+                          return null;
+                        })}
+                        </Vertical>
+                      </View>
                     );
                   })}
                 </Vertical>

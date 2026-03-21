@@ -54,6 +54,8 @@ export type LatestItemsWidgetConfig = {
       key: string;
       label: string;
       field: string;
+      /** Persisted from widget editor; merged in flow with slot defaults. */
+      options?: Record<string, boolean | number | string>;
     }>;
   };
 };

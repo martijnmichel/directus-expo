@@ -7,7 +7,7 @@ import java.util.Locale
 
 object DirectusWidgetFlowDecoder {
   /**
-   * APP_WIDGET flow JSON: `{ data: [ { type, items: [ { id, values: [{slot,type,value}] } ] } ] }`
+   * APP_WIDGET flow JSON: `{ data: [ { type, items: [ { id, values: [{ slot, type, value, options? }] } ] } ] }`
    */
   fun decodeSlotItemsFromFlowResponse(resp: JSONObject, setup: DirectusWidgetFlowSetup): Pair<List<DirectusWidgetSlotItem>, String?> {
     val dataArr = resp.optJSONArray("data") ?: return Pair(emptyList(), null)
@@ -36,7 +36,8 @@ object DirectusWidgetFlowDecoder {
         val type =
           DirectusWidgetJson.string(vObj.opt("type")).trim().lowercase(Locale.US).ifEmpty { "string" }
         val value = DirectusWidgetJson.string(vObj.opt("value"))
-        slotMap[slotKey] = DirectusWidgetSlotValue(type, value)
+        val options = vObj.optJSONObject("options")
+        slotMap[slotKey] = DirectusWidgetSlotValue(type, value, options)
       }
 
       val deepLink =

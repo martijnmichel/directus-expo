@@ -13,6 +13,25 @@ function coerceArray(val: unknown): string[] | undefined {
   return val.map((x) => String(x));
 }
 
+/** Directus JSON fields may arrive parsed or as a string depending on client/version. */
+function parseExtraField(raw: unknown): Record<string, unknown> | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return undefined;
+}
+
 async function getWebhookUrlForInstance(directus: any) {
   const instanceUrl = directus?.url.toString();
   if (!instanceUrl) return null;
@@ -69,7 +88,7 @@ export function useWidgetItems(params: {
           title: row.title,
           webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
-          extra: row.extra && typeof row.extra === "object" ? row.extra : undefined,
+          extra: parseExtraField(row.extra) as LatestItemsWidgetConfig["extra"],
         }))
         .filter((c) => c.id.length > 0);
 

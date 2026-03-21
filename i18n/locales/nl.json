@@ -79,6 +79,23 @@
     "removeButton": "Verwijderen",
     "syncToWidget": "Sync naar widget",
     "synced": "Gesynchronizeerd",
+    "slot": {
+      "options": {
+        "widthBehaviour": {
+          "label": "Breedtegedrag",
+          "hint": "Hoe deze kolom horizontale ruimte gebruikt in elke widgetrij.",
+          "opt": {
+            "fit": "Inhoud",
+            "fixed": "Vast aandeel (%)",
+            "stretch": "Uitrekken"
+          }
+        },
+        "width": {
+          "label": "Breedte (%)",
+          "hint": "Ongeveer aandeel van de rij bij “Vast aandeel” (0–100)."
+        }
+      }
+    },
     "latestItems": {
       "selectFieldTitle": "Selecteer veld",
       "selectFieldPlaceholder": "Selecteer veld…",

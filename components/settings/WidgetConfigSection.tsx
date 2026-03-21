@@ -33,7 +33,7 @@ import {
   APP_WIDGET_SUPPORTED,
   APP_WIDGET_TYPE_LATEST_ITEMS,
   APP_WIDGET_TYPES,
-  APP_WIDGET_LATEST_ITEMS_SLOTS,
+  buildDefaultLatestItemsFormSlots,
 } from "@/constants/widget";
 import {
   deleteItem,
@@ -57,11 +57,7 @@ import { listStyles } from "@/components/display/related-listitem";
 import { useStyles } from "react-native-unistyles";
 import { router } from "expo-router";
 const DEFAULT_FIELDS: string[] = [];
-const DEFAULT_SLOTS = APP_WIDGET_LATEST_ITEMS_SLOTS.map((s) => ({
-  key: s.key,
-  label: "",
-  field: "",
-}));
+const DEFAULT_SLOTS = buildDefaultLatestItemsFormSlots();
 
 export function WidgetConfigSection() {
   const { t } = useTranslation();

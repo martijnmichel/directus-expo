@@ -20,6 +20,7 @@ import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetBitmapLoader
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowRepository
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetFlowSetup
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetJson
+import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotColumnLayout
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotRemoteViews
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotItem
 import com.martijnmichel.directusexpo.widget.directus.DirectusWidgetSlotValue
@@ -156,6 +157,32 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       }
     }
     return 0f
+  }
+
+  /**
+   * Widget width in **dp** from [AppWidgetManager] options (min/max track live resize).
+   */
+  @Suppress("DEPRECATION")
+  private fun widgetWidthDpFromOptions(options: Bundle): Float {
+    val minW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+    val maxW = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH, minW)
+    val fromMinMax = maxOf(minW, maxW)
+    if (fromMinMax > 0) {
+      return fromMinMax.toFloat()
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+      val sizes: ArrayList<SizeF>? =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+          options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
+        } else {
+          options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES)
+        }
+      if (!sizes.isNullOrEmpty()) {
+        return sizes.maxOf { it.width }
+      }
+    }
+    return 280f
   }
 
   /**
@@ -310,6 +337,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
                 views.setTextViewText(R.id.widget_subtitle, "Open app to add a widget setup")
               }
+              val rowWidthDp =
+                widgetWidthDpFromOptions(appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle())
               renderRows(
                 context,
                 views,
@@ -319,6 +348,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
                 instanceBase,
                 thumbBitmapsByFileId,
                 widgetId,
+                rowWidthDp,
               )
             }
           }
@@ -342,6 +372,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     instanceBase: String?,
     thumbBitmapsByFileId: Map<String, Bitmap>,
     appWidgetId: Int,
+    rowWidthDp: Float,
   ) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
 
@@ -388,6 +419,24 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         containerId = R.id.widget_row_right_container,
         imageId = R.id.widget_row_right_image,
         thumbBitmapsByFileId = thumbBitmapsByFileId,
+      )
+
+      val rowW = rowWidthDp.coerceAtLeast(120f)
+      val peerRight = DirectusWidgetSlotColumnLayout.roughPeerWidthDp(rightSlot, rowW)
+      val peerLeft = DirectusWidgetSlotColumnLayout.roughPeerWidthDp(leftSlot, rowW)
+      DirectusWidgetSlotColumnLayout.applyContainerWidth(
+        rowRv,
+        R.id.widget_row_left_container,
+        leftSlot,
+        rowW,
+        peerRight,
+      )
+      DirectusWidgetSlotColumnLayout.applyContainerWidth(
+        rowRv,
+        R.id.widget_row_right_container,
+        rightSlot,
+        rowW,
+        peerLeft,
       )
 
       rowRv.setViewVisibility(

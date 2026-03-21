@@ -139,7 +139,6 @@ struct SlotRowView: View {
 
     let title = DirectusWidgetSlotDisplay.text(for: titleSlot)
     let subtitle = DirectusWidgetSlotDisplay.text(for: subtitleSlot)
-    let sideMaxWidth: CGFloat = 80
     let hasLeft = DirectusWidgetSideSlot.hasContent(leftSlot)
     let hasRight = DirectusWidgetSideSlot.hasContent(rightSlot)
     let hasSubtitle = DirectusWidgetSideSlot.hasContent(subtitleSlot)
@@ -147,7 +146,14 @@ struct SlotRowView: View {
     return VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
       HStack(alignment: .center, spacing: 6) {
         if hasLeft {
-          DirectusWidgetSideSlotView(slot: leftSlot, maxWidth: sideMaxWidth, alignment: .leading)
+          DirectusWidgetSideSlotView(slot: leftSlot, alignment: .leading)
+            .modifier(
+              WidgetSideSlotColumnModifier(
+                behaviour: WidgetSlotWidthBehaviour.parse(options: leftSlot?.options),
+                widthPercent: WidgetSlotWidthBehaviour.widthPercent(options: leftSlot?.options),
+                alignment: .leading,
+              ),
+            )
         }
 
         Text(title)
@@ -157,7 +163,14 @@ struct SlotRowView: View {
           .layoutPriority(1)
 
         if hasRight {
-          DirectusWidgetSideSlotView(slot: rightSlot, maxWidth: sideMaxWidth, alignment: .trailing)
+          DirectusWidgetSideSlotView(slot: rightSlot, alignment: .trailing)
+            .modifier(
+              WidgetSideSlotColumnModifier(
+                behaviour: WidgetSlotWidthBehaviour.parse(options: rightSlot?.options),
+                widthPercent: WidgetSlotWidthBehaviour.widthPercent(options: rightSlot?.options),
+                alignment: .trailing,
+              ),
+            )
         }
       }
 

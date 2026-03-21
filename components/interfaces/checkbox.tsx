@@ -21,17 +21,13 @@ export const Checkbox = ({
   required,
 }: CheckboxProps) => {
   const { styles: formStyle, theme } = useStyles(formStyles);
+  const caption = text ?? label;
 
   return (
     <View style={formStyle.formControl}>
-      {label && (
-        <Text style={formStyle.label}>
-          {label} {required && "*"}
-        </Text>
-      )}
       <Pressable
         onPress={() => !disabled && onChange?.(!checked)}
-        style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+        style={formStyle.checkboxRow}
       >
         <View
           style={[
@@ -61,16 +57,17 @@ export const Checkbox = ({
             />
           )}
         </View>
-        {text && (
+        {caption ? (
           <Text
             style={[
-              { color: theme.colors.textPrimary },
+              formStyle.checkboxCaption,
               disabled && { color: theme.colors.textTertiary },
             ]}
           >
-            {text}
+            {caption}
+            {required ? " *" : ""}
           </Text>
-        )}
+        ) : null}
       </Pressable>
       {(error || helper) && (
         <Text style={[formStyle.helperText, error && formStyle.errorText]}>

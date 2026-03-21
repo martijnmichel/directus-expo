@@ -2,13 +2,50 @@ import Foundation
 
 // MARK: - Flow response (APP_WIDGET_FLOW_VERSION)
 
+/// Scalar values inside per-slot `options` from the flow (booleans, numbers, strings).
+enum FlowJsonScalar: Codable, Hashable {
+  case bool(Bool)
+  case int(Int)
+  case double(Double)
+  case string(String)
+
+  init(from decoder: Decoder) throws {
+    let c = try decoder.singleValueContainer()
+    if let b = try? c.decode(Bool.self) {
+      self = .bool(b)
+      return
+    }
+    if let i = try? c.decode(Int.self) {
+      self = .int(i)
+      return
+    }
+    if let d = try? c.decode(Double.self) {
+      self = .double(d)
+      return
+    }
+    self = .string(try c.decode(String.self))
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var c = encoder.singleValueContainer()
+    switch self {
+    case .bool(let v): try c.encode(v)
+    case .int(let v): try c.encode(v)
+    case .double(let v): try c.encode(v)
+    case .string(let v): try c.encode(v)
+    }
+  }
+}
+
 struct FlowItemValue: Decodable, Hashable {
   let slot: String
   let type: String?
   let value: String
+  /// Per-slot UI options from Directus config (e.g. `widthBehaviour`, `width` for left/right).
+  let options: [String: FlowJsonScalar]?
 
   enum CodingKeys: String, CodingKey {
-    case slot, type, value
+    case slot, type, value, options
   }
 
   init(from decoder: Decoder) throws {
@@ -19,6 +56,7 @@ struct FlowItemValue: Decodable, Hashable {
       ?? (try? c.decode(Int.self, forKey: .value)).map { String($0) }
       ?? (try? c.decode(Double.self, forKey: .value)).map { String($0) }
       ?? ""
+    options = try? c.decodeIfPresent([String: FlowJsonScalar].self, forKey: .options)
   }
 }
 
@@ -68,6 +106,7 @@ struct SlotItem: Hashable, Identifiable {
     let type: String
     let value: String
     var imageData: Data?
+    let options: [String: FlowJsonScalar]?
   }
 
   let id: String

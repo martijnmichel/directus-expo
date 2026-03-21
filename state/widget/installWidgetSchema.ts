@@ -416,6 +416,43 @@ module.exports = async function (data) {
     return leaf.map(getFieldValueString).filter(Boolean).join(", ");
   }
 
+  /** Default UI options for slots that support them (keep in sync with APP_WIDGET_LATEST_ITEMS_SLOTS). */
+  function defaultSlotOptionsByKey(slotKey) {
+    if (slotKey === "left" || slotKey === "right") {
+      return { widthBehaviour: "fixed", width: 24 };
+    }
+    return null;
+  }
+
+  var SLOT_OPTION_KEYS = { widthBehaviour: true, width: true };
+
+  function mergeSlotOptions(slotKey, rawOpts) {
+    var def = defaultSlotOptionsByKey(slotKey);
+    if (!def) return null;
+    var out = {};
+    for (var dk in def) {
+      if (Object.prototype.hasOwnProperty.call(def, dk)) out[dk] = def[dk];
+    }
+    if (rawOpts && typeof rawOpts === "object" && !Array.isArray(rawOpts)) {
+      var wb = rawOpts.widthBehaviour;
+      if (wb === "fit" || wb === "fixed" || wb === "stretch") {
+        out.widthBehaviour = wb;
+      } else if (rawOpts.stretch === true) {
+        out.widthBehaviour = "stretch";
+      }
+      for (var rk in rawOpts) {
+        if (!Object.prototype.hasOwnProperty.call(rawOpts, rk)) continue;
+        if (!SLOT_OPTION_KEYS[rk]) continue;
+        out[rk] = rawOpts[rk];
+      }
+      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed" && out.widthBehaviour !== "stretch") {
+        out.widthBehaviour = "fixed";
+      }
+    }
+    delete out.stretch;
+    return out;
+  }
+
   function normalizeSlots(extra) {
     var defaults = [
       { key: "left", label: "Left", field: "" },
@@ -434,9 +471,16 @@ module.exports = async function (data) {
         key: k,
         label: s.label != null ? String(s.label) : k,
         field: s.field != null ? String(s.field) : "",
+        options: s.options != null && typeof s.options === "object" && !Array.isArray(s.options) ? s.options : null,
       };
     }
-    return defaults.map(function (d) { return byKey[d.key] || d; });
+    return defaults.map(function (d) {
+      var base = byKey[d.key] || d;
+      var merged = mergeSlotOptions(base.key, base.options);
+      var row = { key: base.key, label: base.label, field: base.field };
+      if (merged) row.options = merged;
+      return row;
+    });
   }
 
   function asArray(val) {
@@ -1108,7 +1152,7 @@ module.exports = async function (data) {
     switch (widgetType) {
       case "latest-items":
       default: {
-        var slots = (rawExtra && Array.isArray(rawExtra.slots)) ? rawExtra.slots : [];
+        var slots = normalizeSlots(rawExtra || {});
         var formatted = (Array.isArray(items) ? items : []).map(function (it) {
           var id = it && (it.id != null ? String(it.id) : "");
           var values = slots.reduce(function (acc, s) {
@@ -1116,11 +1160,13 @@ module.exports = async function (data) {
             if (!field.trim()) return acc;
             var parsed = parsePathAndTransform(field);
             resolveSlotDebug(parsed.path, parsed.transform);
-            acc.push({
+            var row = {
               slot: s.key,
               type: inferSlotTypeFromPath(collection, field),
               value: resolveSlotValue(it, field),
-            });
+            };
+            if (s.options && typeof s.options === "object") row.options = s.options;
+            acc.push(row);
             return acc;
           }, []);
           return { id: id, values: values };
@@ -1426,6 +1472,42 @@ module.exports = async function (data) {
   // Each widget type returns { normalizedExtra, fieldPaths } where fieldPaths
   // is the deduplicated list of base paths to request from Directus (no transforms).
   // Add a new "case" here when a new widget type is introduced.
+  function defaultSlotOptionsByKey(slotKey) {
+    if (slotKey === "left" || slotKey === "right") {
+      return { widthBehaviour: "fixed", width: 24 };
+    }
+    return null;
+  }
+
+  var SLOT_OPTION_KEYS_PUSH = { widthBehaviour: true, width: true };
+
+  function mergeSlotOptions(slotKey, rawOpts) {
+    var def = defaultSlotOptionsByKey(slotKey);
+    if (!def) return null;
+    var out = {};
+    for (var dk in def) {
+      if (Object.prototype.hasOwnProperty.call(def, dk)) out[dk] = def[dk];
+    }
+    if (rawOpts && typeof rawOpts === "object" && !Array.isArray(rawOpts)) {
+      var wb = rawOpts.widthBehaviour;
+      if (wb === "fit" || wb === "fixed" || wb === "stretch") {
+        out.widthBehaviour = wb;
+      } else if (rawOpts.stretch === true) {
+        out.widthBehaviour = "stretch";
+      }
+      for (var rk in rawOpts) {
+        if (!Object.prototype.hasOwnProperty.call(rawOpts, rk)) continue;
+        if (!SLOT_OPTION_KEYS_PUSH[rk]) continue;
+        out[rk] = rawOpts[rk];
+      }
+      if (out.widthBehaviour !== "fit" && out.widthBehaviour !== "fixed" && out.widthBehaviour !== "stretch") {
+        out.widthBehaviour = "fixed";
+      }
+    }
+    delete out.stretch;
+    return out;
+  }
+
   function normalizeExtraForType(widgetType, rawExtra) {
     switch (widgetType) {
       case "latest-items":
@@ -1443,9 +1525,20 @@ module.exports = async function (data) {
           if (!s || typeof s !== "object") continue;
           var k = s.key != null ? String(s.key) : "";
           if (!k) continue;
-          byKey[k] = { key: k, label: s.label != null ? String(s.label) : k, field: s.field != null ? String(s.field) : "" };
+          byKey[k] = {
+            key: k,
+            label: s.label != null ? String(s.label) : k,
+            field: s.field != null ? String(s.field) : "",
+            options: s.options != null && typeof s.options === "object" && !Array.isArray(s.options) ? s.options : null,
+          };
         }
-        var slots = slotDefaults.map(function (d) { return byKey[d.key] || d; });
+        var slots = slotDefaults.map(function (d) {
+          var base = byKey[d.key] || d;
+          var merged = mergeSlotOptions(base.key, base.options);
+          var row = { key: base.key, label: base.label, field: base.field };
+          if (merged) row.options = merged;
+          return row;
+        });
         var paths = slots.map(function (sl) { return sanitizePath(sl.field); }).filter(Boolean);
         return { normalizedExtra: { slots: slots }, fieldPaths: paths };
       }

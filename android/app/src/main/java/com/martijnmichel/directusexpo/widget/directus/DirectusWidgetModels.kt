@@ -1,6 +1,7 @@
 package com.martijnmichel.directusexpo.widget.directus
 
 import android.graphics.Bitmap
+import org.json.JSONObject
 
 /**
  * Minimal setup needed to decode flow payloads and build deep links (any Directus home-screen widget).
@@ -12,7 +13,15 @@ data class DirectusWidgetFlowSetup(
   val webhookUrl: String?,
 )
 
-data class DirectusWidgetSlotValue(val type: String, val value: String)
+/**
+ * One cell in a row: resolved field type + string value, optional per-slot UI options from the flow
+ * (e.g. `widthBehaviour`, `width` for left/right — see `constants/widget.ts` / flow `normalizeSlots`).
+ */
+data class DirectusWidgetSlotValue(
+  val type: String,
+  val value: String,
+  val options: JSONObject? = null,
+)
 
 data class DirectusWidgetSlotItem(
   val id: String,

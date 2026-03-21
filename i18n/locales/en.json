@@ -82,6 +82,23 @@
     "removeButton": "Remove",
     "syncToWidget": "Sync to widget",
     "synced": "Synced",
+    "slot": {
+      "options": {
+        "widthBehaviour": {
+          "label": "Width behaviour",
+          "hint": "How this column uses horizontal space in each widget row.",
+          "opt": {
+            "fit": "Fit content",
+            "fixed": "Fixed share (%)",
+            "stretch": "Stretch to fill"
+          }
+        },
+        "width": {
+          "label": "Width (%)",
+          "hint": "Approximate share of the row when behaviour is “Fixed share” (0–100)."
+        }
+      }
+    },
     "latestItems": {
       "selectFieldTitle": "Select field",
       "selectFieldPlaceholder": "Select field…",

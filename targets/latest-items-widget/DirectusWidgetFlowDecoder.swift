@@ -13,7 +13,11 @@ enum DirectusWidgetFlowDecoder {
         var map: [String: SlotItem.SlotValue] = [:]
         for v in it.values {
           if !v.slot.isEmpty {
-            map[v.slot] = .init(type: (v.type ?? "string").lowercased(), value: v.value)
+            map[v.slot] = .init(
+              type: (v.type ?? "string").lowercased(),
+              value: v.value,
+              options: v.options
+            )
           }
         }
         let url = urlBase.map { $0 + it.id }
