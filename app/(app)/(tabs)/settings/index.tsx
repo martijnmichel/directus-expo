@@ -136,6 +136,27 @@ export default function SettingsScreen() {
         </ExternalLink>
       ),
     },
+    ...(__DEV__
+      ? [
+          {
+            label: "Dev: Deep Link Loading",
+            type: "component",
+            component: (
+              <Button
+                variant="soft"
+                onPress={() =>
+                  router.push({
+                    pathname: "/deeplink-loading",
+                    params: { collection: "articles", switching: "1" },
+                  } as any)
+                }
+              >
+                Open deep link loading screen
+              </Button>
+            ),
+          },
+        ]
+      : []),
     ...(isUpdateAvailable
       ? [
           {

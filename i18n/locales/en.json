@@ -277,6 +277,17 @@
     }
   },
   "pages": {
+    "deeplinkLoading": {
+      "titleSwitching": "Switching account and server...",
+      "titleOpening": "Opening linked item...",
+      "subtitleSwitching": "Applying deep link session and reloading your data.",
+      "subtitleOpening": "Loading content from deep link.",
+      "detailCollection": "Collection: {{collection}}",
+      "detailServer": "Server: {{server}}",
+      "detailMoment": "This should only take a moment.",
+      "switchTarget": "Switch to \"{{account}}\" on \"{{server}}\"",
+      "accountFallback": "user"
+    },
     "modals": {
       "repeater": {
         "edit": "Edit item",

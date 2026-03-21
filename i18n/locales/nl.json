@@ -272,6 +272,17 @@
     }
   },
   "pages": {
+    "deeplinkLoading": {
+      "titleSwitching": "Account en server wisselen...",
+      "titleOpening": "Gekoppeld item openen...",
+      "subtitleSwitching": "Deep-link sessie toepassen en gegevens vernieuwen.",
+      "subtitleOpening": "Inhoud laden vanuit deep link.",
+      "detailCollection": "Collectie: {{collection}}",
+      "detailServer": "Server: {{server}}",
+      "detailMoment": "Dit duurt normaal maar even.",
+      "switchTarget": "Schakel over naar \"{{account}}\" op \"{{server}}\"",
+      "accountFallback": "gebruiker"
+    },
     "modals": {
       "repeater": {
         "edit": "Artikel bewerken",

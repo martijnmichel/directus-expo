@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
-import ToastManager from "@/utils/toast";
 import {
   handleIncomingDeepLinkUrl,
   parseDirectusDeepLink,
@@ -14,16 +13,11 @@ import {
   resolveSessionContextForSessionId,
 } from "@/state/auth/resolveActiveSession";
 
-function describeSessionTarget(
-  userLabel: string | undefined,
-  apiUrl: string,
-): string {
-  const user = userLabel?.trim() || "account";
+function getServerLabel(rawUrl: string): string {
   try {
-    const host = new URL(apiUrl).host;
-    return `${user} on ${host}`;
+    return new URL(rawUrl).host;
   } catch {
-    return `${user} on ${apiUrl}`;
+    return rawUrl;
   }
 }
 
@@ -53,9 +47,10 @@ export function AppDeepLinkHandler() {
         if (!parsed) return;
 
         const sidFromLink = parsed.sessionId?.trim();
-        const ctx = sidFromLink
+        const deepLinkCtx = sidFromLink
           ? await resolveSessionContextForSessionId(sidFromLink)
-          : await resolveActiveSessionContext();
+          : null;
+        const ctx = deepLinkCtx ?? (await resolveActiveSessionContext());
         if (!ctx) {
           router.replace("/login");
           return;
@@ -64,17 +59,20 @@ export function AppDeepLinkHandler() {
           !!previousCtx &&
           (previousCtx.sessionId !== ctx.sessionId ||
             previousCtx.api.url !== ctx.api.url);
+        router.replace({
+          pathname: "/deeplink-loading",
+          params: {
+            collection: parsed.collection,
+            switching: switchedSessionOrServer ? "1" : "0",
+            server: getServerLabel(ctx.api.url),
+            account: ctx.wrapper.userLabel?.trim() || "",
+          },
+        } as any);
         const result = await refreshSession({
           url: ctx.api.url,
           sessionId: ctx.sessionId,
         });
         if (result.ok) {
-          if (switchedSessionOrServer) {
-            ToastManager.success({
-              message: "Switched account from deep link",
-              description: `Now using ${describeSessionTarget(ctx.wrapper.userLabel, ctx.api.url)}.`,
-            });
-          }
           setPendingDeepLinkHref(null);
           router.replace(parsed.href as any);
         } else {
