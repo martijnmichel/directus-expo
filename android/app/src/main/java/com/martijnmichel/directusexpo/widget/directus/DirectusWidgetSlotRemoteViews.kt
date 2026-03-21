@@ -38,10 +38,20 @@ object DirectusWidgetSlotRemoteViews {
     thumbBitmapsByFileId: Map<String, Bitmap> = emptyMap(),
   ) {
     if (!transformSlotTypes) {
-      views.setTextViewText(
-        textViewId,
-        DirectusWidgetSlotDisplay.displayText(slot?.type, slot?.value),
-      )
+      val raw = slot?.value?.trim().orEmpty()
+      if (slot == null || raw.isEmpty()) {
+        views.setViewVisibility(textViewId, View.GONE)
+        views.setTextViewText(textViewId, "")
+        return
+      }
+      val text = DirectusWidgetSlotDisplay.displayText(slot.type, slot.value)
+      if (text.isBlank()) {
+        views.setViewVisibility(textViewId, View.GONE)
+        views.setTextViewText(textViewId, "")
+        return
+      }
+      views.setViewVisibility(textViewId, View.VISIBLE)
+      views.setTextViewText(textViewId, text)
       return
     }
 
@@ -80,8 +90,14 @@ object DirectusWidgetSlotRemoteViews {
       else -> {
         views.setViewPadding(textViewId, 0, 0, 0, 0)
         views.setViewVisibility(img, View.GONE)
-        views.setViewVisibility(textViewId, View.VISIBLE)
-        views.setTextViewText(textViewId, DirectusWidgetSlotDisplay.displayText(slot.type, slot.value))
+        val sideText = DirectusWidgetSlotDisplay.displayText(slot.type, slot.value)
+        if (sideText.isBlank()) {
+          views.setViewVisibility(textViewId, View.GONE)
+          views.setTextViewText(textViewId, "")
+        } else {
+          views.setViewVisibility(textViewId, View.VISIBLE)
+          views.setTextViewText(textViewId, sideText)
+        }
         views.setInt(textViewId, "setBackgroundColor", Color.TRANSPARENT)
         views.setInt(textViewId, "setTextColor", Color.parseColor("#666666"))
       }

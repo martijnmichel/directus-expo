@@ -15,7 +15,7 @@ import kotlin.math.abs
 object DirectusWidgetSlotDisplay {
   fun displayText(type: String?, value: String?): String {
     val raw = value?.trim().orEmpty()
-    if (raw.isEmpty()) return "-"
+    if (raw.isEmpty()) return ""
 
     val t = type?.trim()?.lowercase(Locale.US).orEmpty()
     return when (t) {
