@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One list row; host adds N instances via RemoteViews.addView (API 24+).
+     Right column gets higher layout_weight than left so relative dates get more width than the left label. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/widget_row_item_root"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  android:paddingTop="0dp"
+  android:paddingBottom="0dp">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:baselineAligned="false">
+
+    <FrameLayout
+      android:id="@+id/widget_row_left_container"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:maxWidth="72dp">
+
+      <ImageView
+        android:id="@+id/widget_row_left_image"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@drawable/widget_thumb_placeholder"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null"
+        android:src="@android:color/transparent"
+        android:visibility="gone"
+        android:clipToOutline="true"
+        android:layout_gravity="center_vertical|start" />
+
+      <TextView
+        android:id="@+id/widget_row_left_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="."
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:background="@android:color/transparent"
+        android:textColor="#666666"
+        android:paddingLeft="0dp"
+        android:paddingRight="4dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:visibility="gone"
+        android:gravity="start|center_vertical" />
+    </FrameLayout>
+
+    <TextView
+      android:id="@+id/widget_row_title"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="4"
+      android:text="-"
+      android:textSize="13sp"
+      android:textStyle="bold"
+      android:maxLines="1"
+      android:ellipsize="end"
+      android:layout_marginStart="6dp"
+      android:layout_marginEnd="6dp"
+      android:gravity="start|center_vertical" />
+
+    <FrameLayout
+      android:id="@+id/widget_row_right_container"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="3"
+      android:maxWidth="132dp">
+
+      <ImageView
+        android:id="@+id/widget_row_right_image"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@drawable/widget_thumb_placeholder"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null"
+        android:src="@android:color/transparent"
+        android:visibility="gone"
+        android:clipToOutline="true"
+        android:layout_gravity="center_vertical|end" />
+
+      <TextView
+        android:id="@+id/widget_row_right_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="."
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:background="@android:color/transparent"
+        android:textColor="#666666"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="1dp"
+        android:paddingBottom="1dp"
+        android:visibility="gone"
+        android:gravity="end|center_vertical" />
+    </FrameLayout>
+
+  </LinearLayout>
+
+  <TextView
+    android:id="@+id/widget_row_subtitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="-"
+    android:textSize="12sp"
+    android:textColor="#666666"
+    android:maxLines="1"
+    android:ellipsize="end"
+    android:layout_marginTop="2dp" />
+
+  <TextView
+    android:id="@+id/widget_row_divider"
+    android:layout_width="match_parent"
+    android:layout_height="1dp"
+    android:background="#DDDDDD"
+    android:text=""
+    android:padding="0dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp" />
+
+</LinearLayout>

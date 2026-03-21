@@ -35,7 +35,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   companion object {
     private val executor = Executors.newSingleThreadExecutor()
 
-    /** Last row index in widget_latest_items.xml (rows 0..8 ⇒ 9 rows). */
+    /** Max row count − 1 (0..[WIDGET_ROW_LAST_INDEX] inclusive ⇒ 9 rows). */
     private const val WIDGET_ROW_LAST_INDEX = 8
 
     /** Title + padding + optional subtitle (dp) — subtract from host height for list area. */
@@ -352,7 +352,16 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_subtitle, View.VISIBLE)
                 views.setTextViewText(R.id.widget_subtitle, "Open app to add a widget setup")
               }
-              renderRows(context, views, maxRows, items, cfg, instanceBase, thumbBitmapsByFileId)
+              renderRows(
+                context,
+                views,
+                maxRows,
+                items,
+                cfg,
+                instanceBase,
+                thumbBitmapsByFileId,
+                widgetId,
+              )
             }
           }
         }
@@ -361,24 +370,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   }
 
   private fun renderEmptyRows(views: RemoteViews) {
-    views.setViewVisibility(R.id.widget_row_0_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_1_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_2_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_3_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_4_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_5_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_6_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_7_container, View.GONE)
-    views.setViewVisibility(R.id.widget_row_8_container, View.GONE)
-
-    views.setViewVisibility(R.id.widget_row_0_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_1_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_2_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_3_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_4_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_5_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_6_divider, View.GONE)
-    views.setViewVisibility(R.id.widget_row_7_divider, View.GONE)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      views.removeAllViews(R.id.widget_rows_container)
+    }
   }
 
   private fun renderSideSlot(
@@ -449,158 +443,75 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     cfg: SelectedConfig,
     instanceBase: String?,
     thumbBitmapsByFileId: Map<String, Bitmap>,
+    appWidgetId: Int,
   ) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) return
+
     val visibleCount = items.size.coerceAtMost(widgetMaxRows)
+    views.removeAllViews(R.id.widget_rows_container)
 
-    val rowContainers = intArrayOf(
-      R.id.widget_row_0_container,
-      R.id.widget_row_1_container,
-      R.id.widget_row_2_container,
-      R.id.widget_row_3_container,
-      R.id.widget_row_4_container,
-      R.id.widget_row_5_container,
-      R.id.widget_row_6_container,
-      R.id.widget_row_7_container,
-      R.id.widget_row_8_container,
-    )
-    val rowDividers = intArrayOf(
-      R.id.widget_row_0_divider,
-      R.id.widget_row_1_divider,
-      R.id.widget_row_2_divider,
-      R.id.widget_row_3_divider,
-      R.id.widget_row_4_divider,
-      R.id.widget_row_5_divider,
-      R.id.widget_row_6_divider,
-      R.id.widget_row_7_divider,
-    )
-    val leftContainerIds = intArrayOf(
-      R.id.widget_row_0_left_container,
-      R.id.widget_row_1_left_container,
-      R.id.widget_row_2_left_container,
-      R.id.widget_row_3_left_container,
-      R.id.widget_row_4_left_container,
-      R.id.widget_row_5_left_container,
-      R.id.widget_row_6_left_container,
-      R.id.widget_row_7_left_container,
-      R.id.widget_row_8_left_container,
-    )
-    val rightContainerIds = intArrayOf(
-      R.id.widget_row_0_right_container,
-      R.id.widget_row_1_right_container,
-      R.id.widget_row_2_right_container,
-      R.id.widget_row_3_right_container,
-      R.id.widget_row_4_right_container,
-      R.id.widget_row_5_right_container,
-      R.id.widget_row_6_right_container,
-      R.id.widget_row_7_right_container,
-      R.id.widget_row_8_right_container,
-    )
-    val leftImageIds = intArrayOf(
-      R.id.widget_row_0_left_image,
-      R.id.widget_row_1_left_image,
-      R.id.widget_row_2_left_image,
-      R.id.widget_row_3_left_image,
-      R.id.widget_row_4_left_image,
-      R.id.widget_row_5_left_image,
-      R.id.widget_row_6_left_image,
-      R.id.widget_row_7_left_image,
-      R.id.widget_row_8_left_image,
-    )
-    val leftTextIds = intArrayOf(
-      R.id.widget_row_0_left_text,
-      R.id.widget_row_1_left_text,
-      R.id.widget_row_2_left_text,
-      R.id.widget_row_3_left_text,
-      R.id.widget_row_4_left_text,
-      R.id.widget_row_5_left_text,
-      R.id.widget_row_6_left_text,
-      R.id.widget_row_7_left_text,
-      R.id.widget_row_8_left_text,
-    )
-    val rightImageIds = intArrayOf(
-      R.id.widget_row_0_right_image,
-      R.id.widget_row_1_right_image,
-      R.id.widget_row_2_right_image,
-      R.id.widget_row_3_right_image,
-      R.id.widget_row_4_right_image,
-      R.id.widget_row_5_right_image,
-      R.id.widget_row_6_right_image,
-      R.id.widget_row_7_right_image,
-      R.id.widget_row_8_right_image,
-    )
-    val rightTextIds = intArrayOf(
-      R.id.widget_row_0_right_text,
-      R.id.widget_row_1_right_text,
-      R.id.widget_row_2_right_text,
-      R.id.widget_row_3_right_text,
-      R.id.widget_row_4_right_text,
-      R.id.widget_row_5_right_text,
-      R.id.widget_row_6_right_text,
-      R.id.widget_row_7_right_text,
-      R.id.widget_row_8_right_text,
-    )
-    val titleTextIds = intArrayOf(
-      R.id.widget_row_0_title,
-      R.id.widget_row_1_title,
-      R.id.widget_row_2_title,
-      R.id.widget_row_3_title,
-      R.id.widget_row_4_title,
-      R.id.widget_row_5_title,
-      R.id.widget_row_6_title,
-      R.id.widget_row_7_title,
-      R.id.widget_row_8_title,
-    )
-    val subtitleTextIds = intArrayOf(
-      R.id.widget_row_0_subtitle,
-      R.id.widget_row_1_subtitle,
-      R.id.widget_row_2_subtitle,
-      R.id.widget_row_3_subtitle,
-      R.id.widget_row_4_subtitle,
-      R.id.widget_row_5_subtitle,
-      R.id.widget_row_6_subtitle,
-      R.id.widget_row_7_subtitle,
-      R.id.widget_row_8_subtitle,
-    )
-
-    for (i in 0 until rowContainers.size) {
-      views.setViewVisibility(rowContainers[i], if (i < visibleCount) View.VISIBLE else View.GONE)
-      if (i < rowDividers.size) {
-        views.setViewVisibility(rowDividers[i], if (i < visibleCount - 1) View.VISIBLE else View.GONE)
-      }
-    }
-
+    val pkg = context.packageName
     for (i in 0 until visibleCount) {
       val item = items[i]
+      val rowRv = RemoteViews(pkg, R.layout.widget_latest_items_row)
+
       val leftSlot = item.slots["left"]
       val titleSlot = item.slots["title"]
       val subtitleSlot = item.slots["subtitle"]
       val rightSlot = item.slots["right"]
 
-      views.setTextViewText(
-        titleTextIds[i],
+      rowRv.setTextViewText(
+        R.id.widget_row_title,
         DirectusWidgetSlotDisplay.displayText(titleSlot?.type, titleSlot?.value),
       )
-      // Row subtitle: show the flow-provided `subtitle` slot.
-      views.setTextViewText(
-        subtitleTextIds[i],
+      rowRv.setTextViewText(
+        R.id.widget_row_subtitle,
         DirectusWidgetSlotDisplay.displayText(subtitleSlot?.type, subtitleSlot?.value),
       )
 
-      renderSideSlot(views, leftContainerIds[i], leftImageIds[i], leftTextIds[i], leftSlot, thumbBitmapsByFileId)
-      renderSideSlot(views, rightContainerIds[i], rightImageIds[i], rightTextIds[i], rightSlot, thumbBitmapsByFileId)
+      renderSideSlot(
+        rowRv,
+        R.id.widget_row_left_container,
+        R.id.widget_row_left_image,
+        R.id.widget_row_left_text,
+        leftSlot,
+        thumbBitmapsByFileId,
+      )
+      renderSideSlot(
+        rowRv,
+        R.id.widget_row_right_container,
+        R.id.widget_row_right_image,
+        R.id.widget_row_right_text,
+        rightSlot,
+        thumbBitmapsByFileId,
+      )
 
-      val deepLink = item.deepLink
-        ?: if (cfg.collection.isNotBlank() && item.id.isNotBlank()) "directus://content/${cfg.collection}/${item.id}" else null
+      rowRv.setViewVisibility(
+        R.id.widget_row_divider,
+        if (i < visibleCount - 1) View.VISIBLE else View.GONE,
+      )
+
+      val deepLink =
+        item.deepLink
+          ?: if (cfg.collection.isNotBlank() && item.id.isNotBlank()) {
+            "directus://content/${cfg.collection}/${item.id}"
+          } else {
+            null
+          }
       if (!deepLink.isNullOrBlank()) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(deepLink))
-        val pendingIntent = PendingIntent.getActivity(
-          context,
-          (deepLink.hashCode() and 0x7fffffff),
-          intent,
-          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(rowContainers[i], pendingIntent)
+        val requestCode = (appWidgetId * 1_000 + i) xor deepLink.hashCode()
+        val pendingIntent =
+          PendingIntent.getActivity(
+            context,
+            requestCode and 0x7fffffff,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+          )
+        rowRv.setOnClickPendingIntent(R.id.widget_row_item_root, pendingIntent)
       }
+
+      views.addView(R.id.widget_rows_container, rowRv)
     }
   }
 
