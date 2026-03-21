@@ -262,7 +262,7 @@ function FieldTree({
   const fields = useMemo(() => {
     const list = ((fieldsQ.data ?? []) as any[])
       .filter((f) => f && typeof f.field === "string")
-      .filter((f) => !f.meta?.hidden)
+      .filter((f) => !f.schema?.is_primary_key)
       .filter((f) => !String(f.field).startsWith("_"));
     if (!search.trim()) return list;
     const q = search.trim().toLowerCase();
