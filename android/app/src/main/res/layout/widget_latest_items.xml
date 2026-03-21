@@ -68,7 +68,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_0_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -95,8 +95,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -143,8 +143,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>
@@ -187,7 +187,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_1_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -214,8 +214,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -262,8 +262,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>
@@ -306,7 +306,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_2_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -333,8 +333,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -381,8 +381,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>
@@ -425,7 +425,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_3_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -452,8 +452,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -500,8 +500,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>
@@ -544,7 +544,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_4_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -571,8 +571,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -619,8 +619,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>
@@ -663,7 +663,7 @@
 
         <FrameLayout
           android:id="@+id/widget_row_5_left_container"
-          android:layout_width="28dp"
+          android:layout_width="80dp"
           android:layout_height="wrap_content">
 
           <ImageView
@@ -690,8 +690,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
         </FrameLayout>
 
@@ -738,8 +738,8 @@
             android:textColor="#666666"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone"
             android:gravity="end" />
         </FrameLayout>

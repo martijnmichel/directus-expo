@@ -151,20 +151,6 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  private fun withAlpha(color: Int, alpha: Int): Int {
-    return (alpha shl 24) or (color and 0x00FFFFFF)
-  }
-
-  private fun statusBackgroundColor(value: String): Int {
-    val base = when (value.trim().lowercase(Locale.US)) {
-      "published" -> Color.parseColor("#2E7D32")
-      "archived" -> Color.parseColor("#616161")
-      "draft" -> Color.parseColor("#F57C00")
-      else -> Color.parseColor("#9E9E9E")
-    }
-    return withAlpha(base, 0x33)
-  }
-
   private fun statusForegroundColor(value: String): Int {
     return when (value.trim().lowercase(Locale.US)) {
       "published" -> Color.parseColor("#2E7D32")
@@ -325,11 +311,13 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         }
       }
       "status" -> {
-        views.setViewVisibility(sideImageId, View.VISIBLE)
-        views.setViewVisibility(sideTextId, View.GONE)
+        // Match iOS: capsule with status label text (not a dot).
+        views.setViewVisibility(sideImageId, View.GONE)
+        views.setViewVisibility(sideTextId, View.VISIBLE)
 
-        val dotRes = statusDotDrawable(value)
-        views.setImageViewResource(sideImageId, dotRes)
+        views.setTextViewText(sideTextId, value)
+        views.setInt(sideTextId, "setTextColor", statusForegroundColor(value))
+        views.setInt(sideTextId, "setBackgroundResource", statusPillDrawable(value))
       }
       else -> {
         views.setViewVisibility(sideImageId, View.GONE)
@@ -342,12 +330,12 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     }
   }
 
-  private fun statusDotDrawable(value: String): Int {
+  private fun statusPillDrawable(value: String): Int {
     return when (value.trim().lowercase(Locale.US)) {
-      "published" -> R.drawable.widget_status_dot_published
-      "archived" -> R.drawable.widget_status_dot_archived
-      "draft" -> R.drawable.widget_status_dot_draft
-      else -> R.drawable.widget_status_dot_unknown
+      "published" -> R.drawable.widget_status_pill_published
+      "archived" -> R.drawable.widget_status_pill_archived
+      "draft" -> R.drawable.widget_status_pill_draft
+      else -> R.drawable.widget_status_pill_unknown
     }
   }
 
