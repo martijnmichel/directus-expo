@@ -5,7 +5,7 @@
 -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
   android:drawable="@mipmap/ic_launcher_foreground"
-  android:insetLeft="10dp"
-  android:insetTop="10dp"
-  android:insetRight="10dp"
-  android:insetBottom="10dp" />
+  android:insetLeft="12dp"
+  android:insetTop="12dp"
+  android:insetRight="12dp"
+  android:insetBottom="12dp" />
