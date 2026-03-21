@@ -267,7 +267,8 @@
       "logout": "Uitloggen",
       "updateAvailable": "Update beschikbaar!",
       "reportIssue": "Rapporteer",
-      "becomeSponsor": "Word een sponsor"
+      "becomeSponsor": "Word een sponsor",
+      "switchSession": "Verander gebruiker of server"
     }
   },
   "pages": {

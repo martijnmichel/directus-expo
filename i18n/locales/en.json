@@ -272,7 +272,8 @@
       "logout": "Logout",
       "updateAvailable": "Update available!",
       "reportIssue": "Report",
-      "becomeSponsor": "Become a sponsor"
+      "becomeSponsor": "Become a sponsor",
+      "switchSession": "Switch user or server"
     }
   },
   "pages": {

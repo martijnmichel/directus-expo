@@ -57,7 +57,7 @@ export default function SettingsScreen() {
           onPress={() => router.push("/login")}
           leftIcon={<Switch />}
         >
-          Connect to another API
+          {t("settings.actions.switchSession")}
         </Button>
       ),
     },
