@@ -24,11 +24,18 @@ import type { API } from "./APIForm";
 import { readSessionWrapper } from "@/state/auth/directusSessionStorage";
 import { useResolvedActiveSession } from "@/hooks/useResolvedActiveSession";
 import { resolveActiveSessionContext } from "@/state/auth/resolveActiveSession";
+import { takePendingDeepLinkHref } from "@/state/linking/deepLinks";
 import * as WebBrowser from "expo-web-browser";
 import { InstanceSessionSelect } from "./InstanceSessionSelect";
 import { X } from "./icons/X";
 
 WebBrowser.maybeCompleteAuthSession();
+
+function navigateAfterAuthSuccess() {
+  const next = takePendingDeepLinkHref();
+  if (next) router.replace(next as any);
+  else router.push("/");
+}
 
 function hasDirectusHost(url: string): boolean {
   try {
@@ -286,7 +293,7 @@ export const LoginForm = () => {
           persistNewSession(data.api, sessionId);
         }
         mutateActiveSessionId.mutate(sessionId);
-        router.push("/");
+        navigateAfterAuthSuccess();
       } catch {
         Alert.alert("Error", t("form.errors.loginFailed"));
       }
@@ -302,7 +309,7 @@ export const LoginForm = () => {
           persistNewSession(data.api, sessionId);
         }
         mutateActiveSessionId.mutate(sessionId);
-        router.push("/");
+        navigateAfterAuthSuccess();
       } catch {
         Alert.alert("Error", t("form.errors.loginFailed"));
       }
@@ -471,7 +478,7 @@ export const LoginForm = () => {
                 .then((result) => {
                   if (result.ok) {
                     mutateActiveSessionId.mutate(sid);
-                    router.push("/");
+                    navigateAfterAuthSuccess();
                   } else {
                     if (typeW === "email") {
                       setEmailReloginUnlocked(true);

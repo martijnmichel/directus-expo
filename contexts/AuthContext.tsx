@@ -14,7 +14,9 @@ import {
   RestClient,
 } from "@directus/sdk";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Linking from "expo-linking";
 import { router } from "expo-router";
+import { applyInitialDeepLinkFromUrl } from "@/state/linking/deepLinks";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
 import {
   clearSessionStorage,
@@ -206,6 +208,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const initializeDirectus = async () => {
     try {
+      await applyInitialDeepLinkFromUrl(await Linking.getInitialURL());
       const ctx = await resolveActiveSessionContext();
       if (!ctx) {
         setIsLoading(false);

@@ -14,6 +14,8 @@ export type WidgetConfigListEntry = {
    */
   widgetId?: string;
   webhookUrl?: string;
+  /** Active session when synced; appended to `directus://content/...` row links. */
+  sessionId?: string;
 };
 
 export async function writeLatestItemsWidgetConfigListToCache(
@@ -29,6 +31,7 @@ export async function writeLatestItemsWidgetConfigListToCache(
     collection: String(c.collection ?? ""),
     widgetId: c.widgetId != null ? String(c.widgetId) : undefined,
     webhookUrl: c.webhookUrl != null ? String(c.webhookUrl) : undefined,
+    sessionId: c.sessionId != null ? String(c.sessionId) : undefined,
   }));
   const cache = getWidgetCache();
   await cache.setConfigList(JSON.stringify(list));

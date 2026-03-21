@@ -7,6 +7,7 @@ import {
   APP_WIDGET_TYPE_LATEST_ITEMS,
 } from "@/constants/widget";
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
+import { readActiveSessionId } from "@/state/auth/resolveActiveSession";
 
 function coerceArray(val: unknown): string[] | undefined {
   if (!Array.isArray(val)) return undefined;
@@ -89,6 +90,7 @@ export function useWidgetItems(params: {
           webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
           extra: parseExtraField(row.extra) as LatestItemsWidgetConfig["extra"],
+          sessionId,
         }))
         .filter((c) => c.id.length > 0);
 

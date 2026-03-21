@@ -76,6 +76,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     val instanceUrl: String?,
     val widgetId: String,
     val webhookUrl: String?,
+    val sessionId: String?,
   )
 
   private fun SelectedConfig.toFlowSetup(): DirectusWidgetFlowSetup =
@@ -84,6 +85,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
       collection = collection,
       widgetId = widgetId,
       webhookUrl = webhookUrl,
+      sessionId = sessionId,
     )
 
   private fun widgetConfigKey(widgetId: Int): String =
@@ -117,6 +119,8 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         DirectusWidgetJson.string(obj.opt("widgetId")).takeIf { it.isNotBlank() } ?: id
       val webhookUrl =
         obj.opt("webhookUrl")?.let { DirectusWidgetJson.string(it) }?.takeIf { it.isNotBlank() }
+      val sessionId =
+        obj.opt("sessionId")?.let { DirectusWidgetJson.string(it) }?.takeIf { it.isNotBlank() }
 
       out.add(
         SelectedConfig(
@@ -126,6 +130,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
           instanceUrl = instanceUrl,
           widgetId = widgetId,
           webhookUrl = webhookUrl,
+          sessionId = sessionId,
         ),
       )
     }

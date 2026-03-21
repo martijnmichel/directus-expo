@@ -94,7 +94,8 @@ struct Provider: AppIntentTimelineProvider {
         suiteName: LatestItemsWidgetKeys.appGroup,
         payloadKeyPrefix: LatestItemsWidgetKeys.payloadPrefix,
         configId: config.id,
-        collection: config.collection
+        collection: config.collection,
+        sessionId: config.sessionId
       ) {
         items = cached
       }

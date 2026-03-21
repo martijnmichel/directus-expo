@@ -12,6 +12,10 @@ export type LatestItemsWidgetConfig = {
    */
   instanceName?: string;
   /**
+   * Active app session id when this config was synced (in-app deep links / resume).
+   */
+  sessionId?: string;
+  /**
    * Directus collection name (e.g. "articles").
    */
   collection: string;

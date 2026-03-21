@@ -1,6 +1,7 @@
 package com.martijnmichel.directusexpo.widget.directus
 
 import android.graphics.Bitmap
+import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
@@ -41,7 +42,17 @@ object DirectusWidgetFlowDecoder {
       }
 
       val deepLink =
-        if (setup.collection.isNotBlank()) "directus://content/${setup.collection}/$id" else null
+        if (setup.collection.isNotBlank()) {
+          val base = "directus://content/${setup.collection}/$id"
+          val sid = setup.sessionId?.trim().orEmpty()
+          if (sid.isNotEmpty()) {
+            "$base?sessionId=${Uri.encode(sid)}"
+          } else {
+            base
+          }
+        } else {
+          null
+        }
       items.add(DirectusWidgetSlotItem(id = id, deepLink = deepLink, slots = slotMap))
     }
 

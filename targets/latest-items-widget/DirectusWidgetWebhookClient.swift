@@ -24,7 +24,11 @@ enum DirectusWidgetWebhookClient {
         return nil
       }
       let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
-      return DirectusWidgetFlowDecoder.decodeSlotItemsFromFlowResponse(resp, collection: config.collection)
+      return DirectusWidgetFlowDecoder.decodeSlotItemsFromFlowResponse(
+        resp,
+        collection: config.collection,
+        sessionId: config.sessionId
+      )
     } catch {
       return nil
     }
@@ -65,7 +69,11 @@ enum DirectusWidgetWebhookClient {
         return (nil, "Webhook error (HTTP \(http.statusCode)).", nil)
       }
       let resp = try JSONDecoder().decode(FlowResponse.self, from: data)
-      let items = DirectusWidgetFlowDecoder.decodeSlotItemsFromFlowResponse(resp, collection: config.collection)
+      let items = DirectusWidgetFlowDecoder.decodeSlotItemsFromFlowResponse(
+        resp,
+        collection: config.collection,
+        sessionId: config.sessionId
+      )
       return (items, nil, resp)
     } catch is DecodingError {
       return (nil, "Webhook returned unexpected JSON.", nil)

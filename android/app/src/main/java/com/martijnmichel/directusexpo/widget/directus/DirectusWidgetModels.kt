@@ -11,6 +11,7 @@ data class DirectusWidgetFlowSetup(
   val collection: String,
   val widgetId: String,
   val webhookUrl: String?,
+  val sessionId: String? = null,
 )
 
 /**

@@ -32,6 +32,7 @@ import { useEffect } from "react";
 import { Platform } from "react-native";
 import { EventProvider } from "react-native-outside-press";
 import { OTAUpdate } from "@/components/OTAUpdate";
+import { AppDeepLinkHandler } from "@/components/AppDeepLinkHandler";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // Register your breakpoints
@@ -48,6 +49,7 @@ export default function RootLayout() {
           <Preload>
             <ConfirmDialogProvider>
               <AuthProvider>
+                <AppDeepLinkHandler />
                 <PortalProvider>
                   <EventProvider>
                     <Slot />

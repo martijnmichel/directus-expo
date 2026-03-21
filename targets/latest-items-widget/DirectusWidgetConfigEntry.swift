@@ -8,9 +8,10 @@ struct WidgetConfigEntry: Decodable, Hashable {
   let collection: String?
   let widgetId: String?
   let webhookUrl: String?
+  let sessionId: String?
 
   enum CodingKeys: String, CodingKey {
-    case id, title, instanceUrl, collection, widgetId, webhookUrl
+    case id, title, instanceUrl, collection, widgetId, webhookUrl, sessionId
   }
 
   init(from decoder: Decoder) throws {
@@ -21,5 +22,6 @@ struct WidgetConfigEntry: Decodable, Hashable {
     collection = try? c.decodeIfPresent(String.self, forKey: .collection)
     widgetId = try? c.decodeIfPresent(String.self, forKey: .widgetId)
     webhookUrl = try? c.decodeIfPresent(String.self, forKey: .webhookUrl)
+    sessionId = try? c.decodeIfPresent(String.self, forKey: .sessionId)
   }
 }
