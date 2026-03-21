@@ -126,16 +126,25 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
   }
 
   /**
-   * Widget height in **dp** from host-reported options ([AppWidgetManager]).
+   * Widget height in **dp** for the **current** on-screen size ([AppWidgetManager] options).
    *
-   * **API 31+:** Prefer [AppWidgetManager.OPTION_APPWIDGET_SIZES] — each [SizeF] is in **dips**; use
-   * the largest height among reported sizes (typical when the host lists portrait/landscape variants).
+   * Prefer [AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT] /
+   * [AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT] (dips); after resize these track the live bounds.
    *
-   * **Fallback:** [AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT] /
-   * [AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT] are documented as **dips**; use `max(min, max)`.
+   * Do **not** prefer [AppWidgetManager.OPTION_APPWIDGET_SIZES] here: that list is “possible sizes”
+   * and is meant for the size-keyed [RemoteViews] map API. Using the max height from that list
+   * mis-counts rows, and pairing it with `RemoteViews(sizeMap)` locks the widget to discrete sizes
+   * so many launchers **won’t offer horizontal resize** even when [resizeMode] allows it.
    */
   @Suppress("DEPRECATION")
   private fun widgetHeightDpFromOptions(options: Bundle): Float {
+    val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+    val maxH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minH)
+    val fromMinMax = maxOf(minH, maxH)
+    if (fromMinMax > 0) {
+      return fromMinMax.toFloat()
+    }
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       val sizes: ArrayList<SizeF>? =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -147,11 +156,7 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         return sizes.maxOf { it.height }
       }
     }
-
-    val minH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-    val maxH = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, minH)
-    val dp = maxOf(minH, maxH)
-    return if (dp > 0) dp.toFloat() else 0f
+    return 0f
   }
 
   /**
@@ -176,40 +181,15 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     return rows.coerceIn(2, maxR)
   }
 
-  /**
-   * [AppWidgetManager.OPTION_APPWIDGET_SIZES] when the launcher provides it (API 31+).
-   * If null/empty, use [singleRemoteViewsUpdate] path instead of size-keyed [RemoteViews].
-   *
-   * @see [Provide exact layouts](https://developer.android.com/develop/ui/views/appwidgets/layouts#provide-exact-layouts)
-   */
-  @Suppress("DEPRECATION")
-  private fun optionAppWidgetSizesList(options: Bundle): List<SizeF>? {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return null
-    val sizes: ArrayList<SizeF>? =
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES, SizeF::class.java)
-      } else {
-        options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES)
-      }
-    if (sizes.isNullOrEmpty()) return null
-    return sizes.toList()
-  }
-
-  /** Max list rows needed for this widget (max across size profiles when multiple). */
+  /** List rows for this widget instance from its current host-reported height. */
   private fun maxRowsForWidgetOptions(options: Bundle): Int {
-    val profiles = optionAppWidgetSizesList(options)
-    return if (!profiles.isNullOrEmpty()) {
-      profiles.maxOf { listRowsForWidgetHeightDp(it.height) }
-    } else {
-      listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
-    }
+    return listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
   }
 
   /**
-   * API 31+: one [RemoteViews] per launcher [SizeF] so row count matches each reported size.
-   * Otherwise a single [RemoteViews] using [widgetHeightDpFromOptions].
-   *
-   * @see [Provide responsive layouts](https://developer.android.com/develop/ui/views/appwidgets/layouts#provide-responsive-layouts)
+   * Single [RemoteViews] per update so the launcher can resize width/height freely (`resizeMode`).
+   * Avoid `RemoteViews(Map<SizeF, RemoteViews>)`: that API registers fixed size breakpoints and
+   * commonly disables continuous horizontal resize on Pixel / other launchers.
    */
   private fun updateLatestItemsAppWidget(
     context: Context,
@@ -218,22 +198,10 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
     populate: (RemoteViews, maxRows: Int) -> Unit,
   ) {
     val options = appWidgetManager.getAppWidgetOptions(widgetId) ?: Bundle()
-    val profiles = optionAppWidgetSizesList(options)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !profiles.isNullOrEmpty()) {
-      val viewBySize = linkedMapOf<SizeF, RemoteViews>()
-      for (size in profiles) {
-        val maxRows = listRowsForWidgetHeightDp(size.height)
-        val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
-        populate(views, maxRows)
-        viewBySize[size] = views
-      }
-      appWidgetManager.updateAppWidget(widgetId, RemoteViews(viewBySize))
-    } else {
-      val maxRows = listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
-      val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
-      populate(views, maxRows)
-      appWidgetManager.updateAppWidget(widgetId, views)
-    }
+    val maxRows = listRowsForWidgetHeightDp(widgetHeightDpFromOptions(options))
+    val views = RemoteViews(context.packageName, R.layout.widget_latest_items)
+    populate(views, maxRows)
+    appWidgetManager.updateAppWidget(widgetId, views)
   }
 
   private fun statusForegroundColor(value: String): Int {

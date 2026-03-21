@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Fixed width: always 4 launcher grid cells (see
-  https://developer.android.com/develop/ui/views/appwidgets/layouts#anatomy_determining_size ).
-  minWidth = (4 × 70dp) − 30dp = 250dp. Same value for min/max resize width so horizontal size
-  cannot change; only height is resizable (resizeMode vertical).
+  Sizing: https://developer.android.com/develop/ui/views/appwidgets/layouts#estimate-minimum-dimensions
 
-  API 31+: targetCellWidth reinforces the default span; OPTION_APPWIDGET_SIZES width stays ~250dp
-  while height still drives row count in LatestItemsAppWidgetProvider.
+  Do NOT set targetCellWidth/targetCellHeight: on API 31+ they override minWidth/minHeight for the
+  default span and some launchers treat that as a fixed width — horizontal resize never appears.
+
+  Width: default ~276dp (4 cols on Pixel-style grid). minResizeWidth 203dp (~3 cols).
+  maxResizeWidth must be large enough for “full row” on 5-column homes with *wide* cells (422dp is only
+  ~6 cols on a 73dp grid; many launchers need 550–800dp for 5-wide). Host still caps to screen width.
+
+  Height: vertical resize; max 4 rows via maxResizeHeight (70×4−30).
+
+  resizeMode horizontal|vertical — minResizeWidth < minWidth < maxResizeWidth.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-  android:minWidth="250dp"
+  android:minWidth="276dp"
   android:minHeight="160dp"
-  android:minResizeWidth="250dp"
-  android:maxResizeWidth="250dp"
+  android:minResizeWidth="203dp"
+  android:maxResizeWidth="800dp"
   android:minResizeHeight="90dp"
-  android:targetCellWidth="4"
-  android:targetCellHeight="2"
+  android:maxResizeHeight="250dp"
   android:updatePeriodMillis="1800000"
   android:initialLayout="@layout/widget_latest_items"
   android:configure="com.martijnmichel.directusexpo.app.LatestItemsWidgetConfigureActivity"
-  android:resizeMode="vertical"
+  android:resizeMode="horizontal|vertical"
   android:widgetCategory="home_screen"
   android:description="@string/widget_latest_items_description" />
