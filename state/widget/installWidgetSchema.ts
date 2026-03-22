@@ -115,6 +115,14 @@ const WIDGET_FIELDS: Array<{
       note: "Directus sort string, e.g. -date_updated.",
     },
   }
+  {
+    field: "limit",
+    type: "number",
+    meta: {
+      interface: "input",
+      note: "Limit for the widget query.",
+    },
+  }
 ];
 
 /**

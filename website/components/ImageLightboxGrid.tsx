@@ -88,8 +88,8 @@ export function ImageLightboxGrid({
   const active = openIndex !== null ? images[openIndex] : null;
 
   return (
-    <div className="not-prose my-5 @container/ilg">
-      <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 @sm/ilg:grid-cols-3">
+    <div className="not-prose my-5 w-full min-w-0 @container">
+      <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 @lg:grid-cols-3 @4xl:grid-cols-4">
         {images.map((item, i) => {
           const id = `${anchorPrefix}-${i}`;
           return (
