@@ -42,7 +42,7 @@ export default async function DocsIndexPage() {
     <div className="container mx-auto px-4 py-12 max-w-4xl">
       <h1 className="text-3xl font-bold mb-3">Docs</h1>
       <p className="text-neutral-600 dark:text-neutral-400 mb-10">
-        Practical guides for admins and end users.
+        Documentation for Directus Mobile features and setup.
       </p>
 
       <ul className="space-y-6">

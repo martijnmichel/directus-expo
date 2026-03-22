@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Widgets Guide",
+  title: "Widgets",
   description:
     "How Directus Mobile widgets work for admins and end users, including setup, permissions, and data safety.",
   audience: ["Admins", "End users"],
@@ -10,12 +10,47 @@ export const metadata = {
 Directus Mobile includes a native **Latest Items** home-screen widget for iOS and Android.
 The widget reads your Directus data and opens items directly in the app.
 
+
+<ImageLightboxGrid
+  anchorPrefix="widgets-setup"
+  images={[
+    { src: "/widgets-homescreen.png", alt: "Widget on home screen" },
+    { src: "/widgets-settings-page.png", alt: "Widgets settings page" },
+    { src: "/edit-widget.png", alt: "Edit widget setup" },
+    { src: "/fieldpicker.png", alt: "Select widget fields" },
+    { src: "/edit-widget-slots.png", alt: "Edit widget slots" },
+  ]}
+/>
+
 ## For admins
 
 ### 1) Install widget backend once per Directus server
 
 In the app, go to **Settings -> Widgets** and install the widget backend.
 This creates/updates the required Directus collection + flow used by the widget.
+
+What gets installed:
+
+- **Schema (collection + fields):** stores each user's widget setups (for example selected collection, title, sort, limit, and slot/field configuration).
+- **Flow:** receives the widget request, runs the configured query against Directus, and returns a small payload that the native widget can render quickly.
+
+In short, the schema stores widget configuration, and the flow turns that configuration into live widget data.
+
+Flow operations (high level):
+
+1. **Handshake / validation**
+   - validates version/support and that the widget request is structurally valid.
+2. **Resolve widget config**
+   - reads the widget config record and extracts collection, sort, limit, fields, and slot config.
+3. **Read context metadata**
+   - reads users/roles/policies/permissions/relations/fields so returned values respect Directus access rules and allowed paths.
+4. **Read collection data**
+   - queries the target collection using the widget setup (with limit/sort/fields).
+5. **Filter + map for widget payload**
+   - formats rows into widget slot values and strips disallowed/empty values.
+6. **Finalize response**
+   - adds metadata like favicon (from `directus_settings`) and returns a compact JSON payload for native rendering.
+
 
 ### 2) Keep Directus permissions as source of truth
 
@@ -44,10 +79,12 @@ You can guide users by:
 In **Settings -> Widgets**, create one or more widget setups.
 Choose what collection and fields you want shown.
 
+
 ### 2) Add widget on your home screen
 
 - **iOS:** long press home screen -> **+** -> choose **Latest Items**.
 - **Android:** add the Directus Mobile widget from your widget picker.
+
 
 ### 3) Tap an item to open in app
 
@@ -70,3 +107,5 @@ In practice:
 - **Widget shows no setups:** open app -> Settings -> Widgets and sync setups.
 - **Widget shows empty data:** verify role/collection permissions in Directus.
 - **Tap opens login or wrong session:** refresh saved sessions in app settings and re-open via widget.
+- **Works in Simulator but not on a real iPhone (blank / endless loading):** confirm the **App Group** is created in the Apple Developer portal and enabled for **both** the main app and the **Latest Items** widget extension; refresh provisioning / reinstall. HTTPS alone does not fix a missing or mismatched group — the widget may never read the shared config list.
+- **After changing widget setups, home screen still looks stale:** open the app once so it can rewrite the App Group data and request a widget timeline reload.
