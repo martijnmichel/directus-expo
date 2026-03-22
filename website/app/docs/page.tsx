@@ -54,7 +54,7 @@ export default async function DocsIndexPage() {
                   {audience.join(" • ")}
                 </p>
               )}
-              <h2 className="text-xl font-semibold group-hover:text-primary transition-colors">
+              <h2 className="group-hover:text-primary transition-colors">
                 {title}
               </h2>
               {description && (

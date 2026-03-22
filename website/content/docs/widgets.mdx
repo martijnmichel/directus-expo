@@ -76,9 +76,36 @@ You can guide users by:
 
 ### 1) Create a setup in the app
 
-In **Settings -> Widgets**, create one or more widget setups.
-Choose what collection and fields you want shown.
+Open **Settings → Widgets** and add a **widget setup** for each home-screen configuration you want (for example “Production / Articles” vs “Staging / Tasks”). Each setup stores:
 
+- **Which Directus collection** to read (and which saved server/session the app should use for that setup).
+- **How items are loaded:** optional **title** shown in the widget header, **sort** (Directus-style field list, e.g. `-date_updated`), and **limit** (max rows).
+- **Which fields are requested** from Directus for that setup. The editor follows the same idea as the in-app collection table: pick the fields you need so values exist for the widget without fetching the whole collection.
+
+#### Slots: where each field appears in a row
+
+The **Latest Items** widget lays out each row from **slots**. Each slot is either tied to a **field** from your collection (you tap the slot and choose a field path) or **left empty** where that is allowed.
+
+| Slot        | Role |
+| ----------- | ---- |
+| **Left**    | Optional narrow column (e.g. status, label, short code). If you clear the field, this column is hidden. |
+| **Title**   | Main line for the row—usually the item’s primary title (or similar). |
+| **Subtitle**| Second line under the title for extra context (e.g. summary, date text). |
+| **Right**   | Optional narrow column on the other side (e.g. time, count, small meta). If you clear the field, this column is hidden. |
+
+So: **title** and **subtitle** define the main text block; **left** and **right** are optional side columns for short values.
+
+#### Slot options (left and right only)
+
+Only the **left** and **right** slots have extra **layout options** (the title row is shared: the main title uses the space between left and right).
+
+- **Width behaviour**
+  - **Fit content** — the side column only takes the space its text needs (good for short labels).
+  - **Fixed share (%)** — the column uses about that **percentage of the row width** (0–100), so you can balance left/right vs the title when you have longer side text.
+
+When behaviour is **Fixed share**, set **Width (%)** to the share you want; that control is hidden when behaviour is **Fit content**.
+
+After you save, keep **Settings → Widgets** open at least once so setups sync to the device storage the home-screen widget reads.
 
 ### 2) Add the widget and pick a setup
 
