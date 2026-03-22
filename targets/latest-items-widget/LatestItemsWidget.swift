@@ -128,6 +128,19 @@ struct Provider: AppIntentTimelineProvider {
 
 // MARK: - View
 
+/// Per-row deep links only work on medium/large widgets. Multiple `.widgetURL` modifiers in one
+/// entry are not supported — the system effectively keeps one URL (often the last), so every row
+/// opened the same document. Use `Link` for those families; use a single `.widgetURL` on the list
+/// for small (and other) families.
+private func widgetFamilySupportsPerRowLinks(_ family: WidgetFamily) -> Bool {
+  switch family {
+  case .systemMedium, .systemLarge:
+    return true
+  default:
+    return false
+  }
+}
+
 struct SlotRowView: View {
   let item: SlotItem
   let family: WidgetFamily
@@ -144,7 +157,7 @@ struct SlotRowView: View {
     let hasRight = DirectusWidgetSideSlot.hasContent(rightSlot)
     let hasSubtitle = DirectusWidgetSideSlot.hasContent(subtitleSlot)
 
-    return VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
+    let row = VStack(alignment: .leading, spacing: WidgetNativeTheme.Layout.rowLineSpacing) {
       HStack(alignment: .center, spacing: WidgetNativeTheme.Layout.columnGap) {
         if hasLeft {
           DirectusWidgetSideSlotView(slot: leftSlot, alignment: .leading)
@@ -187,19 +200,30 @@ struct SlotRowView: View {
           .layoutPriority(1) // Full width under the title row; no slot layout options.
       }
     }
-    .modifier(LatestItemsWidgetURLIfNotPreviewModifier(url: item.urlString.flatMap { URL(string: $0) }))
+
+    let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
+    let url = item.urlString.flatMap { URL(string: $0) }
+
+    if isPreview || url == nil {
+      row
+    } else if widgetFamilySupportsPerRowLinks(family) {
+      Link(destination: url!) {
+        row
+      }
+    } else {
+      // Small / accessory: parent applies one `.widgetURL` for the whole widget (first row).
+      row
+    }
   }
 }
 
-private struct LatestItemsWidgetURLIfNotPreviewModifier: ViewModifier {
-  let url: URL?
-
-  func body(content: Content) -> some View {
-    let isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
-    if isPreview || url == nil {
-      content
+private extension View {
+  @ViewBuilder
+  func optionalWidgetURL(_ url: URL?) -> some View {
+    if let url {
+      self.widgetURL(url)
     } else {
-      content.widgetURL(url!)
+      self
     }
   }
 }
@@ -242,6 +266,17 @@ struct LatestItemsWidgetView: View {
         }
       }()
 
+      let visibleItems = Array(entry.items.prefix(maxRows))
+      let isPreviewEnv = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] != nil
+      /// Small/accessory widgets: one tap target — first row’s `directus://content/{collection}/{id}`.
+      let singleWidgetTapURL: URL? = {
+        guard !widgetFamilySupportsPerRowLinks(family), !isPreviewEnv else { return nil }
+        for it in visibleItems {
+          if let u = it.urlString.flatMap({ URL(string: $0) }) { return u }
+        }
+        return nil
+      }()
+
       VStack(alignment: .leading, spacing: 0) {
         HStack(alignment: .center, spacing: 8) {
           latestItemsWidgetHeaderFavicon(entry: entry)
@@ -257,13 +292,13 @@ struct LatestItemsWidgetView: View {
         if !entry.items.isEmpty {
           Divider().opacity(0.5)
           VStack(alignment: .leading, spacing: 0) {
-            let visible = Array(entry.items.prefix(maxRows))
-            ForEach(Array(visible.enumerated()), id: \.element.id) { idx, it in
+            ForEach(Array(visibleItems.enumerated()), id: \.element.id) { idx, it in
               SlotRowView(item: it, family: family)
                 .padding(.vertical, family == .systemLarge ? 6 : 3)
-              if idx < visible.count - 1 { Divider() }
+              if idx < visibleItems.count - 1 { Divider() }
             }
           }
+          .optionalWidgetURL(singleWidgetTapURL)
           .padding(.top, 10)
         } else {
           Text(entry.statusMessage ?? "Open the app to refresh")
