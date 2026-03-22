@@ -138,7 +138,7 @@ export default function Collection() {
   const { t } = useTranslation();
 
   return (
-    <Layout safeArea={false}>
+    <Layout>
       <Stack.Screen
         options={{
           headerTitle: t("pages.modals.m2m.pick"),

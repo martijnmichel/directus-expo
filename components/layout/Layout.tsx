@@ -8,27 +8,19 @@ import {
   ViewStyle,
   ScrollViewProps,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface LayoutProps extends ViewProps {
   children: React.ReactNode;
-  safeArea?: boolean;
 }
 
-export const Layout = ({
-  children,
-  safeArea = true,
-  style,
-  ...props
-}: LayoutProps) => {
+export const Layout = ({ children, style, ...props }: LayoutProps) => {
   const { styles } = useStyles(stylesheet);
-  const Wrapper = safeArea ? SafeAreaView : View;
 
   return (
-    <Wrapper style={[styles.layout, style]} {...props}>
+    <View style={[styles.layout, style]} {...props}>
       {children}
-    </Wrapper>
+    </View>
   );
 };
 
