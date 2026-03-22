@@ -32,8 +32,10 @@ enum DirectusWidgetImagePrefetch {
         }
       }
       for await (itemId, slotKey, data) in group {
-        if let data, !data.isEmpty, UIImage(data: data) != nil {
-          fetched[itemId, default: [:]][slotKey] = data
+        if let data, !data.isEmpty,
+           let fitted = DirectusWidgetImageArchivalLimit.pngDataFittingArchivalLimit(data)
+        {
+          fetched[itemId, default: [:]][slotKey] = fitted
         }
       }
     }
@@ -63,9 +65,9 @@ enum DirectusWidgetImagePrefetch {
     func rasterData(from url: URL) async -> Data? {
       guard let data = try? await URLSession.shared.data(from: url).0,
             !data.isEmpty,
-            UIImage(data: data) != nil
+            let fitted = DirectusWidgetImageArchivalLimit.pngDataFittingArchivalLimit(data)
       else { return nil }
-      return data
+      return fitted
     }
 
     if let fileId = faviconFileId, !fileId.isEmpty {

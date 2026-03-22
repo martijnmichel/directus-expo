@@ -114,7 +114,7 @@ const WIDGET_FIELDS: Array<{
       interface: "input",
       note: "Directus sort string, e.g. -date_updated.",
     },
-  }
+  },
   {
     field: "limit",
     type: "number",
