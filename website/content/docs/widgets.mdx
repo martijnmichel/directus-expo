@@ -80,11 +80,26 @@ In **Settings -> Widgets**, create one or more widget setups.
 Choose what collection and fields you want shown.
 
 
-### 2) Add widget on your home screen
+### 2) Add the widget and pick a setup
 
-- **iOS:** long press home screen -> **+** -> choose **Latest Items**.
-- **Android:** add the Directus Mobile widget from your widget picker.
+You need **at least one setup** saved in the app (step 1). The home-screen widget does not invent setups—it reads the same list the app syncs when you open **Settings → Widgets** (and when you save a setup).
 
+**iOS**
+
+1. Long-press the home screen (or an empty area) → tap **+** (widgets gallery).
+2. Find **Directus Mobile** → **Latest Items**, pick a size, then tap **Add Widget**.
+3. **Choose which setup to use:**
+   - **While adding:** if the system shows configuration, open **Setup** and pick one of your setups (title/collection as shown in the app).
+   - **After it is on the home screen:** long-press the widget → **Edit Widget** → **Setup** → select the setup you want. You can change this anytime without removing the widget.
+
+If **Setup** is empty, open the main app → **Settings → Widgets** so setups are written to shared storage, then try again.
+
+**Android**
+
+1. Long-press the home screen → **Widgets** (wording varies by launcher).
+2. Add **Directus Mobile** → **Latest Items** (or the latest-items widget entry).
+3. **Configuration opens automatically** for that widget instance: tap the **setup** you want in the list. Each widget instance you add can use a **different** setup.
+4. If the list is empty, finish adding the widget when you can, then open the app → **Settings → Widgets** to create setups; remove and re-add the widget (or use **Open widget settings** if the configure screen offers it) to pick a setup.
 
 ### 3) Tap an item to open in app
 
