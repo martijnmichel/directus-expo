@@ -130,8 +130,12 @@ If **Setup** is empty, open the main app → **Settings → Widgets** so setups 
 
 ### 3) Tap an item to open in app
 
-When you tap a widget row, the app opens the target item.
-If needed, the app can switch to the right saved session/server before opening.
+Row links include your **active app session** when setups are synced from the app. That lets the app open the correct item **without** a risky “guess which session” step.
+
+- **Open Settings → Widgets once** after login (or switching session) so shared storage includes `sessionId`. If it’s missing, rows may be **non-tappable** (Android) or taps may do nothing useful (iOS).
+- **Cold start:** the first launch after a tap may show a short loading state while the app restores the session and applies the deep link.
+
+When you tap a row, the app opens the target item for that session.
 
 ## Data safety and hosting
 
@@ -148,6 +152,6 @@ In practice:
 
 - **Widget shows no setups:** open app -> Settings -> Widgets and sync setups.
 - **Widget shows empty data:** verify role/collection permissions in Directus.
-- **Tap opens login or wrong session:** refresh saved sessions in app settings and re-open via widget.
+- **Tap opens login, or nothing happens on tap:** open **Settings → Widgets** while logged in so setups sync with the current **session id**; try again. Push/other `directus://` links without `?sessionId=` are ignored for safety—prefer widget row taps or links that include the session query.
 - **Works in Simulator but not on a real iPhone (blank / endless loading):** confirm the **App Group** is created in the Apple Developer portal and enabled for **both** the main app and the **Latest Items** widget extension; refresh provisioning / reinstall. HTTPS alone does not fix a missing or mismatched group — the widget may never read the shared config list.
 - **After changing widget setups, home screen still looks stale:** open the app once so it can rewrite the App Group data and request a widget timeline reload.
