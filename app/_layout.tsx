@@ -29,7 +29,7 @@ import { queryClient } from "@/utils/react-query";
 import Toast from "react-native-toast-message";
 import { DateUtils } from "@/utils/dayjs";
 import { useEffect } from "react";
-import { Platform } from "react-native";
+import { ActivityIndicator, useColorScheme, View } from "react-native";
 import { EventProvider } from "react-native-outside-press";
 import { OTAUpdate } from "@/components/OTAUpdate";
 import { AppDeepLinkHandler } from "@/components/AppDeepLinkHandler";
@@ -68,6 +68,7 @@ export default function RootLayout() {
 }
 
 const Preload = ({ children }: { children: React.ReactNode }) => {
+  const colorScheme = useColorScheme();
   const { data, isLoading, refetch } = useLocalStorage<AppSettings>(
     LocalStorageKeys.APP_SETTINGS,
     {
@@ -103,7 +104,18 @@ const Preload = ({ children }: { children: React.ReactNode }) => {
   });
 
   if (!fontsLoaded || isLoading) {
-    return null;
+    return (
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colorScheme === "dark" ? "#000" : "#fff",
+        }}
+      >
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   UnistylesRegistry.addConfig({

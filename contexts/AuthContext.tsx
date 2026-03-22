@@ -504,10 +504,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  if (isLoading) {
-    return null;
-  }
-
+  // Keep children mounted while restoring the session so the router and deep-link handler run.
+  // Returning null here caused a white screen on cold start (e.g. widget → app). Loading UI
+  // lives in `(app)/_layout` (and login mounts without blocking on auth init).
   return (
     <AuthContext.Provider
       value={{
