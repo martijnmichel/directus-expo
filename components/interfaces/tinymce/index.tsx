@@ -4,12 +4,12 @@ import {
   Pressable,
   TextInput,
   Modal as RNModal,
-  SafeAreaView,
   Keyboard,
   ViewProps,
   Text,
   TextInputProps,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import {
   createStyleSheet,

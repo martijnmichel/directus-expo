@@ -2,13 +2,13 @@ import React from "react";
 import {
   View,
   ViewProps,
-  SafeAreaView,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ViewStyle,
   ScrollViewProps,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 
 interface LayoutProps extends ViewProps {
