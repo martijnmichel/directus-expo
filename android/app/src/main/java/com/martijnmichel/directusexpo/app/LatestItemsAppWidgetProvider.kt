@@ -475,13 +475,9 @@ class LatestItemsAppWidgetProvider : AppWidgetProvider() {
         if (i < visibleCount - 1) View.VISIBLE else View.GONE,
       )
 
-      val deepLink =
-        item.deepLink
-          ?: if (cfg.collection.isNotBlank() && item.id.isNotBlank()) {
-            "directus://content/${cfg.collection}/${item.id}"
-          } else {
-            null
-          }
+      // Only [DirectusWidgetFlowDecoder] sets [DirectusWidgetSlotItem.deepLink]; it is null without
+      // a stored session id (same as iOS / RN — no bare directus://content/… taps).
+      val deepLink = item.deepLink
       if (!deepLink.isNullOrBlank()) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(deepLink))
         val requestCode = (appWidgetId * 1_000 + i) xor deepLink.hashCode()

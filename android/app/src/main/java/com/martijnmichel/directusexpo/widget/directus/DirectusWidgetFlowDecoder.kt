@@ -41,14 +41,16 @@ object DirectusWidgetFlowDecoder {
         slotMap[slotKey] = DirectusWidgetSlotValue(type, value, options)
       }
 
+      // Match JS deep-link policy: require ?sessionId= so the app never runs the warm refresh
+      // flow on a bare content URL (can fail open /login and clear storage). No session ⇒ no link.
       val deepLink =
         if (setup.collection.isNotBlank()) {
-          val base = "directus://content/${setup.collection}/$id"
           val sid = setup.sessionId?.trim().orEmpty()
           if (sid.isNotEmpty()) {
+            val base = "directus://content/${setup.collection}/$id"
             "$base?sessionId=${Uri.encode(sid)}"
           } else {
-            base
+            null
           }
         } else {
           null
