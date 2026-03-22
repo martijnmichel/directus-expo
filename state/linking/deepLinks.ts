@@ -61,7 +61,12 @@ export function parseDirectusDeepLink(rawUrl: string): ParsedDirectusDeepLink | 
 }
 
 /**
- * Cold start: optional `sessionId` query → storage; queue navigation for after auth.
+ * Cold start: persist `sessionId` and queue navigation after auth.
+ *
+ * **Requires `?sessionId=`** on `directus://content/...` links. Without it we skip entirely so we
+ * never queue navigation that would run the in-app deep link refresh flow (which can
+ * fail and send the user to `/login`, clearing the active session). Widgets must embed the
+ * session id in row URLs (see native widget decoder + app widget sync).
  */
 export async function applyInitialDeepLinkFromUrl(
   url: string | null | undefined,
@@ -69,26 +74,27 @@ export async function applyInitialDeepLinkFromUrl(
   const parsed = url ? parseDirectusDeepLink(url) : null;
   if (!parsed) return;
 
-  if (parsed.sessionId) {
-    await AsyncStorage.setItem(
-      LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
-      parsed.sessionId,
-    );
-    await queryClient.invalidateQueries({
-      queryKey: ["resolved-active-session"],
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
-    });
-  }
+  const sid = parsed.sessionId?.trim();
+  if (!sid) return;
+
+  await AsyncStorage.setItem(
+    LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+    sid,
+  );
+  await queryClient.invalidateQueries({
+    queryKey: ["resolved-active-session"],
+  });
+  await queryClient.invalidateQueries({
+    queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
+  });
   setPendingDeepLinkHref(parsed.href);
 }
 
 /**
- * Warm open while app is running: persist optional `sessionId` from URL.
+ * Warm open while app is running: persist `sessionId` from URL.
+ * Returns **null** if the URL is a content deep link without `sessionId` (ignored for safety).
  * Does **not** set {@link pendingDeepLinkHref} — the in-app handler navigates after
- * `refreshSession`, otherwise a separate effect can consume pending first and open the
- * item with the previous Directus client.
+ * `refreshSession`.
  */
 export async function handleIncomingDeepLinkUrl(
   url: string,
@@ -96,18 +102,19 @@ export async function handleIncomingDeepLinkUrl(
   const parsed = parseDirectusDeepLink(url);
   if (!parsed) return null;
 
-  if (parsed.sessionId) {
-    await AsyncStorage.setItem(
-      LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
-      parsed.sessionId,
-    );
-    await queryClient.invalidateQueries({
-      queryKey: ["resolved-active-session"],
-    });
-    await queryClient.invalidateQueries({
-      queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
-    });
-  }
+  const sid = parsed.sessionId?.trim();
+  if (!sid) return null;
+
+  await AsyncStorage.setItem(
+    LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
+    sid,
+  );
+  await queryClient.invalidateQueries({
+    queryKey: ["resolved-active-session"],
+  });
+  await queryClient.invalidateQueries({
+    queryKey: ["local-storage", LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID],
+  });
   return parsed;
 }
 

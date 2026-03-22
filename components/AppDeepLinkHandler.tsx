@@ -42,7 +42,12 @@ export function AppDeepLinkHandler() {
 
   useEffect(() => {
     const { remove } = subscribeToDeepLinks((url) => {
-      if (!parseDirectusDeepLink(url)) return;
+      const parsedGate = parseDirectusDeepLink(url);
+      if (!parsedGate) return;
+      // Content links without sessionId are ignored — processing triggers refreshSession and can
+      // land on /login and wipe storage on failure (e.g. widget row URLs missing ?sessionId=).
+      if (!parsedGate.sessionId?.trim()) return;
+
       const now = Date.now();
       const isDuplicate =
         lastHandledUrlRef.current === url && now - lastHandledAtRef.current < 1500;
@@ -57,11 +62,9 @@ export function AppDeepLinkHandler() {
           const parsed = await handleIncomingDeepLinkUrl(url);
           if (!parsed) return;
 
-          const sidFromLink = parsed.sessionId?.trim();
-          const deepLinkCtx = sidFromLink
-            ? await resolveSessionContextForSessionId(sidFromLink)
-            : null;
-          const ctx = deepLinkCtx ?? (await resolveActiveSessionContext());
+          const ctx = await resolveSessionContextForSessionId(
+            parsed.sessionId!.trim(),
+          );
           if (!ctx) {
             router.replace("/login");
             return;
