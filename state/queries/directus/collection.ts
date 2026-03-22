@@ -25,7 +25,7 @@ import { coreCollections } from "./core";
 import { get, unset } from "lodash";
 import { useMemo } from "react";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
-import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey } from "@/hooks/primaryKeyUtils";
 
 export const useCollection = (id: string) => {
   const { directus, user } = useAuth();

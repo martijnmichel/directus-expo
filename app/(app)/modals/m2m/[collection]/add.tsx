@@ -46,7 +46,8 @@ export default function Collection() {
     <KeyboardAwareLayout>
       <Stack.Screen
         key={`${path}-${collection}-${id}`}
-        getId={() => `${path}-${collection}-${id}`}
+        dangerouslySingular={(_name, _params) =>
+          `${path}-${collection}-${id}`}
         options={{
           headerTitle,
 
