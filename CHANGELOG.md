@@ -1,5 +1,12 @@
 # [0.12.0](https://github.com/martijnmichel/directus-expo/compare/v0.11.0...v0.12.0) (2026-03-23)
 
+### Additional changes since `v0.10.1`
+
+- Widget support landed across iOS and Android (native targets, widget settings UI, flow/install wiring, cache and deep-link behavior).
+- Widget reliability fixes were added (image archival limit handling, per-row deep links, error messaging, and access handling improvements).
+- Auth/deep-linking was hardened for multi-session behavior and session-aware widget opening.
+- Installer and flow permission setup were improved for widget collections and flow access checks.
+
 # [0.11.0](https://github.com/martijnmichel/directus-expo/compare/v0.10.1...v0.11.0) (2026-03-23)
 
 

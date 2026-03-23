@@ -28,15 +28,16 @@
     "eas:preview": "eas update --branch preview --message \"Preview Update\"",
     "eas:prod": "eas update --branch production --message \"Production Update\"",
     "run:android": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android",
-    "run:android:device": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android --device"
+    "run:android:device": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android --device",
+    "prepare": "husky"
   },
   "jest": {
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@bacons/apple-targets": "^4.0.6",
     "@10play/react-native-web-webview": "^0.0.3",
     "@10play/tentap-editor": "^0.6.0",
+    "@bacons/apple-targets": "^4.0.6",
     "@directus/sdk": "^18.0.3",
     "@expo-google-fonts/inter": "^0.2.3",
     "@expo/vector-icons": "^15.0.2",
@@ -58,8 +59,8 @@
     "@uidotdev/usehooks": "^2.4.1",
     "dayjs": "^1.11.13",
     "expo": "^54.0.0",
-    "expo-build-properties": "~0.13.3",
     "expo-auth-session": "~7.0.8",
+    "expo-build-properties": "~0.13.3",
     "expo-constants": "~18.0.9",
     "expo-crypto": "~15.0.7",
     "expo-dev-client": "~6.0.15",
@@ -107,9 +108,9 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "patch-package": "^8.0.0",
-    "dotenv": "^16.4.5",
     "@babel/core": "^7.25.2",
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^6.0.3",
@@ -120,8 +121,11 @@
     "@types/react": "~19.1.10",
     "babel-plugin-module-resolver": "^5.0.2",
     "conventional-changelog-conventionalcommits": "^7.0.2",
+    "dotenv": "^16.4.5",
+    "husky": "^9.1.7",
     "jest": "^29.2.1",
     "jest-expo": "~54.0.12",
+    "patch-package": "^8.0.0",
     "react-test-renderer": "18.3.1",
     "semantic-release": "^24.2.1",
     "typescript": "~5.9.2"
