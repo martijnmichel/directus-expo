@@ -23,6 +23,7 @@ import {
   debugGetConfigListFromAppGroup,
   getConfigListFromAppGroup,
   getConfigListIdsFromAppGroup,
+  hasNativeWidgetSharedStorageModule,
 } from "@/widgets/shared/widgetCache";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -68,6 +69,7 @@ export function WidgetConfigSection() {
   const [syncingToWidgetId, setSyncingToWidgetId] = useState<string | null>(
     null,
   );
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
   const flowVersionQuery = useFlowVersion(
     resolved?.api.url ?? null,
     Platform.OS === "ios",
@@ -148,9 +150,17 @@ export function WidgetConfigSection() {
             const prevKey = [...prev].sort().join("|");
             return nextKey === prevKey ? prev : ids;
           });
+          setLastSyncError(null);
         }
-      } catch {
-        if (!cancelled) setIdsInAppGroup((prev) => (prev.length ? prev : []));
+      } catch (error) {
+        if (!cancelled) {
+          const msg =
+            error instanceof Error && error.message
+              ? error.message
+              : "Failed to read shared widget storage.";
+          setLastSyncError(msg);
+          setIdsInAppGroup((prev) => (prev.length ? prev : []));
+        }
       }
     })();
 
@@ -256,6 +266,7 @@ export function WidgetConfigSection() {
   }
 
   const accessForbidden = widgetAccess === "forbidden";
+  const nativeStorageAvailable = hasNativeWidgetSharedStorageModule();
   if (!runFullSetupCheck && accessForbidden) {
     return (
       <Vertical spacing="md">
@@ -329,6 +340,14 @@ export function WidgetConfigSection() {
                       );
                       const readBack = await getConfigListFromAppGroup();
                       if (readBack?.ids) setIdsInAppGroup(readBack.ids);
+                      setLastSyncError(null);
+                    } catch (error) {
+                      const msg =
+                        error instanceof Error && error.message
+                          ? error.message
+                          : "Failed to sync widget setup.";
+                      setLastSyncError(msg);
+                      Alert.alert(t("widget.title"), msg);
                     } finally {
                       setSyncingToWidgetId(null);
                     }
@@ -381,6 +400,16 @@ export function WidgetConfigSection() {
         }
         action={undefined}
       />
+      {Platform.OS === "ios" && !nativeStorageAvailable && (
+        <InlineAlert
+          status="warning"
+          message="Native WidgetSharedStorage module missing in this iOS build."
+          action={undefined}
+        />
+      )}
+      {lastSyncError && (
+        <InlineAlert status="warning" message={lastSyncError} action={undefined} />
+      )}
     </Vertical>
   );
 }

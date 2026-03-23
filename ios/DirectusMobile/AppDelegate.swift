@@ -47,6 +47,15 @@ public class AppDelegate: ExpoAppDelegate {
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
   ) -> Bool {
+    // Only hand true deep links/universal links to React Native.
+    // Widget/App Intent activities (e.g. widget configuration intents) are not URL links and
+    // can trigger noisy AppIntent mapping errors in the main app when forwarded here.
+    let isWebBrowsingActivity = userActivity.activityType == NSUserActivityTypeBrowsingWeb
+    let hasDeepLinkUrl = userActivity.webpageURL != nil
+    guard isWebBrowsingActivity || hasDeepLinkUrl else {
+      return super.application(application, continue: userActivity, restorationHandler: restorationHandler)
+    }
+
     let result = RCTLinkingManager.application(application, continue: userActivity, restorationHandler: restorationHandler)
     return super.application(application, continue: userActivity, restorationHandler: restorationHandler) || result
   }

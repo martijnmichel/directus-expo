@@ -25,6 +25,13 @@ type WidgetCache = {
   setPayload(id: string, json: string | null): Promise<void>;
 };
 
+export function hasNativeWidgetSharedStorageModule(): boolean {
+  const native = (NativeModules as any).WidgetSharedStorage as
+    | NativeWidgetSharedStorage
+    | undefined;
+  return !!native;
+}
+
 export function getWidgetCache(): WidgetCache {
   const native: NativeWidgetSharedStorage | undefined =
     (NativeModules as any).WidgetSharedStorage;

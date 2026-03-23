@@ -1,4 +1,5 @@
 import AppIntents
+import OSLog
 import SwiftUI
 import UIKit
 import WidgetKit
@@ -64,16 +65,24 @@ struct Entry: TimelineEntry {
 @available(iOS 17.0, *)
 struct Provider: AppIntentTimelineProvider {
   typealias Intent = LatestItemsWidgetConfigurationIntent
+  private let log = Logger(subsystem: "com.martijnmichel.directusexpo.widgets", category: "LatestItemsWidget")
 
   func placeholder(in context: Context) -> Entry {
     Entry(date: .now, configTitle: "Latest", faviconImageData: nil, instanceUrl: nil, items: [], statusMessage: nil)
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
+    log.debug("snapshot start")
     let readResult = readLatestItemsConfigListResult()
     let list = readResult.list
+    log.debug(
+      "config list read count=\(list.count, privacy: .public) groupDefaults=\(readResult.canOpenGroupDefaults, privacy: .public) groupContainer=\(readResult.canOpenGroupContainer, privacy: .public)"
+    )
     let selectedId = configuration.setup?.id ?? list.first?.id
     let selectedConfig = list.first(where: { $0.id == selectedId }) ?? list.first
+    log.debug(
+      "selected config id=\(selectedConfig?.id ?? "nil", privacy: .public) title=\(selectedConfig?.title ?? "nil", privacy: .public)"
+    )
 
     var items: [SlotItem] = []
     var status: String? = nil
@@ -87,14 +96,20 @@ struct Provider: AppIntentTimelineProvider {
       }
     } else if let config = selectedConfig, (config.webhookUrl == nil || config.webhookUrl?.isEmpty == true) {
       status = "This setup is missing a webhook URL. Open the app and re-save the setup."
+      log.error("selected config missing webhook url configId=\(config.id, privacy: .public)")
     } else if let config = selectedConfig {
+      log.debug("webhook fetch start configId=\(config.id, privacy: .public)")
       let result = await DirectusWidgetWebhookClient.fetchSlotItemsFromWebhookDetailed(config: config)
       items = result.items ?? []
       if items.isEmpty, let msg = result.errorMessage { status = msg }
       flowResp = result.flowResponse
+      log.debug(
+        "webhook fetch done configId=\(config.id, privacy: .public) items=\(items.count, privacy: .public) error=\(result.errorMessage ?? "nil", privacy: .public)"
+      )
     }
 
     if items.isEmpty, let config = selectedConfig {
+      log.debug("cache fallback start configId=\(config.id, privacy: .public)")
       if let cached = DirectusWidgetFlowDecoder.readCachedPayload(
         suiteName: LatestItemsWidgetKeys.appGroup,
         payloadKeyPrefix: LatestItemsWidgetKeys.payloadPrefix,
@@ -103,6 +118,9 @@ struct Provider: AppIntentTimelineProvider {
         sessionId: config.sessionId
       ) {
         items = cached
+        log.debug("cache fallback hit configId=\(config.id, privacy: .public) items=\(items.count, privacy: .public)")
+      } else {
+        log.debug("cache fallback miss configId=\(config.id, privacy: .public)")
       }
     }
 
@@ -113,6 +131,9 @@ struct Provider: AppIntentTimelineProvider {
       faviconFileId: flowResp?.favicon,
       instanceUrl: selectedConfig?.instanceUrl,
       webhookUrl: selectedConfig?.webhookUrl
+    )
+    log.debug(
+      "snapshot end items=\(items.count, privacy: .public) status=\(status ?? "nil", privacy: .public) hasFavicon=\(faviconImageData != nil, privacy: .public)"
     )
     return Entry(
       date: .now,
@@ -125,8 +146,10 @@ struct Provider: AppIntentTimelineProvider {
   }
 
   func timeline(for configuration: Intent, in context: Context) async -> Timeline<Entry> {
+    log.debug("timeline start")
     let entry = await snapshot(for: configuration, in: context)
     let next = Calendar.current.date(byAdding: .minute, value: 30, to: .now) ?? .now.addingTimeInterval(1800)
+    log.debug("timeline end nextRefresh=\(next.formatted(date: .omitted, time: .standard), privacy: .public)")
     return Timeline(entries: [entry], policy: .after(next))
   }
 }

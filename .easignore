@@ -11,9 +11,7 @@ dist/
 web-build/
 .metro-health-check*
 
-# Native / build artifacts
-android
-ios
+# Native build artifacts only (keep ios/android source dirs for cloud builds)
 *.ipa
 *.apk
 *.aab

@@ -1,7 +1,7 @@
 {
   "name": "directus-expo",
   "main": "expo-router/entry",
-  "version": "0.12.6",
+  "version": "0.12.7",
   "scripts": {
     "postinstall": "patch-package",
     "start": "expo start",
