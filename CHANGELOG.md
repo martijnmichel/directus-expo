@@ -1,3 +1,7 @@
+## <small>0.12.1 (2026-03-23)</small>
+
+* chore: add husky commit messages check ([8197566](https://github.com/martijnmichel/directus-expo/commit/8197566))
+
 # [0.12.0](https://github.com/martijnmichel/directus-expo/compare/v0.11.0...v0.12.0) (2026-03-23)
 
 ### Additional changes since `v0.10.1`
