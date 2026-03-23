@@ -70,7 +70,8 @@ struct Provider: AppIntentTimelineProvider {
   }
 
   func snapshot(for configuration: Intent, in context: Context) async -> Entry {
-    let list = readLatestItemsConfigList()
+    let readResult = readLatestItemsConfigListResult()
+    let list = readResult.list
     let selectedId = configuration.setup?.id ?? list.first?.id
     let selectedConfig = list.first(where: { $0.id == selectedId }) ?? list.first
 
@@ -79,7 +80,11 @@ struct Provider: AppIntentTimelineProvider {
     var flowResp: FlowResponse? = nil
 
     if selectedConfig == nil {
-      status = "No widget setup found. Open Settings → Widget and add a setup."
+      if !readResult.canOpenGroupDefaults || !readResult.canOpenGroupContainer {
+        status = "No widget setup found. App Group access missing in widget target/signing."
+      } else {
+        status = "No widget setup found. Open Settings → Widget and add a setup."
+      }
     } else if let config = selectedConfig, (config.webhookUrl == nil || config.webhookUrl?.isEmpty == true) {
       status = "This setup is missing a webhook URL. Open the app and re-save the setup."
     } else if let config = selectedConfig {

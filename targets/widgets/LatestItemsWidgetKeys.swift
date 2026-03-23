@@ -8,15 +8,27 @@ enum LatestItemsWidgetKeys {
   static let payloadPrefix = "directus.widgets.latestItems.v1.payload."
 }
 
+struct LatestItemsConfigListReadResult {
+  let list: [WidgetConfigEntry]
+  let canOpenGroupDefaults: Bool
+  let canOpenGroupContainer: Bool
+}
+
 func readLatestItemsConfigList() -> [WidgetConfigEntry] {
+  return readLatestItemsConfigListResult().list
+}
+
+func readLatestItemsConfigListResult() -> LatestItemsConfigListReadResult {
   var raw: String?
-  if let defaults = UserDefaults(suiteName: LatestItemsWidgetKeys.appGroup) {
+  let defaults = UserDefaults(suiteName: LatestItemsWidgetKeys.appGroup)
+  if let defaults {
     raw = defaults.string(forKey: LatestItemsWidgetKeys.configListKey)
   }
+  let containerURL = FileManager.default.containerURL(
+    forSecurityApplicationGroupIdentifier: LatestItemsWidgetKeys.appGroup
+  )
   if raw == nil || raw?.isEmpty == true,
-     let containerURL = FileManager.default.containerURL(
-       forSecurityApplicationGroupIdentifier: LatestItemsWidgetKeys.appGroup
-     ) {
+     let containerURL {
     let fileURL = containerURL.appendingPathComponent(LatestItemsWidgetKeys.configListFileName)
     raw = try? String(contentsOf: fileURL, encoding: .utf8)
   }
@@ -29,5 +41,9 @@ func readLatestItemsConfigList() -> [WidgetConfigEntry] {
       // If decoding fails, treat as empty list.
     }
   }
-  return list
+  return LatestItemsConfigListReadResult(
+    list: list,
+    canOpenGroupDefaults: defaults != nil,
+    canOpenGroupContainer: containerURL != nil
+  )
 }
