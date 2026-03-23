@@ -1,3 +1,7 @@
+## <small>0.12.8 (2026-03-23)</small>
+
+* chore: bump buildnumber ([d127365](https://github.com/martijnmichel/directus-expo/commit/d127365))
+
 ## <small>0.12.7 (2026-03-23)</small>
 
 * chore: bump version ([ddcea6d](https://github.com/martijnmichel/directus-expo/commit/ddcea6d))
