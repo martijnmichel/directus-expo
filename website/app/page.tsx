@@ -1,7 +1,13 @@
 import { Slider } from "@/components/slider";
 import { StoreButtons } from "@/components/store-buttons";
 import SwiperScreenshots from "@/components/swiper-screenshots";
-import { BellIcon, FileIcon, ServerIcon, UploadIcon } from "lucide-react";
+import {
+  BellIcon,
+  FileIcon,
+  LayoutGridIcon,
+  ServerIcon,
+  UploadIcon,
+} from "lucide-react";
 
 export default function Home() {
   const features = [
@@ -24,22 +30,24 @@ export default function Home() {
     },
 
     {
-      title: "Upload files from your device",
-      titleGradientPart: "your device",
-      icon: <UploadIcon className="size-10" />,
+      title: "Home Screen Widgets",
+      titleGradientPart: "Widgets",
+      icon: <LayoutGridIcon className="size-10" />,
       description:
-        "Shoot a video, take a photo or scan a document and upload it directly to Directus. Access your device's camera and file system to quickly add media assets to your collections. Perfect for content creators and team members who need to update media on the go, with support for multiple file types and automatic processing.",
+        "Add Directus widgets to your iOS or Android home screen to quickly view the latest items and jump straight into the right content. Configure widget setups in the app and keep important collections one tap away.",
       videoUrl: "/video/handle-assets.mp4",
     },
 
     {
-      title: "Manage your content",
-      titleGradientPart: "your content",
-      icon: <FileIcon className="size-10" />,
+      title: "Manage content and media",
+      titleGradientPart: "content and media",
+      icon: <UploadIcon className="size-10" />,
       description:
-        "Create, edit, and delete content entries directly from your mobile device. Browse through your collections, filter and search content, and make real-time updates to your data. Perfect for content managers who need to review and update content on the go, with support for all the most important Directus field types and interfaces.",
+        "Create, edit, and delete content entries directly from your mobile device while uploading photos, videos, and documents to Directus in the same workflow. Browse collections, search and filter data, and keep content and assets in sync on the go.",
       videoUrl: "/video/handle-assets.mp4",
     },
+
+   
   ];
   return (
     <main className="min-h-screen relative">
