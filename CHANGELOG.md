@@ -1,3 +1,8 @@
+## <small>0.12.3 (2026-03-23)</small>
+
+* Merge branch 'main' of https://github.com/martijnmichel/directus-expo ([8fb884b](https://github.com/martijnmichel/directus-expo/commit/8fb884b))
+* refactor: latest-items-widget on ios to widgets ([2b47c11](https://github.com/martijnmichel/directus-expo/commit/2b47c11))
+
 ## <small>0.12.2 (2026-03-23)</small>
 
 * docs: blog post for new release ([a3f6328](https://github.com/martijnmichel/directus-expo/commit/a3f6328))
