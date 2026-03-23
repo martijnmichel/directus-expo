@@ -1,3 +1,11 @@
+## <small>0.12.5 (2026-03-23)</small>
+
+* chore: bump version ([c16225b](https://github.com/martijnmichel/directus-expo/commit/c16225b))
+* display app group error ([6acdfc7](https://github.com/martijnmichel/directus-expo/commit/6acdfc7))
+* update homepage ([501d1ec](https://github.com/martijnmichel/directus-expo/commit/501d1ec))
+* Update package.json ([a47db96](https://github.com/martijnmichel/directus-expo/commit/a47db96))
+* chord: fix app group ([395c0a1](https://github.com/martijnmichel/directus-expo/commit/395c0a1))
+
 ## <small>0.12.4 (2026-03-23)</small>
 
 * chore: prebuild ([a5e4c53](https://github.com/martijnmichel/directus-expo/commit/a5e4c53))
