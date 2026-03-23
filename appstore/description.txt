@@ -4,6 +4,7 @@ Transform your content management experience with Directus, the powerful open da
 
 Key Features:
 • Intuitive Content Management: Create, edit and publish content on the go
+• Home Screen Widgets: Pin your latest items to your home screen for instant access and quick status visibility
 • Push Notifications: Get notified when content changes—subscribe per collection and choose create, update, or delete events so you stay in the loop
 • Rich Text Editor: Format your content with a full-featured mobile editor
 • Media Library: Upload and manage images, videos, and documents directly from your device

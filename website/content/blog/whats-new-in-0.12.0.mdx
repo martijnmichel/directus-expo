@@ -1,0 +1,64 @@
+export const metadata = {
+  title: "Directus Mobile 0.12.0 — Widgets & Multi-Session",
+  description:
+    "0.12.0 introduces two major features: home screen widgets on iOS and Android, and multi-session support per server instance.",
+  date: "2026-03-23",
+  tags: ["Product", "Release"],
+  readTime: "5 min read",
+  image: "/widgets-homescreen.png",
+};
+
+# Directus Mobile 0.12.0 — Widgets & Multi-Session
+
+**0.12.0** introduces two major features:
+
+- **Home screen widgets** on iOS and Android
+- **Multi-session per server instance** for better environment switching
+
+This release is focused on helping you get to the right content faster and switch between projects without friction.
+
+## Home screen widgets on iOS and Android
+
+Widgets are now available as a new core feature in Directus Mobile:
+
+- Configure a widget in-app and pin it to your home screen.
+- See items from a collection without opening the app first.
+- Tap an item to deep-link directly into the right content.
+- Install and configure widget support from the app flow as an admin.
+
+<ImageLightboxGrid
+  anchorPrefix="widgets-setup"
+  images={[
+    { src: "/widgets-homescreen.png", alt: "Widget on home screen" },
+    { src: "/widgets-android-home.jpeg", alt: "Widget on Android home screen" },
+    { src: "/widgets-settings-page.png", alt: "Widgets settings page" },
+    { src: "/edit-widget.png", alt: "Edit widget setup" },
+    { src: "/fieldpicker.png", alt: "Select widget fields" },
+    { src: "/edit-widget-slots.png", alt: "Edit widget slots" },
+  ]}
+/>
+
+
+## Multi-session per instance
+
+Multi-session support is now built in as a new feature:
+
+- **Multi-session per instance** support.
+- Automatic session selection for deep links.
+- Safer startup/auth bootstrap behavior to avoid unexpected login resets.
+- More reliable session-aware routing from widget and app deep links.
+
+If you regularly switch between staging, production, or multiple projects, this release removes a lot of friction in day-to-day use.
+
+
+## Additional polish
+
+You will also notice a more refined experience overall:
+
+- Cleaner widget configuration flow in the app.
+- More predictable navigation when switching contexts.
+- Better consistency in UI spacing and layout behavior.
+
+---
+
+If you have been waiting for a version that combines quick-access widgets with robust multi-session behavior, **0.12.0 is the one to install**.
