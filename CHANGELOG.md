@@ -1,3 +1,8 @@
+## <small>0.12.2 (2026-03-23)</small>
+
+* docs: blog post for new release ([a3f6328](https://github.com/martijnmichel/directus-expo/commit/a3f6328))
+* docs: refine blog entry ([4267f4c](https://github.com/martijnmichel/directus-expo/commit/4267f4c))
+
 ## <small>0.12.1 (2026-03-23)</small>
 
 * chore: add husky commit messages check ([8197566](https://github.com/martijnmichel/directus-expo/commit/8197566))
