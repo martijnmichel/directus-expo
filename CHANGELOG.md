@@ -1,3 +1,7 @@
+## <small>0.12.4 (2026-03-23)</small>
+
+* chore: prebuild ([a5e4c53](https://github.com/martijnmichel/directus-expo/commit/a5e4c53))
+
 ## <small>0.12.3 (2026-03-23)</small>
 
 * Merge branch 'main' of https://github.com/martijnmichel/directus-expo ([8fb884b](https://github.com/martijnmichel/directus-expo/commit/8fb884b))
