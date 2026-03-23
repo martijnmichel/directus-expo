@@ -2,7 +2,7 @@
 
 # Directus Mobile app for ios/android
 
-Transform your content management experience with Directus, the powerful open data platform now available on mobile. Access, manage, and control your content with ease, right from your smartphone or tablet.
+Transform your content management experience with Directus, the powerful open data platform now available on mobile. Access, manage, and control your content with ease, right from your smartphone or tablet. Add widgets to your homescreen displaying your collections and receive Push Notifications on data updates.
 
 App status: Production
 
