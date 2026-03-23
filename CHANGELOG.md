@@ -1,3 +1,8 @@
+## <small>0.12.10 (2026-03-23)</small>
+
+* chore: remove nitromodules ([3ad5dff](https://github.com/martijnmichel/directus-expo/commit/3ad5dff))
+* --ignore ([bebf2dc](https://github.com/martijnmichel/directus-expo/commit/bebf2dc))
+
 ## <small>0.12.9 (2026-03-23)</small>
 
 * chore: remove useLegacyPackaging ([a976f3d](https://github.com/martijnmichel/directus-expo/commit/a976f3d))
