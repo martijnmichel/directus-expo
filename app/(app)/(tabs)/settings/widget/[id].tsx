@@ -197,8 +197,18 @@ export default function WidgetConfigEditorScreen() {
       }
     },
     onSuccess: async () => {
-      await writeCacheFromWidgetConfigsQuery();
-      router.back();
+      try {
+        await writeCacheFromWidgetConfigsQuery();
+      } catch (error) {
+        Alert.alert(
+          t("widget.title"),
+          error instanceof Error
+            ? error.message
+            : "Saved in Directus, but failed to sync widget cache.",
+        );
+      } finally {
+        router.back();
+      }
     },
   });
 
@@ -214,8 +224,18 @@ export default function WidgetConfigEditorScreen() {
       );
     },
     onSuccess: async () => {
-      await writeCacheFromWidgetConfigsQuery();
-      router.back();
+      try {
+        await writeCacheFromWidgetConfigsQuery();
+      } catch (error) {
+        Alert.alert(
+          t("widget.title"),
+          error instanceof Error
+            ? error.message
+            : "Deleted in Directus, but failed to sync widget cache.",
+        );
+      } finally {
+        router.back();
+      }
     },
   });
 

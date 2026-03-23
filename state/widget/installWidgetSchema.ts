@@ -89,12 +89,12 @@ const WIDGET_FIELDS: Array<{
     },
   },
   {
-    field: "fields",
+    field: "extra",
     type: "json",
     meta: {
       interface: "input-code",
       options: { language: "json" },
-      note: "Fields array for the widget query (e.g. [\"id\",\"title\"]).",
+      note: "Fields/slots array for the widget query (e.g. [\"id\",\"title\"]).",
     },
   },
  
@@ -1622,7 +1622,6 @@ module.exports = async function (data) {
                   "type",
                   "user_id",
                   "collection",
-                  "fields",
                   "extra",
                   "filter",
                   "sort",
@@ -1961,7 +1960,7 @@ module.exports = async function (data) {
             collection: APP_WIDGET_CONFIG_COLLECTION,
             action,
             validation: {},
-            fields: ["id", "user_id", "collection", "title", "fields", "filter", "sort", "limit", "type"],
+            fields: ["id", "user_id", "collection", "title", "extra", "filter", "sort", "limit", "type"],
           } as Record<string, unknown>;
 
           if (action === "create") {

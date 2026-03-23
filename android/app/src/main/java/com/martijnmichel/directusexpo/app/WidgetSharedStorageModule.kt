@@ -16,6 +16,10 @@ class WidgetSharedStorageModule(private val reactContext: ReactApplicationContex
   @ReactMethod
   fun setConfigList(json: String, promise: Promise) {
     try {
+      // Guard against malformed writes so widget/provider readers never crash on JSON parse.
+      if (json.isNotBlank()) {
+        org.json.JSONArray(json)
+      }
       prefs.edit()
         .putString("directus.widgets.latestItems.v1.configList", json)
         .apply()
@@ -50,12 +54,17 @@ class WidgetSharedStorageModule(private val reactContext: ReactApplicationContex
       var count = 0
       val ids = Arguments.createArray()
       if (raw.isNotEmpty()) {
-        val jsonArr = org.json.JSONArray(raw)
-        count = jsonArr.length()
-        for (i in 0 until jsonArr.length()) {
-          val obj = jsonArr.optJSONObject(i) ?: continue
-          val id = obj.optString("id", "")
-          if (id.isNotBlank()) ids.pushString(id)
+        try {
+          val jsonArr = org.json.JSONArray(raw)
+          count = jsonArr.length()
+          for (i in 0 until jsonArr.length()) {
+            val obj = jsonArr.optJSONObject(i) ?: continue
+            val id = obj.optString("id", "")
+            if (id.isNotBlank()) ids.pushString(id)
+          }
+        } catch (_: Exception) {
+          // Corrupted cache should not crash app code paths that only need "synced" hints.
+          // Treat as empty and keep UI responsive.
         }
       }
       val result = Arguments.createMap().apply {

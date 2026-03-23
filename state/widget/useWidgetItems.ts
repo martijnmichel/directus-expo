@@ -9,11 +9,6 @@ import {
 import type { LatestItemsWidgetConfig } from "@/widgets/latestItems/types";
 import { readActiveSessionId } from "@/state/auth/resolveActiveSession";
 
-function coerceArray(val: unknown): string[] | undefined {
-  if (!Array.isArray(val)) return undefined;
-  return val.map((x) => String(x));
-}
-
 /** Directus JSON fields may arrive parsed or as a string depending on client/version. */
 function parseExtraField(raw: unknown): Record<string, unknown> | undefined {
   if (raw == null) return undefined;
@@ -87,7 +82,6 @@ export function useWidgetItems(params: {
           collection: row.collection ?? "",
           sort: row.sort ?? "",
           limit: row.limit ?? 5,
-          fields: coerceArray(row.fields) ?? [],
           title: row.title,
           webhookUrl: webhookUrl?.toString() ?? undefined,
           type: row.type ? String(row.type) : APP_WIDGET_TYPE_LATEST_ITEMS,
