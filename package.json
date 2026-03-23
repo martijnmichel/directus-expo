@@ -4,6 +4,7 @@
   "version": "0.12.9",
   "scripts": {
     "postinstall": "patch-package",
+    "eas-build-pre-install": "node scripts/cleanup-android-launcher-webp.js",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
@@ -29,7 +30,8 @@
     "eas:prod": "eas update --branch production --message \"Production Update\"",
     "run:android": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android",
     "run:android:device": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android --device",
-    "prepare": "husky"
+    "prepare": "husky",
+    "clean:android:launcher-webp": "node scripts/cleanup-android-launcher-webp.js"
   },
   "jest": {
     "preset": "jest-expo"

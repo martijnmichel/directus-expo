@@ -258,7 +258,7 @@
 		};
 		XXD37895CDE99FCC696EE0XX /* widgets */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = XX2CA95754A5870C209D12XX /* Build configuration list for PBXNativeTarget "widgets" */;
+			buildConfigurationList = XX1370E34B311FFAC458A4XX /* Build configuration list for PBXNativeTarget "widgets" */;
 			buildPhases = (
 				XX074B8811C1CF8E8A3D74XX /* Frameworks */,
 				XXE45443DC38DCFE1DB622XX /* Sources */,
@@ -532,7 +532,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.8;
+				MARKETING_VERSION = 0.12.9;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -566,7 +566,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.12.8;
+				MARKETING_VERSION = 0.12.9;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -700,7 +700,7 @@
 			};
 			name = Release;
 		};
-		XX49A1CFD18DA414B33AF4XX /* Release */ = {
+		XX66FDA707F7564EC6B06EXX /* Release */ = {
 			isa = XCBuildConfiguration;
 			name = Release;
 			buildSettings = {
@@ -714,7 +714,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -727,7 +727,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.12.8;
+				MARKETING_VERSION = 0.12.9;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo.widgets;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -741,7 +741,7 @@
 				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
 		};
-		XXCC4262203954A2A75EFFXX /* Debug */ = {
+		XXB9126ECD2EF4C352BCD9XX /* Debug */ = {
 			isa = XCBuildConfiguration;
 			name = Debug;
 			buildSettings = {
@@ -754,7 +754,7 @@
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -767,7 +767,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 0.12.8;
+				MARKETING_VERSION = 0.12.9;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.martijnmichel.directusexpo.widgets;
@@ -803,12 +803,12 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		XX2CA95754A5870C209D12XX /* Build configuration list for PBXNativeTarget "widgets" */ = {
+		XX1370E34B311FFAC458A4XX /* Build configuration list for PBXNativeTarget "widgets" */ = {
 			isa = XCConfigurationList;
 			defaultConfigurationIsVisible = 0;
 			buildConfigurations = (
-				XXCC4262203954A2A75EFFXX /* Debug */,
-				XX49A1CFD18DA414B33AF4XX /* Release */,
+				XXB9126ECD2EF4C352BCD9XX /* Debug */,
+				XX66FDA707F7564EC6B06EXX /* Release */,
 			);
 			defaultConfigurationName = Release;
 		};
