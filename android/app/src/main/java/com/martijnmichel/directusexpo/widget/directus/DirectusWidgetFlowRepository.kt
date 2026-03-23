@@ -82,6 +82,22 @@ class DirectusWidgetFlowRepository(
         return DirectusWidgetFetchResult(emptyList(), null, "Webhook returned unexpected JSON.")
       }
 
+    // Webhook can return logical errors with HTTP 200, e.g.
+    // { ok:false, status:"forbidden", error:{ message:"..." } }.
+    val logicalOk = if (resp.has("ok")) resp.optBoolean("ok", true) else true
+    if (!logicalOk) {
+      val topMessage = resp.optString("message").takeIf { it.isNotBlank() }
+      val errorObj = resp.optJSONObject("error")
+      val errorMessage = errorObj?.optString("message")?.takeIf { it.isNotBlank() }
+      val status = resp.optString("status").takeIf { it.isNotBlank() }
+      val statusMessage =
+        errorMessage
+          ?: topMessage
+          ?: if (status == "forbidden") "Widget owner does not have read access to this collection."
+          else "Open the app to refresh"
+      return DirectusWidgetFetchResult(emptyList(), null, statusMessage)
+    }
+
     val (items, faviconFileId) = DirectusWidgetFlowDecoder.decodeSlotItemsFromFlowResponse(resp, setup)
     if (items.isEmpty()) {
       val cached = prefs.getString(cacheKey(setup.id), null)
