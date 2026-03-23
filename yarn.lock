@@ -9065,11 +9065,6 @@ react-native-mask-input@^1.2.3:
   resolved "https://registry.yarnpkg.com/react-native-mask-input/-/react-native-mask-input-1.2.3.tgz#c588b145bb48098be54ac6b40ebe7363a302428b"
   integrity sha512-RWx+gc1EaBslJWR6dsvGdILJ5XvnvZuyEsgJaH9uAMukB3Z9eOlxra1E7Ovck8NSMVcYWpBB/lzojO4LwqqXgA==
 
-react-native-nitro-modules@^0.20.1:
-  version "0.20.1"
-  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.20.1.tgz#99568818b90e364f1e08b5341a7868eca3762333"
-  integrity sha512-ffa8GbnLBs7irEx1ZCl7WdHzzA5uj4ngh7hIWbeUfBs8m2iAn+byowOJWHKmO+RA2hp9dVwTxHYSBOqIvTVvHA==
-
 react-native-outside-press@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/react-native-outside-press/-/react-native-outside-press-1.2.2.tgz#a869ce9e025d112581f05bc6a7ef86fc0c83f4b7"
