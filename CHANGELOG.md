@@ -1,3 +1,20 @@
+# [0.11.0](https://github.com/martijnmichel/directus-expo/compare/v0.10.1...v0.11.0) (2026-03-23)
+
+
+### Bug Fixes
+
+* scroll on draggable delay ([759985d](https://github.com/martijnmichel/directus-expo/commit/759985d502d7cab450b6051fb4f5bfbf2264c76e))
+
+
+### Features
+
+* multi session per instance ([941bca3](https://github.com/martijnmichel/directus-expo/commit/941bca346d254803a44011cff0ee1c2afed36d44))
+
+
+### Performance Improvements
+
+* automatic session switch on deeplink ([4a4f37e](https://github.com/martijnmichel/directus-expo/commit/4a4f37e986cda61c927a3534b51d6eabeda6cdb9))
+
 ## [0.10.1](https://github.com/martijnmichel/directus-expo/compare/v0.10.0...v0.10.1) (2026-03-19)
 
 
