@@ -6,7 +6,7 @@ try {
 }
 
 const packageJson = require("./package.json");
-const buildNumber = 10;
+const buildNumber = 11;
 
 export default () => ({
   expo: {
@@ -67,7 +67,6 @@ export default () => ({
             compileSdkVersion: 35,
             targetSdkVersion: 35,
             buildToolsVersion: "35.0.0",
-            useLegacyPackaging: true,
           },
         },
       ],
