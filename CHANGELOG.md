@@ -1,3 +1,8 @@
+## <small>0.12.7 (2026-03-23)</small>
+
+* chore: bump version ([ddcea6d](https://github.com/martijnmichel/directus-expo/commit/ddcea6d))
+* fix: remove android/ios folder from easignore ([6e953bb](https://github.com/martijnmichel/directus-expo/commit/6e953bb))
+
 ## <small>0.12.6 (2026-03-23)</small>
 
 * chore: bump version for native ([c41b2b0](https://github.com/martijnmichel/directus-expo/commit/c41b2b0))
