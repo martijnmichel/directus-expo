@@ -1,3 +1,7 @@
+## <small>0.12.6 (2026-03-23)</small>
+
+* chore: bump version for native ([c41b2b0](https://github.com/martijnmichel/directus-expo/commit/c41b2b0))
+
 ## <small>0.12.5 (2026-03-23)</small>
 
 * chore: bump version ([c16225b](https://github.com/martijnmichel/directus-expo/commit/c16225b))
