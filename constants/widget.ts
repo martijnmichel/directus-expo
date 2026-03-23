@@ -7,12 +7,8 @@ export const APP_WIDGET_FLOW_NAME = "App widgets data";
 /**
  * Contract version for the widget webhook response.
  * Keep this in sync with the Directus Flow script.
- *
- * v104: `widthBehaviour` is only `fit` | `fixed` (no `stretch` — it broke Android title layout).
- * Default for left/right is `fit` so side columns hug content and the title uses remaining width.
- * Legacy `stretch` / `widthBehaviour: "stretch"` / `stretch: true` → `fixed`. Title/subtitle: no options.
  */
-export const APP_WIDGET_FLOW_VERSION = 104;
+export const APP_WIDGET_FLOW_VERSION = 1;
 
 /** Widget type identifier used across app + Directus flow. */
 export const APP_WIDGET_TYPE_LATEST_ITEMS = "latest-items" as const;

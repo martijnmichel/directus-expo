@@ -117,7 +117,7 @@ const WIDGET_FIELDS: Array<{
   },
   {
     field: "limit",
-    type: "number",
+    type: "integer",
     meta: {
       interface: "input",
       note: "Limit for the widget query.",

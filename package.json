@@ -27,7 +27,8 @@
     "eas:staging": "eas update --branch staging --message \"Staging Update\"",
     "eas:preview": "eas update --branch preview --message \"Preview Update\"",
     "eas:prod": "eas update --branch production --message \"Production Update\"",
-    "run:android": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android"
+    "run:android": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android",
+    "run:android:device": "ANDROID_HOME=/Volumes/Samsung990PRO/Android/sdk npx expo run:android --device"
   },
   "jest": {
     "preset": "jest-expo"

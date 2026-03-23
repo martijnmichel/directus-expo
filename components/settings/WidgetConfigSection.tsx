@@ -34,11 +34,7 @@ import {
   APP_WIDGET_TYPES,
   buildDefaultLatestItemsFormSlots,
 } from "@/constants/widget";
-import {
-  deleteItem,
-  readFlows,
-  readItems,
-} from "@directus/sdk";
+import { deleteItem, readFlows, readItems } from "@directus/sdk";
 import { DividerSubtitle } from "@/components/display/subtitle";
 import { Alert as InlineAlert } from "@/components/display/alert";
 import { useInstallWidgetSchema } from "@/state/widget/installWidgetSchema";
@@ -164,7 +160,8 @@ export function WidgetConfigSection() {
   }, [configIdsKey]);
 
   const openAdd = () => router.push("/settings/widget/new");
-  const openEdit = (c: LatestItemsWidgetConfig) => router.push(`/settings/widget/${c.id}`);
+  const openEdit = (c: LatestItemsWidgetConfig) =>
+    router.push(`/settings/widget/${c.id}`);
 
   const remove = (c: LatestItemsWidgetConfig) => {
     Alert.alert(
@@ -282,18 +279,8 @@ export function WidgetConfigSection() {
     <Vertical spacing="md">
       <DividerSubtitle title={t("widget.title")} icon="msWidgets" />
       <Muted>{t("widget.intro")}</Muted>
-      <InlineAlert
-        status="info"
-        message={
-          Platform.OS === "android"
-            ? t("widget.addToHomeScreenHintAndroid")
-            : t("widget.addToHomeScreenHintIos")
-        }
-        action={undefined}
-      />
-      {configs.length === 0 && (
-        <InlineAlert status="warning" message={t("widget.setupPickerHint")} />
-      )}
+
+     
       <Vertical spacing="xs" style={{ marginTop: 8 }}>
         {configs.map((c) => (
           <Pressable
@@ -366,10 +353,7 @@ export function WidgetConfigSection() {
           </Pressable>
         ))}
       </Vertical>
-      <Button
-        onPress={openAdd}
-        leftIcon={<DirectusIcon name="add" />}
-      >
+      <Button onPress={openAdd} leftIcon={<DirectusIcon name="add" />}>
         {t("widget.addSetup")}
       </Button>
 
@@ -387,6 +371,16 @@ export function WidgetConfigSection() {
                 : "Update flow"}
           </Button>
         )}
+
+      <InlineAlert
+        status="info"
+        message={
+          Platform.OS === "android"
+            ? t("widget.addToHomeScreenHintAndroid")
+            : t("widget.addToHomeScreenHintIos")
+        }
+        action={undefined}
+      />
     </Vertical>
   );
 }

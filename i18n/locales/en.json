@@ -67,7 +67,7 @@
     "installBackend": "Install widget backend",
     "permissionWarning": "You don't have permission to manage widgets. Ask an admin to grant access to app_widget_config.",
     "checkAgain": "Check again",
-    "intro": "Configure which collections native widgets can show. Install the widget backend once per Directus instance (requires admin), then add personal widget setups below.",
+    "intro": "Configure which collections native widgets can show.",
     "addToHomeScreenTitle": "Add widget to home screen",
     "addToHomeScreenHintAndroid": "Tap below to add the Latest Items widget to your home screen. You can then choose which setup to show.",
     "addToHomeScreenHintIos": "Long-press the home screen, tap +, choose \"Latest Items\" for this app, then pick the setup you want.",
