@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Visual tokens for this widget extension target (fonts, colors, spacing).
-/// Add new widgets under `targets/latest-items-widget/` and reuse this theme.
+/// Add new widgets under `targets/widgets/` and reuse this theme.
 enum WidgetNativeTheme {
 
   enum Typography {

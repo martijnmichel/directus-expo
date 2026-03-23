@@ -1,10 +1,10 @@
 /** @type {import('@bacons/apple-targets/app.plugin').ConfigFunction} */
 module.exports = (config) => ({
   type: "widget",
-  name: "latest-items-widget",
-  displayName: "Latest Items",
+  name: "widgets",
+  displayName: "Directus Widgets",
   deploymentTarget: "18.0",
-  bundleIdentifier: ".latest-items-widget",
+  bundleIdentifier: ".widgets",
   entitlements: {
     "com.apple.security.application-groups": [
       "group.com.martijnmichel.directusexpo.widgets",

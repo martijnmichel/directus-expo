@@ -19,7 +19,7 @@
 		XX12B55A1EDABF083C3B51XX /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */; };
 		XX1A6800511A685AB346D2XX /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XXA12889081EB894481655XX /* AppIntents.framework */; };
 		XX3C562DEF346B45594832XX /* ActivityKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XXCAF23C3FC41F82140FA1XX /* ActivityKit.framework */; };
-		XX5E33595221565679C4FCXX /* latest-items-widget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		XX5E33595221565679C4FCXX /* widgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XX64D4E6A9BDFF21D90B96XX /* widgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		XX6A44985675A04437B8C4XX /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = XX4DFF38D47332D6BF0183XX /* SwiftUI.framework */; };
 /* End PBXBuildFile section */
 
@@ -29,7 +29,7 @@
 			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = XXD37895CDE99FCC696EE0XX;
-			remoteInfo = "latest-items-widget";
+			remoteInfo = widgets;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -40,7 +40,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				XX5E33595221565679C4FCXX /* latest-items-widget.appex in Embed Foundation Extensions */,
+				XX5E33595221565679C4FCXX /* widgets.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -65,7 +65,7 @@
 		F21748422D0307B40044C1D9 /* WidgetSharedStorage.m */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = WidgetSharedStorage.m; path = DirectusMobile/WidgetSharedStorage.m; sourceTree = "<group>"; };
 		XX470101BAEB8E0BBC8B0DXX /* WidgetKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		XX4DFF38D47332D6BF0183XX /* SwiftUI.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
-		XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = "latest-items-widget.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		XX64D4E6A9BDFF21D90B96XX /* widgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = widgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		XXA12889081EB894481655XX /* AppIntents.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 		XXCAF23C3FC41F82140FA1XX /* ActivityKit.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = ActivityKit.framework; path = System/Library/Frameworks/ActivityKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -77,12 +77,12 @@
 				"expo-target.config.js",
 				Info.plist,
 			);
-			target = XXD37895CDE99FCC696EE0XX /* latest-items-widget */;
+			target = XXD37895CDE99FCC696EE0XX /* widgets */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		XX6A905F2D857E4B511F1FXX /* latest-items-widget */ = {
+		XX6A905F2D857E4B511F1FXX /* widgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				XXA9E7B2C1BEFFA35B4823XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
@@ -90,7 +90,7 @@
 			explicitFileTypes = {};
 			explicitFolders = (
 			);
-			path = "latest-items-widget";
+			path = widgets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -182,7 +182,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* DirectusMobile.app */,
-				XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */,
+				XX64D4E6A9BDFF21D90B96XX /* widgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -224,7 +224,7 @@
 		XX3E41C1850246162C0061XX /* expo:targets */ = {
 			isa = PBXGroup;
 			children = (
-				XX6A905F2D857E4B511F1FXX /* latest-items-widget */,
+				XX6A905F2D857E4B511F1FXX /* widgets */,
 			);
 			name = expo:targets;
 			path = ../targets;
@@ -257,9 +257,9 @@
 			productReference = 13B07F961A680F5B00A75B9A /* DirectusMobile.app */;
 			productType = "com.apple.product-type.application";
 		};
-		XXD37895CDE99FCC696EE0XX /* latest-items-widget */ = {
+		XXD37895CDE99FCC696EE0XX /* widgets */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = XX6F5BFFD26D2CBBC3E53DXX /* Build configuration list for PBXNativeTarget "latest-items-widget" */;
+			buildConfigurationList = XX6F5BFFD26D2CBBC3E53DXX /* Build configuration list for PBXNativeTarget "widgets" */;
 			buildPhases = (
 				XX074B8811C1CF8E8A3D74XX /* Frameworks */,
 				XXE45443DC38DCFE1DB622XX /* Sources */,
@@ -270,11 +270,11 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				XX6A905F2D857E4B511F1FXX /* latest-items-widget */,
+				XX6A905F2D857E4B511F1FXX /* widgets */,
 			);
-			name = "latest-items-widget";
-			productName = latestitemswidget;
-			productReference = XX64D4E6A9BDFF21D90B96XX /* latest-items-widget.appex */;
+			name = widgets;
+			productName = widgets;
+			productReference = XX64D4E6A9BDFF21D90B96XX /* widgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -310,7 +310,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* DirectusMobile */,
-				XXD37895CDE99FCC696EE0XX /* latest-items-widget */,
+				XXD37895CDE99FCC696EE0XX /* widgets */,
 			);
 		};
 /* End PBXProject section */
@@ -505,7 +505,7 @@
 /* Begin PBXTargetDependency section */
 		XXC0C72DD52A5C1786D98AXX /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = XXD37895CDE99FCC696EE0XX /* latest-items-widget */;
+			target = XXD37895CDE99FCC696EE0XX /* widgets */;
 			targetProxy = XX2EC38492E5103BF0D4FAXX /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -719,7 +719,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "../targets/latest-items-widget/Info.plist";
+				INFOPLIST_FILE = "../targets/widgets/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Latest Items";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -730,7 +730,7 @@
 				);
 				MARKETING_VERSION = 0.10.1;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.martijnmichel.directusexpo.latest-items-widget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.martijnmichel.directusexpo.widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -738,7 +738,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "../targets/widgets/generated.entitlements";
 				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
 		};
@@ -759,7 +759,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = "../targets/latest-items-widget/Info.plist";
+				INFOPLIST_FILE = "../targets/widgets/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "Latest Items";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
@@ -771,7 +771,7 @@
 				MARKETING_VERSION = 0.10.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.martijnmichel.directusexpo.latest-items-widget";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.martijnmichel.directusexpo.widgets";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -779,7 +779,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				CODE_SIGN_ENTITLEMENTS = "../targets/latest-items-widget/generated.entitlements";
+				CODE_SIGN_ENTITLEMENTS = "../targets/widgets/generated.entitlements";
 				DEVELOPMENT_TEAM = U94SNGSSX7;
 			};
 		};
@@ -804,7 +804,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		XX6F5BFFD26D2CBBC3E53DXX /* Build configuration list for PBXNativeTarget "latest-items-widget" */ = {
+		XX6F5BFFD26D2CBBC3E53DXX /* Build configuration list for PBXNativeTarget "widgets" */ = {
 			isa = XCConfigurationList;
 			defaultConfigurationIsVisible = 0;
 			buildConfigurations = (

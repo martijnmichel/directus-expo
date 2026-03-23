@@ -4,7 +4,7 @@ This WidgetKit extension shows latest Directus items. Configuration is driven by
 
 ## Why is the widget in `targets/` and not `ios/`?
 
-- **Widget extension** (this folder, `targets/latest-items-widget/`): The **@bacons/apple-targets** plugin discovers extension targets by scanning the `targets/` directory for `expo-target.config.js` and wires each folder into the Xcode project as a separate target (the `.appex`). The plugin is built around this layout, so the widget Swift code lives here.
+- **Widget extension** (this folder, `targets/widgets/`): The **@bacons/apple-targets** plugin discovers extension targets by scanning the `targets/` directory for `expo-target.config.js` and wires each folder into the Xcode project as a separate target (the `.appex`). The plugin is built around this layout, so the widget Swift code lives here.
 - **Main-app native module** (`ios/DirectusMobile/WidgetSharedStorage.m`): That code runs in the **main app** and writes the config list to the App Group so the widget extension can read it. It’s a normal React Native native module in the main app target, so it lives under `ios/`. We can’t move the widget extension into `ios/` without dropping the plugin and maintaining the widget target and its file references by hand.
 
 ## How the widget gets the Directus API URL
