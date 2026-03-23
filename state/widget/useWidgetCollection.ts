@@ -67,12 +67,28 @@ export function useWidgetAccessOnly(enabled: boolean = true) {
       try {
         const filter: Record<string, unknown> = {};
         if (userId) filter.user_id = { _eq: userId };
-        await directus!.request(
-          readItems(APP_WIDGET_CONFIG_COLLECTION as any, {
-            ...(Object.keys(filter).length > 0 && { filter }),
-            limit: 1,
-          }) as RestCommand<unknown, any>,
-        );
+        const [_, flows] = await Promise.all([
+          directus!.request(
+            readItems(APP_WIDGET_CONFIG_COLLECTION as any, {
+              ...(Object.keys(filter).length > 0 && { filter }),
+              limit: 1,
+            }) as RestCommand<unknown, any>,
+          ),
+          directus!.request(
+            readFlows({
+              filter: { name: { _eq: APP_WIDGET_FLOW_NAME } },
+              fields: ["id", "name"],
+              limit: 1,
+            } as any),
+          ),
+        ]);
+        const flowList = Array.isArray(flows)
+          ? flows
+          : ((flows as { data?: unknown[] })?.data ?? []);
+        // For non-admins, treat "can't see the flow" as no widget access.
+        if (flowList.length === 0) {
+          return { access: "forbidden" as const };
+        }
         return { access: "ok" as const };
       } catch (error) {
         if (isWidgetForbiddenError(error)) {

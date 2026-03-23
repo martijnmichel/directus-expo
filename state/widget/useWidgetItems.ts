@@ -34,6 +34,7 @@ async function getWebhookUrlForInstance(directus: any) {
   const flows = await directus.request(
     readFlows({
       filter: { name: { _eq: APP_WIDGET_FLOW_NAME } },
+      fields: ["id"],
       limit: 1,
     } as any),
   );
