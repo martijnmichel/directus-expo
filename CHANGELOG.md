@@ -1,3 +1,9 @@
+## <small>0.12.9 (2026-03-23)</small>
+
+* chore: remove useLegacyPackaging ([a976f3d](https://github.com/martijnmichel/directus-expo/commit/a976f3d))
+* ignore ([dd3d2f2](https://github.com/martijnmichel/directus-expo/commit/dd3d2f2))
+* rm duplicate assets ([7c35df2](https://github.com/martijnmichel/directus-expo/commit/7c35df2))
+
 ## <small>0.12.8 (2026-03-23)</small>
 
 * chore: bump buildnumber ([d127365](https://github.com/martijnmichel/directus-expo/commit/d127365))
