@@ -62,6 +62,7 @@ import { getCollectionTranslation } from "@/helpers/collections/getCollectionTra
 import { DirectusErrorResponse } from "@/types/directus";
 import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
+import { useModalStore } from "@/state/stores/modalStore";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
 type RelatedItemState = {
@@ -92,6 +93,7 @@ export const M2AInput = ({
     return null;
   }
 
+  const { open: openModal, close: closeModal } = useModalStore()
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles, theme } = useStyles();
   const { data: relations } = useRelations();
@@ -492,6 +494,7 @@ export const M2AInput = ({
         <Button
           variant="ghost"
           onPress={() => {
+            router.back()
             onPress({
               pathname: `/modals/m2a/[collection]/${variant}`,
               params: {
@@ -625,12 +628,10 @@ export const M2AInput = ({
               </Link>
             ) */}
 
-            <Modal>
-              <Modal.Trigger>
-                <Button>{t("components.shared.createNew")}</Button>
-              </Modal.Trigger>
-              <Modal.Content variant="quickView">
-                {({ close }) => {
+<Button
+              onPress={() => {
+                openModal(() => {
+                  console.log("open modal");
                   return (
                     <Vertical>
                       {map(
@@ -641,24 +642,25 @@ export const M2AInput = ({
                             variant="add"
                             onPress={(href) => {
                               router.push(href);
-                              close();
+                              closeModal();
                             }}
                             collection={collection}
                           />
-                        )
+                        ),
                       )}
                     </Vertical>
                   );
-                }}
-              </Modal.Content>
-            </Modal>
+                }, "Create New");
 
-            <Modal>
-              <Modal.Trigger>
-                <Button>{t("components.shared.addExisting")}</Button>
-              </Modal.Trigger>
-              <Modal.Content variant="quickView">
-                {({ close }) => {
+                router.push({ pathname: "/modals/dynamic" });
+              }}
+            >
+              {t("components.shared.createNew")}
+            </Button>
+
+            <Button
+              onPress={() => {
+                openModal(() => {
                   return (
                     <Vertical>
                       {map(
@@ -669,17 +671,22 @@ export const M2AInput = ({
                             variant="pick"
                             onPress={(href) => {
                               router.push(href);
-                              close();
+                              closeModal();
                             }}
                             collection={collection}
                           />
-                        )
+                        ),
                       )}
                     </Vertical>
                   );
-                }}
-              </Modal.Content>
-            </Modal>
+                }, "Add Existing");
+                router.push({ pathname: "/modals/dynamic" });
+              }}
+            >
+              {t("components.shared.addExisting")}
+            </Button>
+
+           
           </Horizontal>
         )}
       </Vertical>
