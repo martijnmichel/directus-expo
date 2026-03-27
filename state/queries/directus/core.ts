@@ -32,7 +32,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { mutateUser } from "@/state/actions/updateUser";
 import { mutateMe } from "@/state/actions/updateMe";
-import { get } from "lodash";
+import { get, unset } from "lodash";
 import { addRole } from "@/state/actions/addRole";
 import { addPolicy } from "@/state/actions/addPolicy";
 import { removeFile } from "@/state/actions/deleteFile";
@@ -179,8 +179,13 @@ export const useFiles = (query?: Query<CoreSchema, any>) => {
       const items = (await directus?.request(
         readFiles(query)
       )) as unknown as DirectusFile[];
+      const aggregateQuery = { ...(query ?? {}) };
+      unset(aggregateQuery, ["page"]);
       const pagination = await directus?.request(
-        aggregate("directus_files", { aggregate: { count: "*" } })
+        aggregate("directus_files", {
+          aggregate: { count: "*" },
+          query: aggregateQuery as any,
+        })
       );
       return { items: items, total: Number(get(pagination, "0.count")) };
     },
