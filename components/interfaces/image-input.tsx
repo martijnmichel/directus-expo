@@ -198,6 +198,8 @@ export const ImageInput = ({
                         <>
                           <ScrollView>
                             <FileSelect
+                              multiple={false}
+                              type={["images"]}
                               onSelect={(v) => {
                                 close();
                                 requestAnimationFrame(() => {

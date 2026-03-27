@@ -300,6 +300,8 @@ export const FileInput = ({
               <>
                 <ScrollView>
                   <FileSelect
+                    multiple={false}
+                    type={["images", "files"]}
                     onSelect={(v) => {
                       close();
                       requestAnimationFrame(() => {

@@ -354,7 +354,8 @@ export const FilesMultiInput = ({
                   <>
                     <ScrollView>
                       <FileSelect
-                        multiple
+                        multiple={true}
+                        type={["images", "files"]}
                         onSelect={(files) => {
                           addMultipleFiles(
                             (files as string[]).map((f) => ({
