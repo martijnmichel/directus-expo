@@ -2,29 +2,17 @@ import React, { ReactNode, useState } from "react";
 import {
   View,
   Pressable,
-  Platform,
-  ActivityIndicator,
   ScrollView,
-  StyleSheet,
-  Modal as RNModal,
-  TextInput,
-  TouchableWithoutFeedback,
-  LayoutRectangle,
 } from "react-native";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import * as ImagePicker from "expo-image-picker";
 import { formStyles } from "./style";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { Button } from "../display/button";
 import { Input } from "./input";
 import {
-  Download,
-  Search,
-  Edit,
   X,
   Link,
   Gallery,
-  Check,
   Upload,
 } from "../icons";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,18 +20,16 @@ import { Modal } from "../display/modal";
 import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
 import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
-import Animated, { SlideInDown, SlideInUp } from "react-native-reanimated";
 import { useFile } from "@/state/queries/directus/core";
 import { isImageType } from "@/helpers/document/isImageType";
 import { DirectusFile } from "@directus/sdk";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
-import { PortalOutlet } from "../layout/Portal";
 import OutsidePressHandler from "react-native-outside-press";
 import { useTranslation } from "react-i18next";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
 import { InterfaceProps } from ".";
-
+import * as DocumentPicker from "expo-document-picker";
 type FileInputProps = InterfaceProps<{
   value?: string | null;
   onChange?: (value: string | null) => void;
@@ -72,29 +58,32 @@ export const FileInput = ({
   const [isOpen, setIsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
-  const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
-  const [inputLayout, setInputLayout] = useState<LayoutRectangle>({
-    x: 0,
-    y: 0,
-    width: 0,
-    height: 0,
-  });
+  const { mutateAsync: upload } = addUploadFiles();
+  const { mutateAsync: importFile } = addImportFiles();
 
-  const pickImage = async () => {
+  const pickFile = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 1,
+      const result = await DocumentPicker.getDocumentAsync({
+        multiple: false,
       });
 
-      const file = await upload(result);
-      if (file) {
-        onChange?.(file.id);
+      if (!result.canceled && result.assets?.[0]) {
+        const file = await upload({
+          canceled: false,
+          assets: [
+            {
+              uri: result.assets[0].uri,
+              mimeType: result.assets[0].mimeType ?? "application/octet-stream",
+              fileName: result.assets[0].name,
+            },
+          ],
+        } as any);
+        if (file?.id) {
+          onChange?.(String(file.id));
+        }
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error uploading file:", error);
     }
   };
 
@@ -102,7 +91,7 @@ export const FileInput = ({
     try {
       const file = await importFile(imageUrl);
       if (file) {
-        onChange?.(file.id);
+        onChange?.(String(file.id));
       }
       setImageUrl("");
     } catch (error) {
@@ -118,14 +107,14 @@ export const FileInput = ({
   const finalIconColor = defaultIconColor;
 
   const clonedPrepend = prepend
-    ? React.cloneElement(prepend as React.ReactElement, {
+    ? React.cloneElement(prepend as React.ReactElement<any>, {
         color: finalIconColor,
         size: 20,
       })
     : null;
 
   const clonedAppend = append
-    ? React.cloneElement(append as React.ReactElement, {
+    ? React.cloneElement(append as React.ReactElement<any>, {
         color: finalIconColor,
         size: 20,
       })
@@ -184,7 +173,7 @@ export const FileInput = ({
             ]}
             onPress={() => setIsOpen(!isOpen)}
           >
-            {value ? (
+            {!!value ? (
               <File id={value} />
             ) : (
               <Horizontal>
@@ -197,7 +186,7 @@ export const FileInput = ({
             )}
           </Pressable>
 
-          {value && (
+          {!!value && (
             <Button variant="ghost" rounded onPress={() => onChange?.(null)}>
               <X />
             </Button>
@@ -224,7 +213,7 @@ export const FileInput = ({
                   <Pressable
                     style={dropdownStyles.dropdownItem}
                     onPress={() => {
-                      pickImage();
+                      pickFile();
                       setIsOpen(false);
                     }}
                   >
@@ -295,17 +284,18 @@ export const FileInput = ({
       )}
       {sources.includes("library") && (
         <Modal open={libraryOpen} onClose={() => setLibraryOpen(false)}>
-          <Modal.Content variant="bottomSheet" title="Import from URL">
+          <Modal.Content variant="bottomSheet" title="Select from library">
             {({ close }) => (
               <>
                 <ScrollView>
                   <FileSelect
-                    multiple={false}
                     type={["images", "files"]}
                     onSelect={(v) => {
+                      const selected = Array.isArray(v) ? v[0] : v;
+                      if (!selected) return;
                       close();
                       requestAnimationFrame(() => {
-                        onChange?.(v as string);
+                        onChange?.(String(selected));
                       });
                     }}
                   />
