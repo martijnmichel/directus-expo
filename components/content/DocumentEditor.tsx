@@ -58,6 +58,7 @@ export const DocumentEditor = ({
   submitType?: "submit" | "raw" | "inline";
 }) => {
   const uuid = useUUID();
+  const { t } = useTranslation();
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
   const { data: itemPermissions } = useItemPermissions(
@@ -82,6 +83,7 @@ export const DocumentEditor = ({
     permissions,
     styles,
     uuid,
+    t
   });
 
   const form = useWatch({ control });
@@ -92,7 +94,6 @@ export const DocumentEditor = ({
     }
   }, [form, isDirty]);
 
-  const { t } = useTranslation();
   const [revision, setRevision] = useState<number>(0);
   const modalContext = useContext(ModalContext);
   const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
