@@ -20,8 +20,10 @@ export type MittEvents = {
   "m2m:add": { data: CoreSchemaDocument; field: string; uuid: string };
   "m2m:update": {
     collection: keyof CoreSchema;
-    docId: string | number;
     uuid: string;
+    field: string;
+    data: CoreSchemaDocument;
+    junction_id: string | number;
   };
   "m2o:pick": { data: CoreSchemaDocument; field: string; uuid: string };
 

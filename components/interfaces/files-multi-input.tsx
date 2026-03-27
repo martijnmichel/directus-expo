@@ -169,23 +169,7 @@ export const FilesMultiInput = ({
       junction.meta.junction_field as keyof typeof doc
     ] as unknown as DirectusFile;
 
-    useEffect(() => {
-      EventBus.on("m2m:update", (event) => {
-        if (
-          event.collection === relation.related_collection &&
-          (
-            doc?.[
-              junction.meta.junction_field as keyof typeof doc
-            ] as CoreSchemaDocument
-          )?.id === event.docId
-        ) {
-          refetch();
-        }
-      });
-      return () => {
-        EventBus.off("m2m:update", () => refetch());
-      };
-    }, [refetch, relation.related_collection, doc]);
+   
 
     if (error) {
       return (

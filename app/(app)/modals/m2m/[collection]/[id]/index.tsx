@@ -26,8 +26,9 @@ import {
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { CoreSchemaDocument } from "@/types/directus";
 export default function Collection() {
-  const { collection, id, uuid } = useLocalSearchParams();
+  const { collection, id, uuid, junction_id, item_field } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -55,13 +56,16 @@ export default function Collection() {
             <DocumentEditor
               collection={collection as keyof CoreSchema}
               id={id as string}
+              submitType="raw"
               onSave={async (document) => {
                 router.dismiss();
                 console.log({ collection, id });
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
-                  docId: document[primaryKey as any] as string,
                   uuid: uuid as string,
+                  junction_id: junction_id as string | number,
+                  field: item_field as string,
+                  data: document as CoreSchemaDocument,
                 });
               }}
             />
