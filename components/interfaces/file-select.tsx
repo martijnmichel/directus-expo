@@ -1,5 +1,5 @@
 import { DirectusFile, readFiles } from "@directus/sdk";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Grid } from "../display/grid";
 import { Pressable, View, Text } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,10 +19,16 @@ import { InterfaceProps } from ".";
 type FileSelectProps = InterfaceProps<{
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
+  type?: ("images" | "files")[];
   extensions?: string[];
 }>;
 
-export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
+export const FileSelect = ({
+  onSelect,
+  multiple = false,
+  type,
+  extensions,
+}: FileSelectProps) => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<DirectusFile | null>(null);
   const { directus, token } = useAuth();
@@ -36,6 +42,33 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
     limit,
     search,
   });
+
+  const acceptedExtensions = useMemo(
+    () =>
+      (extensions ?? [])
+        .map((ext) => String(ext).trim().replace(/^\./, "").toLowerCase())
+        .filter(Boolean),
+    [extensions],
+  );
+
+  const filteredFiles = useMemo(() => {
+    const selectedTypes =
+      Array.isArray(type) && type.length > 0 ? type : ["images", "files"];
+    const allowImages = selectedTypes.includes("images");
+    const allowNonImages = selectedTypes.includes("files");
+    return (files?.items ?? []).filter((file) => {
+      const mime = String(file.type ?? "").toLowerCase();
+      const isImage = mime.startsWith("image/");
+      const typeAllowed = isImage ? allowImages : allowNonImages;
+      if (!typeAllowed) return false;
+      if (acceptedExtensions.length === 0) return true;
+      const filename = String(
+        file.filename_download ?? file.filename_disk ?? "",
+      ).toLowerCase();
+      const ext = filename.includes(".") ? filename.split(".").pop() ?? "" : "";
+      return acceptedExtensions.includes(ext);
+    });
+  }, [files?.items, type, acceptedExtensions]);
 
   const handleSelect = (file: DirectusFile) => {
     if (multiple) {
@@ -68,8 +101,11 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
   return (
     <>
       <Grid cols={{ xs: 3, sm: 4, md: 5, lg: 6 }} spacing="md">
-        {files?.items?.map((file) => {
+        {filteredFiles.map((file) => {
           const selected = isSelected(file);
+          const isImage = String(file.type ?? "")
+            .toLowerCase()
+            .startsWith("image/");
           return (
             <Pressable
               onPress={() => handleSelect(file)}
@@ -77,15 +113,25 @@ export const FileSelect = ({ onSelect, multiple = false }: FileSelectProps) => {
               style={styles.fileContainer}
             >
               <View style={styles.imageWrapper}>
-                <Image
-                  style={[styles.image, selected && styles.selected]}
-                  source={{
-                    uri: `${directus?.url.origin}/assets/${file.id}`,
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
-                  }}
-                />
+                {isImage ? (
+                  <Image
+                    style={[styles.image, selected && styles.selected]}
+                    source={{
+                      uri: `${directus?.url.origin}/assets/${file.id}`,
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }}
+                  />
+                ) : (
+                  <View style={[styles.filePreview, selected && styles.selected]}>
+                    <Text style={styles.filePreviewText}>
+                      {(String(file.type ?? "file").split("/")[1] || "FILE")
+                        .slice(0, 4)
+                        .toUpperCase()}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.radioWrapper}>
                   <RadioButton
                     checked={selected}
@@ -140,6 +186,20 @@ const stylesheet = createStyleSheet((theme) => ({
     height: "100%",
     objectFit: "cover",
     borderRadius: theme.borderRadius.md,
+  },
+  filePreview: {
+    width: "100%",
+    height: "100%",
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.backgroundAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  filePreviewText: {
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.body.fontFamily,
+    color: theme.colors.textSecondary,
+    fontWeight: "600",
   },
   selected: {
     borderWidth: 2,
