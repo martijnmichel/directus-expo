@@ -65,6 +65,7 @@ export const mapFields = ({
   styles,
   uuid,
   fallbackInterface,
+  t,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
@@ -74,13 +75,22 @@ export const mapFields = ({
   permissions?: ReadUserPermissionsOutput;
   styles?: any;
   uuid?: string;
-  fallbackInterface?: "input"
+  fallbackInterface?: "input",
+  t: (d: string) => string;
 }): ReactNode => {
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)
       ?.meta.translations?.find((t) => t.language === "nl-NL")?.translation ||
     field;
+
+  
+    const isRequired = (item: ReadFieldOutput<CoreSchema>) => !!item.meta.required;
+    const getItemRules = (item: ReadFieldOutput<CoreSchema>) => ({
+      required: isRequired(item)
+        ? (t?.("common.thisFieldIsRequired") ?? "common.thisFieldIsRequired")
+        : false,
+    });
 
   const filtered = parent
     ? fields?.filter((f) => f.meta.group === parent)
@@ -130,6 +140,7 @@ export const mapFields = ({
               canUpdateItem,
               permissions,
               styles,
+              t,
             })}
           </Accordion>
         );
@@ -156,6 +167,7 @@ export const mapFields = ({
                   canUpdateItem,
                   permissions,
                   styles,
+                  t,
                 })}
               </View>
             </CollapsibleContent>
