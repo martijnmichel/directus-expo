@@ -262,10 +262,11 @@ export const M2MInput = ({
     const requestFields = uniq([
       pk,
       junctionField,
-      ...templatePaths,
       ...prefixedTemplatePaths,
       "*.*.*",
     ]).filter(Boolean);
+
+    console.log({ requestFields, junctionField, templatePaths, prefixedTemplatePaths })
 
     const {
       data: doc,

@@ -15,7 +15,7 @@ import {
   useDocument,
   useFields,
 } from "@/state/queries/directus/collection";
-import { Alert, View } from "react-native";
+import { Alert, Platform, View } from "react-native";
 import { Check, Trash } from "../icons";
 import {
   coreCollections,
@@ -273,6 +273,32 @@ export const DocumentEditor = ({
           <Check />
         </Button>
       </PortalOutlet> */}
+
+      {Platform.OS === "web" && submitType !== "submit" && __DEV__ && (
+        <Horizontal style={{ justifyContent: "flex-end", paddingBottom: 10 }}>
+          {itemPermissions?.delete.access && id !== "+" && (
+            <Button
+              rounded
+              variant="soft"
+              size="sm"
+              onPress={handleDelete}
+              loading={isDeleting}
+            >
+              <Trash />
+            </Button>
+          )}
+          <Button
+            rounded
+            disabled={!isDirty || !isValid || isSubmitting}
+            loading={isSubmitting}
+            size="sm"
+            onPress={handleSave}
+          >
+            <Check />
+          </Button>
+        </Horizontal>
+      )}
+
       <View style={styles.form}>{fieldComponents}</View>
     </FormProvider>
   );

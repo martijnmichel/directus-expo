@@ -204,12 +204,39 @@ export const M2AInput = ({
       }
     };
     EventBus.on("m2a:add", addM2M);
+
+    const editM2A = (event: MittEvents["m2a:update"]) => {
+      if (event.uuid === uuid && event.field === item.field) {
+        console.log("m2a:update:received", event);
+
+        const data ={
+          collection: event.collection,
+          id: event.junction_id,
+          [relation?.field as string]: { ...event.data },
+          [junction?.field as string]: docId,
+          ...(sortField && {
+            [sortField as string]:
+              [...value.create, ...value.update].length + 1,
+          }),
+        };
+
+        const newState = {
+          create: value.create,
+          update: value.update.map((v) => v.id === Number(event.junction_id) ? data : v),
+          delete: value.delete,
+        };
+        console.log({ newState, relation, junction, value })
+        props.onChange(newState);
+      }
+    };
+    EventBus.on("m2a:update", editM2A);
     return () => {
       EventBus.off("m2a:add", addM2M);
+      EventBus.off("m2a:update", editM2A);
     };
   }, [valueProp, props.onChange, relation, junction, value, uuid]);
 
-  /** console.log({
+  console.log({
     item,
     docId,
     valueProp,
@@ -217,7 +244,7 @@ export const M2AInput = ({
     junction,
     sortField,
     relation,
-  }); */
+  }); 
 
   const NewItem = ({ collection, item: newItem }: { collection: string; item: any }) => {
     const { data } = useCollection(collection as keyof CoreSchema);
@@ -306,9 +333,10 @@ export const M2AInput = ({
               .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
               .filter(Boolean),
             // Keep preview labels reliable for nested M2M/M2A display templates (e.g. block_bentogrid.items)
-            "*.*.*",
+            "*.*",
           ]
-        : [primaryKey, "*.*.*"];
+        : [primaryKey, "*.*"];
+        
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
@@ -417,6 +445,7 @@ export const M2AInput = ({
                   collection: (junctionDoc as Record<string, unknown>)?.collection as string,
                   uuid,
                   item_field: item.field,
+                  junction_id: (junctionDoc as Record<string, unknown>)?.id as string | number,
                   id: (() => {
                     const raw = (junctionDoc as Record<string, unknown>)?.[junctionItemField];
                     return (
