@@ -93,7 +93,7 @@ export const M2AInput = ({
     return null;
   }
 
-  const { open: openModal, close: closeModal } = useModalStore()
+  const { open: openModal, close: closeModal } = useModalStore();
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles, theme } = useStyles();
   const { data: relations } = useRelations();
@@ -104,11 +104,12 @@ export const M2AInput = ({
   const junction = relations?.find(
     (r) =>
       r.related_collection === item?.collection &&
-      r.meta.one_field === item?.field
+      r.meta.one_field === item?.field,
   );
 
   const sortField = junction?.meta.sort_field;
-  const junctionItemField = (junction?.meta?.junction_field as string) ?? "item";
+  const junctionItemField =
+    (junction?.meta?.junction_field as string) ?? "item";
 
   const isInitial = Array.isArray(valueProp);
   const value = isInitial
@@ -127,7 +128,7 @@ export const M2AInput = ({
   const relation = relations?.find(
     (r) =>
       r.field === junction?.meta.junction_field &&
-      r.collection === junction.meta.many_collection
+      r.collection === junction.meta.many_collection,
   );
 
   const junctionParentIdField = junction?.field;
@@ -136,19 +137,14 @@ export const M2AInput = ({
     {
       fields: ["*"],
       filter:
-        docId != null &&
-        docId !== "+" &&
-        junctionParentIdField
+        docId != null && docId !== "+" && junctionParentIdField
           ? { [junctionParentIdField]: { _eq: docId } }
           : undefined,
     },
     {
       enabled:
-        !!junction &&
-        docId != null &&
-        docId !== "+" &&
-        !!junctionParentIdField,
-    }
+        !!junction && docId != null && docId !== "+" && !!junctionParentIdField,
+    },
   );
 
   useEffect(() => {
@@ -164,7 +160,7 @@ export const M2AInput = ({
           ...doc,
           [sortField as string]: findIndex(
             newOrderIds,
-            (id) => id === `${JSON.stringify(doc)}new`
+            (id) => id === `${JSON.stringify(doc)}new`,
           ),
         };
       }),
@@ -174,7 +170,7 @@ export const M2AInput = ({
           newOrderIds,
           (id) =>
             id ===
-            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`
+            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`,
         ),
       })),
       delete: value.delete,
@@ -209,7 +205,7 @@ export const M2AInput = ({
       if (event.uuid === uuid && event.field === item.field) {
         console.log("m2a:update:received", event);
 
-        const data ={
+        const data = {
           collection: event.collection,
           id: event.junction_id,
           [relation?.field as string]: { ...event.data },
@@ -222,10 +218,12 @@ export const M2AInput = ({
 
         const newState = {
           create: value.create,
-          update: value.update.map((v) => v.id === Number(event.junction_id) ? data : v),
+          update: value.update.map((v) =>
+            v.id === Number(event.junction_id) ? data : v,
+          ),
           delete: value.delete,
         };
-        console.log({ newState, relation, junction, value })
+        console.log({ newState, relation, junction, value });
         props.onChange(newState);
       }
     };
@@ -244,9 +242,15 @@ export const M2AInput = ({
     junction,
     sortField,
     relation,
-  }); 
+  });
 
-  const NewItem = ({ collection, item: newItem }: { collection: string; item: any }) => {
+  const NewItem = ({
+    collection,
+    item: newItem,
+  }: {
+    collection: string;
+    item: any;
+  }) => {
     const { data } = useCollection(collection as keyof CoreSchema);
 
     const { data: fields } = useFields(data?.collection as any);
@@ -259,7 +263,7 @@ export const M2AInput = ({
     const text = parseTemplate(
       effectiveTemplate,
       newItem as { [key: string]: any },
-      fields
+      fields,
     );
 
     return (
@@ -282,7 +286,7 @@ export const M2AInput = ({
                 create: value.create.filter(
                   (v) =>
                     v?.[relation?.field as any]?.[primaryKey] !==
-                    newItem?.[primaryKey]
+                    newItem?.[primaryKey],
                 ),
               });
             }}
@@ -312,15 +316,19 @@ export const M2AInput = ({
     });
 
     const { data: collection } = useCollection(
-      junctionDocMinimal?.collection as keyof CoreSchema
+      junctionDocMinimal?.collection as keyof CoreSchema,
     );
 
     const displayTemplate =
       item?.meta?.options?.template ||
       (collection?.meta?.display_template as string | undefined);
     const templatePaths = getFieldPathsFromTemplate(displayTemplate);
-    const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.["collection"] as string | undefined;
-    const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[junctionItemField];
+    const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.[
+      "collection"
+    ] as string | undefined;
+    const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[
+      junctionItemField
+    ];
     const itemId = getPrimaryKeyValue(rawItem, undefined, rawItem);
 
     const { data: fields } = useFields(collection?.collection as any);
@@ -336,22 +344,26 @@ export const M2AInput = ({
             "*.*",
           ]
         : [primaryKey, "*.*"];
-        
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
       id: itemId as string | number,
       options: { fields: relatedFields as any },
-      query: { enabled: !!relatedCollection && itemId != null && itemId !== "" },
+      query: {
+        enabled: !!relatedCollection && itemId != null && itemId !== "",
+      },
     });
 
     const junctionDoc = junctionDocMinimal;
     const error = errorMinimal;
-    const itemData = (relatedDoc ?? (junctionDoc != null ? (junctionDoc as Record<string, unknown>)?.[junctionItemField] : undefined)) as Record<string, unknown> | undefined;
+    const itemData = (relatedDoc ??
+      (junctionDoc != null
+        ? (junctionDoc as Record<string, unknown>)?.[junctionItemField]
+        : undefined)) as Record<string, unknown> | undefined;
     let text = parseTemplate(
       displayTemplate,
       itemData as { [key: string]: any },
-      fields
+      fields,
     );
 
     // Template-driven fallback for complex aliases/lists:
@@ -442,16 +454,21 @@ export const M2AInput = ({
               href={{
                 pathname: `/modals/m2a/[collection]/[id]`,
                 params: {
-                  collection: (junctionDoc as Record<string, unknown>)?.collection as string,
+                  collection: (junctionDoc as Record<string, unknown>)
+                    ?.collection as string,
                   uuid,
                   item_field: item.field,
-                  junction_id: (junctionDoc as Record<string, unknown>)?.id as string | number,
+                  junction_id: (junctionDoc as Record<string, unknown>)?.id as
+                    | string
+                    | number,
                   id: (() => {
-                    const raw = (junctionDoc as Record<string, unknown>)?.[junctionItemField];
-                    return (
-                      getPrimaryKeyValue(raw, fields, raw) ??
-                      getPrimaryKeyValue(junctionDoc, undefined, id)
-                    ) as string | number;
+                    const raw = (junctionDoc as Record<string, unknown>)?.[
+                      junctionItemField
+                    ];
+                    return (getPrimaryKeyValue(raw, fields, raw) ??
+                      getPrimaryKeyValue(junctionDoc, undefined, id)) as
+                      | string
+                      | number;
                   })(),
                 },
               }}
@@ -476,7 +493,9 @@ export const M2AInput = ({
                         id: id as number,
                         ...(sortField && {
                           [sortField]: (
-                            (junctionDoc as Record<string, unknown>)?.[junctionItemField] as { [key: string]: any }
+                            (junctionDoc as Record<string, unknown>)?.[
+                              junctionItemField
+                            ] as { [key: string]: any }
                           )?.[sortField as string],
                         }),
                       },
@@ -487,7 +506,8 @@ export const M2AInput = ({
                   props.onChange({
                     ...value,
                     update: value.update.filter(
-                      (v) => getPrimaryKeyValue(v, undefined, (v as any)?.id) !== id,
+                      (v) =>
+                        getPrimaryKeyValue(v, undefined, (v as any)?.id) !== id,
                     ),
                     delete: [...value.delete, id as number],
                   });
@@ -523,7 +543,8 @@ export const M2AInput = ({
         <Button
           variant="ghost"
           onPress={() => {
-            router.back()
+            closeModal();
+            router.back();
             onPress({
               pathname: `/modals/m2a/[collection]/${variant}`,
               params: {
@@ -577,7 +598,7 @@ export const M2AInput = ({
           >
             {orderBy(
               [...value.create, ...value.update, ...value.delete],
-              sortField || ""
+              sortField || "",
             ).map((junctionDoc, index) => {
               if (typeof junctionDoc === "number") {
                 junctionDoc = { id: junctionDoc };
@@ -595,8 +616,9 @@ export const M2AInput = ({
                 ) as number | string) ?? "";
 
               const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew =
-                isInitial ? false : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
+              const isNew = isInitial
+                ? false
+                : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
 
               if (isNew) {
                 return (
@@ -657,7 +679,7 @@ export const M2AInput = ({
               </Link>
             ) */}
 
-<Button
+            <Button
               onPress={() => {
                 openModal(() => {
                   console.log("open modal");
@@ -671,7 +693,6 @@ export const M2AInput = ({
                             variant="add"
                             onPress={(href) => {
                               router.push(href);
-                              closeModal();
                             }}
                             collection={collection}
                           />
@@ -700,7 +721,6 @@ export const M2AInput = ({
                             variant="pick"
                             onPress={(href) => {
                               router.push(href);
-                              closeModal();
                             }}
                             collection={collection}
                           />
@@ -714,8 +734,6 @@ export const M2AInput = ({
             >
               {t("components.shared.addExisting")}
             </Button>
-
-           
           </Horizontal>
         )}
       </Vertical>
