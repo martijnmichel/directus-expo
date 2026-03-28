@@ -739,7 +739,7 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as number[]}
                         item={item}
-                        uuid={uuid}
+                        documentSessionId={uuid}
                         docId={docId}
                         error={error?.message}
                       />

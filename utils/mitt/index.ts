@@ -17,14 +17,16 @@ export type MittEvents = {
     data: CoreSchemaDocument;
     junction_id: string | number;
   };
-  "m2m:add": { data: CoreSchemaDocument; field: string; uuid: string };
+  
+  "m2m:add": { data: CoreSchemaDocument; field: string; document_session_id: string | number };
   "m2m:update": {
     collection: keyof CoreSchema;
-    uuid: string;
+    document_session_id: string | number;
     field: string;
     data: CoreSchemaDocument;
     junction_id: string | number;
   };
+
   "m2o:pick": { data: CoreSchemaDocument; field: string; uuid: string };
 
   "o2m:add": { data: CoreSchemaDocument; field: string; uuid: string };

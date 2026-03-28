@@ -20,7 +20,7 @@ import {
 } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { findIndex, get, map, orderBy, uniq } from "lodash";
+import { findIndex, get, map, merge, orderBy, uniq } from "lodash";
 import {
   Link,
   RelativePathString,
@@ -55,22 +55,19 @@ import { RelatedListItem } from "../display/related-listitem";
 import { DirectusErrorResponse } from "@/types/directus";
 import { CoreSchemaDocument } from "@/types/directus";
 import { InterfaceProps } from ".";
+import { useUUID } from "@/hooks/useUUID";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
 
 type RelatedItem = { id?: number | string; [key: string]: any };
-type RelatedItemState = {
-  create: RelatedItem[];
-  update: RelatedItem[];
-  delete: number[];
-};
 
 type M2MInputProps = InterfaceProps<{
-  value: number[] | RelatedItemState;
-  onChange: (value: RelatedItemState) => void;
+  value: number[] | Record<string, any>[];
+  onChange: (value: Record<string, any>[]) => void;
 }>;
 
 export const M2MInput = ({
   docId,
-  uuid,
+  documentSessionId,
   item,
   label,
   error,
@@ -101,19 +98,17 @@ export const M2MInput = ({
 
   const sortField = junction?.meta.sort_field;
 
-  const isInitial = Array.isArray(valueProp);
-  const value = isInitial
-    ? {
-        create: [],
-        update: [
-          ...map(valueProp, (id, index) => ({
-            id,
-            ...(sortField && { [sortField]: index }),
-          })),
-        ],
-        delete: [],
-      }
-    : valueProp;
+  const isInitial = valueProp?.some((v) => typeof v === "number");
+  const value: Record<string, any>[] = isInitial
+    ? [
+        ...map(valueProp as number[], (id, index) => ({
+          id,
+          ...(sortField && { [sortField]: index }),
+        })),
+      ]
+    : (valueProp as Record<string, any>[]);
+
+  console.log({ value, valueProp, isInitial });
 
   const relation = relations?.find(
     (r) =>
@@ -138,18 +133,18 @@ export const M2MInput = ({
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
-      if (event.field === item.field && event.uuid === uuid) {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
         console.log("m2m:add:received", event);
 
         const data = {
+          __itemId: "sdfsdsome fresh id",
           [relation?.field as string]: event.data,
-          [sortField as string]: [...value.create, ...value.update].length + 1,
+          [sortField as string]: value.length + 1,
         };
-        const newState = {
-          create: [...value.create, data],
-          update: value.update,
-          delete: value.delete,
-        };
+        const newState = [...value, data];
         onChange?.(newState);
       }
     };
@@ -157,25 +152,23 @@ export const M2MInput = ({
     return () => {
       EventBus.off("m2m:add", addM2M);
     };
-  }, [valueProp, onChange, relation, junction, value, uuid]);
+  }, [valueProp, onChange, relation, junction, value, documentSessionId]);
 
   useEffect(() => {
     const onUpdate = (event: MittEvents["m2m:update"]) => {
-      if (event.field === item.field && event.uuid === uuid) {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
         console.log("m2m:update:received", event);
         const data = {
           id: Number(event.junction_id),
           [relation?.field as string]: { ...event.data },
           [junction?.field as string]: docId,
-          
         };
-        const newState = {
-          create: value.create,
-          update: value.update.map((v) =>
-            v.id === Number(event.junction_id) ? { ...data } : v,
-          ),
-          delete: value.delete,
-        };
+        const newState = value.map((v) =>
+          v.id === Number(event.junction_id) ? merge(v, data) : v,
+        );
         console.log({ newState, value, relation });
         onChange?.(newState);
       }
@@ -184,33 +177,19 @@ export const M2MInput = ({
     return () => {
       EventBus.off("m2m:update", onUpdate);
     };
-  }, [onChange, relation?.related_collection, value, uuid, item.field]);
+  }, [
+    onChange,
+    relation?.related_collection,
+    value,
+    documentSessionId,
+    item.field,
+  ]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
     console.log({ newOrderIds });
-    onChange?.({
-      create: value.create.map((doc) => {
-        console.log(`${JSON.stringify(doc)}new`);
-        return {
-          ...doc,
-          [sortField as string]: findIndex(
-            newOrderIds,
-            (id) => id === `${JSON.stringify(doc)}new`,
-          ),
-        };
-      }),
-      update: value.update.map((doc) => ({
-        ...doc,
-        [sortField as string]: findIndex(
-          newOrderIds,
-          (id) =>
-            id ===
-            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`,
-        ),
-      })),
-      delete: value.delete,
-    });
+    const sortedValue = orderBy(value, sortField || "", "asc");
+    onChange?.(sortedValue);
   };
 
   const junctionParentIdField = junction?.field;
@@ -289,15 +268,8 @@ export const M2MInput = ({
       pk,
       junctionField,
       ...prefixedTemplatePaths,
-      "*.*.*",
+      "*.*",
     ]).filter(Boolean);
-
-    console.log({
-      requestFields,
-      junctionField,
-      templatePaths,
-      prefixedTemplatePaths,
-    });
 
     const {
       data: doc,
@@ -320,17 +292,38 @@ export const M2MInput = ({
       );
     }
 
-    const draftValue = value.update.find((v) => v.id === docId);
-    const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
-    const parsedFromRelated = parseTemplate(
+    const draftJunctionDoc = value.find((v) => v.id === docId);
+    const draftValue = draftJunctionDoc
+      ? draftJunctionDoc[relation?.field as string]
+      : undefined;
+
+    // note: if the interface template is used, directus returns the template path from the document, otherwise parse it from the junction doc
+    const parsedFromDoc = parseTemplate(
       effectiveTemplate,
-      (draftValue as any)?.[junctionField] ?? 
-      ((doc as any)?.[junctionField] ?? doc) as any,
+      interfaceTemplate ? doc : (doc?.[relation?.field as string] ?? doc),
       fields,
     );
-    const text = parsedFromRelated || parsedFromDoc;
+    const parsedFromValue = parseTemplate(
+      effectiveTemplate,
+      interfaceTemplate ? (draftJunctionDoc as any) : (draftValue as any),
+      fields,
+    );
+    const text = draftValue ? parsedFromValue : parsedFromDoc;
 
-        console.log({ docId, interfaceTemplate, value, draftValue, parsedFromDoc, parsedFromRelated });
+    console.log({
+      docId,
+      doc,
+      interfaceTemplate,
+      value,
+      draftValue,
+      parsedFromDoc,
+      parsedFromValue,
+      effectiveTemplate,
+      requestFields,
+      junctionField,
+      templatePaths,
+      prefixedTemplatePaths,
+    });
     const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
     const editId =
       getPrimaryKeyValue(rawJunctionValue, fields) ??
@@ -349,10 +342,11 @@ export const M2MInput = ({
                 pathname: `/modals/m2m/[collection]/[id]`,
                 params: {
                   collection: relation.related_collection,
-                  uuid,
+                  document_session_id: documentSessionId,
                   id: editId as string | number,
                   junction_id: docId as string | number,
                   item_field: item.field,
+                  draft: draftValue ? objectToBase64(draftValue) : undefined,
                 },
               }}
               asChild
@@ -402,10 +396,7 @@ export const M2MInput = ({
             onOrderChange={onOrderChange}
             gap={3}
           >
-            {orderBy(
-              [...value.create, ...value.update, ...value.delete],
-              sortField || "",
-            ).map((junctionDoc, index) => {
+            {orderBy(value, sortField || "").map((junctionDoc, index) => {
               if (typeof junctionDoc === "number") {
                 junctionDoc = { id: junctionDoc };
               }
@@ -429,7 +420,7 @@ export const M2MInput = ({
                 ) ??
                 "") as number | string;
 
-              const isDeselected = value.delete?.some((doc) => doc === id);
+              const isDeselected = false; //value.some((doc) => doc.id === id);
               const isNew = isInitial
                 ? false
                 : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
@@ -479,16 +470,9 @@ export const M2MInput = ({
                               field: relation.field,
                               primaryKey,
                               id,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id,
-                              ),
                             });
-                            onChange?.({
-                              ...value,
-                              create: value.create.filter(
-                                (v) => v?.[relation.field]?.[primaryKey] !== id,
-                              ),
-                            });
+                            const newState = value.filter((v) => v.id !== id);
+                            onChange?.(newState);
                           }}
                         >
                           <DirectusIcon name="delete" />
@@ -518,33 +502,23 @@ export const M2MInput = ({
                     onAdd={(item) => {
                       console.log({ item });
                       const addedId = getPrimaryKeyValue(item, fields, item);
-                      onChange?.({
+                      const newState = [
                         ...value,
-                        update: [
-                          ...value.update,
-                          {
-                            id: addedId as number | string,
-                            ...(sortField && {
-                              [sortField]: item[sortField as string],
-                            }),
-                          },
-                        ],
-                        delete: value.delete.filter((v) => v !== id),
-                      });
+                        {
+                          id: addedId as number | string,
+                          ...(sortField && {
+                            [sortField]: item[sortField as string],
+                          }),
+                        },
+                      ];
+                      onChange?.(newState);
                     }}
                     onDelete={(item) => {
                       console.log({ item });
                       const deleteId = getPrimaryKeyValue(item, fields, id);
 
-                      onChange?.({
-                        ...value,
-                        update: value.update.filter(
-                          (v) =>
-                            getPrimaryKeyValue(v, undefined, (v as any)?.id) !==
-                            deleteId,
-                        ),
-                        delete: [...value.delete, deleteId as number],
-                      });
+                      const newState = value.filter((v) => v.id !== deleteId);
+                      onChange?.(newState);
                     }}
                     isNew={isNew}
                     isDeselected={isDeselected}
@@ -575,7 +549,7 @@ export const M2MInput = ({
 
                   params: {
                     collection: relation.related_collection,
-                    uuid,
+                    document_session_id: documentSessionId,
                     item_field: item.field,
                   },
                 }}
@@ -593,7 +567,7 @@ export const M2MInput = ({
                   junction_collection: junction.collection,
                   related_collection: relation.related_collection,
                   related_field: relation.field,
-                  uuid,
+                  document_session_id: documentSessionId,
                   current_value: [
                     pickedItems?.items?.map(
                       (i: any) => i?.[junction.meta.junction_field as string],

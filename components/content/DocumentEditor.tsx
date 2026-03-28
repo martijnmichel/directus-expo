@@ -43,7 +43,7 @@ import { useUUID } from "@/hooks/useUUID";
 export const DocumentEditor = ({
   collection,
   id,
-  defaultValues = {},
+  defaultValues = undefined,
   onSave,
   onChange,
   onDelete,
@@ -111,7 +111,7 @@ export const DocumentEditor = ({
     collection: collection as keyof CoreSchema,
     id,
     query: {
-      enabled: id !== "+",
+      enabled: id !== "+" && !defaultValues,
     },
   });
 
@@ -131,15 +131,18 @@ export const DocumentEditor = ({
   };
 
   useEffect(() => {
+    console.log("defaultValues", defaultValues);
+    if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
-    if (document) {
+    if (document ) {
+      console.log("reset", document);
       context.reset(
-        getDocumentFieldValues(document as Record<string, unknown>),
+        getDocumentFieldValues(document as Record<string, unknown>), 
       );
       //console.log("reset", document);
       setRevision((state) => state + 1);
     }
-  }, [document]);
+  }, [document, defaultValues]);
 
   type DirtyFieldsType =
     | boolean

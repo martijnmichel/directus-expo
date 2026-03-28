@@ -49,7 +49,7 @@ export default function Collection() {
     junction_field,
     doc_id,
     item_field,
-    uuid,
+    document_session_id,
   } = useLocalSearchParams();
   const primaryKey = usePrimaryKey(related_collection as keyof CoreSchema);
 
@@ -189,7 +189,7 @@ export default function Collection() {
             EventBus.emit("m2m:add", {
               data: doc as CoreSchemaDocument,
               field: item_field as string,
-              uuid: uuid as string,
+              document_session_id: document_session_id as string | number,
             });
           });
         }}

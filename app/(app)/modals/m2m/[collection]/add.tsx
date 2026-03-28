@@ -27,8 +27,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CoreSchemaDocument } from "@/types/directus";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect } from "react";
+import { useDraftStore } from "@/state/stores/draftStore";
 export default function Collection() {
-  const { collection, item_field, uuid } = useLocalSearchParams();
+  const { collection, item_field, draft_id, document_session_id } = useLocalSearchParams();
   const id = "+";
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
@@ -41,7 +42,7 @@ export default function Collection() {
 
   const headerStyle = useHeaderStyles({ isModal: true });
   const { t } = useTranslation();
-
+  const { pushPatch } = useDraftStore();
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
@@ -64,10 +65,11 @@ export default function Collection() {
               submitType="raw"
               onSave={async (document) => {
                 router.dismiss();
+                pushPatch(draft_id as string, document);
                 EventBus.emit("m2m:add", {
                   data: document as CoreSchemaDocument,
                   field: item_field as string,
-                  uuid: uuid as string,
+                  document_session_id: document_session_id as string,
                 });
               }}
             />

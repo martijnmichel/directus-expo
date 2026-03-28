@@ -320,7 +320,8 @@ export type InterfaceProps<T extends any> = {
   required?: boolean;
   item?: ReadFieldOutput<CoreSchema>;
   placeholder?: string;
-  uuid?: string;
+  uuid?: string; // to be deprecated
+  documentSessionId?: string; // new naming convention for uuid
   prepend?: ReactNode;
   append?: ReactNode;
   disabled?: boolean;
