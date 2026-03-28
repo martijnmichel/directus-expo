@@ -64,9 +64,9 @@
     "expo-auth-session": "~7.0.8",
     "expo-build-properties": "~0.13.3",
     "expo-constants": "~18.0.9",
-    "expo-document-picker": "~14.0.8",
     "expo-crypto": "~15.0.7",
     "expo-dev-client": "~6.0.15",
+    "expo-document-picker": "~14.0.8",
     "expo-font": "~14.0.9",
     "expo-image": "~3.0.9",
     "expo-image-picker": "~17.0.8",
@@ -107,12 +107,14 @@
     "ts-node": "^10.9.2",
     "turndown": "^7.2.0",
     "uuid": "^11.0.5",
-    "zod": "^3.24.1"
+    "zod": "^3.24.1",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@commitlint/cli": "^20.5.0",
     "@commitlint/config-conventional": "^20.5.0",
+    "@redux-devtools/extension": "^4.0.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^6.0.3",
