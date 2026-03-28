@@ -118,6 +118,7 @@ export const M2AInput = ({
         update: [
           ...map(valueProp, (id, index) => ({
             id,
+            
             ...(sortField && { [sortField]: index }),
           })),
         ],

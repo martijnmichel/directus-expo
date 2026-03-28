@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, TouchableWithoutFeedback, View } from "react-native";
 import {
   CoreSchema,
@@ -55,14 +55,25 @@ import { RelatedListItem } from "../display/related-listitem";
 import { DirectusErrorResponse } from "@/types/directus";
 import { CoreSchemaDocument } from "@/types/directus";
 import { InterfaceProps } from ".";
-import { useUUID } from "@/hooks/useUUID";
+import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 
-type RelatedItem = { id?: number | string; [key: string]: any };
+enum RelatedItemState {
+  Default = "default",
+  Created = "created",
+  Updated = "updated",
+  Deleted = "deleted",
+}
+type RelatedItem = {
+  id?: number | string; // used for existing items
+  [key: string]: any;
+  __id?: string; // used for new items
+  __state?: RelatedItemState;
+};
 
 type M2MInputProps = InterfaceProps<{
-  value: number[] | Record<string, any>[];
-  onChange: (value: Record<string, any>[]) => void;
+  value: number[] | RelatedItem[];
+  onChange: (value: RelatedItem[]) => void;
 }>;
 
 export const M2MInput = ({
@@ -98,15 +109,23 @@ export const M2MInput = ({
 
   const sortField = junction?.meta.sort_field;
 
-  const isInitial = valueProp?.some((v) => typeof v === "number");
-  const value: Record<string, any>[] = isInitial
-    ? [
-        ...map(valueProp as number[], (id, index) => ({
-          id,
-          ...(sortField && { [sortField]: index }),
-        })),
-      ]
-    : (valueProp as Record<string, any>[]);
+  const isInitial = valueProp?.some(
+    (v) => typeof v === "number" || typeof v !== "object",
+  );
+  const value = useMemo(
+    () =>
+      isInitial
+        ? [
+            ...map(valueProp as number[], (id, index) => ({
+              id,
+              __id: id?.toString(),
+              __state: RelatedItemState.Default,
+              ...(sortField && { [sortField]: index }),
+            })),
+          ]
+        : (valueProp as Record<string, any>[]),
+    [valueProp, sortField, isInitial],
+  );
 
   console.log({ value, valueProp, isInitial });
 
@@ -139,8 +158,9 @@ export const M2MInput = ({
       ) {
         console.log("m2m:add:received", event);
 
-        const data = {
-          __itemId: "sdfsdsome fresh id",
+        const data: RelatedItem = {
+          __id: generateUUID(),
+          __state: RelatedItemState.Created,
           [relation?.field as string]: event.data,
           [sortField as string]: value.length + 1,
         };
@@ -161,10 +181,9 @@ export const M2MInput = ({
         event.document_session_id === documentSessionId
       ) {
         console.log("m2m:update:received", event);
-        const data = {
-          id: Number(event.junction_id),
+        const data: RelatedItem = {
+          __state: RelatedItemState.Updated,
           [relation?.field as string]: { ...event.data },
-          [junction?.field as string]: docId,
         };
         const newState = value.map((v) =>
           v.id === Number(event.junction_id) ? merge(v, data) : v,
@@ -188,7 +207,10 @@ export const M2MInput = ({
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
     console.log({ newOrderIds });
-    const sortedValue = orderBy(value, sortField || "", "asc");
+    const sortedValue = value.map((v) => ({
+      ...v,
+      [sortField as string]: findIndex(newOrderIds, (id) => id === v.__id),
+    }));
     onChange?.(sortedValue);
   };
 
@@ -207,6 +229,8 @@ export const M2MInput = ({
         !!junction && docId != null && docId !== "+" && !!junctionParentIdField,
     },
   );
+
+  
 
   useEffect(() => {
     refetch();
@@ -294,7 +318,7 @@ export const M2MInput = ({
 
     const draftJunctionDoc = value.find((v) => v.id === docId);
     const draftValue = draftJunctionDoc
-      ? draftJunctionDoc[relation?.field as string]
+      ? (draftJunctionDoc as any)[relation?.field as string]
       : undefined;
 
     // note: if the interface template is used, directus returns the template path from the document, otherwise parse it from the junction doc
@@ -391,7 +415,7 @@ export const M2MInput = ({
 
         <DndProvider minDistance={10}>
           <DraggableStack
-            key={JSON.stringify(valueProp)}
+            key={documentSessionId}
             direction="column"
             onOrderChange={onOrderChange}
             gap={3}
@@ -420,10 +444,8 @@ export const M2MInput = ({
                 ) ??
                 "") as number | string;
 
-              const isDeselected = false; //value.some((doc) => doc.id === id);
-              const isNew = isInitial
-                ? false
-                : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
+              const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
+              const isNew = junctionDoc.__state === RelatedItemState.Created;
 
               /** console.log({
                   junctionDoc,
@@ -453,9 +475,8 @@ export const M2MInput = ({
               if (isNew) {
                 return (
                   <Draggable
-                    key={JSON.stringify(junctionDoc) + "new"}
-                    id={JSON.stringify(junctionDoc) + "new"}
-                    disabled={!sortField}
+                    id={junctionDoc.__id}
+                    disabled={!sortField || !junctionDoc.__id}
                     activationDelay={200}
                   >
                     <RelatedListItem
@@ -487,37 +508,27 @@ export const M2MInput = ({
 
               return (
                 <Draggable
-                  key={id + "draggable"}
-                  id={id?.toString() + "existing"}
-                  disabled={!sortField}
+                  id={junctionDoc.__id}
+                  disabled={!sortField || !junctionDoc.__id}
                   activationDelay={200}
                 >
                   <Item
-                    key={id}
+                    key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
                     docId={id}
                     junction={junction!}
                     relation={relation!}
                     template={item.meta.options?.template}
                     isSortable={!!sortField}
                     onAdd={(item) => {
-                      console.log({ item });
-                      const addedId = getPrimaryKeyValue(item, fields, item);
-                      const newState = [
-                        ...value,
-                        {
-                          id: addedId as number | string,
-                          ...(sortField && {
-                            [sortField]: item[sortField as string],
-                          }),
-                        },
-                      ];
+                      const newState = value.map((v) =>
+                        v.id === item.id ? { ...v, __state: "default" } : v,
+                      );
                       onChange?.(newState);
                     }}
                     onDelete={(item) => {
-                      console.log({ item });
-                      const deleteId = getPrimaryKeyValue(item, fields, id);
-
-                      const newState = value.filter((v) => v.id !== deleteId);
+                      const newState = value.map((v) =>
+                        v.id === item.id ? { ...v, __state: "deleted" } : v,
+                      );
                       onChange?.(newState);
                     }}
                     isNew={isNew}

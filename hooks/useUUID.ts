@@ -5,3 +5,7 @@ export const useUUID = () => {
   const uuid = useRef(uuidv4());
   return uuid.current;
 };
+
+export const generateUUID = () => {
+  return uuidv4();
+};
