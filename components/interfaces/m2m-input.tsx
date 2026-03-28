@@ -254,6 +254,7 @@ export const M2MInput = ({
     onDelete,
     onAdd,
     isNew,
+    isUpdated,
     isDeselected,
     isSortable,
     ...props
@@ -265,6 +266,7 @@ export const M2MInput = ({
     onDelete?: (doc: Record<string, unknown>) => void;
     onAdd?: (doc: Record<string, unknown>) => void;
     isNew?: boolean;
+    isUpdated?: boolean;
     isDeselected?: boolean;
     isSortable?: boolean;
   }) => {
@@ -364,6 +366,7 @@ export const M2MInput = ({
         isDeselected={isDeselected}
         isNew={isNew}
         isDraggable={isSortable}
+        isUpdated={isUpdated}
         append={
           <>
             {!isDeselected && (
@@ -473,6 +476,7 @@ export const M2MInput = ({
                   (v) => v.__id === junctionDoc.__id,
                 );
                 const isNew = junctionDoc.__state === RelatedItemState.Created;
+                const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
 
                 /** console.log({
                   junctionDoc,
@@ -523,6 +527,7 @@ export const M2MInput = ({
                       }}
                       isNew={isNew}
                       isDeselected={isDeselected}
+                      isUpdated={isUpdated}
                     />
                   </Draggable>
                 );

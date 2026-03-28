@@ -8,6 +8,7 @@ export type RelatedListItemProps = {
   append?: React.ReactNode;
   children: React.ReactNode;
   isNew?: boolean;
+  isUpdated?: boolean;
   isDeselected?: boolean;
   isDraggable?: boolean;
   prepend?: React.ReactNode;
@@ -19,6 +20,7 @@ export const RelatedListItem = ({
   children,
   isDraggable,
   isNew,
+  isUpdated,
   isDeselected,
   prepend,
   onPress,
@@ -33,6 +35,7 @@ export const RelatedListItem = ({
           styles.listItem,
           isDeselected && styles.listItemDeselected,
           isNew && styles.listItemNew,
+          isUpdated && styles.listItemUpdated,
         ]}
       >
         {isDraggable && <DirectusIcon name="drag_handle" />}
@@ -73,12 +76,17 @@ export const listStyles = createStyleSheet((theme) => ({
     maxWidth: 500,
   },
   listItemDeselected: {
-    borderColor: theme.colors.errorBorder,
+    borderColor: theme.colors.error,
     backgroundColor: theme.colors.errorBackground,
   },
   listItemDeselectedText: {},
   listItemNew: {
     borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryBackground,
+  },
+  listItemUpdated: {
+    borderColor: theme.colors.info,
+    backgroundColor: theme.colors.infoBackground,
   },
   content: {
     flex: 1,
