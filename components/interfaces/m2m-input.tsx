@@ -99,6 +99,8 @@ export const M2MInput = ({
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
+  const [deletedItems, setDeletedItems] = useState<RelatedItem[]>([]);
+
   const { t } = useTranslation();
 
   const junction = relations?.find(
@@ -230,8 +232,6 @@ export const M2MInput = ({
     },
   );
 
-  
-
   useEffect(() => {
     refetch();
   }, [docId, junction?.collection, refetch]);
@@ -306,6 +306,9 @@ export const M2MInput = ({
       options: {
         fields: requestFields as any,
       },
+      query: {
+        enabled: !isNew,
+      },
     });
 
     if (error) {
@@ -316,7 +319,9 @@ export const M2MInput = ({
       );
     }
 
-    const draftJunctionDoc = value.find((v) => v.id === docId);
+    const draftJunctionDoc = value.find(
+      (v) => v.id === docId || v.__id === docId,
+    );
     const draftValue = draftJunctionDoc
       ? (draftJunctionDoc as any)[relation?.field as string]
       : undefined;
@@ -354,31 +359,46 @@ export const M2MInput = ({
       getPrimaryKeyValue(rawJunctionValue, junctionFields, docId) ??
       getPrimaryKeyValue(docId, junctionFields);
 
-    return doc ? (
+    return (
       <RelatedListItem
         isDeselected={isDeselected}
         isNew={isNew}
         isDraggable={isSortable}
         append={
           <>
-            <Link
-              href={{
-                pathname: `/modals/m2m/[collection]/[id]`,
-                params: {
-                  collection: relation.related_collection,
-                  document_session_id: documentSessionId,
-                  id: editId as string | number,
-                  junction_id: docId as string | number,
-                  item_field: item.field,
-                  draft: draftValue ? objectToBase64(draftValue) : undefined,
-                },
-              }}
-              asChild
-            >
-              <Button variant="ghost" rounded>
-                <DirectusIcon name="edit_square" />
-              </Button>
-            </Link>
+            {!isDeselected && (
+              <Link
+                href={{
+                  pathname: isNew
+                    ? `/modals/m2m/[collection]/add`
+                    : `/modals/m2m/[collection]/[id]`,
+                  params: isNew
+                    ? {
+                        collection: relation.related_collection,
+                        document_session_id: documentSessionId,
+                        item_field: item.field,
+                        draft: draftValue
+                          ? objectToBase64(draftValue)
+                          : undefined,
+                      }
+                    : {
+                        collection: relation.related_collection,
+                        document_session_id: documentSessionId,
+                        id: editId as string | number,
+                        junction_id: docId as string | number,
+                        item_field: item.field,
+                        draft: draftValue
+                          ? objectToBase64(draftValue)
+                          : undefined,
+                      },
+                }}
+                asChild
+              >
+                <Button variant="ghost" rounded>
+                  <DirectusIcon name="edit_square" />
+                </Button>
+              </Link>
+            )}
 
             <Button
               variant="ghost"
@@ -400,7 +420,7 @@ export const M2MInput = ({
       >
         {text}
       </RelatedListItem>
-    ) : null;
+    );
   };
 
   return (
@@ -420,34 +440,41 @@ export const M2MInput = ({
             onOrderChange={onOrderChange}
             gap={3}
           >
-            {orderBy(value, sortField || "").map((junctionDoc, index) => {
-              if (typeof junctionDoc === "number") {
-                junctionDoc = { id: junctionDoc };
-              }
-              const primaryKey = relation?.schema?.foreign_key_column;
+            {orderBy([...value, ...deletedItems], sortField || "").map(
+              (junctionDoc, index) => {
+                if (typeof junctionDoc === "number") {
+                  junctionDoc = { id: junctionDoc };
+                }
+                const primaryKey = relation?.schema?.foreign_key_column;
 
-              const relatedDoc =
-                relation?.field in junctionDoc
-                  ? (junctionDoc as any)[relation?.field]
-                  : junctionDoc;
-              const rawId: unknown =
-                typeof relatedDoc === "number" || typeof relatedDoc === "string"
-                  ? relatedDoc
-                  : primaryKey in relatedDoc
-                    ? relatedDoc[primaryKey]
-                    : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
-              const id: number | string = (getPrimaryKeyValue(rawId, fields) ??
-                getPrimaryKeyValue(
-                  junctionDoc,
-                  undefined,
-                  getPrimaryKeyValue(rawId, undefined, ""),
+                const relatedDoc =
+                  relation?.field in junctionDoc
+                    ? (junctionDoc as any)[relation?.field]
+                    : junctionDoc;
+                const rawId: unknown =
+                  typeof relatedDoc === "number" ||
+                  typeof relatedDoc === "string"
+                    ? relatedDoc
+                    : primaryKey in relatedDoc
+                      ? relatedDoc[primaryKey]
+                      : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
+                const id: number | string = (getPrimaryKeyValue(
+                  rawId,
+                  fields,
                 ) ??
-                "") as number | string;
+                  getPrimaryKeyValue(
+                    junctionDoc,
+                    undefined,
+                    getPrimaryKeyValue(rawId, undefined, ""),
+                  ) ??
+                  "") as number | string;
 
-              const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
-              const isNew = junctionDoc.__state === RelatedItemState.Created;
+                const isDeselected = deletedItems.some(
+                  (v) => v.__id === junctionDoc.__id,
+                );
+                const isNew = junctionDoc.__state === RelatedItemState.Created;
 
-              /** console.log({
+                /** console.log({
                   junctionDoc,
                   relatedDoc,
                   id,
@@ -457,86 +484,50 @@ export const M2MInput = ({
                   isDeselected,
                 }); */
 
-              const text = parseTemplate(
-                item.meta.options?.template ||
-                  (relatedCollectionMeta?.meta?.display_template as
-                    | string
-                    | undefined),
-                item.meta.options?.template
-                  ? {
-                      ...junctionDoc,
-                    }
-                  : ((junctionDoc as any)?.[relation?.field as string] ?? {
-                      ...junctionDoc,
-                    }),
-                fields,
-              );
-
-              if (isNew) {
                 return (
                   <Draggable
                     id={junctionDoc.__id}
                     disabled={!sortField || !junctionDoc.__id}
                     activationDelay={200}
                   >
-                    <RelatedListItem
-                      isNew
-                      isDraggable={!!sortField}
-                      append={
-                        <Button
-                          variant="ghost"
-                          rounded
-                          onPress={() => {
-                            console.log({
-                              field: relation.field,
-                              primaryKey,
-                              id,
-                            });
-                            const newState = value.filter((v) => v.id !== id);
-                            onChange?.(newState);
-                          }}
-                        >
-                          <DirectusIcon name="delete" />
-                        </Button>
-                      }
-                    >
-                      {text || "--"}
-                    </RelatedListItem>
+                    <Text>{id || junctionDoc.__id}</Text>
+                    <Item
+                      key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
+                      docId={id || junctionDoc.__id}
+                      junction={junction!}
+                      relation={relation!}
+                      template={item.meta.options?.template}
+                      isSortable={!!sortField}
+                      onAdd={(item) => {
+                        const deletedItem = deletedItems.find(
+                          (v) => v.__id === junctionDoc.__id,
+                        );
+                        if (deletedItem) {
+                          setDeletedItems(
+                            deletedItems.filter(
+                              (v) => v.__id !== junctionDoc.__id,
+                            ),
+                          );
+                          const newState = [...value, deletedItem];
+                          onChange?.(newState);
+                        }
+                      }}
+                      onDelete={(item) => {
+                        const newState = value.filter(
+                          (v) => v.__id !== junctionDoc.__id,
+                        );
+                        if (!isNew) {
+                          setDeletedItems([...deletedItems, junctionDoc]);
+                        }
+                        onChange?.(newState);
+                      }}
+                      isNew={isNew}
+                      isDeselected={isDeselected}
+                    />
                   </Draggable>
                 );
-              }
-
-              return (
-                <Draggable
-                  id={junctionDoc.__id}
-                  disabled={!sortField || !junctionDoc.__id}
-                  activationDelay={200}
-                >
-                  <Item
-                    key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
-                    docId={id}
-                    junction={junction!}
-                    relation={relation!}
-                    template={item.meta.options?.template}
-                    isSortable={!!sortField}
-                    onAdd={(item) => {
-                      const newState = value.map((v) =>
-                        v.id === item.id ? { ...v, __state: "default" } : v,
-                      );
-                      onChange?.(newState);
-                    }}
-                    onDelete={(item) => {
-                      const newState = value.map((v) =>
-                        v.id === item.id ? { ...v, __state: "deleted" } : v,
-                      );
-                      onChange?.(newState);
-                    }}
-                    isNew={isNew}
-                    isDeselected={isDeselected}
-                  />
-                </Draggable>
-              );
-            })}
+              },
+            )}
           </DraggableStack>
         </DndProvider>
         {(error || helper) && (

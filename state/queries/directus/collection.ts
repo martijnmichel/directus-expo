@@ -49,43 +49,43 @@ export const useDocuments = (
   return coreCollection?.readItems
     ? coreCollection.readItems(query)
     : useQuery({
-        queryKey: ["documents", collection, query],
+      queryKey: ["documents", collection, query],
 
-        queryFn: async () => {
-          const items = await directus?.request(
-            readItems(collection as any, query)
-          );
-          const aggregateQuery = { ...query };
-          unset(aggregateQuery, ["page"]);
-          const pk = getPrimaryKey(fields);
-          const pagination = await directus?.request(
-            aggregate(collection as any, {
-              aggregate: { countDistinct: `${pk}` },
-              query: aggregateQuery,
-            })
-          );
+      queryFn: async () => {
+        const items = await directus?.request(
+          readItems(collection as any, query)
+        );
+        const aggregateQuery = { ...query };
+        unset(aggregateQuery, ["page"]);
+        const pk = getPrimaryKey(fields);
+        const pagination = await directus?.request(
+          aggregate(collection as any, {
+            aggregate: { countDistinct: `${pk}` },
+            query: aggregateQuery,
+          })
+        );
 
-          const total = Number(get(pagination, `0.countDistinct.${pk}`));
+        const total = Number(get(pagination, `0.countDistinct.${pk}`));
 
-          return {
-            items: items || [],
-            total: !isNaN(total) ? total : 0,
-          };
-        },
-        ...options,
-      });
+        return {
+          items: items || [],
+          total: !isNaN(total) ? total : 0,
+        };
+      },
+      ...options,
+    });
 };
 
 export const useDocument = ({
   collection,
   id,
   options,
-  ...queryOptions
+  query
 }: {
   collection: keyof CoreSchema;
   id?: number | string | "+";
   options?: Query<CoreSchema, any>;
-  query?: Omit<UseQueryOptions, "queryKey" | "queryFn">;
+  query?: Omit<UseQueryOptions<any, Error | DirectusErrorResponse>, "queryKey" | "queryFn">;
 }): UseQueryResult<
   Record<string, unknown> | undefined,
   Error | DirectusErrorResponse
@@ -101,7 +101,7 @@ export const useDocument = ({
     return useQuery({
       queryKey: ["document-add", collection, "+"],
       queryFn: async () => ({}),
-      ...queryOptions,
+      ...query,
     });
   }
 
@@ -111,17 +111,17 @@ export const useDocument = ({
       queryFn: async () =>
         directus?.request(readSingleton(collection as any, options)),
       retry: false,
-      ...queryOptions,
+      ...query,
     });
   } else
     return coreCollection?.readItem
       ? coreCollection.readItem(id as string)
       : useQuery({
-          queryKey: ["document", collection, id],
-          queryFn: async () =>
-            directus?.request(readItem(collection as any, id!, options)),
-          ...queryOptions,
-        });
+        queryKey: ["document", collection, id],
+        queryFn: async () =>
+          directus?.request(readItem(collection as any, id!, options)),
+        ...query,
+      });
 };
 
 export const useFields = (collection: keyof CoreSchema) => {
