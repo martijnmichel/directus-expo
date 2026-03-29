@@ -77,7 +77,8 @@ export default function Collection() {
                   document_session_id: document_session_id as string | number,
                   junction_id: (junction_id as string | number) ?? id,
                   field: item_field as string,
-                  data: document as CoreSchemaDocument,
+                  /** primary key is needed so directus knows which doc on junction item it will update, otherwise it will create a new item */
+                  data: { [primaryKey]: id, ...document } as CoreSchemaDocument,
                   draft_id: draft_id as string,
                 });
               }}

@@ -59,6 +59,7 @@ export const DocumentEditor = ({
   submitType?: "submit" | "raw" | "inline";
 }) => {
   const uuid = useUUID();
+  const { token } = useAuth();
   const { t } = useTranslation();
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
@@ -261,6 +262,7 @@ export const DocumentEditor = ({
         };
 
         const cleanedData = transformFormData(data) as Record<string, unknown>;
+        
 
         await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {
