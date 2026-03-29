@@ -31,7 +31,7 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
 import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
-import EventBus, { MittEvents } from "@/utils/mitt";
+import EventBus, { MittEvents, RelatedItem, RelatedItemState } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import {
   DndProvider,
@@ -57,19 +57,6 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-
-enum RelatedItemState {
-  Default = "default",
-  Created = "created",
-  Updated = "updated",
-  Deleted = "deleted",
-}
-type RelatedItem = {
-  id?: number | string; // used for existing items
-  [key: string]: any;
-  __id?: string; // used for new items
-  __state?: RelatedItemState;
-};
 
 type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -508,9 +495,7 @@ export const M2MInput = ({
                   ) ??
                   "") as number | string;
 
-                const isDeselected = deletedItems.some(
-                  (v) => v.__id === junctionDoc.__id,
-                );
+                const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
                 const isNew = junctionDoc.__state === RelatedItemState.Created;
                 const isUpdated =
                   junctionDoc.__state === RelatedItemState.Updated;
@@ -534,32 +519,28 @@ export const M2MInput = ({
                     <Text>{id || junctionDoc.__id}</Text>
                     <Item
                       key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
-                      docId={id || junctionDoc.__id}
+                      docId={junctionDoc.__id}
                       junction={junction!}
                       relation={relation!}
                       template={item.meta.options?.template}
                       isSortable={!!sortField}
                       onAdd={(item) => {
-                        const deletedItem = deletedItems.find(
-                          (v) => v.__id === junctionDoc.__id,
+                        const newState = value.map((v) =>
+                          v.__id === junctionDoc.__id
+                            ? { ...v, __state: RelatedItemState.Default }
+                            : v,
                         );
-                        if (deletedItem) {
-                          setDeletedItems(
-                            deletedItems.filter(
-                              (v) => v.__id !== junctionDoc.__id,
-                            ),
-                          );
-                          const newState = [...value, deletedItem];
-                          onChange?.(newState);
-                        }
+                        onChange?.(newState);
                       }}
                       onDelete={(item) => {
-                        const newState = value.filter(
-                          (v) => v.__id !== junctionDoc.__id,
-                        );
-                        if (!isNew) {
-                          setDeletedItems([...deletedItems, junctionDoc]);
-                        }
+                        const newState = isNew
+                          ? value.filter((v) => v.__id !== junctionDoc.__id)
+                          : value.map((v) =>
+                              v.__id === junctionDoc.__id
+                                ? { ...v, __state: RelatedItemState.Deleted }
+                                : v,
+                            );
+
                         onChange?.(newState);
                       }}
                       isNew={isNew}

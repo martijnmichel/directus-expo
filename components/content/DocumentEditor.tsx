@@ -181,7 +181,37 @@ export const DocumentEditor = ({
         onSave?.(data);
         break;
       case "submit": {
-        await updateDoc(data, {
+
+        const cleanupFormData = (value: unknown): unknown => {
+          if (value === null || typeof value !== "object") {
+            return value;
+          }
+          if (Array.isArray(value)) {
+            return value
+              .filter((item) => {
+                if (item && typeof item === "object" && !Array.isArray(item)) {
+                  return (item as { __state?: string }).__state !== "deleted";
+                }
+                return true;
+              })
+              .map((item) => cleanupFormData(item));
+          }
+          const obj = value as Record<string, unknown>;
+          if (obj.__state === "deleted") {
+            return undefined;
+          }
+          return Object.keys(obj).reduce((acc, key) => {
+            const cleaned = cleanupFormData(obj[key]);
+            if (cleaned === undefined) {
+              return acc;
+            }
+            return { ...acc, [key]: cleaned };
+          }, {} as Record<string, unknown>);
+        };
+
+        const cleanedData = cleanupFormData(data) as Record<string, unknown>;
+        
+        await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {
             context.reset(updatedDoc);
 
