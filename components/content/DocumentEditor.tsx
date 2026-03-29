@@ -26,7 +26,7 @@ import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
-import { each, filter, find, isEmpty, map } from "lodash";
+import { each, filter, find, isEmpty, map, merge } from "lodash";
 import { queryClient } from "@/utils/react-query";
 import { DirectusErrorResponse } from "@/types/directus";
 import { mapFields } from "@/helpers/document/mapFields";
@@ -131,18 +131,19 @@ export const DocumentEditor = ({
   };
 
   useEffect(() => {
-    console.log("defaultValues", defaultValues);
-    if (defaultValues) return;
+    //console.log("defaultValues", defaultValues);
+   // if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
     if (document ) {
       console.log("reset", document);
       context.reset(
-        getDocumentFieldValues(document as Record<string, unknown>), 
+        getDocumentFieldValues(merge(document, defaultValues) as Record<string, unknown>),
+        
       );
       //console.log("reset", document);
-      setRevision((state) => state + 1);
+      //setRevision((state) => state + 1);
     }
-  }, [document, defaultValues]);
+  }, [document]);
 
   type DirtyFieldsType =
     | boolean

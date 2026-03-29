@@ -30,7 +30,15 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { useDraft, useDraftStore } from "@/state/stores/draftStore";
 import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const { collection, id, document_session_id, junction_id, item_field, draft:draftData } = useLocalSearchParams();
+  const {
+    collection,
+    id,
+    document_session_id,
+    junction_id,
+    item_field,
+    draft: draftData,
+    draft_id,
+  } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -67,9 +75,10 @@ export default function Collection() {
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
                   document_session_id: document_session_id as string | number,
-                  junction_id: junction_id as string | number,
+                  junction_id: (junction_id as string | number) ?? id,
                   field: item_field as string,
                   data: document as CoreSchemaDocument,
+                  draft_id: draft_id as string,
                 });
               }}
             />

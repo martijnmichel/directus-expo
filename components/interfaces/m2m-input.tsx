@@ -153,6 +153,10 @@ export const M2MInput = ({
   );
 
   useEffect(() => {
+    console.log({ value });
+  }, [value]);
+
+  useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
       if (
         event.field === item.field &&
@@ -160,13 +164,30 @@ export const M2MInput = ({
       ) {
         console.log("m2m:add:received", event);
 
+        /**
+         * __id is set by picking an existing item, and is a valid doc id in the related collection
+         * draft_id is set when editing new/existing or picked items (after re-opening) and is always derived from the __id
+         * if none are set, generate a new UUID for the new item to allow drafting
+         */
         const data: RelatedItem = {
-          __id: generateUUID(),
+          __id: event.__id ?? event.draft_id ?? generateUUID(),
           __state: RelatedItemState.Created,
           [relation?.field as string]: event.data,
           [sortField as string]: value.length + 1,
         };
-        const newState = [...value, data];
+
+        /**
+         * if draft_id is set and __id is not, update the existing item by merging the data with the existing item
+         * otherwise add the new item to the state
+         */
+        const newState =
+          !!event.draft_id && !event.__id
+            ? value.map((v) => (v.__id === event.draft_id ? merge(v, data) : v))
+            : [...value, data];
+
+        /**
+         * update the state with the new item
+         */
         onChange?.(newState);
       }
     };
@@ -183,13 +204,25 @@ export const M2MInput = ({
         event.document_session_id === documentSessionId
       ) {
         console.log("m2m:update:received", event);
+
+        const currentItem = value.find((v) => v.__id === event.draft_id);
+        console.log({ currentItem });
+
+        /**
+         * update the item in the state
+         */
         const data: RelatedItem = {
           __state: RelatedItemState.Updated,
           [relation?.field as string]: { ...event.data },
         };
+
+        /**
+         * update the state with the new item
+         */
         const newState = value.map((v) =>
-          v.id === Number(event.junction_id) ? merge(v, data) : v,
+          v.__id === event.draft_id ? merge(v, data) : v,
         );
+
         console.log({ newState, value, relation });
         onChange?.(newState);
       }
@@ -380,6 +413,8 @@ export const M2MInput = ({
                         collection: relation.related_collection,
                         document_session_id: documentSessionId,
                         item_field: item.field,
+                        id: docId as string | number,
+                        draft_id: draftJunctionDoc?.__id,
                         draft: draftValue
                           ? objectToBase64(draftValue)
                           : undefined,
@@ -389,6 +424,7 @@ export const M2MInput = ({
                         document_session_id: documentSessionId,
                         id: editId as string | number,
                         junction_id: docId as string | number,
+                        draft_id: draftJunctionDoc?.__id,
                         item_field: item.field,
                         draft: draftValue
                           ? objectToBase64(draftValue)
@@ -476,7 +512,8 @@ export const M2MInput = ({
                   (v) => v.__id === junctionDoc.__id,
                 );
                 const isNew = junctionDoc.__state === RelatedItemState.Created;
-                const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
+                const isUpdated =
+                  junctionDoc.__state === RelatedItemState.Updated;
 
                 /** console.log({
                   junctionDoc,

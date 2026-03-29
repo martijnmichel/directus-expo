@@ -12,7 +12,7 @@ import {
   useNavigation,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
-import { map, reduce } from "lodash";
+import { map, merge, reduce } from "lodash";
 import { CoreSchema, createItem, readItem, readItems } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
@@ -40,6 +40,7 @@ import { SearchFilter } from "@/components/content/filters/search-filter-modal";
 import { Horizontal } from "@/components/layout/Stack";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 import { DataTableColumn } from "@/components/content/DataTableColumn";
+import { generateUUID } from "@/hooks/useUUID";
 export default function Collection() {
   const {
     related_collection,
@@ -67,6 +68,11 @@ export default function Collection() {
   const tableFields = useCollectionTableFields({
     collection: related_collection as keyof CoreSchema,
   });
+
+  const nestedFields = tableFields.filter((f: string) => f.includes("."));
+  const expandedFields = nestedFields.map((f: string) =>
+    f.includes(".$") ? f.split(".$")[0] : f
+  );
 
   const { data: options, refetch } = useDocuments(
     related_collection as keyof CoreSchema,
@@ -112,7 +118,7 @@ export default function Collection() {
   const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
     related_collection as keyof CoreSchema,
     {
-      fields: [...tableFields.filter((f: string) => f.includes(".")), primaryKey as any],
+      fields: [...expandedFields, primaryKey as any],
       limit: -1,
       filter: {
         [primaryKey as any]: {
@@ -125,12 +131,14 @@ export default function Collection() {
     }
   );
 
+ //console.log({ relatedDocuments, tableFields, primaryKey, related_collection, expandedFields });
+
  
 
   useEffect(() => {
     refetch();
     refetchRelatedDocuments();
-  }, [current_value]);
+  }, [options]);
 
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
@@ -170,12 +178,11 @@ export default function Collection() {
             const relatedDoc = (relatedDocuments?.items as Record<string, unknown>[] | undefined)?.find(
               (r) => r[primaryKey as string] === doc[primaryKey as string]
             );
-            console.log({ relatedDoc, doc, primaryKey });
+           //console.log({ relatedDoc, doc, mergedDoc: merge(doc, relatedDoc), primaryKey, relatedDocuments });
             return (
               <DataTableColumn
                 template={f}
-                document={doc}
-                relatedDocument={relatedDoc}
+                document={merge(doc, relatedDoc)}
                 collection={related_collection as keyof CoreSchema}
                 key={`table-${related_collection}-column-${f}`}
               />
@@ -190,6 +197,7 @@ export default function Collection() {
               data: doc as CoreSchemaDocument,
               field: item_field as string,
               document_session_id: document_session_id as string | number,
+              __id: doc?.[primaryKey as string] as string,
             });
           });
         }}

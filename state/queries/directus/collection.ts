@@ -47,9 +47,9 @@ export const useDocuments = (
   const coreCollection = coreCollections[collection];
   const { data: fields } = useFields(collection);
   return coreCollection?.readItems
-    ? coreCollection.readItems(query)
+    ? coreCollection.readItems(query as any)
     : useQuery({
-      queryKey: ["documents", collection, query],
+      queryKey: ["documents", collection, query, options],
 
       queryFn: async () => {
         const items = await directus?.request(
