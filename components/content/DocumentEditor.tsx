@@ -39,6 +39,7 @@ import { mutateDocument } from "@/state/actions/updateDocument";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import ToastManager from "@/utils/toast";
 import { useUUID } from "@/hooks/useUUID";
+import { RelatedItemState } from "@/utils/mitt";
 
 export const DocumentEditor = ({
   collection,
@@ -83,7 +84,7 @@ export const DocumentEditor = ({
     permissions,
     styles,
     uuid,
-    t
+    t,
   });
 
   const form = useWatch({ control });
@@ -132,13 +133,14 @@ export const DocumentEditor = ({
 
   useEffect(() => {
     //console.log("defaultValues", defaultValues);
-   // if (defaultValues) return;
+    // if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
-    if (document ) {
+    if (document) {
       console.log("reset", document);
       context.reset(
-        getDocumentFieldValues(merge(document, defaultValues) as Record<string, unknown>),
-        
+        getDocumentFieldValues(
+          merge(document, defaultValues) as Record<string, unknown>,
+        ),
       );
       //console.log("reset", document);
       //setRevision((state) => state + 1);
@@ -181,7 +183,11 @@ export const DocumentEditor = ({
         onSave?.(data);
         break;
       case "submit": {
-
+        /**
+         * Transforms the form data to the Directus API detailed relationship format from __state fields
+         * @param value - The value to transform
+         * @returns
+         */
         const transformFormData = (value: unknown): unknown => {
           if (value === null || typeof value !== "object") {
             return value;
@@ -203,11 +209,11 @@ export const DocumentEditor = ({
                   continue;
                 }
                 const rec = item as Record<string, unknown>;
-                const state = rec.__state as string | undefined;
-                if (state === "default" || state === undefined) {
+                const state = rec.__state as RelatedItemState | undefined;
+                if (state === RelatedItemState.Default || state === undefined) {
                   continue;
                 }
-                if (state === "deleted") {
+                if (state === RelatedItemState.Deleted) {
                   if (rec.id != null) {
                     del.push(rec.id);
                   }
@@ -218,9 +224,9 @@ export const DocumentEditor = ({
                 if (cleaned === undefined) {
                   continue;
                 }
-                if (state === "created") {
+                if (state === RelatedItemState.Created) {
                   create.push(cleaned);
-                } else if (state === "updated") {
+                } else if (state === RelatedItemState.Updated) {
                   update.push(cleaned);
                 }
               }
@@ -239,20 +245,23 @@ export const DocumentEditor = ({
             return value.map((item) => transformFormData(item));
           }
           const obj = value as Record<string, unknown>;
-          return Object.keys(obj).reduce((acc, key) => {
-            if (key.startsWith("__") || key === "null") {
-              return acc;
-            }
-            const cleaned = transformFormData(obj[key]);
-            if (cleaned === undefined) {
-              return acc;
-            }
-            return { ...acc, [key]: cleaned };
-          }, {} as Record<string, unknown>);
+          return Object.keys(obj).reduce(
+            (acc, key) => {
+              if (key.startsWith("__") || key === "null") {
+                return acc;
+              }
+              const cleaned = transformFormData(obj[key]);
+              if (cleaned === undefined) {
+                return acc;
+              }
+              return { ...acc, [key]: cleaned };
+            },
+            {} as Record<string, unknown>,
+          );
         };
 
         const cleanedData = transformFormData(data) as Record<string, unknown>;
-        
+
         await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {
             context.reset(updatedDoc);
