@@ -182,26 +182,68 @@ export const DocumentEditor = ({
         break;
       case "submit": {
 
-        const cleanupFormData = (value: unknown): unknown => {
+        const transformFormData = (value: unknown): unknown => {
           if (value === null || typeof value !== "object") {
             return value;
           }
           if (Array.isArray(value)) {
-            return value
-              .filter((item) => {
-                if (item && typeof item === "object" && !Array.isArray(item)) {
-                  return (item as { __state?: string }).__state !== "deleted";
+            const hasRelationState = value.some(
+              (item) =>
+                item &&
+                typeof item === "object" &&
+                !Array.isArray(item) &&
+                Object.prototype.hasOwnProperty.call(item as object, "__state"),
+            );
+            if (hasRelationState) {
+              const create: unknown[] = [];
+              const update: unknown[] = [];
+              const del: unknown[] = [];
+              for (const item of value) {
+                if (!item || typeof item !== "object" || Array.isArray(item)) {
+                  continue;
                 }
-                return true;
-              })
-              .map((item) => cleanupFormData(item));
+                const rec = item as Record<string, unknown>;
+                const state = rec.__state as string | undefined;
+                if (state === "default" || state === undefined) {
+                  continue;
+                }
+                if (state === "deleted") {
+                  if (rec.id != null) {
+                    del.push(rec.id);
+                  }
+                  continue;
+                }
+                const { __state: _omit, ...rest } = rec;
+                const cleaned = transformFormData(rest);
+                if (cleaned === undefined) {
+                  continue;
+                }
+                if (state === "created") {
+                  create.push(cleaned);
+                } else if (state === "updated") {
+                  update.push(cleaned);
+                }
+              }
+              const grouped: Record<string, unknown> = {};
+              if (create.length) {
+                grouped.create = create;
+              }
+              if (update.length) {
+                grouped.update = update;
+              }
+              if (del.length) {
+                grouped.delete = del;
+              }
+              return Object.keys(grouped).length ? grouped : undefined;
+            }
+            return value.map((item) => transformFormData(item));
           }
           const obj = value as Record<string, unknown>;
-          if (obj.__state === "deleted") {
-            return undefined;
-          }
           return Object.keys(obj).reduce((acc, key) => {
-            const cleaned = cleanupFormData(obj[key]);
+            if (key.startsWith("__") || key === "null") {
+              return acc;
+            }
+            const cleaned = transformFormData(obj[key]);
             if (cleaned === undefined) {
               return acc;
             }
@@ -209,7 +251,7 @@ export const DocumentEditor = ({
           }, {} as Record<string, unknown>);
         };
 
-        const cleanedData = cleanupFormData(data) as Record<string, unknown>;
+        const cleanedData = transformFormData(data) as Record<string, unknown>;
         
         await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {
