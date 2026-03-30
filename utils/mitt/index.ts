@@ -105,6 +105,7 @@ export enum RelatedItemState {
   Created = "created",
   Updated = "updated",
   Deleted = "deleted",
+  Picked = "picked",
 }
 
 export type RelatedItem = {

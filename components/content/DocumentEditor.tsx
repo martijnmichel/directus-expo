@@ -225,7 +225,7 @@ export const DocumentEditor = ({
                 if (cleaned === undefined) {
                   continue;
                 }
-                if (state === RelatedItemState.Created) {
+                if (state === RelatedItemState.Created || state === RelatedItemState.Picked) {
                   create.push(cleaned);
                 } else if (state === RelatedItemState.Updated) {
                   update.push(cleaned);

@@ -20,7 +20,7 @@ import {
 } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { findIndex, get, map, merge, orderBy, uniq } from "lodash";
+import { findIndex, get, isNaN, map, merge, orderBy, uniq } from "lodash";
 import {
   Link,
   RelativePathString,
@@ -31,7 +31,11 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
 import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
-import EventBus, { MittEvents, RelatedItem, RelatedItemState } from "@/utils/mitt";
+import EventBus, {
+  MittEvents,
+  RelatedItem,
+  RelatedItemState,
+} from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import {
   DndProvider,
@@ -158,7 +162,9 @@ export const M2MInput = ({
          */
         const data: RelatedItem = {
           __id: event.__id ?? event.draft_id ?? generateUUID(),
-          __state: RelatedItemState.Created,
+          __state: event.__id
+            ? RelatedItemState.Picked
+            : RelatedItemState.Created,
           [relation?.field as string]: event.data,
           [sortField as string]: value.length + 1,
         };
@@ -252,6 +258,46 @@ export const M2MInput = ({
     },
   );
 
+  const interfaceTemplate = item.meta.options?.template || "";
+  const effectiveTemplate =
+    interfaceTemplate ||
+    (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
+    "";
+  const pk = getPrimaryKey(fields);
+  const { data: relatedFields } = useFields(relatedCollectionMeta?.collection as any);
+  const relatedPrimaryKey = relatedFields ? getPrimaryKey(relatedFields) : "id";
+  const junctionField = String(junction?.meta.junction_field);
+  const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+    .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+    .filter(Boolean);
+  const prefixedTemplatePaths = templatePaths.map((p) =>
+    p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
+  );
+  const requestFields = uniq([
+    pk,
+    junctionField,
+    `${junctionField}.${relatedPrimaryKey}`,
+    ...prefixedTemplatePaths,
+    "*",
+  ]).filter(Boolean);
+  
+  const filteredJunctionIds = value.map((v) => v.__id).filter((v) => !isNaN(Number(v)));
+
+  const { data: relatedDocs } = useDocuments(
+    junction?.meta.many_collection as keyof CoreSchema,
+    {
+      fields: requestFields as any,
+      filter: {
+        id: { _in: filteredJunctionIds },
+      },
+    },
+    {
+      enabled: !!junction && !!junction?.meta.many_collection && filteredJunctionIds.length > 0,
+    }
+  );
+
+  console.log({ relatedDocs, requestFields });
+
   useEffect(() => {
     refetch();
   }, [docId, junction?.collection, refetch]);
@@ -276,6 +322,7 @@ export const M2MInput = ({
     isNew,
     isUpdated,
     isDeselected,
+    isPicked,
     isSortable,
     ...props
   }: {
@@ -288,58 +335,16 @@ export const M2MInput = ({
     isNew?: boolean;
     isUpdated?: boolean;
     isDeselected?: boolean;
+    isPicked?: boolean;
     isSortable?: boolean;
   }) => {
+    const doc = relatedDocs?.items?.find((v) => v.id === Number(docId));
     const { data: fields } = useFields(relation.related_collection as any);
     const { data: junctionFields } = useFields(
       junction?.meta.many_collection as any,
     );
-    const { data: relatedCollection } = useCollection(
-      relation.related_collection as keyof CoreSchema,
-    );
-    const interfaceTemplate = template || "";
-    const effectiveTemplate =
-      interfaceTemplate ||
-      (relatedCollection?.meta?.display_template as string | undefined) ||
-      "";
-    const pk = getPrimaryKey(fields);
-    const junctionField = String(junction.meta.junction_field);
-    const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
-      .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
-      .filter(Boolean);
-    const prefixedTemplatePaths = templatePaths.map((p) =>
-      p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
-    );
-    const requestFields = uniq([
-      pk,
-      junctionField,
-      ...prefixedTemplatePaths,
-      "*.*",
-    ]).filter(Boolean);
-
-    const {
-      data: doc,
-      isLoading,
-      refetch,
-      error,
-    } = useDocument({
-      collection: junction?.meta.many_collection as keyof CoreSchema,
-      id: docId,
-      options: {
-        fields: requestFields as any,
-      },
-      query: {
-        enabled: !isNew,
-      },
-    });
-
-    if (error) {
-      return (
-        <RelatedListItem>
-          {(error as DirectusErrorResponse).errors?.[0].message}
-        </RelatedListItem>
-      );
-    }
+  
+   
 
     const draftJunctionDoc = value.find(
       (v) => v.id === docId || v.__id === docId,
@@ -374,6 +379,8 @@ export const M2MInput = ({
       junctionField,
       templatePaths,
       prefixedTemplatePaths,
+      junction,
+      relatedPrimaryKey,
     });
     const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
     const editId =
@@ -387,9 +394,10 @@ export const M2MInput = ({
         isNew={isNew}
         isDraggable={isSortable}
         isUpdated={isUpdated}
+        isPicked={isPicked}
         append={
           <>
-            {!isDeselected && (
+            {!isDeselected && !isPicked && (
               <Link
                 href={{
                   pathname: isNew
@@ -444,7 +452,7 @@ export const M2MInput = ({
           </>
         }
       >
-        {text}
+        {text || "--"}
       </RelatedListItem>
     );
   };
@@ -495,11 +503,13 @@ export const M2MInput = ({
                   ) ??
                   "") as number | string;
 
-                const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
+                const isDeselected =
+                  junctionDoc.__state === RelatedItemState.Deleted;
                 const isNew = junctionDoc.__state === RelatedItemState.Created;
                 const isUpdated =
                   junctionDoc.__state === RelatedItemState.Updated;
-
+                const isPicked =
+                  junctionDoc.__state === RelatedItemState.Picked;
                 /** console.log({
                   junctionDoc,
                   relatedDoc,
@@ -533,19 +543,21 @@ export const M2MInput = ({
                         onChange?.(newState);
                       }}
                       onDelete={(item) => {
-                        const newState = isNew
-                          ? value.filter((v) => v.__id !== junctionDoc.__id)
-                          : value.map((v) =>
-                              v.__id === junctionDoc.__id
-                                ? { ...v, __state: RelatedItemState.Deleted }
-                                : v,
-                            );
+                        const newState =
+                          isNew || isPicked
+                            ? value.filter((v) => v.__id !== junctionDoc.__id)
+                            : value.map((v) =>
+                                v.__id === junctionDoc.__id
+                                  ? { ...v, __state: RelatedItemState.Deleted }
+                                  : v,
+                              );
 
                         onChange?.(newState);
                       }}
                       isNew={isNew}
                       isDeselected={isDeselected}
                       isUpdated={isUpdated}
+                      isPicked={isPicked}
                     />
                   </Draggable>
                 );

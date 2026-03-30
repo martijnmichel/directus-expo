@@ -11,6 +11,7 @@ export type RelatedListItemProps = {
   isUpdated?: boolean;
   isDeselected?: boolean;
   isDraggable?: boolean;
+  isPicked?: boolean;
   prepend?: React.ReactNode;
   onPress?: () => void;
 };
@@ -23,6 +24,7 @@ export const RelatedListItem = ({
   isUpdated,
   isDeselected,
   prepend,
+  isPicked,
   onPress,
 }: RelatedListItemProps) => {
   const { styles, theme } = useStyles(listStyles);
@@ -34,7 +36,7 @@ export const RelatedListItem = ({
         style={[
           styles.listItem,
           isDeselected && styles.listItemDeselected,
-          isNew && styles.listItemNew,
+          (isNew || isPicked) && styles.listItemNew,
           isUpdated && styles.listItemUpdated,
         ]}
       >
@@ -81,12 +83,12 @@ export const listStyles = createStyleSheet((theme) => ({
   },
   listItemDeselectedText: {},
   listItemNew: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryBackground,
-  },
-  listItemUpdated: {
     borderColor: theme.colors.info,
     backgroundColor: theme.colors.infoBackground,
+  },
+  listItemUpdated: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryBackground,
   },
   content: {
     flex: 1,

@@ -194,7 +194,7 @@ export default function Collection() {
           router.dismiss();
           requestAnimationFrame(() => {
             EventBus.emit("m2m:add", {
-              data: doc as CoreSchemaDocument,
+              data: { [primaryKey]: doc?.[primaryKey as string] } as CoreSchemaDocument,
               field: item_field as string,
               document_session_id: document_session_id as string | number,
               __id: doc?.[primaryKey as string] as string,
