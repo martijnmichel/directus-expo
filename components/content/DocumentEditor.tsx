@@ -194,58 +194,19 @@ export const DocumentEditor = ({
             return value;
           }
           if (Array.isArray(value)) {
-            const hasRelationState = value.some(
-              (item) =>
-                item &&
-                typeof item === "object" &&
-                !Array.isArray(item) &&
-                Object.prototype.hasOwnProperty.call(item as object, "__state"),
-            );
-            if (hasRelationState) {
-              const create: unknown[] = [];
-              const update: unknown[] = [];
-              const del: unknown[] = [];
-              for (const item of value) {
-                if (!item || typeof item !== "object" || Array.isArray(item)) {
-                  continue;
+            return value
+              .filter((item) => {
+                if (item && typeof item === "object" && !Array.isArray(item)) {
+                  return item.__state !== RelatedItemState.Deleted;
                 }
-                const rec = item as Record<string, unknown>;
-                const state = rec.__state as RelatedItemState | undefined;
-                if (state === RelatedItemState.Default || state === undefined) {
-                  continue;
-                }
-                if (state === RelatedItemState.Deleted) {
-                  if (rec.id != null) {
-                    del.push(rec.id);
-                  }
-                  continue;
-                }
-                const { __state: _omit, ...rest } = rec;
-                const cleaned = transformFormData(rest);
-                if (cleaned === undefined) {
-                  continue;
-                }
-                if (state === RelatedItemState.Created || state === RelatedItemState.Picked) {
-                  create.push(cleaned);
-                } else if (state === RelatedItemState.Updated) {
-                  update.push(cleaned);
-                }
-              }
-              const grouped: Record<string, unknown> = {};
-              if (create.length) {
-                grouped.create = create;
-              }
-              if (update.length) {
-                grouped.update = update;
-              }
-              if (del.length) {
-                grouped.delete = del;
-              }
-              return Object.keys(grouped).length ? grouped : undefined;
-            }
-            return value.map((item) => transformFormData(item));
+                return true;
+              })
+              .map((item) => transformFormData(item));
           }
           const obj = value as Record<string, unknown>;
+          if (obj.__state === RelatedItemState.Deleted) {
+            return undefined;
+          }
           return Object.keys(obj).reduce(
             (acc, key) => {
               if (key.startsWith("__") || key === "null") {
@@ -262,7 +223,6 @@ export const DocumentEditor = ({
         };
 
         const cleanedData = transformFormData(data) as Record<string, unknown>;
-        
 
         await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {

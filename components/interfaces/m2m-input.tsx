@@ -166,7 +166,7 @@ export const M2MInput = ({
             ? RelatedItemState.Picked
             : RelatedItemState.Created,
           [relation?.field as string]: event.data,
-          [sortField as string]: value.length + 1,
+          ...(sortField && { [sortField as string]: value.length + 1 }),
         };
 
         /**
@@ -188,7 +188,7 @@ export const M2MInput = ({
     return () => {
       EventBus.off("m2m:add", addM2M);
     };
-  }, [valueProp, onChange, relation, junction, value, documentSessionId]);
+  }, [onChange, relation, value, documentSessionId, sortField]);
 
   useEffect(() => {
     const onUpdate = (event: MittEvents["m2m:update"]) => {
@@ -264,7 +264,9 @@ export const M2MInput = ({
     (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
     "";
   const pk = getPrimaryKey(fields);
-  const { data: relatedFields } = useFields(relatedCollectionMeta?.collection as any);
+  const { data: relatedFields } = useFields(
+    relatedCollectionMeta?.collection as any,
+  );
   const relatedPrimaryKey = relatedFields ? getPrimaryKey(relatedFields) : "id";
   const junctionField = String(junction?.meta.junction_field);
   const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
@@ -280,8 +282,10 @@ export const M2MInput = ({
     ...prefixedTemplatePaths,
     "*",
   ]).filter(Boolean);
-  
-  const filteredJunctionIds = value.map((v) => v.__id).filter((v) => !isNaN(Number(v)));
+
+  const filteredJunctionIds = value
+    .map((v) => v.__id)
+    .filter((v) => !isNaN(Number(v)));
 
   const { data: relatedDocs } = useDocuments(
     junction?.meta.many_collection as keyof CoreSchema,
@@ -292,8 +296,11 @@ export const M2MInput = ({
       },
     },
     {
-      enabled: !!junction && !!junction?.meta.many_collection && filteredJunctionIds.length > 0,
-    }
+      enabled:
+        !!junction &&
+        !!junction?.meta.many_collection &&
+        filteredJunctionIds.length > 0,
+    },
   );
 
   console.log({ relatedDocs, requestFields });
@@ -343,8 +350,6 @@ export const M2MInput = ({
     const { data: junctionFields } = useFields(
       junction?.meta.many_collection as any,
     );
-  
-   
 
     const draftJunctionDoc = value.find(
       (v) => v.id === docId || v.__id === docId,
@@ -469,7 +474,6 @@ export const M2MInput = ({
 
         <DndProvider minDistance={10}>
           <DraggableStack
-            key={documentSessionId}
             direction="column"
             onOrderChange={onOrderChange}
             gap={3}
@@ -526,7 +530,6 @@ export const M2MInput = ({
                     disabled={!sortField || !junctionDoc.__id}
                     activationDelay={200}
                   >
-                    <Text>{id || junctionDoc.__id}</Text>
                     <Item
                       key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
                       docId={junctionDoc.__id}
