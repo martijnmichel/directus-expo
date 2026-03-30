@@ -3,6 +3,7 @@ import { Horizontal } from "../layout/Stack";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { DirectusIcon } from "./directus-icon";
 import { Text } from "./typography";
+import { SortableItem } from "react-native-reanimated-dnd";
 
 export type RelatedListItemProps = {
   append?: React.ReactNode;
@@ -40,7 +41,11 @@ export const RelatedListItem = ({
           isUpdated && styles.listItemUpdated,
         ]}
       >
-        {isDraggable && <DirectusIcon name="drag_handle" />}
+        <SortableItem.Handle
+          style={{ display: isDraggable ? "contents" : "none" }}
+        >
+          <DirectusIcon name="drag_handle" />
+        </SortableItem.Handle>
         {prepend && <View>{prepend}</View>}
         <Text
           numberOfLines={1}
