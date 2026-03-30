@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -34,6 +34,7 @@ import { objectToBase64 } from "@/helpers/document/docToBase64";
 import EventBus from "@/utils/mitt";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
 import { InterfaceProps } from ".";
+import { useModalStore } from "@/state/stores/modalStore";
 
 type ImageInputProps = InterfaceProps<{
   value?: string;
@@ -56,10 +57,18 @@ export const ImageInput = ({
   const [imageUrl, setImageUrl] = useState("");
   const { directus, token } = useAuth();
 
+  const openFilePicker = useModalStore((state) => state.open);
+  const closeFilePicker = useModalStore((state) => state.close);
+
   const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
   const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
 
   const { t } = useTranslation();
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const pickImage = async () => {
     try {
@@ -90,17 +99,20 @@ export const ImageInput = ({
     }
   };
 
+  const handleFilePick = useCallback(
+    (file: { data: string | string[] }) => {
+      onChangeRef.current?.(file.data);
+    },
+    [],
+  );
+
   useEffect(() => {
-    EventBus.on("file:pick", (file) => {
-      onChange?.(file.data);
-    });
+    EventBus.on("file:pick", handleFilePick);
 
     return () => {
-      EventBus.off("file:pick", (file) => {
-        onChange?.(file.data);
-      });
+      EventBus.off("file:pick", handleFilePick);
     };
-  }, []);
+  }, [handleFilePick]);
   return (
     <View style={formStyle.formControl}>
       {label && (
@@ -111,15 +123,15 @@ export const ImageInput = ({
 
       <View style={styles.container}>
         <View style={styles.imagePreview}>
-          <Image
+          {!!value &&<Image
             source={{
-              uri: `${directus?.url}/assets/${value}`,
+              uri: `${directus?.url}assets/${value}`,
               headers: {
                 Authorization: `Bearer ${token}`,
               },
             }}
             style={styles.image}
-          />
+          />}
         </View>
 
         {!disabled && (
@@ -184,39 +196,36 @@ export const ImageInput = ({
                   </Button>
                   */
 
-                  <Modal>
-                    <Modal.Trigger>
-                      <Button rounded variant="soft">
-                        <Gallery />
-                      </Button>
-                    </Modal.Trigger>
-                    <Modal.Content
-                      variant="bottomSheet"
-                      title={t("components.shared.selectFromLibrary")}
-                    >
-                      {({ close }) => (
-                        <>
-                          <ScrollView>
-                            <FileSelect
-                              multiple={false}
-                              type={["images"]}
-                              onSelect={(v) => {
-                                close();
-                                requestAnimationFrame(() => {
-                                  onChange?.(v);
-                                });
-                              }}
-                            />
-                            <View style={{ height: 80 }} />
-                          </ScrollView>
-                          <FloatingToolbarHost />
-                        </>
-                      )}
-                    </Modal.Content>
-                  </Modal>
+                  <Button
+                    rounded
+                    variant="soft"
+                    onPress={() => {
+                      openFilePicker(() => {
+                        return (
+                          <>
+                            <ScrollView>
+                              <FileSelect
+                                multiple={false}
+                                type={["images"]}
+                                onSelect={(v) => {
+                                  closeFilePicker();
+                                  requestAnimationFrame(() => {
+                                    onChange?.(v);
+                                  });
+                                }}
+                              />
+                              <View style={{ height: 80 }} />
+                            </ScrollView>
+                          </>
+                        );
+                      });
+                    }}
+                  >
+                    <Gallery />
+                  </Button>
                 )}
 
-                {value && (
+                {!!value && (
                   <Button variant="soft" rounded onPress={() => onChange?.("")}>
                     <X />
                   </Button>
