@@ -1,0 +1,22 @@
+diff --git a/node_modules/zustand/esm/middleware.mjs b/node_modules/zustand/esm/middleware.mjs
+index 8de7fb3..d565a33 100644
+--- a/node_modules/zustand/esm/middleware.mjs
++++ b/node_modules/zustand/esm/middleware.mjs
+@@ -59,7 +59,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
+   const { enabled, anonymousActionType, store, ...options } = devtoolsOptions;
+   let extensionConnector;
+   try {
+-    extensionConnector = (enabled != null ? enabled : (import.meta.env ? import.meta.env.MODE : void 0) !== "production") && window.__REDUX_DEVTOOLS_EXTENSION__;
++    extensionConnector = (enabled != null ? enabled : (((typeof process !== "undefined" && process.env && process.env.NODE_ENV) || "") !== "production")) && window.__REDUX_DEVTOOLS_EXTENSION__;
+   } catch (e) {
+   }
+   if (!extensionConnector) {
+@@ -121,7 +121,7 @@ const devtoolsImpl = (fn, devtoolsOptions = {}) => (set, get, api) => {
+     let didWarnAboutReservedActionType = false;
+     const originalDispatch = api.dispatch;
+     api.dispatch = (...args) => {
+-      if ((import.meta.env ? import.meta.env.MODE : void 0) !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
++      if (((typeof process !== "undefined" && process.env && process.env.NODE_ENV) || "") !== "production" && args[0].type === "__setState" && !didWarnAboutReservedActionType) {
+         console.warn(
+           '[zustand devtools middleware] "__setState" action type is reserved to set state from the devtools. Avoid using it.'
+         );
