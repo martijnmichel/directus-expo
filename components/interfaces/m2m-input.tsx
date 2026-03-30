@@ -50,7 +50,7 @@ import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import {
   getFieldPathsFromTemplate,
-  parseTemplate,
+  parseTemplateParts,
 } from "@/helpers/document/template";
 import { getPrimaryKey, getPrimaryKeyValue } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
@@ -62,6 +62,7 @@ import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { Sortable, SortableItem } from "react-native-reanimated-dnd";
+import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
 type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -353,34 +354,16 @@ export const M2MInput = ({
       : undefined;
 
     // note: if the interface template is used, directus returns the template path from the document, otherwise parse it from the junction doc
-    const parsedFromDoc = parseTemplate(
+    const partsFromDoc = parseTemplateParts(
       effectiveTemplate,
       interfaceTemplate ? doc : (doc?.[relation?.field as string] ?? doc),
       fields,
     );
-    const parsedFromValue = parseTemplate(
+    const partsFromValue = parseTemplateParts(
       effectiveTemplate,
       interfaceTemplate ? (draftJunctionDoc as any) : (draftValue as any),
       fields,
     );
-    const text = draftValue ? parsedFromValue : parsedFromDoc;
-    /**
-    console.log({
-      docId,
-      doc,
-      interfaceTemplate,
-      value,
-      draftValue,
-      parsedFromDoc,
-      parsedFromValue,
-      effectiveTemplate,
-      requestFields,
-      junctionField,
-      templatePaths,
-      prefixedTemplatePaths,
-      junction,
-      relatedPrimaryKey,
-    }); */
     const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
     const editId =
       getPrimaryKeyValue(rawJunctionValue, fields) ??
@@ -451,7 +434,7 @@ export const M2MInput = ({
           </>
         }
       >
-        {text || "--"}
+        <TemplatePartsRenderer parts={draftValue ? partsFromValue : partsFromDoc} />
       </RelatedListItem>
     );
   };

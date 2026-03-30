@@ -50,6 +50,7 @@ import { useTranslation } from "react-i18next";
 import { DragIcon, Trash } from "../icons";
 import {
   getFieldPathsFromTemplate,
+  parseTemplateParts,
   parseTemplate,
 } from "@/helpers/document/template";
 import {
@@ -65,6 +66,7 @@ import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
 type O2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -319,6 +321,16 @@ export const O2MInput = ({
               draftValue,
               fields,
             );
+            const partsFromDoc = parseTemplateParts(
+              effectiveTemplate,
+              doc,
+              fields,
+            );
+            const partsFromValue = parseTemplateParts(
+              effectiveTemplate,
+              draftValue,
+              fields,
+            );
 
             /**
              * check if the draft value has values for non-primary key fields
@@ -441,7 +453,13 @@ export const O2MInput = ({
                     </>
                   }
                 >
-                  {text}
+                  <TemplatePartsRenderer
+                    parts={
+                      draftValue && draftValueHasValues
+                        ? partsFromValue
+                        : partsFromDoc
+                    }
+                  />
                 </RelatedListItem>
               </SortableItem>
             );
