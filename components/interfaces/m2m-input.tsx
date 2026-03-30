@@ -61,6 +61,7 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { Sortable, SortableItem } from "react-native-reanimated-dnd";
 
 type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -465,49 +466,40 @@ export const M2MInput = ({
           </Text>
         )}
 
-        <DndProvider minDistance={10}>
-          <DraggableStack
-            direction="column"
-            onOrderChange={onOrderChange}
-            gap={3}
-          >
-            {orderBy([...value, ...deletedItems], sortField || "").map(
-              (junctionDoc, index) => {
-                if (typeof junctionDoc === "number") {
-                  junctionDoc = { id: junctionDoc };
-                }
-                const primaryKey = relation?.schema?.foreign_key_column;
+        <Sortable
+          data={value}
+          itemKeyExtractor={(item) => item.__id.toString()}
+          itemHeight={50}
+          renderItem={({ item: junctionDoc, id: __sortId, ...rest }) => {
+            if (typeof junctionDoc === "number") {
+              junctionDoc = { id: junctionDoc };
+            }
+            const primaryKey = relation?.schema?.foreign_key_column;
 
-                const relatedDoc =
-                  relation?.field in junctionDoc
-                    ? (junctionDoc as any)[relation?.field]
-                    : junctionDoc;
-                const rawId: unknown =
-                  typeof relatedDoc === "number" ||
-                  typeof relatedDoc === "string"
-                    ? relatedDoc
-                    : primaryKey in relatedDoc
-                      ? relatedDoc[primaryKey]
-                      : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
-                const id: number | string = (getPrimaryKeyValue(
-                  rawId,
-                  fields,
-                ) ??
-                  getPrimaryKeyValue(
-                    junctionDoc,
-                    undefined,
-                    getPrimaryKeyValue(rawId, undefined, ""),
-                  ) ??
-                  "") as number | string;
+            const relatedDoc =
+              relation?.field in junctionDoc
+                ? (junctionDoc as any)[relation?.field]
+                : junctionDoc;
+            const rawId: unknown =
+              typeof relatedDoc === "number" || typeof relatedDoc === "string"
+                ? relatedDoc
+                : primaryKey in relatedDoc
+                  ? relatedDoc[primaryKey]
+                  : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
+            const id: number | string = (getPrimaryKeyValue(rawId, fields) ??
+              getPrimaryKeyValue(
+                junctionDoc,
+                undefined,
+                getPrimaryKeyValue(rawId, undefined, ""),
+              ) ??
+              "") as number | string;
 
-                const isDeselected =
-                  junctionDoc.__state === RelatedItemState.Deleted;
-                const isNew = junctionDoc.__state === RelatedItemState.Created;
-                const isUpdated =
-                  junctionDoc.__state === RelatedItemState.Updated;
-                const isPicked =
-                  junctionDoc.__state === RelatedItemState.Picked;
-                /** console.log({
+            const isDeselected =
+              junctionDoc.__state === RelatedItemState.Deleted;
+            const isNew = junctionDoc.__state === RelatedItemState.Created;
+            const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
+            const isPicked = junctionDoc.__state === RelatedItemState.Picked;
+            /** console.log({
                   junctionDoc,
                   relatedDoc,
                   id,
@@ -517,50 +509,50 @@ export const M2MInput = ({
                   isDeselected,
                 }); */
 
-                return (
-                  <Draggable
-                    id={junctionDoc.__id}
-                    disabled={!sortField || !junctionDoc.__id}
-                    activationDelay={200}
-                  >
-                    <Item
-                      key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
-                      docId={junctionDoc.__id}
-                      junction={junction!}
-                      relation={relation!}
-                      template={item.meta.options?.template}
-                      isSortable={!!sortField}
-                      onAdd={(item) => {
-                        const newState = value.map((v) =>
-                          v.__id === junctionDoc.__id
-                            ? { ...v, __state: RelatedItemState.Default }
-                            : v,
-                        );
-                        onChange?.(newState);
-                      }}
-                      onDelete={(item) => {
-                        const newState =
-                          isNew || isPicked
-                            ? value.filter((v) => v.__id !== junctionDoc.__id)
-                            : value.map((v) =>
-                                v.__id === junctionDoc.__id
-                                  ? { ...v, __state: RelatedItemState.Deleted }
-                                  : v,
-                              );
+            return (
+              <SortableItem
+                key={`${junctionDoc.__id}-${documentSessionId}`}
+                id={junctionDoc.__id}
+                data={junctionDoc}
+                {...rest}
+              >
+                <Item
+                  key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
+                  docId={junctionDoc.__id}
+                  junction={junction!}
+                  relation={relation!}
+                  template={item.meta.options?.template}
+                  isSortable={!!sortField}
+                  onAdd={(item) => {
+                    const newState = value.map((v) =>
+                      v.__id === junctionDoc.__id
+                        ? { ...v, __state: RelatedItemState.Default }
+                        : v,
+                    );
+                    onChange?.(newState);
+                  }}
+                  onDelete={(item) => {
+                    const newState =
+                      isNew || isPicked
+                        ? value.filter((v) => v.__id !== junctionDoc.__id)
+                        : value.map((v) =>
+                            v.__id === junctionDoc.__id
+                              ? { ...v, __state: RelatedItemState.Deleted }
+                              : v,
+                          );
 
-                        onChange?.(newState);
-                      }}
-                      isNew={isNew}
-                      isDeselected={isDeselected}
-                      isUpdated={isUpdated}
-                      isPicked={isPicked}
-                    />
-                  </Draggable>
-                );
-              },
-            )}
-          </DraggableStack>
-        </DndProvider>
+                    onChange?.(newState);
+                  }}
+                  isNew={isNew}
+                  isDeselected={isDeselected}
+                  isUpdated={isUpdated}
+                  isPicked={isPicked}
+                />
+              </SortableItem>
+            );
+          }}
+        />
+
         {(error || helper) && (
           <Text
             style={[

@@ -11,6 +11,7 @@ import { Modal } from "../display/modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
+import { Sortable, SortableItem } from "react-native-reanimated-dnd";
 import {
   useCollection,
   useDocument,
@@ -280,190 +281,172 @@ export const O2MInput = ({
   };
 
   return (
-    relation && (
+    relation && !value.some(v => typeof v === "number") && (
       <Vertical spacing="xs">
         {label && (
           <Text style={formControlStyles.label}>
             {label} {required && "*"}
           </Text>
         )}
-        <DndProvider 
-            disabled={!sortField}>
-          <DraggableStack
-            direction="column"
-            onOrderChange={onOrderChange}
-            style={{ gap: 3 }}
-          >
-            {value.map((relationDoc, index) => {
-              const id: number | string =
-                (getPrimaryKeyValue(
-                  relationDoc,
-                  fields,
-                  (relationDoc as any)?.[relatedPk || ""],
-                ) as number | string) ?? "";
+        <Sortable
+          data={value}
+          itemKeyExtractor={(item) => item.__id.toString()}
+          itemHeight={50}
+          renderItem={({ item: relationDoc, id: __sortId, ...rest }) => {
 
-              const isDefault =
-                relationDoc.__state === RelatedItemState.Default;
-              const isDeselected =
-                relationDoc.__state === RelatedItemState.Deleted;
-              const isNew = relationDoc.__state === RelatedItemState.Created;
-              const isSortable = !!sortField;
-              const isPicked = relationDoc.__state === RelatedItemState.Picked;
-              const isUpdated =
-                relationDoc.__state === RelatedItemState.Updated;
+            const isDefault = relationDoc.__state === RelatedItemState.Default;
+            const isDeselected =
+              relationDoc.__state === RelatedItemState.Deleted;
+            const isNew = relationDoc.__state === RelatedItemState.Created;
+            const isSortable = !!sortField;
+            const isPicked = relationDoc.__state === RelatedItemState.Picked;
+            const isUpdated = relationDoc.__state === RelatedItemState.Updated;
 
-              const doc = docs?.items?.find(
-                (v) =>
-                  String(getRelatedPkValue(v)) === String(relationDoc.__id),
-              );
+            const doc = docs?.items?.find(
+              (v) => String(getRelatedPkValue(v)) === String(relationDoc.__id),
+            );
 
-              const draftValue = relationDoc ? (relationDoc as any) : undefined;
+            const draftValue = relationDoc ? (relationDoc as any) : undefined;
 
-              const editId =
-                getPrimaryKeyValue(draftValue, fields) ??
-                getPrimaryKeyValue(draftValue, relatedFields, docId) ??
-                getPrimaryKeyValue(docId, relatedFields);
+            const editId =
+              getPrimaryKeyValue(draftValue, fields) ??
+              getPrimaryKeyValue(draftValue, relatedFields, docId) ??
+              getPrimaryKeyValue(docId, relatedFields);
 
-              const parsedFromDoc = parseTemplate(
-                effectiveTemplate,
-                doc,
-                fields,
-              );
-              const parsedFromValue = parseTemplate(
-                effectiveTemplate,
-                draftValue,
-                fields,
-              );
+            const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
+            const parsedFromValue = parseTemplate(
+              effectiveTemplate,
+              draftValue,
+              fields,
+            );
 
-              /**
-               * check if the draft value has values for non-primary key fields
-               */
-              const draftValueHasValues = Object.keys(draftValue || {}).some(
-                (key) => {
-                  const field = relatedFields?.find((f) => f.field === key);
-                  return !field?.schema.is_primary_key && !!field;
-                },
-              );
+            /**
+             * check if the draft value has values for non-primary key fields
+             */
+            const draftValueHasValues = Object.keys(draftValue || {}).some(
+              (key) => {
+                const field = relatedFields?.find((f) => f.field === key);
+                return !field?.schema.is_primary_key && !!field && field.field !== sortField;
+              },
+            );
 
-              const text =
-                draftValue && draftValueHasValues
-                  ? parsedFromValue
-                  : parsedFromDoc;
+            const text =
+              draftValue && draftValueHasValues
+                ? parsedFromValue
+                : parsedFromDoc;
 
-              console.log({
-                text,
-                parsedFromDoc,
-                parsedFromValue,
-                draftValue,
-                draftValueHasValues,
-                doc,
-                relationDoc,
-              });
+            console.log({
+              text,
+              parsedFromDoc,
+              parsedFromValue,
+              draftValue,
+              draftValueHasValues,
+              doc,
+              relationDoc,
+            });
 
-              return (
-                <Draggable
-                  key={relationDoc.__id}
-                  id={relationDoc.__id}
-                  disabled={!sortField}
-                  activationDelay={200}
-                >
-                  <RelatedListItem
-                    isDraggable={isSortable}
-                    isDeselected={isDeselected}
-                    isUpdated={isUpdated}
-                    isNew={isNew}
-                    isPicked={isPicked}
-                    append={
-                      <>
-                        {!isDeselected && !isPicked && (
-                          <Link
-                            href={{
-                              pathname: isNew
-                                ? `/modals/o2m/[collection]/add`
-                                : `/modals/o2m/[collection]/[id]`,
-                              params: isNew
-                                ? {
-                                    collection: relation.collection,
-                                    document_session_id: documentSessionId,
-                                    item_field: item.field,
-                                    draft_id: relationDoc?.__id,
-                                    draft: draftValue
+            return (
+              <SortableItem
+                key={`${__sortId}-${relationDoc.__id}`}
+                id={__sortId}
+                data={relationDoc}
+                {...rest}
+              >
+                <RelatedListItem
+                  isDraggable={isSortable}
+                  isDeselected={isDeselected}
+                  isUpdated={isUpdated}
+                  isNew={isNew}
+                  isPicked={isPicked}
+                  append={
+                    <>
+                      {!isDeselected && !isPicked && (
+                        <Link
+                          href={{
+                            pathname: isNew
+                              ? `/modals/o2m/[collection]/add`
+                              : `/modals/o2m/[collection]/[id]`,
+                            params: isNew
+                              ? {
+                                  collection: relation.collection,
+                                  document_session_id: documentSessionId,
+                                  id: "",
+                                  item_field: item.field,
+                                  draft_id: relationDoc?.__id,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                }
+                              : {
+                                  collection: relation.collection,
+                                  document_session_id: documentSessionId,
+                                  id: editId as string | number,
+                                  draft_id: relationDoc?.__id,
+                                  item_field: item.field,
+                                  draft:
+                                    !isDefault && draftValue
                                       ? objectToBase64(draftValue)
                                       : undefined,
-                                  }
-                                : {
-                                    collection: relation.collection,
-                                    document_session_id: documentSessionId,
-                                    id: editId as string | number,
-                                    draft_id: relationDoc?.__id,
-                                    item_field: item.field,
-                                    draft:
-                                      !isDefault && draftValue
-                                        ? objectToBase64(draftValue)
-                                        : undefined,
-                                  },
-                            }}
-                            asChild
-                          >
-                            <Button variant="ghost" rounded>
-                              <DirectusIcon name="edit_square" />
-                            </Button>
-                          </Link>
-                        )}
+                                },
+                          }}
+                          asChild
+                        >
+                          <Button variant="ghost" rounded>
+                            <DirectusIcon name="edit_square" />
+                          </Button>
+                        </Link>
+                      )}
 
-                        <Button
-                          variant="ghost"
-                          onPress={() => {
-                            if (isNew || isPicked) {
+                      <Button
+                        variant="ghost"
+                        onPress={() => {
+                          if (isNew || isPicked) {
+                            props.onChange(
+                              value.filter((v) => v.__id !== relationDoc.__id),
+                            );
+                          } else {
+                            if (isDeselected) {
                               props.onChange(
-                                value.filter(
-                                  (v) => v.__id !== relationDoc.__id,
+                                value.map((v) =>
+                                  v.__id === relationDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Default,
+                                      }
+                                    : v,
                                 ),
                               );
                             } else {
-                              if (isDeselected) {
-                                props.onChange(
-                                  value.map((v) =>
-                                    v.__id === relationDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Default,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              } else {
-                                props.onChange(
-                                  value.map((v) =>
-                                    v.__id === relationDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Deleted,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              }
+                              props.onChange(
+                                value.map((v) =>
+                                  v.__id === relationDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Deleted,
+                                      }
+                                    : v,
+                                ),
+                              );
                             }
-                          }}
-                          rounded
-                        >
-                          {isDeselected ? (
-                            <DirectusIcon name="settings_backup_restore" />
-                          ) : (
-                            <DirectusIcon name="close" />
-                          )}
-                        </Button>
-                      </>
-                    }
-                  >
-                    {text}
-                  </RelatedListItem>
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
+                          }
+                        }}
+                        rounded
+                      >
+                        {isDeselected ? (
+                          <DirectusIcon name="settings_backup_restore" />
+                        ) : (
+                          <DirectusIcon name="close" />
+                        )}
+                      </Button>
+                    </>
+                  }
+                >
+                  {text}
+                </RelatedListItem>
+              </SortableItem>
+            );
+          }}
+        />
         {(error || helper) && (
           <Text
             style={[
@@ -502,7 +485,7 @@ export const O2MInput = ({
                   document_session_id: documentSessionId,
                   current_value: [
                     ...map(value, (v) =>
-                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]),
+                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk as string]),
                     ),
                   ].join(","),
                   doc_id: docId,

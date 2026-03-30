@@ -29,43 +29,40 @@ export const RelatedListItem = ({
   onPress,
 }: RelatedListItemProps) => {
   const { styles, theme } = useStyles(listStyles);
-  const Wrapper = onPress ? TouchableOpacity : View;
   return (
-    <Wrapper onPress={onPress}>
-      <Horizontal
-        spacing="md"
+    <Horizontal
+      spacing="md"
+      style={[
+        styles.listItem,
+        isDeselected && styles.listItemDeselected,
+        (isNew || isPicked) && styles.listItemNew,
+        isUpdated && styles.listItemUpdated,
+      ]}
+    >
+      <SortableItem.Handle
+        style={{ display: isDraggable ? "contents" : "none" }}
+      >
+        <DirectusIcon name="drag_handle" />
+      </SortableItem.Handle>
+      {prepend && <View>{prepend}</View>}
+      <Text
+        numberOfLines={1}
         style={[
-          styles.listItem,
-          isDeselected && styles.listItemDeselected,
-          (isNew || isPicked) && styles.listItemNew,
-          isUpdated && styles.listItemUpdated,
+          styles.content,
+          isDeselected && styles.listItemDeselectedText,
+          isNew && styles.listItemNew,
+          children === "--" && { color: theme.colors.textMuted },
         ]}
       >
-        <SortableItem.Handle
-          style={{ display: isDraggable ? "contents" : "none" }}
-        >
-          <DirectusIcon name="drag_handle" />
-        </SortableItem.Handle>
-        {prepend && <View>{prepend}</View>}
-        <Text
-          numberOfLines={1}
-          style={[
-            styles.content,
-            isDeselected && styles.listItemDeselectedText,
-            isNew && styles.listItemNew,
-            children === "--" && { color: theme.colors.textMuted },
-          ]}
-        >
-          {children}
-        </Text>
-        <Horizontal
-          style={{ marginLeft: "auto", alignItems: "center" }}
-          spacing={0}
-        >
-          {append}
-        </Horizontal>
+        {children}
+      </Text>
+      <Horizontal
+        style={{ marginLeft: "auto", alignItems: "center" }}
+        spacing={0}
+      >
+        {append}
       </Horizontal>
-    </Wrapper>
+    </Horizontal>
   );
 };
 
