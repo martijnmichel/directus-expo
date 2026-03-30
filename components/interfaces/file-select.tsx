@@ -1,7 +1,7 @@
 import { DirectusFile, readFiles } from "@directus/sdk";
 import { useMemo, useState } from "react";
 import { Grid } from "../display/grid";
-import { Pressable, View, Text } from "react-native";
+import { Pressable, View, Text, Platform } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { RadioButton } from "./radio-button";
@@ -15,6 +15,8 @@ import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "../content/filters/pagination";
 import { SearchFilter } from "../content/filters/search-filter-modal";
 import { InterfaceProps } from ".";
+import { Stack } from "expo-router";
+import { Horizontal } from "../layout/Stack";
 
 type FileSelectProps = InterfaceProps<{
   onSelect?: (files: string | string[]) => void;
@@ -65,7 +67,9 @@ export const FileSelect = ({
       const filename = String(
         file.filename_download ?? file.filename_disk ?? "",
       ).toLowerCase();
-      const ext = filename.includes(".") ? filename.split(".").pop() ?? "" : "";
+      const ext = filename.includes(".")
+        ? (filename.split(".").pop() ?? "")
+        : "";
       return acceptedExtensions.includes(ext);
     });
   }, [files?.items, type, acceptedExtensions]);
@@ -100,6 +104,18 @@ export const FileSelect = ({
 
   return (
     <>
+      {Platform.OS === "web" && (
+        <Horizontal style={{ justifyContent: "flex-end", paddingBottom: 10, paddingTop: 10 }}>
+          <Button
+            rounded
+            size="sm"
+            disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
+            onPress={handleSubmit}
+          >
+            <Check />
+          </Button>
+        </Horizontal>
+      )}
       <Grid cols={{ xs: 3, sm: 4, md: 5, lg: 6 }} spacing="md">
         {filteredFiles.map((file) => {
           const selected = isSelected(file);
@@ -124,7 +140,9 @@ export const FileSelect = ({
                     }}
                   />
                 ) : (
-                  <View style={[styles.filePreview, selected && styles.selected]}>
+                  <View
+                    style={[styles.filePreview, selected && styles.selected]}
+                  >
                     <Text style={styles.filePreviewText}>
                       {(String(file.type ?? "file").split("/")[1] || "FILE")
                         .slice(0, 4)
@@ -157,6 +175,20 @@ export const FileSelect = ({
         <Pagination {...filterContext} total={files?.total || 0} />
         <SearchFilter {...filterContext} />
       </PortalOutlet>
+
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Button
+              rounded
+              disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
+              onPress={handleSubmit}
+            >
+              <Check />
+            </Button>
+          ),
+        }}
+      />
 
       <PortalOutlet name="modal-header">
         <Button
