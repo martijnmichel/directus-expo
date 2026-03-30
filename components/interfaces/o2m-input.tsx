@@ -19,7 +19,7 @@ import {
 } from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { findIndex, get, map, orderBy, uniq } from "lodash";
+import { findIndex, get, map, merge, orderBy, uniq } from "lodash";
 import {
   Link,
   RelativePathString,
@@ -30,7 +30,12 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
 import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
-import { EventBus, MittEvents } from "@/utils/mitt";
+import {
+  EventBus,
+  MittEvents,
+  RelatedItem,
+  RelatedItemState,
+} from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import {
   DndProvider,
@@ -42,7 +47,10 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { DragIcon, Trash } from "../icons";
-import { parseTemplate } from "@/helpers/document/template";
+import {
+  getFieldPathsFromTemplate,
+  parseTemplate,
+} from "@/helpers/document/template";
 import {
   getPrimaryKey,
   getPrimaryKeyValue,
@@ -54,136 +62,18 @@ import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import React from "react";
 import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
-
-type RelatedItem = { id?: number | string; [key: string]: any };
-type RelatedItemState = {
-  create: RelatedItem[];
-  update: RelatedItem[];
-  delete: number[];
-};
+import { generateUUID } from "@/hooks/useUUID";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
 
 type O2MInputProps = InterfaceProps<{
-  value: number[] | RelatedItemState;
-  onChange: (value: RelatedItemState) => void;
+  value: number[] | RelatedItem[];
+  onChange: (value: RelatedItem[]) => void;
 }>;
-
-type O2MItemRowProps = {
-  collection: string;
-  relatedCollection: string;
-  uuid: string;
-  docId: string | number;
-  isDeselected?: boolean;
-  isSortable?: boolean;
-  value: RelatedItemState;
-  onChange: (value: RelatedItemState) => void;
-  relatedPk: string;
-  sortField?: string;
-  template?: string;
-};
-
-function O2MItemRow({
-  collection,
-  relatedCollection,
-  uuid,
-  docId,
-  isDeselected,
-  isSortable,
-  value,
-  onChange,
-  relatedPk,
-  sortField,
-  template,
-}: O2MItemRowProps) {
-  const { data: relatedCollectionMeta } = useCollection(
-    relatedCollection as keyof CoreSchema,
-  );
-  const effectiveTemplate =
-    template ||
-    (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
-    "";
-  const {
-    data: doc,
-    error,
-  } = useDocument({
-    collection: collection as keyof CoreSchema,
-    id: docId,
-    options: { fields: ["*.*"] },
-  });
-  const { data: fields } = useFields(relatedCollection as keyof CoreSchema);
-
-  if (error) {
-    return (
-      <RelatedListItem>
-        {(error as DirectusErrorResponse).errors?.[0].message}
-      </RelatedListItem>
-    );
-  }
-  if (!doc) return null;
-
-  return (
-    <RelatedListItem
-      isDraggable={isSortable}
-      isDeselected={isDeselected}
-      append={
-        <>
-          <Link
-            href={{
-              pathname: `/modals/m2m/[collection]/[id]`,
-              params: {
-                collection: collection ?? "",
-                uuid,
-                id: String(docId),
-              },
-            }}
-            asChild
-          >
-            <Button variant="ghost" rounded>
-              <DirectusIcon name="edit_square" />
-            </Button>
-          </Link>
-          <Button
-            variant="ghost"
-            rounded
-            onPress={() => {
-              if (isDeselected) {
-                onChange({
-                  ...value,
-                  update: [
-                    ...value.update,
-                    {
-                      [relatedPk]: docId as number,
-                      ...(sortField && { [sortField]: doc[sortField as string] }),
-                    },
-                  ],
-                  delete: value.delete.filter((v) => v !== docId),
-                });
-              } else {
-                onChange({
-                  ...value,
-                  update: value.update.filter((v) => v?.[relatedPk] !== docId),
-                  delete: [...value.delete, docId as number],
-                });
-              }
-            }}
-          >
-            {isDeselected ? (
-              <DirectusIcon name="settings_backup_restore" />
-            ) : (
-              <DirectusIcon name="close" />
-            )}
-          </Button>
-        </>
-      }
-    >
-      {parseTemplate(effectiveTemplate, doc, fields)}
-    </RelatedListItem>
-  );
-}
 
 export const O2MInput = ({
   docId,
   item,
-  uuid,
+  uuid: documentSessionId,
   label,
   error,
   helper,
@@ -205,32 +95,91 @@ export const O2MInput = ({
 
   const { t } = useTranslation();
 
+  const primaryKey = usePrimaryKey(item.collection as any);
+
   const relation = relations?.find(
     (r) =>
       r.related_collection === item.collection &&
-      r.meta.one_field === item.field
+      r.meta.one_field === item.field,
   );
+
   const { data: relatedCollectionMeta } = useCollection(
     relation?.collection as keyof CoreSchema,
   );
+  const { data: relatedFields } = useFields(relation?.collection as any);
 
-  const relatedPk = usePrimaryKey(relation?.collection as any);
+  const relatedPk = relatedFields ? getPrimaryKey(relatedFields) : undefined;
 
   const sortField = relation?.meta.sort_field;
 
-  const isInitial = Array.isArray(valueProp);
-  const value = isInitial
-    ? {
-        create: [],
-        update: [
-          ...map(valueProp, (id, index) => ({
-            [relatedPk || ""]: id,
-            ...(sortField && { [sortField]: index }),
-          })),
-        ],
-        delete: [],
-      }
-    : valueProp;
+  const isInitial = valueProp?.some(
+    (v) => typeof v === "number" || typeof v !== "object",
+  );
+  const value = useMemo(
+    () =>
+      isInitial
+        ? [
+            ...map(valueProp as number[], (id, index) => ({
+              ...(relatedPk ? { [relatedPk]: id } : {}),
+              __id: id?.toString(),
+              __state: RelatedItemState.Default,
+              ...(sortField && { [sortField]: index }),
+            })),
+          ]
+        : (valueProp as Record<string, any>[]),
+    [valueProp, sortField, isInitial, relatedPk],
+  );
+
+  const interfaceTemplate = item.meta.options?.template || "";
+
+  const effectiveTemplate =
+    interfaceTemplate ||
+    (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
+    "";
+
+  const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+    .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+    .filter(Boolean);
+
+  const requestFields = relation
+    ? uniq([relatedPk, ...templatePaths]).filter(Boolean)
+    : [];
+
+  const getRelatedPkValue = (v: RelatedItem) => {
+    return v[relatedPk as string];
+  };
+
+  const { data: docs, error: docsError } = useDocuments(
+    relation?.collection as keyof CoreSchema,
+    {
+      fields: requestFields as any,
+      filter: relatedPk
+        ? {
+            [relatedPk]: {
+              _in: value.map(getRelatedPkValue).filter((x) => !!x),
+            },
+          }
+        : undefined,
+    },
+    {
+      enabled:
+        !!value?.length &&
+        !!relation?.collection &&
+        !!relatedCollectionMeta?.collection &&
+        !!relatedPk,
+    },
+  );
+
+  console.log({
+    docs,
+    value,
+    primaryKey,
+    relatedPk,
+    requestFields,
+    relation,
+    relatedCollectionMeta,
+    sortField,
+  });
 
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
@@ -240,38 +189,39 @@ export const O2MInput = ({
     get(item, "meta.options.enableCreate") !== false;
 
   useEffect(() => {
-    const addO2M = (event: MittEvents["o2m:pick"]) => {
-      if (event.field === item.field && event.uuid === uuid) {
-        console.log("o2m:pick:received", event);
-
-        const data = {
-          [relation?.field as string]: event.data,
-          [sortField as string]: [...value.create, ...value.update].length + 1,
-        };
-        const newState = {
-          create: value.create,
-          update: [...value.update, event.data],
-          delete: value.delete,
-        };
-        props.onChange(newState);
-      }
-    };
-    EventBus.on("o2m:pick", addO2M);
-    return () => {
-      EventBus.off("o2m:pick", addO2M);
-    };
-  }, [valueProp, props.onChange, relation, value, uuid]);
-
-  useEffect(() => {
     const addO2M = (event: MittEvents["o2m:add"]) => {
-      if (event.field === item.field && event.uuid === uuid) {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
         console.log("o2m:add:received", event);
 
-        const newState = {
-          create: [...value.create, event.data],
-          update: value.update,
-          delete: value.delete,
+        /**
+         * __id is set by picking an existing item, and is a valid doc id in the related collection
+         * draft_id is set when editing new/existing or picked items (after re-opening) and is always derived from the __id
+         * if none are set, generate a new UUID for the new item to allow drafting
+         */
+        const data: RelatedItem = {
+          __id: event.__id ?? event.draft_id ?? generateUUID(),
+          __state: event.__id
+            ? RelatedItemState.Picked
+            : RelatedItemState.Created,
+          ...event.data,
+          ...(sortField && { [sortField as string]: value.length + 1 }),
         };
+
+        /**
+         * if draft_id is set and __id is not, update the existing item by merging the data with the existing item
+         * otherwise add the new item to the state
+         */
+        const newState =
+          !!event.draft_id && !event.__id
+            ? value.map((v) => (v.__id === event.draft_id ? merge(v, data) : v))
+            : [...value, data];
+
+        /**
+         * update the state with the new item
+         */
         props.onChange(newState);
       }
     };
@@ -279,78 +229,55 @@ export const O2MInput = ({
     return () => {
       EventBus.off("o2m:add", addO2M);
     };
-  }, [valueProp, props.onChange, relation, value, uuid]);
+  }, [props.onChange, value, documentSessionId, sortField]);
+
+  useEffect(() => {
+    const updateO2M = (event: MittEvents["o2m:update"]) => {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
+        console.log("o2m:update:received", event);
+
+        const currentItem = value.find((v) => v.__id === event.draft_id);
+        console.log({ currentItem });
+
+        /**
+         * update the item in the state
+         */
+        const data: RelatedItem = {
+          __state: RelatedItemState.Updated,
+          ...event.data,
+        };
+
+        /**
+         * update the state with the new item
+         */
+        const newState = value.map((v) =>
+          v.__id === event.draft_id ? merge(v, data) : v,
+        );
+
+        console.log({ newState, value, relation });
+        props.onChange(newState);
+      }
+    };
+    EventBus.on("o2m:update", updateO2M);
+    return () => {
+      EventBus.off("o2m:update", updateO2M);
+    };
+  }, [
+    valueProp,
+    props.onChange,
+    relation,
+    value,
+    documentSessionId,
+    sortField,
+  ]);
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
     console.log({ newOrderIds });
-    props.onChange({
-      create: value.create.map((doc, index) => {
-        return {
-          ...doc,
-          [sortField as string]: findIndex(
-            newOrderIds,
-            (id) => id === `${JSON.stringify(doc)}`
-          ),
-        };
-      }),
-      update: value.update.map((doc, index) => ({
-        ...doc,
-        [sortField as string]: findIndex(
-          newOrderIds,
-          (id) => id === `${JSON.stringify(doc)}`
-        ),
-      })),
-      delete: value.delete,
-    });
   };
-
-  const filterIdsKey = useMemo(
-    () =>
-      JSON.stringify({
-        update: value.update
-          .map((v) => getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]))
-          .filter(Boolean)
-          .sort(),
-        create: value.create
-          .map(
-            (v) =>
-              (v as any)?.[relation?.field as string]?.[
-                relation?.schema?.foreign_key_column as string
-              ]
-          )
-          .filter(Boolean)
-          .sort(),
-      }),
-    [value.update, value.create, relatedPk, relation?.field, relation?.schema]
-  );
-
-  const documentsFilter = useMemo(() => {
-    if (!relation?.schema) return undefined;
-    try {
-      const { update, create } = JSON.parse(filterIdsKey) as {
-        update: (string | number)[];
-        create: (string | number)[];
-      };
-      const ids = [...new Set([...update, ...create])];
-      if (!ids.length) return undefined;
-      return {
-        [relation.schema.column as string]: { _in: ids },
-      };
-    } catch {
-      return undefined;
-    }
-  }, [filterIdsKey, relation?.schema]);
-
-  const documentsQuery = useMemo(
-    () => ({
-      fields: [`*`],
-      ...(documentsFilter && { filter: documentsFilter }),
-    }),
-    [documentsFilter]
-  );
-
-  useDocuments(relation?.collection as keyof CoreSchema, documentsQuery);
 
   return (
     relation && (
@@ -360,97 +287,178 @@ export const O2MInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <DndProvider>
+        <DndProvider 
+            disabled={!sortField}>
           <DraggableStack
-            key={JSON.stringify(valueProp)}
             direction="column"
             onOrderChange={onOrderChange}
             style={{ gap: 3 }}
           >
-            {orderBy(
-              [...value.create, ...value.update, ...value.delete],
-              sortField || relation?.schema?.foreign_key_column || relatedPk || "id"
-            ).map((relatedDoc, index) => {
-              const primaryKey = relation?.schema?.foreign_key_column;
-
+            {value.map((relationDoc, index) => {
               const id: number | string =
                 (getPrimaryKeyValue(
-                  relatedDoc,
+                  relationDoc,
                   fields,
-                  (relatedDoc as any)?.[relatedPk || ""],
+                  (relationDoc as any)?.[relatedPk || ""],
                 ) as number | string) ?? "";
 
-              const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew = isInitial
-                ? false
-                : !((initialValue as (string | number)[]) || [])
-                    .map((v) => String(v))
-                    .includes(String(id));
+              const isDefault =
+                relationDoc.__state === RelatedItemState.Default;
+              const isDeselected =
+                relationDoc.__state === RelatedItemState.Deleted;
+              const isNew = relationDoc.__state === RelatedItemState.Created;
+              const isSortable = !!sortField;
+              const isPicked = relationDoc.__state === RelatedItemState.Picked;
+              const isUpdated =
+                relationDoc.__state === RelatedItemState.Updated;
 
-              const text = parseTemplate<any>(
-                item.meta.options?.template ||
-                  (relatedCollectionMeta?.meta?.display_template as string | undefined),
-                relatedDoc,
-                fields
+              const doc = docs?.items?.find(
+                (v) =>
+                  String(getRelatedPkValue(v)) === String(relationDoc.__id),
               );
 
-              if (isNew) {
-                return (
-                  <Draggable
-                    key={JSON.stringify(relatedDoc)}
-                    id={JSON.stringify(relatedDoc)}
-                    disabled={!sortField}
-                    activationDelay={200}
-                  >
-                    <RelatedListItem
-                      isNew
-                      isDraggable={!!sortField}
-                      append={
-                        <Button
-                          variant="ghost"
-                          rounded
-                          onPress={() => {
-                            props.onChange({
-                              ...value,
-                              create: value.create.filter(
-                                (v) => v?.[relatedPk] !== id
-                              ),
-                              update: value.update.filter(
-                                (v) => v?.[relatedPk] !== id
-                              ),
-                            });
-                          }}
-                        >
-                          <DirectusIcon name="delete" />
-                        </Button>
-                      }
-                    >
-                      {text}
-                    </RelatedListItem>
-                  </Draggable>
-                );
-              }
+              const draftValue = relationDoc ? (relationDoc as any) : undefined;
+
+              const editId =
+                getPrimaryKeyValue(draftValue, fields) ??
+                getPrimaryKeyValue(draftValue, relatedFields, docId) ??
+                getPrimaryKeyValue(docId, relatedFields);
+
+              const parsedFromDoc = parseTemplate(
+                effectiveTemplate,
+                doc,
+                fields,
+              );
+              const parsedFromValue = parseTemplate(
+                effectiveTemplate,
+                draftValue,
+                fields,
+              );
+
+              /**
+               * check if the draft value has values for non-primary key fields
+               */
+              const draftValueHasValues = Object.keys(draftValue || {}).some(
+                (key) => {
+                  const field = relatedFields?.find((f) => f.field === key);
+                  return !field?.schema.is_primary_key && !!field;
+                },
+              );
+
+              const text =
+                draftValue && draftValueHasValues
+                  ? parsedFromValue
+                  : parsedFromDoc;
+
+              console.log({
+                text,
+                parsedFromDoc,
+                parsedFromValue,
+                draftValue,
+                draftValueHasValues,
+                doc,
+                relationDoc,
+              });
 
               return (
                 <Draggable
-                  key={JSON.stringify(relatedDoc)}
-                  id={JSON.stringify(relatedDoc)}
+                  key={relationDoc.__id}
+                  id={relationDoc.__id}
                   disabled={!sortField}
                   activationDelay={200}
                 >
-                  <O2MItemRow
-                    collection={relation.collection ?? ""}
-                    relatedCollection={relation.related_collection ?? ""}
-                    uuid={uuid ?? ""}
-                    docId={id}
+                  <RelatedListItem
+                    isDraggable={isSortable}
                     isDeselected={isDeselected}
-                    isSortable={!!sortField}
-                    value={value}
-                    onChange={props.onChange}
-                    relatedPk={relatedPk || ""}
-                    sortField={sortField ?? undefined}
-                    template={item.meta.options?.template ?? undefined}
-                  />
+                    isUpdated={isUpdated}
+                    isNew={isNew}
+                    isPicked={isPicked}
+                    append={
+                      <>
+                        {!isDeselected && !isPicked && (
+                          <Link
+                            href={{
+                              pathname: isNew
+                                ? `/modals/o2m/[collection]/add`
+                                : `/modals/o2m/[collection]/[id]`,
+                              params: isNew
+                                ? {
+                                    collection: relation.collection,
+                                    document_session_id: documentSessionId,
+                                    item_field: item.field,
+                                    draft_id: relationDoc?.__id,
+                                    draft: draftValue
+                                      ? objectToBase64(draftValue)
+                                      : undefined,
+                                  }
+                                : {
+                                    collection: relation.collection,
+                                    document_session_id: documentSessionId,
+                                    id: editId as string | number,
+                                    draft_id: relationDoc?.__id,
+                                    item_field: item.field,
+                                    draft:
+                                      !isDefault && draftValue
+                                        ? objectToBase64(draftValue)
+                                        : undefined,
+                                  },
+                            }}
+                            asChild
+                          >
+                            <Button variant="ghost" rounded>
+                              <DirectusIcon name="edit_square" />
+                            </Button>
+                          </Link>
+                        )}
+
+                        <Button
+                          variant="ghost"
+                          onPress={() => {
+                            if (isNew || isPicked) {
+                              props.onChange(
+                                value.filter(
+                                  (v) => v.__id !== relationDoc.__id,
+                                ),
+                              );
+                            } else {
+                              if (isDeselected) {
+                                props.onChange(
+                                  value.map((v) =>
+                                    v.__id === relationDoc.__id
+                                      ? {
+                                          ...v,
+                                          __state: RelatedItemState.Default,
+                                        }
+                                      : v,
+                                  ),
+                                );
+                              } else {
+                                props.onChange(
+                                  value.map((v) =>
+                                    v.__id === relationDoc.__id
+                                      ? {
+                                          ...v,
+                                          __state: RelatedItemState.Deleted,
+                                        }
+                                      : v,
+                                  ),
+                                );
+                              }
+                            }
+                          }}
+                          rounded
+                        >
+                          {isDeselected ? (
+                            <DirectusIcon name="settings_backup_restore" />
+                          ) : (
+                            <DirectusIcon name="close" />
+                          )}
+                        </Button>
+                      </>
+                    }
+                  >
+                    {text}
+                  </RelatedListItem>
                 </Draggable>
               );
             })}
@@ -475,7 +483,7 @@ export const O2MInput = ({
                   pathname: `/modals/o2m/[collection]/add`,
                   params: {
                     collection: relation.collection,
-                    uuid,
+                    document_session_id: documentSessionId,
                     item_field: item.field,
                   },
                 }}
@@ -491,12 +499,9 @@ export const O2MInput = ({
                 params: {
                   collection: relation.collection,
                   related_field: relation.field,
-                  uuid,
+                  document_session_id: documentSessionId,
                   current_value: [
-                    ...map(value.update, (v) =>
-                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]),
-                    ),
-                    ...map(value.create, (v) =>
+                    ...map(value, (v) =>
                       getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk]),
                     ),
                   ].join(","),

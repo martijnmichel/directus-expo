@@ -42,20 +42,16 @@ import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 export default function Collection() {
   const {
     collection,
-    related_field,
     current_value,
-    junction_collection,
-    junction_field,
-    doc_id,
     item_field,
-    uuid,
+    document_session_id,
   } = useLocalSearchParams();
 
   const pagination = useDocumentsFilters();
   const { page, limit, search } = pagination;
 
   const { data: fields } = useFields(collection as keyof CoreSchema);
-
+  const primaryKey = getPrimaryKey(fields);
   const { data: presets } = usePresets();
 
   const preset = presets?.find((p) => p.collection === collection);
@@ -77,23 +73,6 @@ export default function Collection() {
                 {
                   [getPrimaryKey(fields) as any]: {
                     _nin: value,
-                  },
-                },
-              ]
-            : []),
-          ...(doc_id &&
-          doc_id !== "+" &&
-          junction_collection &&
-          related_field &&
-          junction_field
-            ? [
-                {
-                  [`$FOLLOW(${junction_collection},${related_field})`]: {
-                    _none: {
-                      [junction_field as any]: {
-                        _eq: doc_id,
-                      },
-                    },
                   },
                 },
               ]
@@ -148,10 +127,11 @@ export default function Collection() {
           console.log(doc);
           router.dismiss();
           requestAnimationFrame(() => {
-            EventBus.emit("o2m:pick", {
+            EventBus.emit("o2m:add", {
               data: doc as CoreSchemaDocument,
               field: item_field as string,
-              uuid: uuid as string,
+              document_session_id: document_session_id as string,
+              __id: doc?.[primaryKey as string] as string,
             });
           });
         }}

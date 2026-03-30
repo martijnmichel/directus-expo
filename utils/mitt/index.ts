@@ -6,6 +6,9 @@ import mitt, { Emitter } from "mitt";
 
 // Define your event types here
 export type MittEvents = {
+  /**
+   * M2A (Many to Any)
+   */
   "m2a:add": {
     data: CoreSchemaDocument;
     uuid: string;
@@ -20,6 +23,9 @@ export type MittEvents = {
     junction_id: string | number;
   };
 
+  /**
+   * M2M (Many to Many)
+   */
   "m2m:add": {
     data: CoreSchemaDocument;
     field: string;
@@ -37,17 +43,47 @@ export type MittEvents = {
     draft_id: string;
   };
 
-  "m2o:pick": { data: CoreSchemaDocument; field: string; uuid: string };
+  /**
+   * M2O (Many to One)
+   */
+  "m2o:pick": {
+    data: CoreSchemaDocument;
+    field: string;
+    document_session_id: string;
+  };
 
-  "o2m:add": { data: CoreSchemaDocument; field: string; uuid: string };
-  "o2m:pick": { data: CoreSchemaDocument; field: string; uuid: string };
+  /**
+   * O2M (One to Many)
+   */
+  "o2m:update": {
+    collection: keyof CoreSchema;
+    document_session_id: string | number;
+    field: string;
+    data: CoreSchemaDocument;
+    draft_id: string;
+  };
+  "o2m:add": {
+    data: CoreSchemaDocument;
+    field: string;
+    document_session_id: string;
+    draft_id?: string;
+    // __id set by picking an existing item
+    __id?: string;
+  };
 
+  /**
+   * File (File)
+   */
   "file:pick": {
     data: string | string[];
     multiple: boolean;
     field: string;
     uuid: string;
   };
+
+  /**
+   * Repeater (Repeater)
+   */
   "repeater:add": { data: Record<string, any>; field: string; uuid: string };
   "repeater:edit": {
     data: Record<string, any>;
@@ -55,6 +91,10 @@ export type MittEvents = {
     index: number;
     uuid: string;
   };
+
+  /**
+   * Translations (Translations)
+   */
   "translations:edit": {
     data: Record<string, any>[];
     field: string;

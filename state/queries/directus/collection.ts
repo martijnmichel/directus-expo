@@ -46,6 +46,7 @@ export const useDocuments = (
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
   const { data: fields } = useFields(collection);
+  
   return coreCollection?.readItems
     ? coreCollection.readItems(query as any)
     : useQuery({

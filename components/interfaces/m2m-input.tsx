@@ -120,8 +120,6 @@ export const M2MInput = ({
     [valueProp, sortField, isInitial],
   );
 
-  console.log({ value, valueProp, isInitial });
-
   const relation = relations?.find(
     (r) =>
       r.field === junction?.meta.junction_field &&
@@ -142,10 +140,6 @@ export const M2MInput = ({
     junction?.collection as keyof CoreSchema,
     "+",
   );
-
-  useEffect(() => {
-    console.log({ value });
-  }, [value]);
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
@@ -216,7 +210,7 @@ export const M2MInput = ({
           v.__id === event.draft_id ? merge(v, data) : v,
         );
 
-        console.log({ newState, value, relation });
+        //console.log({ newState, value, relation });
         onChange?.(newState);
       }
     };
@@ -280,7 +274,6 @@ export const M2MInput = ({
     junctionField,
     `${junctionField}.${relatedPrimaryKey}`,
     ...prefixedTemplatePaths,
-    "*",
   ]).filter(Boolean);
 
   const filteredJunctionIds = value
@@ -303,7 +296,7 @@ export const M2MInput = ({
     },
   );
 
-  console.log({ relatedDocs, requestFields });
+  // console.log({ relatedDocs, requestFields });
 
   useEffect(() => {
     refetch();
@@ -370,7 +363,7 @@ export const M2MInput = ({
       fields,
     );
     const text = draftValue ? parsedFromValue : parsedFromDoc;
-
+    /**
     console.log({
       docId,
       doc,
@@ -386,7 +379,7 @@ export const M2MInput = ({
       prefixedTemplatePaths,
       junction,
       relatedPrimaryKey,
-    });
+    }); */
     const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
     const editId =
       getPrimaryKeyValue(rawJunctionValue, fields) ??
