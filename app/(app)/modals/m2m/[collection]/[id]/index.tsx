@@ -49,7 +49,6 @@ export default function Collection() {
   const draft = draftData ? base64ToObject(draftData as string) : undefined;
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
   const { pushPatch } = useDraftStore();
-  console.log({ draft, draftData });
   const headerStyles = useHeaderStyles({ isModal: true });
 
   return (
@@ -71,7 +70,6 @@ export default function Collection() {
               defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
-                console.log({ collection, id });
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
                   document_session_id: document_session_id as string | number,
