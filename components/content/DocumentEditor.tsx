@@ -137,7 +137,6 @@ export const DocumentEditor = ({
     // if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
     if (document) {
-      console.log("reset", document);
       context.reset(
         getDocumentFieldValues(
           merge(document, defaultValues) as Record<string, unknown>,

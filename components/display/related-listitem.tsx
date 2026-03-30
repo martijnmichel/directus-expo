@@ -29,6 +29,8 @@ export const RelatedListItem = ({
   onPress,
 }: RelatedListItemProps) => {
   const { styles, theme } = useStyles(listStyles);
+  const isTextChild =
+    typeof children === "string" || typeof children === "number";
   return (
     <Horizontal
       spacing="md"
@@ -45,17 +47,21 @@ export const RelatedListItem = ({
         <DirectusIcon name="drag_handle" />
       </SortableItem.Handle>
       {prepend && <View>{prepend}</View>}
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.content,
-          isDeselected && styles.listItemDeselectedText,
-          isNew && styles.listItemNew,
-          children === "--" && { color: theme.colors.textMuted },
-        ]}
-      >
-        {children}
-      </Text>
+      {isTextChild ? (
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.content,
+            isDeselected && styles.listItemDeselectedText,
+            isNew && styles.listItemNew,
+            children === "--" && { color: theme.colors.textMuted },
+          ]}
+        >
+          {children}
+        </Text>
+      ) : (
+        <View style={styles.partsContent}>{children}</View>
+      )}
       <Horizontal
         style={{ marginLeft: "auto", alignItems: "center" }}
         spacing={0}
@@ -97,6 +103,14 @@ export const listStyles = createStyleSheet((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing.sm,
+
+    fontFamily: theme.typography.body.fontFamily,
+  },
+
+  partsContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
 
     fontFamily: theme.typography.body.fontFamily,
   },

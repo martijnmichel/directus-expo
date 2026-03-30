@@ -10,7 +10,7 @@ export const Thumbnail = ({
   return (
     <Image
       source={{
-        uri: `${directus?.url}/assets/${id}`,
+        uri: `${directus?.url}assets/${id}?width=20&height=20&fit=cover&format=png`,
         headers: {
           Authorization: `Bearer ${token}`,
         },
