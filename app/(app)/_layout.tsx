@@ -81,21 +81,21 @@ export default function TabsLayout() {
         <Stack.Screen
           name="modals/m2a/[collection]/add"
           dangerouslySingular={(_name, params) =>
-            `${params?.collection}-${params?.item_field}-${params?.uuid}-add-m2a`
+            `${params?.collection}-${params?.item_field}-${params?.document_session_id}-add-m2a`
           }
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
           name="modals/m2a/[collection]/pick"
           dangerouslySingular={(_name, params) =>
-            `${params?.related_collection}-${params?.junction_collection}-${params?.item_field}-${params?.uuid}-pick-m2a`
+            `${params?.related_collection}-${params?.junction_collection}-${params?.item_field}-${params?.document_session_id}-pick-m2a`
           }
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
           name="modals/m2a/[collection]/[id]/index"
           dangerouslySingular={(_name, params) =>
-            `${params?.collection}-${params?.id}-${params?.item_field}-${params?.uuid}-edit-m2a`
+            `${params?.collection}-${params?.id}-${params?.item_field}-${params?.document_session_id}-edit-m2a`
           }
           options={{ presentation: "modal" }}
         />
@@ -121,21 +121,21 @@ export default function TabsLayout() {
         <Stack.Screen
           name="modals/o2m/[collection]/pick"
           dangerouslySingular={(_name, params) =>
-            `${params?.collection}-${params?.item_field}-${params?.uuid}-pick-o2m`
+            `${params?.collection}-${params?.item_field}-${params?.document_session_id}-pick-o2m`
           }
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
           name="modals/o2m/[collection]/[id]/index"
           dangerouslySingular={(_name, params) =>
-            `${params?.collection}-${params?.id}-${params?.item_field}-${params?.uuid}-edit-o2m`
+            `${params?.collection}-${params?.id}-${params?.item_field}-${params?.document_session_id}-${params?.uuid}-edit-o2m`
           }
           options={{ presentation: "modal" }}
         />
         <Stack.Screen
           name="modals/o2m/[collection]/add"
           dangerouslySingular={(_name, params) =>
-            `${params?.collection}-${params?.item_field}-${params?.uuid}-add-o2m`
+            `${params?.collection}-${params?.item_field}-${params?.document_session_id}-${params?.uuid}-add-o2m`
           }
           options={{ presentation: "modal" }}
         />
