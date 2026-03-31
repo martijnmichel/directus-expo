@@ -294,6 +294,7 @@ export const O2MInput = ({
           data={value}
           itemKeyExtractor={(item) => item.__id.toString()}
           itemHeight={50}
+          
           renderItem={({ item: relationDoc, id: __sortId, ...rest }) => {
 
             const isDefault = relationDoc.__state === RelatedItemState.Default;
@@ -338,7 +339,7 @@ export const O2MInput = ({
             const draftValueHasValues = Object.keys(draftValue || {}).some(
               (key) => {
                 const field = relatedFields?.find((f) => f.field === key);
-                return !field?.schema.is_primary_key && !!field && field.field !== sortField;
+                return !!field && !field?.schema?.is_primary_key && field.field !== sortField;
               },
             );
 
@@ -362,6 +363,10 @@ export const O2MInput = ({
                 key={`${__sortId}-${relationDoc.__id}`}
                 id={__sortId}
                 data={relationDoc}
+                onDrop={(id, position, allPositions) => {
+                  props.onChange(value.map((v) => ({ ...v, [sortField as string]: allPositions?.[v.__id] })));
+
+                }}
                 {...rest}
               >
                 <RelatedListItem

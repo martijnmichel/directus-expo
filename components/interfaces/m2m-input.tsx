@@ -496,7 +496,11 @@ export const M2MInput = ({
               <SortableItem
                 key={`${junctionDoc.__id}-${documentSessionId}`}
                 id={junctionDoc.__id}
-                data={junctionDoc}
+                data={junctionDoc} 
+                onDrop={(id, position, allPositions) => {
+                  onChange(value.map((v) => ({ ...v, [sortField as string]: allPositions?.[v.__id] })));
+
+                }}
                 {...rest}
               >
                 <Item
