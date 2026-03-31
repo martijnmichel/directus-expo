@@ -168,7 +168,7 @@ export const M2AInput = ({
 
   /**
    * fetch the existing items collection, id and itemId from the junction collection
-   * 
+   *
    */
   const { data: existingItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
@@ -181,7 +181,12 @@ export const M2AInput = ({
     },
     {
       enabled:
-        !!junction && docId != null && docId !== "+" && !!junctionParentIdField && !!junctionItemField && !!oneCollectionField,
+        !!junction &&
+        docId != null &&
+        docId !== "+" &&
+        !!junctionParentIdField &&
+        !!junctionItemField &&
+        !!oneCollectionField,
     },
   );
 
@@ -193,11 +198,15 @@ export const M2AInput = ({
         const existingItem = existingItems?.items?.find(
           (i: any) => String(i.id) === String(v.__id),
         );
-        const valueItem = valueProp.find((i) => typeof i === "object" && String(i.id) === String(v.__id)) as RelatedItem;
+        const valueItem = valueProp.find(
+          (i) => typeof i === "object" && String(i.id) === String(v.__id),
+        ) as RelatedItem;
         return {
           ...v,
           [junctionItemField as string]:
-          typeof valueItem === "object" ? valueItem[junctionItemField as string] : existingItem?.[junctionItemField as string],
+            typeof valueItem === "object"
+              ? valueItem[junctionItemField as string]
+              : existingItem?.[junctionItemField as string],
           [oneCollectionField as string]:
             existingItem?.[oneCollectionField as string],
         };
@@ -332,7 +341,10 @@ export const M2AInput = ({
     const isPicked = junctionDoc.__state === RelatedItemState.Picked;
 
     const relatedItem = junctionDoc?.[junctionItemField as string];
-    const relatedItemId = typeof relatedItem === "object" ? relatedItem?.[relatedPrimaryKey] : relatedItem;
+    const relatedItemId =
+      typeof relatedItem === "object"
+        ? relatedItem?.[relatedPrimaryKey]
+        : relatedItem;
 
     /**
      * if the item display is related-values, we need to replace the template
@@ -390,13 +402,14 @@ export const M2AInput = ({
       id: relatedItemId as string | number,
       options: { fields: requestFields as any },
       query: {
-        enabled: !!relatedCollection && relatedItemId != null && relatedItemId !== "",
+        enabled:
+          !!relatedCollection && relatedItemId != null && relatedItemId !== "",
       },
     });
 
     const draftValue = junctionDoc?.[junctionItemField as string];
 
-    const draftValueHasValues = typeof relatedItem === "object"
+    const draftValueHasValues = typeof relatedItem === "object";
 
     const parsedFromDoc = parseTemplate(effectiveTemplate, relatedDoc, fields);
     const parsedFromValue = parseTemplate(
