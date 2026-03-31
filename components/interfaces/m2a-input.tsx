@@ -79,7 +79,11 @@ import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
 import { useModalStore } from "@/state/stores/modalStore";
 import { generateUUID } from "@/hooks/useUUID";
-import { Sortable, SortableRenderItemProps } from "react-native-reanimated-dnd";
+import {
+  Sortable,
+  SortableItem,
+  SortableRenderItemProps,
+} from "react-native-reanimated-dnd";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
@@ -159,7 +163,7 @@ export const M2AInput = ({
     [valueProp, sortField, isInitial],
   );
 
-  const { data: pickedItems, refetch } = useDocuments(
+  const { data: existingItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
     {
       fields: ["*"],
@@ -174,17 +178,17 @@ export const M2AInput = ({
     },
   );
 
-  const value = pickedItems
+  const value = existingItems
     ? shallowValue.map((v) => {
-        const pickedItem = pickedItems?.items?.find(
+        const existingItem = existingItems?.items?.find(
           (i: any) => String(i.id) === String(v.__id),
         );
         return {
           ...v,
           [junctionItemField as string]:
-            pickedItem?.[junctionItemField as string],
+            existingItem?.[junctionItemField as string],
           [oneCollectionField as string]:
-            pickedItem?.[oneCollectionField as string],
+            existingItem?.[oneCollectionField as string],
         };
       })
     : shallowValue;
@@ -294,7 +298,7 @@ export const M2AInput = ({
     junction,
     sortField,
     relation,
-    pickedItems,
+    existingItems,
   });
 
   const RenderItem = ({
@@ -365,7 +369,7 @@ export const M2AInput = ({
             relatedPrimaryKey,
             ...templatePaths
               .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
-              .filter(Boolean)
+              .filter(Boolean),
           ]
         : [relatedPrimaryKey];
 
@@ -438,85 +442,86 @@ export const M2AInput = ({
     }
 
     return junctionDoc ? (
-      <RelatedListItem
-        isDraggable={!!sortField}
-        isDeselected={isDeselected}
-        isNew={isNew}
-        isUpdated={isUpdated}
-        isPicked={isPicked}
-        prepend={
-          <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
-            {collection?.collection}:
-          </Text>
-        }
-        append={
-          <>
-            <Link
-              href={{
-                pathname: `/modals/m2a/[collection]/[id]`,
-                params: {
-                  collection: relatedCollection,
-                  document_session_id: documentSessionId,
-                  item_field: item.field,
-                  junction_id: (junctionDoc as Record<string, unknown>)?.id as
-                    | string
-                    | number,
-                  id: itemId as string | number,
-                  draft_id: junctionDoc.__id,
-                },
-              }}
-              asChild
-            >
-              <Button variant="ghost" rounded>
-                <DirectusIcon name="edit_square" />
-              </Button>
-            </Link>
+      <SortableItem id={__sortId} data={junctionDoc} {...rest}>
+        <RelatedListItem
+          isDraggable={!!sortField}
+          isDeselected={isDeselected}
+          isNew={isNew}
+          isUpdated={isUpdated}
+          isPicked={isPicked}
+          prepend={
+            <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
+              {collection?.collection}:
+            </Text>
+          }
+          append={
+            <>
+              <Link
+                href={{
+                  pathname: `/modals/m2a/[collection]/[id]`,
+                  params: {
+                    collection: relatedCollection,
+                    document_session_id: documentSessionId,
+                    item_field: item.field,
+                    junction_id: (junctionDoc as Record<string, unknown>)
+                      ?.id as string | number,
+                    id: itemId as string | number,
+                    draft_id: junctionDoc.__id,
+                  },
+                }}
+                asChild
+              >
+                <Button variant="ghost" rounded>
+                  <DirectusIcon name="edit_square" />
+                </Button>
+              </Link>
 
-            <Button
-              variant="ghost"
-              style={{ marginLeft: "auto" }}
-              rounded
-              onPress={() => {
-                if (isNew || isPicked) {
-                  onChange(value.filter((v) => v.__id !== junctionDoc.__id));
-                } else {
-                  if (isDeselected) {
-                    onChange(
-                      value.map((v) =>
-                        v.__id === junctionDoc.__id
-                          ? {
-                              ...v,
-                              __state: RelatedItemState.Default,
-                            }
-                          : v,
-                      ),
-                    );
+              <Button
+                variant="ghost"
+                style={{ marginLeft: "auto" }}
+                rounded
+                onPress={() => {
+                  if (isNew || isPicked) {
+                    onChange(value.filter((v) => v.__id !== junctionDoc.__id));
                   } else {
-                    onChange(
-                      value.map((v) =>
-                        v.__id === junctionDoc.__id
-                          ? {
-                              ...v,
-                              __state: RelatedItemState.Deleted,
-                            }
-                          : v,
-                      ),
-                    );
+                    if (isDeselected) {
+                      onChange(
+                        value.map((v) =>
+                          v.__id === junctionDoc.__id
+                            ? {
+                                ...v,
+                                __state: RelatedItemState.Default,
+                              }
+                            : v,
+                        ),
+                      );
+                    } else {
+                      onChange(
+                        value.map((v) =>
+                          v.__id === junctionDoc.__id
+                            ? {
+                                ...v,
+                                __state: RelatedItemState.Deleted,
+                              }
+                            : v,
+                        ),
+                      );
+                    }
                   }
-                }
-              }}
-            >
-              {isDeselected ? (
-                <DirectusIcon name="settings_backup_restore" />
-              ) : (
-                <DirectusIcon name="close" />
-              )}
-            </Button>
-          </>
-        }
-      >
-        <TemplatePartsRenderer parts={parts} />
-      </RelatedListItem>
+                }}
+              >
+                {isDeselected ? (
+                  <DirectusIcon name="settings_backup_restore" />
+                ) : (
+                  <DirectusIcon name="close" />
+                )}
+              </Button>
+            </>
+          }
+        >
+          <TemplatePartsRenderer parts={parts} />
+        </RelatedListItem>
+      </SortableItem>
     ) : null;
   };
 
