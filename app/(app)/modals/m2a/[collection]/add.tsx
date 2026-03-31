@@ -27,8 +27,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { CoreSchemaDocument } from "@/types/directus";
 import { useTranslation } from "react-i18next";
 import { useCallback, useEffect } from "react";
+import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const { collection, uuid, item_field } = useLocalSearchParams();
+  const { collection, document_session_id, item_field, draft_id, draft: draftData } = useLocalSearchParams();
   const id = "+";
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
@@ -37,7 +38,7 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
-
+  const draft = draftData ? base64ToObject(draftData as string) : undefined;
   const headerStyle = useHeaderStyles({ isModal: true });
   const { t } = useTranslation();
 
@@ -61,11 +62,13 @@ export default function Collection() {
               collection={collection as keyof CoreSchema}
               id={id as string}
               submitType="raw"
+              defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
                 EventBus.emit("m2a:add", {
                   data: document as CoreSchemaDocument,
-                  uuid: uuid as string,
+                  document_session_id: document_session_id as string | number,
+                  draft_id: draft_id as string,
                   field: item_field as string,
                   collection: collection as keyof CoreSchema,
                 });

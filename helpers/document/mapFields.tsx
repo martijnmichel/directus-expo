@@ -127,6 +127,7 @@ export const mapFields = ({
       const defaultProps = {
         label: getLabel(item.field),
         helper: item.meta.note || undefined,
+        documentSessionId: uuid,
         disabled:
           item.meta.readonly ||
           isO2MBacklinkManyField(item) ||

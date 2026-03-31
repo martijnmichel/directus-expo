@@ -220,7 +220,10 @@
       "uploadFromDevice": "Uploaden vanaf apparaat",
       "importFromUrl": "Importeren vanaf URL",
       "selectFromLibrary": "Selecteer uit bibliotheek",
-      "chooseCollection": "Kies verzameling"
+      "chooseCollection": "Kies verzameling",
+      "error": {
+        "somethingWentWrong": "De instellingen van dit item zijn onjuist."
+      }
     },
     "apiSelect": {
       "confirmDelete": "Wil je deze API echt verwijderen?",

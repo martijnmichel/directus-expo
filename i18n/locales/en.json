@@ -225,7 +225,10 @@
       "uploadFromDevice": "Upload from device",
       "importFromUrl": "Import from URL",
       "selectFromLibrary": "Select from library",
-      "chooseCollection": "Choose collection"
+      "chooseCollection": "Choose collection",
+      "error": {
+        "somethingWentWrong": "Relation is not setup correctly"
+      }
     },
     "apiSelect": {
       "editApi": "Edit API",

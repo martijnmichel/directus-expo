@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Pressable, View } from "react-native";
 import {
   CoreSchema,
@@ -18,9 +24,13 @@ import {
   useDocuments,
   useFields,
 } from "@/state/queries/directus/collection";
-import { usePermissions, useRelations } from "@/state/queries/directus/core";
+import {
+  useCollections,
+  usePermissions,
+  useRelations,
+} from "@/state/queries/directus/core";
 import { formStyles } from "./style";
-import { findIndex, get, map, orderBy, uniq } from "lodash";
+import { findIndex, get, map, merge, orderBy, uniq } from "lodash";
 import {
   Href,
   Link,
@@ -32,7 +42,11 @@ import { Horizontal, Vertical } from "../layout/Stack";
 import { List, ListItem } from "../display/list";
 import { MutateOptions, useQuery } from "@tanstack/react-query";
 import { DocumentEditor } from "../content/DocumentEditor";
-import EventBus, { MittEvents } from "@/utils/mitt";
+import EventBus, {
+  MittEvents,
+  RelatedItem,
+  RelatedItemState,
+} from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import {
   DndProvider,
@@ -63,28 +77,25 @@ import { DirectusErrorResponse } from "@/types/directus";
 import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
 import { useModalStore } from "@/state/stores/modalStore";
-
-type RelatedItem = { id?: number | string; [key: string]: any };
-type RelatedItemState = {
-  create: RelatedItem[];
-  update: RelatedItem[];
-  delete: number[];
-};
+import { generateUUID } from "@/hooks/useUUID";
+import { Sortable, SortableRenderItemProps } from "react-native-reanimated-dnd";
+import { objectToBase64 } from "@/helpers/document/docToBase64";
 
 type M2AInputProps = InterfaceProps<{
-  value: number[] | RelatedItemState;
-  onChange: (value: RelatedItemState) => void;
+  value: number[] | RelatedItem[];
+  onChange: (value: RelatedItem[]) => void;
 }>;
 
 export const M2AInput = ({
   docId,
-  uuid,
+  documentSessionId,
   item,
   label,
   error,
   helper,
   value: valueProp = [],
   disabled,
+  onChange,
   required,
   ...props
 }: M2AInputProps) => {
@@ -93,6 +104,8 @@ export const M2AInput = ({
     return null;
   }
 
+  const { data: collections } = useCollections();
+  const { directus } = useAuth();
   const { open: openModal, close: closeModal } = useModalStore();
   const { styles: formControlStyles } = useStyles(formStyles);
   const { styles, theme } = useStyles();
@@ -107,32 +120,43 @@ export const M2AInput = ({
       r.meta.one_field === item?.field,
   );
 
-  const sortField = junction?.meta.sort_field;
-  const junctionItemField =
-    (junction?.meta?.junction_field as string) ?? "item";
-
-  const isInitial = Array.isArray(valueProp);
-  const value = isInitial
-    ? {
-        create: [],
-        update: [
-          ...map(valueProp, (id, index) => ({
-            id,
-            
-            ...(sortField && { [sortField]: index }),
-          })),
-        ],
-        delete: [],
-      }
-    : valueProp;
-
   const relation = relations?.find(
     (r) =>
       r.field === junction?.meta.junction_field &&
       r.collection === junction.meta.many_collection,
   );
 
+  /** the id field that connects to the parent document */
   const junctionParentIdField = junction?.field;
+
+  /** the id field that holds the related item */
+  const junctionItemField = (junction?.meta?.junction_field as string) ?? "";
+
+  /** the field that holds the related collection */
+  const oneCollectionField = relation?.meta.one_collection_field;
+
+  /** the field that holds the sort order */
+  const sortField = junction?.meta.sort_field;
+
+  const isInitial = valueProp?.some(
+    (v) => typeof v === "number" || typeof v !== "object",
+  );
+
+  const shallowValue = useMemo(
+    () =>
+      isInitial
+        ? [
+            ...map(valueProp as number[], (id, index) => ({
+              id,
+              __id: id?.toString(),
+              __state: RelatedItemState.Default,
+              ...(sortField && { [sortField]: index }),
+            })),
+          ]
+        : (valueProp as Record<string, any>[]),
+    [valueProp, sortField, isInitial],
+  );
+
   const { data: pickedItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
     {
@@ -148,92 +172,116 @@ export const M2AInput = ({
     },
   );
 
-  useEffect(() => {
-    refetch();
-  }, [docId, junction?.collection, refetch]);
+  const value = pickedItems
+    ? shallowValue.map((v) => {
+        const pickedItem = pickedItems?.items?.find(
+          (i: any) => String(i.id) === String(v.__id),
+        );
+        return {
+          ...v,
+          [junctionItemField as string]: pickedItem?.[junctionItemField as string],
+          [oneCollectionField as string]:
+            pickedItem?.[oneCollectionField as string],
+        };
+      })
+    : shallowValue;
 
   const onOrderChange = (newOrder: UniqueIdentifier[]) => {
     const newOrderIds = newOrder;
-    props.onChange({
-      create: value.create.map((doc) => {
-        const pk = getPrimaryKeyFromAllFields(doc.collection as any, fields);
-        return {
-          ...doc,
-          [sortField as string]: findIndex(
-            newOrderIds,
-            (id) => id === `${JSON.stringify(doc)}new`,
-          ),
-        };
-      }),
-      update: value.update.map((doc) => ({
-        ...doc,
-        [sortField as string]: findIndex(
-          newOrderIds,
-          (id) =>
-            id ===
-            `${String(getPrimaryKeyValue(doc, undefined, (doc as any)?.id))}existing`,
-        ),
-      })),
-      delete: value.delete,
-    });
   };
 
   useEffect(() => {
-    const addM2M = (event: MittEvents["m2a:add"]) => {
-      if (event.uuid === uuid && event.field === item.field) {
+    const addM2A = (event: MittEvents["m2a:add"]) => {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
         console.log("m2a:add:received", event);
 
-        const data = {
-          collection: event.collection,
+        /**
+         * __id is set by picking an existing item, and is a valid doc id in the related collection
+         * draft_id is set when editing new/existing or picked items (after re-opening) and is always derived from the __id
+         * if none are set, generate a new UUID for the new item to allow drafting
+         */
+        const data: RelatedItem = {
+          __id: event.__id ?? event.draft_id ?? generateUUID(),
+          __state: event.__id
+            ? RelatedItemState.Picked
+            : RelatedItemState.Created,
+          [oneCollectionField as string]: event.collection,
           [relation?.field as string]: event.data,
-          [junction?.field as string]: docId,
-          ...(sortField && {
-            [sortField as string]:
-              [...value.create, ...value.update].length + 1,
-          }),
+          ...(sortField && { [sortField as string]: value.length + 1 }),
         };
-        const newState = {
-          create: [...value.create, data],
-          update: value.update,
-          delete: value.delete,
-        };
-        props.onChange(newState);
+
+        /**
+         * if draft_id is set and __id is not, update the existing item by merging the data with the existing item
+         * otherwise add the new item to the state
+         */
+        const newState =
+          !!event.draft_id && !event.__id
+            ? value.map((v) => (v.__id === event.draft_id ? merge(v, data) : v))
+            : [...value, data];
+
+        /**
+         * update the state with the new item
+         */
+        onChange?.(newState);
       }
     };
-    EventBus.on("m2a:add", addM2M);
+    EventBus.on("m2a:add", addM2A);
+    return () => {
+      EventBus.off("m2a:add", addM2A);
+    };
+  }, [
+    onChange,
+    relation,
+    value,
+    documentSessionId,
+    sortField,
+    oneCollectionField,
+  ]);
 
-    const editM2A = (event: MittEvents["m2a:update"]) => {
-      if (event.uuid === uuid && event.field === item.field) {
+  useEffect(() => {
+    const onUpdate = (event: MittEvents["m2a:update"]) => {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
         console.log("m2a:update:received", event);
 
-        const data = {
-          collection: event.collection,
-          id: event.junction_id,
+        const currentItem = value.find((v) => v.__id === event.draft_id);
+        console.log({ currentItem });
+
+        /**
+         * update the item in the state
+         */
+        const data: RelatedItem = {
+          __state: RelatedItemState.Updated,
           [relation?.field as string]: { ...event.data },
-          [junction?.field as string]: docId,
-          ...(sortField && {
-            [sortField as string]:
-              [...value.create, ...value.update].length + 1,
-          }),
         };
 
-        const newState = {
-          create: value.create,
-          update: value.update.map((v) =>
-            v.id === Number(event.junction_id) ? data : v,
-          ),
-          delete: value.delete,
-        };
-        console.log({ newState, relation, junction, value });
-        props.onChange(newState);
+        /**
+         * update the state with the new item
+         */
+        const newState = value.map((v) =>
+          v.__id === event.draft_id ? merge(v, data) : v,
+        );
+
+        //console.log({ newState, value, relation });
+        onChange?.(newState);
       }
     };
-    EventBus.on("m2a:update", editM2A);
+    EventBus.on("m2a:update", onUpdate);
     return () => {
-      EventBus.off("m2a:add", addM2M);
-      EventBus.off("m2a:update", editM2A);
+      EventBus.off("m2a:update", onUpdate);
     };
-  }, [valueProp, props.onChange, relation, junction, value, uuid]);
+  }, [
+    onChange,
+    relation?.related_collection,
+    value,
+    documentSessionId,
+    item.field,
+  ]);
 
   console.log({
     item,
@@ -243,108 +291,53 @@ export const M2AInput = ({
     junction,
     sortField,
     relation,
+    pickedItems,
   });
 
-  const NewItem = ({
-    collection,
-    item: newItem,
-  }: {
-    collection: string;
-    item: any;
-  }) => {
-    const { data } = useCollection(collection as keyof CoreSchema);
-
-    const { data: fields } = useFields(data?.collection as any);
-    const effectiveTemplate =
-      item?.meta?.options?.template ||
-      (data?.meta?.display_template as string | undefined) ||
-      "";
-
-    const primaryKey = getPrimaryKey(fields);
-    const text = parseTemplate(
-      effectiveTemplate,
-      newItem as { [key: string]: any },
-      fields,
-    );
-
-    return (
-      <RelatedListItem
-        isNew
-        isDraggable={!!sortField}
-        prepend={
-          <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
-            {collection}:
-          </Text>
-        }
-        append={
-          <Button
-            variant="ghost"
-            rounded
-            style={{ marginLeft: "auto" }}
-            onPress={() => {
-              props.onChange({
-                ...value,
-                create: value.create.filter(
-                  (v) =>
-                    v?.[relation?.field as any]?.[primaryKey] !==
-                    newItem?.[primaryKey],
-                ),
-              });
-            }}
-          >
-            <DirectusIcon name="delete" />
-          </Button>
-        }
-      >
-        {text || "--"}
-      </RelatedListItem>
-    );
-  };
-
-  const Item = ({
-    id,
-    isNew,
-    isDeselected,
-  }: {
-    id: string | number;
-    isNew?: boolean;
-    isDeselected?: boolean;
-  }) => {
-    const { data: junctionDocMinimal, error: errorMinimal } = useDocument({
-      collection: junction?.collection as keyof CoreSchema,
-      id,
-      options: { fields: ["*", junctionItemField] },
-    });
-
+  const RenderItem = ({
+    item: junctionDoc,
+    id: __sortId,
+    ...rest
+  }: SortableRenderItemProps<{ id: string } & RelatedItem>) => {
     const { data: collection } = useCollection(
-      junctionDocMinimal?.collection as keyof CoreSchema,
+      junctionDoc?.[oneCollectionField as string] as keyof CoreSchema,
     );
+
+    const { data: fields } = useFields(collection?.collection as any);
+    const relatedPrimaryKey = getPrimaryKey(fields);
 
     const displayTemplate =
       item?.meta?.options?.template ||
       (collection?.meta?.display_template as string | undefined);
     const templatePaths = getFieldPathsFromTemplate(displayTemplate);
-    const relatedCollection = (junctionDocMinimal as Record<string, unknown>)?.[
-      "collection"
-    ] as string | undefined;
-    const rawItem = (junctionDocMinimal as Record<string, unknown>)?.[
-      junctionItemField
-    ];
-    const itemId = getPrimaryKeyValue(rawItem, undefined, rawItem);
+    const relatedCollection = junctionDoc?.[oneCollectionField as string];
 
-    const { data: fields } = useFields(collection?.collection as any);
-    const primaryKey = getPrimaryKey(fields);
+   
+
+    const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
+    const isNew = junctionDoc.__state === RelatedItemState.Created;
+    const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
+    const isPicked = junctionDoc.__state === RelatedItemState.Picked;
+
+    
+    const itemId = junctionDoc?.[junctionItemField as string];
+
+    
     const relatedFields =
       templatePaths.length > 0
         ? [
-            primaryKey,
+            relatedPrimaryKey,
             ...templatePaths
               .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
               .filter(Boolean),
             // Keep preview labels reliable for nested M2M/M2A display templates (e.g. block_bentogrid.items)
             "*.*",
           ]
-        : [primaryKey, "*.*"];
+        : [relatedPrimaryKey, "*.*"];
+
+    const effectiveTemplate =
+      item?.meta?.options?.template ||
+      (collection?.meta?.display_template as string | undefined);
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
@@ -355,8 +348,6 @@ export const M2AInput = ({
       },
     });
 
-    const junctionDoc = junctionDocMinimal;
-    const error = errorMinimal;
     const itemData = (relatedDoc ??
       (junctionDoc != null
         ? (junctionDoc as Record<string, unknown>)?.[junctionItemField]
@@ -367,83 +358,35 @@ export const M2AInput = ({
       fields,
     );
 
-    // Template-driven fallback for complex aliases/lists:
-    // collect all leaf values referenced by display_template paths.
-    const templateLeafValues = (() => {
-      if (!displayTemplate || !itemData) return [] as string[];
-      const paths = getAllPathsFromTemplate(displayTemplate)
-        .map((p) => p.replace(/^item\./, ""))
-        .filter(Boolean);
-      const values = paths.flatMap((path) => {
-        const raw = getValuesAtPath(itemData, path);
-        return (Array.isArray(raw) ? raw : [raw]).filter(
-          (v) => v != null && typeof v !== "object",
-        );
-      });
-      return uniq(values.map((v) => String(v).trim()).filter(Boolean));
-    })();
 
-    if (
-      templateLeafValues.length > 0 &&
-      (!text ||
-        (typeof text === "string" &&
-          (!text.trim() ||
-            text === String(itemId) ||
-            text ===
-              String(
-                getPrimaryKeyValue(
-                  junctionDoc as Record<string, unknown>,
-                  undefined,
-                  "",
-                ) ?? "",
-              ))))
-    ) {
-      text = templateLeafValues.join(", ");
-    }
-    if (!text || (typeof text === "string" && !text.trim())) {
-      text =
-        itemId != null
-          ? String(itemId)
-          : getPrimaryKeyValue(
-                junctionDoc as Record<string, unknown>,
-                undefined,
-                undefined,
-              ) != null
-            ? String(
-                getPrimaryKeyValue(
-                  junctionDoc as Record<string, unknown>,
-                  undefined,
-                  "",
-                ),
-              )
-            : String(id);
-    }
-
-    if (error) {
-      return (
-        <RelatedListItem>
-          {(error as DirectusErrorResponse).errors?.[0].message}
-        </RelatedListItem>
-      );
-    } /**
     console.log({
       junctionDoc,
-      id,
-      primaryKey,
+      relatedPrimaryKey,
+      relatedFields,
+      relatedDoc,
+      itemData,
+      text,
       isNew,
       isDeselected,
       collection,
-      tmpl: item.meta.display_options?.template.replace(/(?:^|\s):/g, ""),
-    }); */
+      effectiveTemplate,
+    }); 
 
     if (!relation) {
-      return null;
+      return (
+        <RelatedListItem>
+          {t("components.shared.error.somethingWentWrong")}
+        </RelatedListItem>
+      );
     }
 
     return junctionDoc ? (
       <RelatedListItem
         isDraggable={!!sortField}
         isDeselected={isDeselected}
+        isNew={isNew}
+        isUpdated={isUpdated}
+        isPicked={isPicked}
         prepend={
           <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
             {collection?.collection}:
@@ -455,22 +398,14 @@ export const M2AInput = ({
               href={{
                 pathname: `/modals/m2a/[collection]/[id]`,
                 params: {
-                  collection: (junctionDoc as Record<string, unknown>)
-                    ?.collection as string,
-                  uuid,
+                  collection: relatedCollection,
+                  document_session_id: documentSessionId,
                   item_field: item.field,
                   junction_id: (junctionDoc as Record<string, unknown>)?.id as
                     | string
                     | number,
-                  id: (() => {
-                    const raw = (junctionDoc as Record<string, unknown>)?.[
-                      junctionItemField
-                    ];
-                    return (getPrimaryKeyValue(raw, fields, raw) ??
-                      getPrimaryKeyValue(junctionDoc, undefined, id)) as
-                      | string
-                      | number;
-                  })(),
+                  id: itemId as string | number,
+                  draft_id: junctionDoc.__id,
                 },
               }}
               asChild
@@ -485,33 +420,32 @@ export const M2AInput = ({
               style={{ marginLeft: "auto" }}
               rounded
               onPress={() => {
-                if (isDeselected) {
-                  props.onChange({
-                    ...value,
-                    update: [
-                      ...value.update,
-                      {
-                        id: id as number,
-                        ...(sortField && {
-                          [sortField]: (
-                            (junctionDoc as Record<string, unknown>)?.[
-                              junctionItemField
-                            ] as { [key: string]: any }
-                          )?.[sortField as string],
-                        }),
-                      },
-                    ],
-                    delete: value.delete.filter((v) => v !== id),
-                  });
+                if (isNew || isPicked) {
+                  onChange(value.filter((v) => v.__id !== junctionDoc.__id));
                 } else {
-                  props.onChange({
-                    ...value,
-                    update: value.update.filter(
-                      (v) =>
-                        getPrimaryKeyValue(v, undefined, (v as any)?.id) !== id,
-                    ),
-                    delete: [...value.delete, id as number],
-                  });
+                  if (isDeselected) {
+                    onChange(
+                      value.map((v) =>
+                        v.__id === junctionDoc.__id
+                          ? {
+                              ...v,
+                              __state: RelatedItemState.Default,
+                            }
+                          : v,
+                      ),
+                    );
+                  } else {
+                    onChange(
+                      value.map((v) =>
+                        v.__id === junctionDoc.__id
+                          ? {
+                              ...v,
+                              __state: RelatedItemState.Deleted,
+                            }
+                          : v,
+                      ),
+                    );
+                  }
                 }
               }}
             >
@@ -559,7 +493,7 @@ export const M2AInput = ({
                     if (raw == null) return undefined;
                     return getPrimaryKeyValue(raw, undefined, raw);
                   }) ?? []),
-                  ...value.create.map((i: any) => {
+                  ...value.map((i: any) => {
                     const v = i?.[junctionItemField];
                     return getPrimaryKeyValue(v, undefined, v);
                   }),
@@ -570,7 +504,7 @@ export const M2AInput = ({
                 junction_field: junction.field,
                 doc_id: docId,
                 item_field: item.field,
-                uuid,
+                document_session_id: documentSessionId,
               },
             });
           }}
@@ -590,66 +524,13 @@ export const M2AInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <DndProvider>
-          <DraggableStack
-            key={JSON.stringify(valueProp)}
-            direction="column"
-            onOrderChange={onOrderChange}
-            style={{ gap: 3 }}
-          >
-            {orderBy(
-              [...value.create, ...value.update, ...value.delete],
-              sortField || "",
-            ).map((junctionDoc, index) => {
-              if (typeof junctionDoc === "number") {
-                junctionDoc = { id: junctionDoc };
-              }
-              const relatedDoc =
-                typeof junctionDoc === "object" &&
-                relation?.field in junctionDoc
-                  ? (junctionDoc as any)[relation?.field]
-                  : junctionDoc;
-              const id: number | string =
-                (getPrimaryKeyValue(
-                  relatedDoc,
-                  undefined,
-                  getPrimaryKeyValue(junctionDoc, undefined, ""),
-                ) as number | string) ?? "";
+        <Sortable
+          data={value}
+          itemKeyExtractor={(item) => item.__id.toString()}
+          itemHeight={50}
+          renderItem={(props) => <RenderItem {...props} />}
+        />
 
-              const isDeselected = value.delete?.some((doc) => doc === id);
-              const isNew = isInitial
-                ? false
-                : !getPrimaryKeyValue(junctionDoc, undefined, undefined);
-
-              if (isNew) {
-                return (
-                  <Draggable
-                    key={JSON.stringify(junctionDoc) + "new"}
-                    id={JSON.stringify(junctionDoc) + "new"}
-                    disabled={!sortField}
-                    activationDelay={300}
-                  >
-                    <NewItem
-                      collection={(junctionDoc as any).collection}
-                      item={(junctionDoc as any)[junctionItemField]}
-                    />
-                  </Draggable>
-                );
-              }
-
-              return (
-                <Draggable
-                  key={id + "draggable"}
-                  id={id?.toString() + "existing"}
-                  disabled={!sortField}
-                  activationDelay={300}
-                >
-                  <Item id={id} isNew={isNew} isDeselected={isDeselected} />
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
         {(error || helper) && (
           <Text
             style={[

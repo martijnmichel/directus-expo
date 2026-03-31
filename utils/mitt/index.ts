@@ -11,16 +11,20 @@ export type MittEvents = {
    */
   "m2a:add": {
     data: CoreSchemaDocument;
-    uuid: string;
     field: string;
+    document_session_id: string | number;
+    draft_id?: string;
+    // __id set by picking an existing item
+    __id?: string;
     collection: keyof CoreSchema;
   };
   "m2a:update": {
     collection: keyof CoreSchema;
-    uuid: string;
+    document_session_id: string | number;
     field: string;
     data: CoreSchemaDocument;
     junction_id: string | number;
+    draft_id: string;
   };
 
   /**
