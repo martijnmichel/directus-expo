@@ -15,6 +15,7 @@ import {
   useDocument,
   useFields,
 } from "@/state/queries/directus/collection";
+import { useRelations } from "@/state/queries/directus/core";
 import { Alert, Platform, View } from "react-native";
 import { Check, Trash } from "../icons";
 import {
@@ -62,6 +63,7 @@ export const DocumentEditor = ({
   const { token } = useAuth();
   const { t } = useTranslation();
   const { data: fields } = useFields(collection as keyof CoreSchema);
+  const { data: relations } = useRelations();
 
   const { data: itemPermissions } = useItemPermissions(
     collection as keyof CoreSchema,
@@ -79,6 +81,7 @@ export const DocumentEditor = ({
   } = context;
   const fieldComponents = mapFields({
     fields,
+    relations,
     control,
     docId: id,
     canUpdateItem: itemPermissions?.update.access,

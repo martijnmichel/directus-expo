@@ -26,6 +26,7 @@ import {
 } from "@/state/queries/directus/core";
 import {
   CoreSchema,
+  ReadRelationOutput,
   readItemPermissions,
   ReadUserPermissionsOutput,
 } from "@directus/sdk";
@@ -65,6 +66,7 @@ export const mapFields = ({
   styles,
   uuid,
   fallbackInterface,
+  relations,
   t,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
@@ -75,7 +77,8 @@ export const mapFields = ({
   permissions?: ReadUserPermissionsOutput;
   styles?: any;
   uuid?: string;
-  fallbackInterface?: "input",
+  fallbackInterface?: "input";
+  relations?: ReadRelationOutput<CoreSchema>[];
   t: (d: string) => string;
 }): ReactNode => {
   const getLabel = (field: string) =>
@@ -83,6 +86,20 @@ export const mapFields = ({
       ?.find((f) => f.field === field)
       ?.meta.translations?.find((t) => t.language === "nl-NL")?.translation ||
     field;
+
+  const isO2MBacklinkManyField = (item: ReadFieldOutput<CoreSchema>) => {
+    return !!relations?.some((relation) => {
+      const relationMeta = relation.meta;
+      if (!relationMeta) return false;
+
+      return (
+        relationMeta.many_collection === item.collection &&
+        relationMeta.many_field === item.field &&
+        !!relationMeta.one_field &&
+        !relationMeta.junction_field
+      );
+    });
+  };
 
   
     const isRequired = (item: ReadFieldOutput<CoreSchema>) => !!item.meta.required;
@@ -112,6 +129,7 @@ export const mapFields = ({
         helper: item.meta.note || undefined,
         disabled:
           item.meta.readonly ||
+          isO2MBacklinkManyField(item) ||
           (docId === "+" && !canCreate) ||
           (docId !== "+" && !canUpdate) ||
           (docId !== "+" && !canUpdateItem),
@@ -140,6 +158,7 @@ export const mapFields = ({
               canUpdateItem,
               permissions,
               styles,
+              relations,
               t,
             })}
           </Accordion>
@@ -167,6 +186,7 @@ export const mapFields = ({
                   canUpdateItem,
                   permissions,
                   styles,
+                  relations,
                   t,
                 })}
               </View>
