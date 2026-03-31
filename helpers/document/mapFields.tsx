@@ -104,7 +104,7 @@ export const mapFields = ({
   
     const isRequired = (item: ReadFieldOutput<CoreSchema>) => !!item.meta.required;
     const getItemRules = (item: ReadFieldOutput<CoreSchema>) => ({
-      required: isRequired(item)
+      required: isRequired(item) && !isO2MBacklinkManyField(item)
         ? (t?.("common.thisFieldIsRequired") ?? "common.thisFieldIsRequired")
         : false,
     });
