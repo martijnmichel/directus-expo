@@ -331,8 +331,8 @@ export const M2AInput = ({
     const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
     const isPicked = junctionDoc.__state === RelatedItemState.Picked;
 
-    const item = junctionDoc?.[junctionItemField as string];
-    const itemId = typeof item === "object" ? item?.[relatedPrimaryKey] : item;
+    const relatedItem = junctionDoc?.[junctionItemField as string];
+    const relatedItemId = typeof relatedItem === "object" ? relatedItem?.[relatedPrimaryKey] : relatedItem;
 
     /**
      * if the item display is related-values, we need to replace the template
@@ -387,16 +387,16 @@ export const M2AInput = ({
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
-      id: itemId as string | number,
+      id: relatedItemId as string | number,
       options: { fields: requestFields as any },
       query: {
-        enabled: !!relatedCollection && itemId != null && itemId !== "",
+        enabled: !!relatedCollection && relatedItemId != null && relatedItemId !== "",
       },
     });
 
     const draftValue = junctionDoc?.[junctionItemField as string];
 
-    const draftValueHasValues = typeof item === "object"
+    const draftValueHasValues = typeof relatedItem === "object"
 
     const parsedFromDoc = parseTemplate(effectiveTemplate, relatedDoc, fields);
     const parsedFromValue = parseTemplate(
@@ -472,7 +472,7 @@ export const M2AInput = ({
                     item_field: item.field,
                     junction_id: (junctionDoc as Record<string, unknown>)
                       ?.id as string | number,
-                    id: itemId as string | number,
+                    id: relatedItemId as string | number,
                     draft_id: junctionDoc.__id,
                     draft: draftValue ? objectToBase64(draftValue) : undefined,
                   },
