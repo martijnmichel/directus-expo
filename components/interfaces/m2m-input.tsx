@@ -52,7 +52,7 @@ import {
   getFieldPathsFromTemplate,
   parseTemplateParts,
 } from "@/helpers/document/template";
-import { getPrimaryKey, getPrimaryKeyValue } from "@/hooks/usePrimaryKey";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { RelatedListItem } from "../display/related-listitem";
@@ -304,7 +304,7 @@ export const M2MInput = ({
     refetch();
   }, [docId, junction?.collection, refetch]);
 
-  /** console.log({
+  console.log({
     item,
     docId,
     valueProp,
@@ -312,7 +312,8 @@ export const M2MInput = ({
     junction,
     relation,
     pickedItems,
-  });  */
+    relatedDocs,
+  });
 
   const Item = <T extends keyof CoreSchema>({
     docId,
@@ -340,20 +341,27 @@ export const M2MInput = ({
     isPicked?: boolean;
     isSortable?: boolean;
   }) => {
-    const doc = relatedDocs?.items?.find((v) => v.id === Number(docId));
-    const { data: fields } = useFields(relation.related_collection as any);
-    const { data: junctionFields } = useFields(
-      junction?.meta.many_collection as any,
-    );
 
+    /** database document */
+    const doc = relatedDocs?.items?.find((v) => String(v.id) === String(docId));
+
+    /** related collection fields */
+    const { data: fields } = useFields(relation.related_collection as any);
+
+    /** draft junction document */
     const draftJunctionDoc = value.find(
       (v) => v.id === docId || v.__id === docId,
     );
+
+    /** draft related collection document */
     const draftValue = draftJunctionDoc
       ? (draftJunctionDoc as any)[relation?.field as string]
       : undefined;
 
-    // note: if the interface template is used, directus returns the template path from the document, otherwise parse it from the junction doc
+    /**
+     * note: if the interface template is used, directus returns the template path from the document
+     * otherwise parse it from the junction doc
+     */
     const partsFromDoc = parseTemplateParts(
       effectiveTemplate,
       interfaceTemplate ? doc : (doc?.[relation?.field as string] ?? doc),
@@ -364,11 +372,11 @@ export const M2MInput = ({
       interfaceTemplate ? (draftJunctionDoc as any) : (draftValue as any),
       fields,
     );
-    const rawJunctionValue = (doc as Record<string, unknown>)?.[junctionField];
-    const editId =
-      getPrimaryKeyValue(rawJunctionValue, fields) ??
-      getPrimaryKeyValue(rawJunctionValue, junctionFields, docId) ??
-      getPrimaryKeyValue(docId, junctionFields);
+
+    /** related collection document id */
+    const relatedDocId = (doc ?? draftJunctionDoc)?.[
+      relation?.field as string
+    ]?.[relatedPrimaryKey as string];
 
     return (
       <RelatedListItem
@@ -390,7 +398,7 @@ export const M2MInput = ({
                         collection: relation.related_collection,
                         document_session_id: documentSessionId,
                         item_field: item.field,
-                        id: docId as string | number,
+                        id: relatedDocId as string | number,
                         draft_id: draftJunctionDoc?.__id,
                         draft: draftValue
                           ? objectToBase64(draftValue)
@@ -399,7 +407,7 @@ export const M2MInput = ({
                     : {
                         collection: relation.related_collection,
                         document_session_id: documentSessionId,
-                        id: editId as string | number,
+                        id: relatedDocId as string | number,
                         junction_id: docId as string | number,
                         draft_id: draftJunctionDoc?.__id,
                         item_field: item.field,
@@ -434,7 +442,9 @@ export const M2MInput = ({
           </>
         }
       >
-        <TemplatePartsRenderer parts={draftValue ? partsFromValue : partsFromDoc} />
+        <TemplatePartsRenderer
+          parts={draftValue ? partsFromValue : partsFromDoc}
+        />
       </RelatedListItem>
     );
   };
@@ -468,14 +478,7 @@ export const M2MInput = ({
                 ? relatedDoc
                 : primaryKey in relatedDoc
                   ? relatedDoc[primaryKey]
-                  : getPrimaryKeyValue(relatedDoc, fields, relatedDoc);
-            const id: number | string = (getPrimaryKeyValue(rawId, fields) ??
-              getPrimaryKeyValue(
-                junctionDoc,
-                undefined,
-                getPrimaryKeyValue(rawId, undefined, ""),
-              ) ??
-              "") as number | string;
+                  : relatedDoc.__id;
 
             const isDeselected =
               junctionDoc.__state === RelatedItemState.Deleted;
@@ -496,15 +499,19 @@ export const M2MInput = ({
               <SortableItem
                 key={`${junctionDoc.__id}-${documentSessionId}`}
                 id={junctionDoc.__id}
-                data={junctionDoc} 
+                data={junctionDoc}
                 onDrop={(id, position, allPositions) => {
-                  onChange(value.map((v) => ({ ...v, [sortField as string]: allPositions?.[v.__id] })));
-
+                  onChange(
+                    value.map((v) => ({
+                      ...v,
+                      [sortField as string]: allPositions?.[v.__id],
+                    })),
+                  );
                 }}
                 {...rest}
               >
                 <Item
-                  key={`${id}-${junctionDoc.__id}-${documentSessionId}`}
+                  key={`${junctionDoc.__id}-${documentSessionId}`}
                   docId={junctionDoc.__id}
                   junction={junction!}
                   relation={relation!}

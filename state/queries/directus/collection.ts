@@ -59,14 +59,14 @@ export const useDocuments = (
         const aggregateQuery = { ...query };
         unset(aggregateQuery, ["page"]);
         const pk = getPrimaryKey(fields);
-        const pagination = await directus?.request(
+        const pagination = !!pk ? await directus?.request(
           aggregate(collection as any, {
             aggregate: { countDistinct: `${pk}` },
             query: aggregateQuery,
           })
-        );
+        ) : undefined;
 
-        const total = Number(get(pagination, `0.countDistinct.${pk}`));
+        const total = !!pk ? Number(get(pagination, `0.countDistinct.${pk}`)) : 0;
 
         return {
           items: items || [],
@@ -108,7 +108,7 @@ export const useDocument = ({
 
   if (collectionData?.meta.singleton) {
     return useQuery({
-      queryKey: ["document", collection, id],
+      queryKey: ["document", collection, id, options, query],
       queryFn: async () =>
         directus?.request(readSingleton(collection as any, options)),
       retry: false,

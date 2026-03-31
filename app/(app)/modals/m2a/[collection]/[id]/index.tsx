@@ -38,6 +38,8 @@ export default function Collection() {
   const draft = draftData ? base64ToObject(draftData as string) : undefined;
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
 
+  console.log({ draft })
+
   const headerStyles = useHeaderStyles({ isModal: true });
 
   return (
@@ -62,7 +64,7 @@ export default function Collection() {
                 console.log({ collection, id });
                 EventBus.emit("m2a:update", {
                   collection: collection as keyof CoreSchema,
-                  data: { [primaryKey]: id, ...document } as CoreSchemaDocument,
+                  data: { [primaryKey as string]: id, ...document } as CoreSchemaDocument,
                   document_session_id: document_session_id as string | number,
                   field: item_field as string,
                   junction_id: junction_id as string | number,

@@ -55,7 +55,6 @@ import {
 } from "@/helpers/document/template";
 import {
   getPrimaryKey,
-  getPrimaryKeyValue,
   usePrimaryKey,
 } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
@@ -311,10 +310,6 @@ export const O2MInput = ({
 
             const draftValue = relationDoc ? (relationDoc as any) : undefined;
 
-            const editId =
-              getPrimaryKeyValue(draftValue, fields) ??
-              getPrimaryKeyValue(draftValue, relatedFields, docId) ??
-              getPrimaryKeyValue(docId, relatedFields);
 
             const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
             const parsedFromValue = parseTemplate(
@@ -397,7 +392,7 @@ export const O2MInput = ({
                               : {
                                   collection: relation.collection,
                                   document_session_id: documentSessionId,
-                                  id: editId as string | number,
+                                  id: relationDoc.__id as string | number,
                                   draft_id: relationDoc?.__id,
                                   item_field: item.field,
                                   draft:
@@ -508,7 +503,7 @@ export const O2MInput = ({
                   document_session_id: documentSessionId,
                   current_value: [
                     ...map(value, (v) =>
-                      getPrimaryKeyValue(v, fields, (v as any)?.[relatedPk as string]),
+                      (v as any)?.[relatedPk as string],
                     ),
                   ].join(","),
                   doc_id: docId,
