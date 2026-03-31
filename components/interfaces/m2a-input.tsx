@@ -148,6 +148,9 @@ export const M2AInput = ({
     (v) => typeof v === "number" || typeof v !== "object",
   );
 
+  /**
+   * create a shallow copy of the value prop to avoid mutating the original value prop
+   */
   const shallowValue = useMemo(
     () =>
       isInitial
@@ -163,10 +166,14 @@ export const M2AInput = ({
     [valueProp, sortField, isInitial],
   );
 
+  /**
+   * fetch the existing items collection, id and itemId from the junction collection
+   * 
+   */
   const { data: existingItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
     {
-      fields: ["*"],
+      fields: ["id", junctionItemField, oneCollectionField ?? ""],
       filter:
         docId != null && docId !== "+" && junctionParentIdField
           ? { [junctionParentIdField]: { _eq: docId } }
@@ -174,19 +181,23 @@ export const M2AInput = ({
     },
     {
       enabled:
-        !!junction && docId != null && docId !== "+" && !!junctionParentIdField,
+        !!junction && docId != null && docId !== "+" && !!junctionParentIdField && !!junctionItemField && !!oneCollectionField,
     },
   );
 
+  /**
+   * map the shallow value to the existing items
+   */
   const value = existingItems
     ? shallowValue.map((v) => {
         const existingItem = existingItems?.items?.find(
           (i: any) => String(i.id) === String(v.__id),
         );
+        const valueItem = valueProp.find((i) => typeof i === "object" && String(i.id) === String(v.__id)) as RelatedItem;
         return {
           ...v,
           [junctionItemField as string]:
-            existingItem?.[junctionItemField as string],
+          typeof valueItem === "object" ? valueItem[junctionItemField as string] : existingItem?.[junctionItemField as string],
           [oneCollectionField as string]:
             existingItem?.[oneCollectionField as string],
         };
@@ -320,7 +331,8 @@ export const M2AInput = ({
     const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
     const isPicked = junctionDoc.__state === RelatedItemState.Picked;
 
-    const itemId = junctionDoc?.[junctionItemField as string];
+    const item = junctionDoc?.[junctionItemField as string];
+    const itemId = typeof item === "object" ? item?.[relatedPrimaryKey] : item;
 
     /**
      * if the item display is related-values, we need to replace the template
@@ -382,14 +394,9 @@ export const M2AInput = ({
       },
     });
 
-    const draftValue = junctionDoc;
+    const draftValue = junctionDoc?.[junctionItemField as string];
 
-    const draftValueHasValues = Object.keys(draftValue || {}).some((key) => {
-      const field = relatedFields?.find((f) => f.field === key);
-      return (
-        !!field && !field?.schema?.is_primary_key && field.field !== sortField
-      );
-    });
+    const draftValueHasValues = typeof item === "object"
 
     const parsedFromDoc = parseTemplate(effectiveTemplate, relatedDoc, fields);
     const parsedFromValue = parseTemplate(
@@ -467,6 +474,7 @@ export const M2AInput = ({
                       ?.id as string | number,
                     id: itemId as string | number,
                     draft_id: junctionDoc.__id,
+                    draft: draftValue ? objectToBase64(draftValue) : undefined,
                   },
                 }}
                 asChild
