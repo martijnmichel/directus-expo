@@ -64,6 +64,7 @@ import {
   getFieldPathsFromTemplate,
   getValuesAtPath,
   parseTemplate,
+  parseTemplateParts,
 } from "@/helpers/document/template";
 import {
   getPrimaryKey,
@@ -80,6 +81,7 @@ import { useModalStore } from "@/state/stores/modalStore";
 import { generateUUID } from "@/hooks/useUUID";
 import { Sortable, SortableRenderItemProps } from "react-native-reanimated-dnd";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
+import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
 type M2AInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -179,7 +181,8 @@ export const M2AInput = ({
         );
         return {
           ...v,
-          [junctionItemField as string]: pickedItem?.[junctionItemField as string],
+          [junctionItemField as string]:
+            pickedItem?.[junctionItemField as string],
           [oneCollectionField as string]:
             pickedItem?.[oneCollectionField as string],
         };
@@ -303,74 +306,128 @@ export const M2AInput = ({
       junctionDoc?.[oneCollectionField as string] as keyof CoreSchema,
     );
 
-    const { data: fields } = useFields(collection?.collection as any);
-    const relatedPrimaryKey = getPrimaryKey(fields);
+    const { data: relatedFields } = useFields(collection?.collection as any);
+    const relatedPrimaryKey = getPrimaryKey(relatedFields);
 
-    const displayTemplate =
-      item?.meta?.options?.template ||
-      (collection?.meta?.display_template as string | undefined);
-    const templatePaths = getFieldPathsFromTemplate(displayTemplate);
     const relatedCollection = junctionDoc?.[oneCollectionField as string];
-
-   
 
     const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
     const isNew = junctionDoc.__state === RelatedItemState.Created;
     const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
     const isPicked = junctionDoc.__state === RelatedItemState.Picked;
 
-    
     const itemId = junctionDoc?.[junctionItemField as string];
 
-    
-    const relatedFields =
+    /**
+     * if the item display is related-values, we need to replace the template
+     * with the display template for only this collection and remove prepended junction field name
+     * example:
+     * input template: {{junctionField:collection.field}}
+     * output template: {{field}}
+     */
+    const displayTemplate =
+      item?.meta?.display === "related-values"
+        ? item?.meta?.display_options?.template?.replace(
+            /\{\{\s*([^}]+)\s*\}\}/g,
+            (_match: string, rawExpr: string) => {
+              const expr = rawExpr.trim();
+              const prefix = `${junctionItemField}:`;
+
+              if (!expr.startsWith(prefix)) {
+                return `{{${expr}}}`;
+              }
+
+              const afterPrefix = expr.slice(prefix.length);
+              const dotIndex = afterPrefix.indexOf(".");
+              if (dotIndex === -1) return "";
+
+              const collectionName = afterPrefix.slice(0, dotIndex);
+              const fieldPath = afterPrefix.slice(dotIndex + 1);
+
+              if (String(collectionName) !== String(relatedCollection)) {
+                return "";
+              }
+
+              return `{{${fieldPath}}}`;
+            },
+          )
+        : undefined;
+
+    const effectiveTemplate =
+      displayTemplate ||
+      (collection?.meta?.display_template as string | undefined);
+
+    const templatePaths = getFieldPathsFromTemplate(effectiveTemplate);
+
+    const requestFields =
       templatePaths.length > 0
         ? [
             relatedPrimaryKey,
             ...templatePaths
               .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
-              .filter(Boolean),
-            // Keep preview labels reliable for nested M2M/M2A display templates (e.g. block_bentogrid.items)
-            "*.*",
+              .filter(Boolean)
           ]
-        : [relatedPrimaryKey, "*.*"];
-
-    const effectiveTemplate =
-      item?.meta?.options?.template ||
-      (collection?.meta?.display_template as string | undefined);
+        : [relatedPrimaryKey];
 
     const { data: relatedDoc } = useDocument({
       collection: (relatedCollection ?? "") as keyof CoreSchema,
       id: itemId as string | number,
-      options: { fields: relatedFields as any },
+      options: { fields: requestFields as any },
       query: {
         enabled: !!relatedCollection && itemId != null && itemId !== "",
       },
     });
 
-    const itemData = (relatedDoc ??
-      (junctionDoc != null
-        ? (junctionDoc as Record<string, unknown>)?.[junctionItemField]
-        : undefined)) as Record<string, unknown> | undefined;
-    let text = parseTemplate(
-      displayTemplate,
-      itemData as { [key: string]: any },
+    const draftValue = junctionDoc;
+
+    const draftValueHasValues = Object.keys(draftValue || {}).some((key) => {
+      const field = relatedFields?.find((f) => f.field === key);
+      return (
+        !!field && !field?.schema?.is_primary_key && field.field !== sortField
+      );
+    });
+
+    const parsedFromDoc = parseTemplate(effectiveTemplate, relatedDoc, fields);
+    const parsedFromValue = parseTemplate(
+      effectiveTemplate,
+      draftValue,
       fields,
     );
 
+    const partsFromDoc = parseTemplateParts(
+      effectiveTemplate,
+      relatedDoc,
+      fields,
+    );
+    const partsFromValue = parseTemplateParts(
+      effectiveTemplate,
+      draftValue,
+      fields,
+    );
+
+    const parts =
+      !!draftValue && !!draftValueHasValues ? partsFromValue : partsFromDoc;
 
     console.log({
       junctionDoc,
       relatedPrimaryKey,
+      displayTemplate,
+      requestFields,
       relatedFields,
       relatedDoc,
-      itemData,
-      text,
+      parsedFromDoc,
+      parsedFromValue,
+      partsFromDoc,
+      partsFromValue,
+      parts,
       isNew,
       isDeselected,
       collection,
       effectiveTemplate,
-    }); 
+      draftValue,
+      draftValueHasValues,
+      item,
+    });
 
     if (!relation) {
       return (
@@ -458,7 +515,7 @@ export const M2AInput = ({
           </>
         }
       >
-        {text}
+        <TemplatePartsRenderer parts={parts} />
       </RelatedListItem>
     ) : null;
   };
