@@ -19,7 +19,7 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
       label,
       error,
       helper,
-      value,
+      value: valueProp,
       onChangeText,
       style,
       disabled,
@@ -31,6 +31,8 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
     const { styles, theme } = useStyles(jsonStyles);
     const [lines, setLines] = useState<number[]>([1]);
     const [errorLine, setErrorLine] = useState<number | null>(null);
+
+    const value = typeof valueProp === "string" ? valueProp : JSON.stringify(valueProp, null, 2);
 
     useEffect(() => {
       if (!value || typeof value !== "string") {
