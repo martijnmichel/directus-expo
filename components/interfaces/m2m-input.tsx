@@ -92,21 +92,58 @@ export const M2MInput = ({
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
-  const [deletedItems, setDeletedItems] = useState<RelatedItem[]>([]);
-
   const { t } = useTranslation();
 
+  /**
+   * find the junction relation
+   */
   const junction = relations?.find(
     (r) =>
       r.related_collection === item.collection &&
       r.meta.one_field === item.field,
   );
 
+  /**
+   * find the relation that connects the junction to the related collection
+   */
+  const relation = relations?.find(
+    (r) =>
+      r.field === junction?.meta.junction_field &&
+      r.collection === junction.meta.many_collection,
+  );
+
+  /**
+   * get the related collection
+   */
+  const { data: relatedCollection } = useCollection(
+    relation?.related_collection as keyof CoreSchema,
+  );
+
+  const { data: relatedFields } = useFields(
+    relatedCollection?.collection as any,
+  );
+
   const sortField = junction?.meta.sort_field;
 
+  const junctionParentIdField = junction?.field;
+  const junctionField = String(junction?.meta.junction_field);
+
+  const pk = getPrimaryKey(fields);
+
+  const relatedPrimaryKey = relatedFields
+    ? getPrimaryKey(relatedFields)
+    : undefined;
+
+  /**
+   * check if the value is an array of ids
+   */
   const isInitial = valueProp?.some(
     (v) => typeof v === "number" || typeof v !== "object",
   );
+
+  /**
+   * create a shallow copy of the value prop to avoid mutating the original value prop
+   */
   const value = useMemo(
     () =>
       isInitial
@@ -122,26 +159,18 @@ export const M2MInput = ({
     [valueProp, sortField, isInitial],
   );
 
-  const relation = relations?.find(
-    (r) =>
-      r.field === junction?.meta.junction_field &&
-      r.collection === junction.meta.many_collection,
-  );
-  const { data: relatedCollectionMeta } = useCollection(
-    relation?.related_collection as keyof CoreSchema,
-  );
-
+  /**
+   * check if the user has permission to create items in the related collection
+   */
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
 
+  /**
+   * check if the user has permission to create items in the related collection
+   */
   const allowCreate =
     relationPermission?.create.access === "full" &&
     get(item, "meta.options.enableCreate") !== false;
-
-  const { mutate: mutateOptions } = mutateDocument(
-    junction?.collection as keyof CoreSchema,
-    "+",
-  );
 
   useEffect(() => {
     const addM2M = (event: MittEvents["m2m:add"]) => {
@@ -186,6 +215,9 @@ export const M2MInput = ({
     };
   }, [onChange, relation, value, documentSessionId, sortField]);
 
+  /**
+   * handle the update event
+   */
   useEffect(() => {
     const onUpdate = (event: MittEvents["m2m:update"]) => {
       if (
@@ -228,17 +260,6 @@ export const M2MInput = ({
     item.field,
   ]);
 
-  const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder;
-    console.log({ newOrderIds });
-    const sortedValue = value.map((v) => ({
-      ...v,
-      [sortField as string]: findIndex(newOrderIds, (id) => id === v.__id),
-    }));
-    onChange?.(sortedValue);
-  };
-
-  const junctionParentIdField = junction?.field;
   const { data: pickedItems, refetch } = useDocuments(
     junction?.collection as keyof CoreSchema,
     {
@@ -255,22 +276,20 @@ export const M2MInput = ({
   );
 
   const interfaceTemplate = item.meta.options?.template || "";
+
   const effectiveTemplate =
     interfaceTemplate ||
-    (relatedCollectionMeta?.meta?.display_template as string | undefined) ||
+    (relatedCollection?.meta?.display_template as string | undefined) ||
     "";
-  const pk = getPrimaryKey(fields);
-  const { data: relatedFields } = useFields(
-    relatedCollectionMeta?.collection as any,
-  );
-  const relatedPrimaryKey = relatedFields ? getPrimaryKey(relatedFields) : "id";
-  const junctionField = String(junction?.meta.junction_field);
+
   const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
     .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
     .filter(Boolean);
+
   const prefixedTemplatePaths = templatePaths.map((p) =>
     p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
   );
+
   const requestFields = uniq([
     pk,
     junctionField,
@@ -278,10 +297,16 @@ export const M2MInput = ({
     ...prefixedTemplatePaths,
   ]).filter(Boolean);
 
+  /**
+   * filter the junction ids, newly created items will have an uuid as __id
+   */
   const filteredJunctionIds = value
     .map((v) => v.__id)
     .filter((v) => !isNaN(Number(v)));
 
+  /**
+   * get the related documents
+   */
   const { data: relatedDocs } = useDocuments(
     junction?.meta.many_collection as keyof CoreSchema,
     {
@@ -300,9 +325,9 @@ export const M2MInput = ({
 
   // console.log({ relatedDocs, requestFields });
 
-  useEffect(() => {
+  /**  useEffect(() => {
     refetch();
-  }, [docId, junction?.collection, refetch]);
+  }, [docId, junction?.collection, refetch]); */
 
   console.log({
     item,
@@ -314,140 +339,6 @@ export const M2MInput = ({
     pickedItems,
     relatedDocs,
   });
-
-  const Item = <T extends keyof CoreSchema>({
-    docId,
-    junction,
-    relation,
-    template,
-    onDelete,
-    onAdd,
-    isNew,
-    isUpdated,
-    isDeselected,
-    isPicked,
-    isSortable,
-    ...props
-  }: {
-    docId: string | number;
-    junction: ReadRelationOutput<CoreSchema>;
-    relation: ReadRelationOutput<CoreSchema>;
-    template?: string;
-    onDelete?: (doc: Record<string, unknown>) => void;
-    onAdd?: (doc: Record<string, unknown>) => void;
-    isNew?: boolean;
-    isUpdated?: boolean;
-    isDeselected?: boolean;
-    isPicked?: boolean;
-    isSortable?: boolean;
-  }) => {
-
-    /** database document */
-    const doc = relatedDocs?.items?.find((v) => String(v.id) === String(docId));
-
-    /** related collection fields */
-    const { data: fields } = useFields(relation.related_collection as any);
-
-    /** draft junction document */
-    const draftJunctionDoc = value.find(
-      (v) => v.id === docId || v.__id === docId,
-    );
-
-    /** draft related collection document */
-    const draftValue = draftJunctionDoc
-      ? (draftJunctionDoc as any)[relation?.field as string]
-      : undefined;
-
-    /**
-     * note: if the interface template is used, directus returns the template path from the document
-     * otherwise parse it from the junction doc
-     */
-    const partsFromDoc = parseTemplateParts(
-      effectiveTemplate,
-      interfaceTemplate ? doc : (doc?.[relation?.field as string] ?? doc),
-      fields,
-    );
-    const partsFromValue = parseTemplateParts(
-      effectiveTemplate,
-      interfaceTemplate ? (draftJunctionDoc as any) : (draftValue as any),
-      fields,
-    );
-
-    /** related collection document id */
-    const relatedDocId = (doc ?? draftJunctionDoc)?.[
-      relation?.field as string
-    ]?.[relatedPrimaryKey as string];
-
-    return (
-      <RelatedListItem
-        isDeselected={isDeselected}
-        isNew={isNew}
-        isDraggable={isSortable}
-        isUpdated={isUpdated}
-        isPicked={isPicked}
-        append={
-          <>
-            {!isDeselected && !isPicked && (
-              <Link
-                href={{
-                  pathname: isNew
-                    ? `/modals/m2m/[collection]/add`
-                    : `/modals/m2m/[collection]/[id]`,
-                  params: isNew
-                    ? {
-                        collection: relation.related_collection,
-                        document_session_id: documentSessionId,
-                        item_field: item.field,
-                        id: relatedDocId as string | number,
-                        draft_id: draftJunctionDoc?.__id,
-                        draft: draftValue
-                          ? objectToBase64(draftValue)
-                          : undefined,
-                      }
-                    : {
-                        collection: relation.related_collection,
-                        document_session_id: documentSessionId,
-                        id: relatedDocId as string | number,
-                        junction_id: docId as string | number,
-                        draft_id: draftJunctionDoc?.__id,
-                        item_field: item.field,
-                        draft: draftValue
-                          ? objectToBase64(draftValue)
-                          : undefined,
-                      },
-                }}
-                asChild
-              >
-                <Button variant="ghost" rounded>
-                  <DirectusIcon name="edit_square" />
-                </Button>
-              </Link>
-            )}
-
-            <Button
-              variant="ghost"
-              onPress={() =>
-                isDeselected
-                  ? onAdd?.(doc as Record<string, unknown>)
-                  : onDelete?.(doc as Record<string, unknown>)
-              }
-              rounded
-            >
-              {isDeselected ? (
-                <DirectusIcon name="settings_backup_restore" />
-              ) : (
-                <DirectusIcon name="close" />
-              )}
-            </Button>
-          </>
-        }
-      >
-        <TemplatePartsRenderer
-          parts={draftValue ? partsFromValue : partsFromDoc}
-        />
-      </RelatedListItem>
-    );
-  };
 
   return (
     relation &&
@@ -467,18 +358,6 @@ export const M2MInput = ({
             if (typeof junctionDoc === "number") {
               junctionDoc = { id: junctionDoc };
             }
-            const primaryKey = relation?.schema?.foreign_key_column;
-
-            const relatedDoc =
-              relation?.field in junctionDoc
-                ? (junctionDoc as any)[relation?.field]
-                : junctionDoc;
-            const rawId: unknown =
-              typeof relatedDoc === "number" || typeof relatedDoc === "string"
-                ? relatedDoc
-                : primaryKey in relatedDoc
-                  ? relatedDoc[primaryKey]
-                  : relatedDoc.__id;
 
             const isDeselected =
               junctionDoc.__state === RelatedItemState.Deleted;
@@ -495,6 +374,45 @@ export const M2MInput = ({
                   isDeselected,
                 }); */
 
+            /** database document */
+            const doc = relatedDocs?.items?.find(
+              (v) => String(v.id) === String(docId),
+            );
+
+            /** draft junction document */
+            const draftJunctionDoc = value.find(
+              (v) => v.id === docId || v.__id === docId,
+            );
+
+            /** draft related collection document */
+            const draftValue = draftJunctionDoc
+              ? (draftJunctionDoc as any)[relation?.field as string]
+              : undefined;
+
+            /**
+             * note: if the interface template is used, directus returns the template path from the document
+             * otherwise parse it from the junction doc
+             */
+            const partsFromDoc = parseTemplateParts(
+              effectiveTemplate,
+              interfaceTemplate
+                ? doc
+                : (doc?.[relation?.field as string] ?? doc),
+              fields,
+            );
+            const partsFromValue = parseTemplateParts(
+              effectiveTemplate,
+              interfaceTemplate
+                ? (draftJunctionDoc as any)
+                : (draftValue as any),
+              fields,
+            );
+
+            /** related collection document id */
+            const relatedDocId = (doc ?? draftJunctionDoc)?.[
+              relation?.field as string
+            ]?.[relatedPrimaryKey as string];
+
             return (
               <SortableItem
                 key={`${junctionDoc.__id}-${documentSessionId}`}
@@ -510,38 +428,92 @@ export const M2MInput = ({
                 }}
                 {...rest}
               >
-                <Item
-                  key={`${junctionDoc.__id}-${documentSessionId}`}
-                  docId={junctionDoc.__id}
-                  junction={junction!}
-                  relation={relation!}
-                  template={item.meta.options?.template}
-                  isSortable={!!sortField}
-                  onAdd={(item) => {
-                    const newState = value.map((v) =>
-                      v.__id === junctionDoc.__id
-                        ? { ...v, __state: RelatedItemState.Default }
-                        : v,
-                    );
-                    onChange?.(newState);
-                  }}
-                  onDelete={(item) => {
-                    const newState =
-                      isNew || isPicked
-                        ? value.filter((v) => v.__id !== junctionDoc.__id)
-                        : value.map((v) =>
-                            v.__id === junctionDoc.__id
-                              ? { ...v, __state: RelatedItemState.Deleted }
-                              : v,
-                          );
-
-                    onChange?.(newState);
-                  }}
-                  isNew={isNew}
+                <RelatedListItem
                   isDeselected={isDeselected}
+                  isNew={isNew}
+                  isDraggable={!!sortField}
                   isUpdated={isUpdated}
                   isPicked={isPicked}
-                />
+                  append={
+                    <>
+                      {!isDeselected && !isPicked && (
+                        <Link
+                          href={{
+                            pathname: isNew
+                              ? `/modals/m2m/[collection]/add`
+                              : `/modals/m2m/[collection]/[id]`,
+                            params: isNew
+                              ? {
+                                  collection: relation.related_collection,
+                                  document_session_id: documentSessionId,
+                                  item_field: item.field,
+                                  id: relatedDocId as string | number,
+                                  draft_id: draftJunctionDoc?.__id,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                }
+                              : {
+                                  collection: relation.related_collection,
+                                  document_session_id: documentSessionId,
+                                  id: relatedDocId as string | number,
+                                  junction_id: docId as string | number,
+                                  draft_id: draftJunctionDoc?.__id,
+                                  item_field: item.field,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                },
+                          }}
+                          asChild
+                        >
+                          <Button variant="ghost" rounded>
+                            <DirectusIcon name="edit_square" />
+                          </Button>
+                        </Link>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        onPress={() =>
+                          isNew || isPicked
+                            ? onChange(
+                                value.filter(
+                                  (v) => v.__id !== junctionDoc.__id,
+                                ),
+                              )
+                            : isDeselected
+                              ? onChange(
+                                  value.filter(
+                                    (v) => v.__id !== junctionDoc.__id,
+                                  ),
+                                )
+                              : onChange(
+                                  value.map((v) =>
+                                    v.__id === junctionDoc.__id
+                                      ? {
+                                          ...v,
+                                          __state: RelatedItemState.Deleted,
+                                        }
+                                      : v,
+                                  ),
+                                )
+                        }
+                        rounded
+                      >
+                        {isDeselected ? (
+                          <DirectusIcon name="settings_backup_restore" />
+                        ) : (
+                          <DirectusIcon name="close" />
+                        )}
+                      </Button>
+                    </>
+                  }
+                >
+                  <TemplatePartsRenderer
+                    parts={draftValue ? partsFromValue : partsFromDoc}
+                  />
+                </RelatedListItem>
               </SortableItem>
             );
           }}
