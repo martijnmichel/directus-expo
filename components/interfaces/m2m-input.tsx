@@ -319,7 +319,7 @@ export const M2MInput = ({
       enabled:
         !!junction &&
         !!junction?.meta.many_collection &&
-        filteredJunctionIds.length > 0,
+        filteredJunctionIds.length > 0 && !!relatedPrimaryKey && !!junctionField && !!pk,
     },
   );
 
@@ -328,7 +328,7 @@ export const M2MInput = ({
   /**  useEffect(() => {
     refetch();
   }, [docId, junction?.collection, refetch]); */
-
+/**
   console.log({
     item,
     docId,
@@ -338,7 +338,7 @@ export const M2MInput = ({
     relation,
     pickedItems,
     relatedDocs,
-  });
+  }); */
 
   return (
     relation &&
