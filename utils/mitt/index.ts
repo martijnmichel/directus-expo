@@ -113,6 +113,7 @@ const emitter: Emitter<MittEvents> = mitt<MittEvents>();
 // Export a utility class for better organization
 export class EventBus {
   static emit<K extends keyof MittEvents>(type: K, event: MittEvents[K]) {
+    console.log(`[EventBus] emitting event: ${type}`, event);
     emitter.emit(type, event);
   }
 

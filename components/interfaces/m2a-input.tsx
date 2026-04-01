@@ -145,6 +145,23 @@ export const M2AInput = ({
   );
 
   /**
+   * create a junction id for the item, m2a items can have the same id in different collections
+   * @param id - the id of the item
+   * @param collection - the collection of the item
+   * @returns the junction id
+   */
+  const createJunctionId = (id: number | string, collection: string) => {
+    return `${id}:${collection}`;
+  };
+
+  /**
+   * get the junction id from the item
+   * @param v - the item
+   * @returns the junction id
+   */
+  const getJunctionId = (v?: string) => String(v?.split(":")[0]);
+
+  /**
    * create a shallow copy of the value prop to avoid mutating the original value prop
    */
   const shallowValue = useMemo(
@@ -153,7 +170,7 @@ export const M2AInput = ({
         ? [
             ...map(valueProp as number[], (id, index) => ({
               id,
-              __id: id?.toString(),
+              __id: id.toString(),
               __state: RelatedItemState.Default,
               ...(sortField && { [sortField]: index }),
             })),
@@ -189,29 +206,26 @@ export const M2AInput = ({
   /**
    * map the shallow value to the existing items
    */
-  const value = existingItems
+  const value = !!existingItems
     ? shallowValue.map((v) => {
         const existingItem = existingItems?.items?.find(
-          (i: any) => String(i.id) === String(v.__id),
+          (i: any) => String(i.id) === String(getJunctionId(v.__id)),
         );
         const valueItem = valueProp.find(
-          (i) => typeof i === "object" && String(i.id) === String(v.__id),
+          (i) => typeof i === "object" && String(i.__id) === String(v.__id),
         ) as RelatedItem;
+
+        const item = !!valueItem ? valueItem : existingItem;
+
+        console.log({ existingItem, valueItem });
         return {
           ...v,
-          [junctionItemField as string]:
-            typeof valueItem === "object"
-              ? valueItem[junctionItemField as string]
-              : existingItem?.[junctionItemField as string],
-          [oneCollectionField as string]:
-            existingItem?.[oneCollectionField as string],
+          __id: createJunctionId(v.__id, item?.[oneCollectionField as string]),
+          [junctionItemField as string]: item?.[junctionItemField as string],
+          [oneCollectionField as string]: item?.[oneCollectionField as string],
         };
       })
     : shallowValue;
-
-  const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder;
-  };
 
   useEffect(() => {
     const addM2A = (event: MittEvents["m2a:add"]) => {
@@ -227,7 +241,9 @@ export const M2AInput = ({
          * if none are set, generate a new UUID for the new item to allow drafting
          */
         const data: RelatedItem = {
-          __id: event.__id ?? event.draft_id ?? generateUUID(),
+          __id: !!event.__id
+            ? createJunctionId(event.__id, event.collection)
+            : (event.draft_id ?? generateUUID()),
           __state: event.__id
             ? RelatedItemState.Picked
             : RelatedItemState.Created,
@@ -408,7 +424,17 @@ export const M2AInput = ({
 
     const draftValue = relatedItem;
 
-    const draftValueHasValues = typeof relatedItem === "object";
+    /**
+     * check if the draft value has values for non-primary key fields
+     */
+    const draftValueHasValues =
+      typeof relatedItem === "object" &&
+      Object.keys(relatedItem || {}).some((key) => {
+        const field = relatedFields?.find((f) => f.field === key);
+        return (
+          !!field && !field?.schema?.is_primary_key
+        );
+      });
 
     const partsFromDoc = parseTemplateParts(
       effectiveTemplate,
@@ -430,6 +456,7 @@ export const M2AInput = ({
       displayTemplate,
       requestFields,
       relatedFields,
+      relatedItemId,
       relatedDoc,
       partsFromDoc,
       partsFromValue,
@@ -453,14 +480,14 @@ export const M2AInput = ({
 
     return junctionDoc ? (
       <SortableItem
-        
         id={__sortId}
         data={junctionDoc}
         onDrop={(id, position, allPositions) => {
           onChange(
             value.map((v) => ({
               ...v,
-              [sortField as string]: allPositions?.[v.__id],
+              [sortField as string]:
+                allPositions?.[`${relatedCollection}:${v.__id}`],
             })),
           );
         }}
@@ -474,34 +501,50 @@ export const M2AInput = ({
           isPicked={isPicked}
           prepend={
             <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
-              {collection?.collection}:
+              {junctionDoc?.[oneCollectionField as string]}:
             </Text>
           }
           append={
             <>
-              <Link
-                href={{
-                  pathname: `/modals/m2a/[collection]/[id]`,
-                  params: {
-                    collection: relatedCollection,
-                    document_session_id: documentSessionId,
-                    item_field: item.field,
-                    junction_id: (junctionDoc as Record<string, unknown>)
-                      ?.id as string | number,
-                    id: relatedItemId as string | number,
-                    draft_id: junctionDoc.__id,
-                    draft:
-                      draftValue && typeof draftValue === "object"
-                        ? objectToBase64(draftValue)
-                        : undefined,
-                  },
-                }}
-                asChild
-              >
-                <Button variant="ghost" rounded>
-                  <DirectusIcon name="edit_square" />
-                </Button>
-              </Link>
+              {!isDeselected && !isPicked && (
+                <Link
+                  href={{
+                    pathname: isNew
+                      ? `/modals/m2a/[collection]/add`
+                      : `/modals/m2a/[collection]/[id]`,
+                    params: isNew
+                      ? {
+                          collection: relatedCollection,
+                          document_session_id: documentSessionId,
+                          item_field: item.field,
+                          id: "add",
+                          draft_id: junctionDoc.__id,
+                          draft:
+                            !!draftValue && typeof draftValue === "object"
+                              ? objectToBase64(draftValue)
+                              : undefined,
+                        }
+                      : {
+                          collection: relatedCollection,
+                          document_session_id: documentSessionId,
+                          item_field: item.field,
+                          junction_id: (junctionDoc as Record<string, unknown>)
+                            ?.id as string | number,
+                          id: relatedItemId as string | number,
+                          draft_id: junctionDoc.__id,
+                          draft:
+                            !!draftValue && typeof draftValue === "object"
+                              ? objectToBase64(draftValue)
+                              : undefined,
+                        },
+                  }}
+                  asChild
+                >
+                  <Button variant="ghost" rounded>
+                    <DirectusIcon name="edit_square" />
+                  </Button>
+                </Link>
+              )}
 
               <Button
                 variant="ghost"
@@ -570,7 +613,6 @@ export const M2AInput = ({
           variant="ghost"
           onPress={() => {
             closeModal();
-            router.back();
             onPress({
               pathname: `/modals/m2a/[collection]/${variant}`,
               params: {
@@ -677,8 +719,6 @@ export const M2AInput = ({
                     </Vertical>
                   );
                 }, "Create New");
-
-                router.push({ pathname: "/modals/dynamic" });
               }}
             >
               {t("components.shared.createNew")}
@@ -705,7 +745,6 @@ export const M2AInput = ({
                     </Vertical>
                   );
                 }, "Add Existing");
-                router.push({ pathname: "/modals/dynamic" });
               }}
             >
               {t("components.shared.addExisting")}

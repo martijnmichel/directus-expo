@@ -46,11 +46,8 @@ export default function Collection() {
     collection,
     related_field,
     current_value,
-    junction_collection,
-    junction_field,
-    doc_id,
     item_field,
-    uuid,
+    document_session_id,
   } = useLocalSearchParams();
 
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
@@ -180,7 +177,7 @@ export default function Collection() {
               data: {
                 [primaryKey as string]: doc[primaryKey as string],
               } as CoreSchemaDocument,
-              document_session_id: uuid as string,
+              document_session_id: document_session_id as string | number,
               field: item_field as string,
               collection: collection as keyof CoreSchema,
               __id: doc[primaryKey as string] as string,
