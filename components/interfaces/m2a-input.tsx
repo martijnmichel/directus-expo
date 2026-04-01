@@ -151,7 +151,7 @@ export const M2AInput = ({
    * @returns the junction id
    */
   const createJunctionId = (id: number | string, collection: string) => {
-    return `${id}:${collection}`;
+    return id.toString().replace(`:${collection}`, "").concat(`:${collection}`);
   };
 
   /**
@@ -487,7 +487,7 @@ export const M2AInput = ({
             value.map((v) => ({
               ...v,
               [sortField as string]:
-                allPositions?.[`${relatedCollection}:${v.__id}`],
+                allPositions?.[v.__id],
             })),
           );
         }}
