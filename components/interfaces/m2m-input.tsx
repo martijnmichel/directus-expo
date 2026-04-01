@@ -376,12 +376,14 @@ export const M2MInput = ({
 
             /** database document */
             const doc = relatedDocs?.items?.find(
-              (v) => String(v.id) === String(docId),
+              (v) => String(v.id) === String(junctionDoc.__id),
             );
 
             /** draft junction document */
             const draftJunctionDoc = value.find(
-              (v) => v.id === docId || v.__id === docId,
+              (v) =>
+                String(v.id) === String(junctionDoc.__id) ||
+                String(v.__id) === String(junctionDoc.__id),
             );
 
             /** draft related collection document */
@@ -475,30 +477,37 @@ export const M2MInput = ({
 
                       <Button
                         variant="ghost"
-                        onPress={() =>
-                          isNew || isPicked
-                            ? onChange(
-                                value.filter(
-                                  (v) => v.__id !== junctionDoc.__id,
+                        onPress={() => {
+                          if (isNew || isPicked) {
+                            onChange(
+                              value.filter((v) => v.__id !== junctionDoc.__id),
+                            );
+                          } else {
+                            if (isDeselected) {
+                              onChange(
+                                value.map((v) =>
+                                  v.__id === junctionDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Default,
+                                      }
+                                    : v,
                                 ),
-                              )
-                            : isDeselected
-                              ? onChange(
-                                  value.filter(
-                                    (v) => v.__id !== junctionDoc.__id,
-                                  ),
-                                )
-                              : onChange(
-                                  value.map((v) =>
-                                    v.__id === junctionDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Deleted,
-                                        }
-                                      : v,
-                                  ),
-                                )
-                        }
+                              );
+                            } else {
+                              onChange(
+                                value.map((v) =>
+                                  v.__id === junctionDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Deleted,
+                                      }
+                                    : v,
+                                ),
+                              );
+                            }
+                          }
+                        }}
                         rounded
                       >
                         {isDeselected ? (
