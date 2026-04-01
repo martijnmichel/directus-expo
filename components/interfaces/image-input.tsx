@@ -38,7 +38,7 @@ import { useModalStore } from "@/state/stores/modalStore";
 
 type ImageInputProps = InterfaceProps<{
   value?: string;
-  onChange?: (value: string | string[]) => void;
+  onChange?: (value: string | string[] | null) => void;
   sources?: ("device" | "url" | "library")[];
 }>;
 
@@ -226,7 +226,7 @@ export const ImageInput = ({
                 )}
 
                 {!!value && (
-                  <Button variant="soft" rounded onPress={() => onChange?.("")}>
+                  <Button variant="soft" rounded onPress={() => onChange?.(null)}>
                     <X />
                   </Button>
                 )}
