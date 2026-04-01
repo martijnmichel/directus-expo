@@ -1,8 +1,15 @@
 diff --git a/node_modules/@mgcrea/react-native-dnd/dist/DndProvider.js b/node_modules/@mgcrea/react-native-dnd/dist/DndProvider.js
-index 2bbf21f..169379f 100644
+index 2bbf21f..77c20c8 100644
 --- a/node_modules/@mgcrea/react-native-dnd/dist/DndProvider.js
 +++ b/node_modules/@mgcrea/react-native-dnd/dist/DndProvider.js
-@@ -109,6 +109,7 @@ export const DndProvider = forwardRef(function DndProvider({ children, springCon
+@@ -103,12 +103,14 @@ export const DndProvider = forwardRef(function DndProvider({ children, springCon
+                 runOnUI(() => {
+                     "worklet";
+                     debug && console.log(`draggableActiveId.value = ${id}`);
++                    draggablePendingId.value = null;
+                     draggableActiveId.value = id;
+                     draggableStates.value[id].value = "dragging";
+                 })();
              }, delay);
          };
          const panGesture = Gesture.Pan()
@@ -10,3 +17,68 @@ index 2bbf21f..169379f 100644
              .onBegin((event) => {
              const { state, x, y } = event;
              debug && console.log("begin", { state, x, y });
+@@ -124,6 +126,15 @@ export const DndProvider = forwardRef(function DndProvider({ children, springCon
+             const { value: restingOffsets } = draggableRestingOffsets;
+             const { value: options } = draggableOptions;
+             const { value: states } = draggableStates;
++            const { value: pendingId } = draggablePendingId;
++            // Defensive reset: clear any stale pending activation from a previous gesture.
++            runOnJS(clearActiveIdTimeout)();
++            if (pendingId !== null) {
++                if (states[pendingId]) {
++                    states[pendingId].value = "resting";
++                }
++                draggablePendingId.value = null;
++            }
+             // for (const [id, offset] of Object.entries(offsets)) {
+             //   console.log({ [id]: [offset.x.value, offset.y.value] });
+             // }
+@@ -192,6 +203,10 @@ export const DndProvider = forwardRef(function DndProvider({ children, springCon
+                     const distance = getDistance(translationX, translationY);
+                     if (distance > activationTolerance) {
+                         runOnJS(clearActiveIdTimeout)();
++                        // Reset pending item visual state when activation is cancelled.
++                        if (draggableStates.value[pendingId]) {
++                            draggableStates.value[pendingId].value = "resting";
++                        }
+                         draggablePendingId.value = null;
+                     }
+                 }
+@@ -233,10 +248,15 @@ export const DndProvider = forwardRef(function DndProvider({ children, springCon
+                 // Check if we were currently waiting for activation delay
+                 if (pendingId !== null) {
+                     runOnJS(clearActiveIdTimeout)();
++                    if (states[pendingId]) {
++                        states[pendingId].value = "resting";
++                    }
+                     draggablePendingId.value = null;
+                 }
+                 return;
+             }
++            runOnJS(clearActiveIdTimeout)();
++            draggablePendingId.value = null;
+             // Reset interaction-related shared state for styling purposes
+             draggableActiveId.value = null;
+             if (onFinalize) {
+diff --git a/node_modules/@mgcrea/react-native-dnd/dist/features/sort/hooks/useDraggableSort.js b/node_modules/@mgcrea/react-native-dnd/dist/features/sort/hooks/useDraggableSort.js
+index 6027f40..551e50b 100644
+--- a/node_modules/@mgcrea/react-native-dnd/dist/features/sort/hooks/useDraggableSort.js
++++ b/node_modules/@mgcrea/react-native-dnd/dist/features/sort/hooks/useDraggableSort.js
+@@ -45,6 +45,17 @@ export const useDraggableSort = ({ horizontal = false, childrenIds, onOrderChang
+         if (prev === null || prev.length === 0) {
+             return;
+         }
++        // Keep internal order in sync when parent reordered the same ids.
++        if (next.length === prev.length && arraysEqual(prev.slice().sort(), next.slice().sort()) && !arraysEqual(prev, next)) {
++            draggableSortOrder.value = next.slice();
++            draggableLastOrder.value = next.slice();
++            draggablePlaceholderIndex.value = -1;
++            draggableActiveLayout.value = null;
++            if (draggableActiveId.value !== null && !next.includes(draggableActiveId.value)) {
++                draggableActiveId.value = null;
++            }
++            return;
++        }
+         // Handle removed draggable items
+         const removedIds = prev.filter((id) => !next.includes(id));
+         if (removedIds.length > 0) {

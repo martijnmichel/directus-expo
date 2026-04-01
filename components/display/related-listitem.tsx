@@ -41,11 +41,8 @@ export const RelatedListItem = ({
         isUpdated && styles.listItemUpdated,
       ]}
     >
-      <SortableItem.Handle
-        style={{ display: isDraggable ? "contents" : "none" }}
-      >
-        <DirectusIcon name="drag_handle" />
-      </SortableItem.Handle>
+      
+      {isDraggable && <DirectusIcon name="drag_handle" />}
       {prepend && <View>{prepend}</View>}
       {isTextChild ? (
         <Text

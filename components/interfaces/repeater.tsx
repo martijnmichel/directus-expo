@@ -97,7 +97,6 @@ export const RepeaterInput = ({
 
       <DndProvider>
         <DraggableStack
-          key={JSON.stringify(value)}
           direction="column"
           onOrderChange={onOrderChange}
         >

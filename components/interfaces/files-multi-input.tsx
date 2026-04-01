@@ -250,7 +250,6 @@ export const FilesMultiInput = ({
         )}
         <DndProvider>
           <DraggableStack
-            key={JSON.stringify(valueProp)}
             direction="column"
             onOrderChange={onOrderChange}
             style={{ gap: 3 }}

@@ -75,11 +75,7 @@ import { RelatedListItem } from "../display/related-listitem";
 import { InterfaceProps } from ".";
 import { useModalStore } from "@/state/stores/modalStore";
 import { generateUUID } from "@/hooks/useUUID";
-import {
-  Sortable,
-  SortableItem,
-  SortableRenderItemProps,
-} from "react-native-reanimated-dnd";
+
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
@@ -335,9 +331,7 @@ export const M2AInput = ({
 
   const RenderItem = ({
     item: junctionDoc,
-    id: __sortId,
-    ...rest
-  }: SortableRenderItemProps<{ id: string } & RelatedItem>) => {
+  }:  RelatedItem) => {
     const { data: collection } = useCollection(
       junctionDoc?.[oneCollectionField as string] as keyof CoreSchema,
     );
@@ -431,9 +425,7 @@ export const M2AInput = ({
       typeof relatedItem === "object" &&
       Object.keys(relatedItem || {}).some((key) => {
         const field = relatedFields?.find((f) => f.field === key);
-        return (
-          !!field && !field?.schema?.is_primary_key
-        );
+        return !!field && !field?.schema?.is_primary_key;
       });
 
     const partsFromDoc = parseTemplateParts(
@@ -450,7 +442,7 @@ export const M2AInput = ({
     const parts =
       !!draftValue && !!draftValueHasValues ? partsFromValue : partsFromDoc;
 
-   /** console.log({
+    /** console.log({
       junctionDoc,
       relatedPrimaryKey,
       displayTemplate,
@@ -479,119 +471,104 @@ export const M2AInput = ({
     }
 
     return junctionDoc ? (
-      <SortableItem
-        id={__sortId}
-        data={junctionDoc}
-        onDrop={(id, position, allPositions) => {
-          onChange(
-            value.map((v) => ({
-              ...v,
-              [sortField as string]:
-                allPositions?.[v.__id],
-            })),
-          );
-        }}
-        {...rest}
-      >
-        <RelatedListItem
-          isDraggable={!!sortField}
-          isDeselected={isDeselected}
-          isNew={isNew}
-          isUpdated={isUpdated}
-          isPicked={isPicked}
-          prepend={
-            <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
-              {junctionDoc?.[oneCollectionField as string]}:
-            </Text>
-          }
-          append={
-            <>
-              {!isDeselected && !isPicked && (
-                <Link
-                  href={{
-                    pathname: isNew
-                      ? `/modals/m2a/[collection]/add`
-                      : `/modals/m2a/[collection]/[id]`,
-                    params: isNew
-                      ? {
-                          collection: relatedCollection,
-                          document_session_id: documentSessionId,
-                          item_field: item.field,
-                          id: "add",
-                          draft_id: junctionDoc.__id,
-                          draft:
-                            !!draftValue && typeof draftValue === "object"
-                              ? objectToBase64(draftValue)
-                              : undefined,
-                        }
-                      : {
-                          collection: relatedCollection,
-                          document_session_id: documentSessionId,
-                          item_field: item.field,
-                          junction_id: (junctionDoc as Record<string, unknown>)
-                            ?.id as string | number,
-                          id: relatedItemId as string | number,
-                          draft_id: junctionDoc.__id,
-                          draft:
-                            !!draftValue && typeof draftValue === "object"
-                              ? objectToBase64(draftValue)
-                              : undefined,
-                        },
-                  }}
-                  asChild
-                >
-                  <Button variant="ghost" rounded>
-                    <DirectusIcon name="edit_square" />
-                  </Button>
-                </Link>
-              )}
-
-              <Button
-                variant="ghost"
-                style={{ marginLeft: "auto" }}
-                rounded
-                onPress={() => {
-                  if (isNew || isPicked) {
-                    onChange(value.filter((v) => v.__id !== junctionDoc.__id));
-                  } else {
-                    if (isDeselected) {
-                      onChange(
-                        value.map((v) =>
-                          v.__id === junctionDoc.__id
-                            ? {
-                                ...v,
-                                __state: RelatedItemState.Default,
-                              }
-                            : v,
-                        ),
-                      );
-                    } else {
-                      onChange(
-                        value.map((v) =>
-                          v.__id === junctionDoc.__id
-                            ? {
-                                ...v,
-                                __state: RelatedItemState.Deleted,
-                              }
-                            : v,
-                        ),
-                      );
-                    }
-                  }
+      <RelatedListItem
+        isDraggable={!!sortField}
+        isDeselected={isDeselected}
+        isNew={isNew}
+        isUpdated={isUpdated}
+        isPicked={isPicked}
+        prepend={
+          <Text style={{ color: theme.colors.primary, fontWeight: "bold" }}>
+            {junctionDoc?.[oneCollectionField as string]}:
+          </Text>
+        }
+        append={
+          <>
+            {!isDeselected && !isPicked && (
+              <Link
+                href={{
+                  pathname: isNew
+                    ? `/modals/m2a/[collection]/add`
+                    : `/modals/m2a/[collection]/[id]`,
+                  params: isNew
+                    ? {
+                        collection: relatedCollection,
+                        document_session_id: documentSessionId,
+                        item_field: item.field,
+                        id: "add",
+                        draft_id: junctionDoc.__id,
+                        draft:
+                          !!draftValue && typeof draftValue === "object"
+                            ? objectToBase64(draftValue)
+                            : undefined,
+                      }
+                    : {
+                        collection: relatedCollection,
+                        document_session_id: documentSessionId,
+                        item_field: item.field,
+                        junction_id: (junctionDoc as Record<string, unknown>)
+                          ?.id as string | number,
+                        id: relatedItemId as string | number,
+                        draft_id: junctionDoc.__id,
+                        draft:
+                          !!draftValue && typeof draftValue === "object"
+                            ? objectToBase64(draftValue)
+                            : undefined,
+                      },
                 }}
+                asChild
               >
-                {isDeselected ? (
-                  <DirectusIcon name="settings_backup_restore" />
-                ) : (
-                  <DirectusIcon name="close" />
-                )}
-              </Button>
-            </>
-          }
-        >
-          <TemplatePartsRenderer parts={parts} />
-        </RelatedListItem>
-      </SortableItem>
+                <Button variant="ghost" rounded>
+                  <DirectusIcon name="edit_square" />
+                </Button>
+              </Link>
+            )}
+
+            <Button
+              variant="ghost"
+              style={{ marginLeft: "auto" }}
+              rounded
+              onPress={() => {
+                if (isNew || isPicked) {
+                  onChange(value.filter((v) => v.__id !== junctionDoc.__id));
+                } else {
+                  if (isDeselected) {
+                    onChange(
+                      value.map((v) =>
+                        v.__id === junctionDoc.__id
+                          ? {
+                              ...v,
+                              __state: RelatedItemState.Default,
+                            }
+                          : v,
+                      ),
+                    );
+                  } else {
+                    onChange(
+                      value.map((v) =>
+                        v.__id === junctionDoc.__id
+                          ? {
+                              ...v,
+                              __state: RelatedItemState.Deleted,
+                            }
+                          : v,
+                      ),
+                    );
+                  }
+                }
+              }}
+            >
+              {isDeselected ? (
+                <DirectusIcon name="settings_backup_restore" />
+              ) : (
+                <DirectusIcon name="close" />
+              )}
+            </Button>
+          </>
+        }
+      >
+        <TemplatePartsRenderer parts={parts} />
+      </RelatedListItem>
     ) : null;
   };
 
@@ -660,12 +637,32 @@ export const M2AInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <Sortable
-          data={value}
-          itemKeyExtractor={(item) => item.__id.toString()}
-          itemHeight={50}
-          renderItem={(props) => <RenderItem {...props} />}
-        />
+
+        <DndProvider>
+          <DraggableStack
+            
+            direction="column"
+            style={{ gap: 3 }}
+            onOrderChange={(newOrderIds: UniqueIdentifier[]) => {
+              const newValue = newOrderIds.map(
+                (id) => value.find((v) => v.__id === id) as RelatedItem,
+              );
+              console.log({ newValue, newOrderIds });
+              onChange(newValue);
+            }}
+          >
+            {value.map((item, index) => (
+              <Draggable
+                key={item.__id + documentSessionId}
+                id={item.__id.toString()}
+                disabled={!sortField}
+                activationDelay={200}
+              >
+                <RenderItem item={item} />
+              </Draggable>
+            ))}
+          </DraggableStack>
+        </DndProvider>
 
         {(error || helper) && (
           <Text
