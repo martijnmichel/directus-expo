@@ -354,7 +354,6 @@ export const M2MInput = ({
             const newValue = newOrderIds.map(
               (id) => value.find((v) => v.__id === id) as RelatedItem,
             );
-            console.log({ newValue, newOrderIds });
             onChange(newValue);
           }}
         >

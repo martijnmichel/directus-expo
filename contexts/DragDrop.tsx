@@ -142,6 +142,18 @@ function arraysEqual(a: string[], b: string[]) {
   return true;
 }
 
+/** Same ids ignoring order — drop emit if internal order desynced from React children. */
+function sameStringMultiset(a: string[], b: string[]) {
+  "worklet";
+  if (a.length !== b.length) return false;
+  const sa = a.slice().sort();
+  const sb = b.slice().sort();
+  for (let i = 0; i < sa.length; i++) {
+    if (sa[i] !== sb[i]) return false;
+  }
+  return true;
+}
+
 function moveArrayIndex(input: string[], from: number, to: number) {
   "worklet";
   const output = input.slice();
@@ -503,6 +515,9 @@ function useDraggableSort({
     () => childrenIds,
     (next, prev) => {
       if (prev === null) return;
+      if (arraysEqual(next, prev)) {
+        return;
+      }
 
       // Empty → first items: initialise order (upstream skipped prev.length === 0)
       if (prev.length === 0 && next.length > 0) {
@@ -556,14 +571,19 @@ function useDraggableSort({
         draggableSortOrder.value = nextOrder;
       });
 
-      if (
-        onOrderChange &&
-        (removedIds.length > 0 || addedIds.length > 0)
-      ) {
-        runOnJS(onOrderChange)(draggableSortOrder.value.slice());
+      // Do not call onOrderChange here. Add/remove already updated the parent; notifying
+      // again races Reanimated (prev/next) and can emit a partial id list and wipe siblings.
+      if (removedIds.length > 0 || addedIds.length > 0) {
+        const order = draggableSortOrder.value.slice();
+        const sortedNext = next.slice().sort();
+        const sortedOrder = order.slice().sort();
+        if (!arraysEqual(sortedOrder, sortedNext)) {
+          draggableSortOrder.value = next.slice();
+        }
+        draggableLastOrder.value = draggableSortOrder.value.slice();
       }
     },
-    [childrenIds, onOrderChange],
+    [childrenIds],
   );
 
   useAnimatedReaction(
@@ -595,7 +615,12 @@ function useDraggableSort({
       if (prevPlaceholderIndex !== -1 && nextPlaceholderIndex === -1) {
         if (nextActiveId === null && onOrderChange) {
           if (!arraysEqual(prevOrder, draggableLastOrder.value)) {
-            runOnJS(onOrderChange)(prevOrder.slice());
+            if (
+              prevOrder.length === childrenIds.length &&
+              sameStringMultiset(prevOrder, childrenIds)
+            ) {
+              runOnJS(onOrderChange)(prevOrder.slice());
+            }
           }
           draggableLastOrder.value = prevOrder.slice();
         }
@@ -613,7 +638,7 @@ function useDraggableSort({
       }
       draggableSortOrder.value = moved;
     },
-    [onOrderChange, onOrderUpdate],
+    [childrenIds, onOrderChange, onOrderUpdate],
   );
 
   return { draggablePlaceholderIndex, draggableSortOrder };
@@ -708,16 +733,6 @@ function useDraggableStack({
     draggableSortOrder.value = childrenIds.slice();
     refreshOffsets();
   }, [childrenIds, draggableSortOrder, refreshOffsets]);
-
-  useAnimatedReaction(
-    () => childrenIds,
-    (next, prev) => {
-      if (prev === null) return;
-      if (arraysEqual(next, prev)) return;
-      refreshOffsets();
-    },
-    [childrenIds],
-  );
 
   useAnimatedReaction(
     () => draggableSortOrder.value,
@@ -874,15 +889,22 @@ export const Sortable = forwardRef(function Sortable(
     [instancePrefix, toInternalId, toUserId],
   );
 
-  const childrenIds = useMemo(() => {
-    return Children.toArray(children)
+  // `children` is new element references every parent render; key internal ids on stable
+  // user-id list so sibling sortables and unrelated re-renders do not thrash layout/refresh.
+  const childrenIdsKey = JSON.stringify(
+    Children.toArray(children)
       .filter(isValidElement)
       .map((c) => {
         const p = (c.props as { id?: string }).id;
-        return p != null ? toInternalId(String(p)) : null;
+        return p != null ? String(p) : null;
       })
-      .filter((x): x is string => x != null);
-  }, [children, toInternalId]);
+      .filter((x): x is string => x != null),
+  );
+
+  const childrenIds = useMemo(() => {
+    const userIds = JSON.parse(childrenIdsKey) as string[];
+    return userIds.map((id) => toInternalId(id));
+  }, [childrenIdsKey, toInternalId]);
 
   const onOrderChangeUser = onOrderChange
     ? (internalOrder: string[]) => {
