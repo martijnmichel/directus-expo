@@ -3,8 +3,6 @@ import { Horizontal } from "../layout/Stack";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { DirectusIcon } from "./directus-icon";
 import { Text } from "./typography";
-import { SortableItem } from "react-native-reanimated-dnd";
-
 export type RelatedListItemProps = {
   append?: React.ReactNode;
   children: React.ReactNode;

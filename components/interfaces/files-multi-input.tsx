@@ -25,14 +25,7 @@ import {
 import { Horizontal, Vertical } from "../layout/Stack";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import {
-  DndProvider,
-  Draggable,
-  DraggableStack,
-  Droppable,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Sortable, SortableItem } from "@/contexts/DragDrop";
 import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
 import { mutateDocuments } from "@/state/actions/updateDocuments";
@@ -123,8 +116,8 @@ export const FilesMultiInput = ({
     );
   };
 
-  const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder.map((id) => parseInt(id as string));
+  const onOrderChange = (newOrder: string[]) => {
+    const newOrderIds = newOrder.map((id) => parseInt(id, 10));
     props.onChange?.(newOrderIds);
   };
 
@@ -248,25 +241,24 @@ export const FilesMultiInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <DndProvider>
-          <DraggableStack
-            direction="column"
-            onOrderChange={onOrderChange}
-            style={{ gap: 3 }}
-          >
-            {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-              const isDeselected =
-                value?.includes(id) && !valueProp.includes(id);
-              const isNew = !value?.includes(id);
+        <Sortable
+          direction="column"
+          onOrderChange={onOrderChange}
+          style={{ gap: 3 }}
+        >
+          {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+            const isDeselected =
+              value?.includes(id) && !valueProp.includes(id);
+            const isNew = !value?.includes(id);
 
-              return (
-                <Draggable
-                  key={id + "draggable"}
-                  id={id.toString()}
-                  disabled={!sortField}
-                  activationDelay={200}
-                >
-                  <Item
+            return (
+              <SortableItem
+                key={id + "draggable"}
+                id={id.toString()}
+                disabled={!sortField}
+                activationDelay={200}
+              >
+                <Item
                     key={id}
                     docId={id}
                     junction={junction!}
@@ -291,11 +283,10 @@ export const FilesMultiInput = ({
                     isNew={isNew}
                     isDeselected={isDeselected}
                   />
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
+              </SortableItem>
+            );
+          })}
+        </Sortable>
         {(error || helper) && (
           <Text
             style={[

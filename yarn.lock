@@ -1789,11 +1789,6 @@
   resolved "https://registry.yarnpkg.com/@material-symbols-react-native/outlined-400/-/outlined-400-1.0.0.tgz#7204547c912c2316ea85cacf1eb143b2c37228b6"
   integrity sha512-/R/uMu5Bp/gA61Xll1HNLoRi4qJv1dQRDRaxjIKBHs0T3KHdpkhnEQUBZJP70t+1P2NcDfOAy1WTvYH8RAxn0w==
 
-"@mgcrea/react-native-dnd@^2.5.3":
-  version "2.5.3"
-  resolved "https://registry.yarnpkg.com/@mgcrea/react-native-dnd/-/react-native-dnd-2.5.3.tgz#69609246781b78b2e7b268cec39aaa615512a674"
-  integrity sha512-Qi2OOfZFyrV7p9q80DLX60pavHfqpxqMrahZxz2S6Y+xwmgfwBAVVHv/GIO3CTs3OIMuXdQ5OFfFgbjpZGAZMw==
-
 "@mixmark-io/domino@^2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@mixmark-io/domino/-/domino-2.2.0.tgz#4e8ec69bf1afeb7a14f0628b7e2c0f35bdb336c3"
@@ -9079,11 +9074,6 @@ react-native-outside-press@^1.2.2:
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/react-native-outside-press/-/react-native-outside-press-1.2.2.tgz#a869ce9e025d112581f05bc6a7ef86fc0c83f4b7"
   integrity sha512-TkLB6KefjSXAPMHl2CQBpGnLQHT1wJp455k3vdhTRiT72llIyXrDDLp/gDhgQNNJAd3+XUEO5F+TZr882t8sYw==
-
-react-native-reanimated-dnd@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/react-native-reanimated-dnd/-/react-native-reanimated-dnd-2.0.0.tgz#036c1e3d02a37efa36217d392392f37c7aba0dc4"
-  integrity sha512-FXNWZoad5RG4Z6g1xX60/ZEBVkhO9jmmftHAuTML3XrVw15dsU8LwHA5ulVpO9UtX4iBGwAn3CCr3GNRcuH/oQ==
 
 react-native-reanimated@~4.1.1:
   version "4.1.3"

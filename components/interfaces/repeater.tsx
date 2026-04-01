@@ -1,24 +1,16 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Text, View, FlatList } from "react-native";
+import React, { useEffect, useCallback } from "react";
+import { Text, View } from "react-native";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Link } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
-import {
-  DndProvider,
-  Draggable,
-  DraggableGrid,
-  DraggableStack,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import EventBus, { MittEvents } from "@/utils/mitt";
+import { Sortable, SortableItem } from "@/contexts/DragDrop";
+import EventBus from "@/utils/mitt";
 import { DragIcon, Trash, Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
-import { runOnJS } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { Alert } from "../display/alert";
 import { InterfaceProps } from ".";
@@ -49,17 +41,13 @@ export const RepeaterInput = ({
   const { t } = useTranslation();
 
   const onOrderChange = useCallback(
-    (order: UniqueIdentifier[]) => {
-      console.log({ order });
-      // Reorder the items based on the new order
-      const newItems = order.map((index) => value[parseInt(index as string)]);
-      console.log({ newItems });
+    (order: string[]) => {
+      const newItems = order.map((index) => value[parseInt(index, 10)]);
       onChange?.(newItems);
     },
     [value, onChange],
   );
 
-  console.log({ item });
   const getDisplayValue = (repeatItem: any) => {
     const format = item.meta?.display_options?.format;
     return format
@@ -95,20 +83,15 @@ export const RepeaterInput = ({
         <Alert message={t("components.repeater.noItems")} status="info" />
       )}
 
-      <DndProvider>
-        <DraggableStack
-          direction="column"
-          onOrderChange={onOrderChange}
-        >
-          {(value || []).map((repeaterItem, index) => (
-            <Draggable
-              key={index}
-              id={index.toString()}
-              disabled={!!item.meta?.options?.sortable}
-              data={repeaterItem}
-              activationDelay={200}
-              style={[styles.listItem, styles.fullWidth]}
-            >
+      <Sortable direction="column" onOrderChange={onOrderChange}>
+        {(value || []).map((repeaterItem, index) => (
+          <SortableItem
+            key={index}
+            id={index.toString()}
+            disabled={!item.meta?.options?.sortable}
+            activationDelay={200}
+            style={[styles.listItem, styles.fullWidth]}
+          >
               <View style={styles.dragHandle}>
                 <DragIcon />
               </View>
@@ -156,10 +139,9 @@ export const RepeaterInput = ({
               >
                 <Trash />
               </Button>
-            </Draggable>
-          ))}
-        </DraggableStack>
-      </DndProvider>
+          </SortableItem>
+        ))}
+      </Sortable>
 
       {(error || helper) && (
         <Text

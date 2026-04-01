@@ -37,13 +37,7 @@ import EventBus, {
   RelatedItemState,
 } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import {
-  DndProvider,
-  Draggable,
-  DraggableStack,
-  Droppable,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { count } from "console";
@@ -61,8 +55,8 @@ import { CoreSchemaDocument } from "@/types/directus";
 import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
-import { Sortable, SortableItem } from "react-native-reanimated-dnd";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
+import { Sortable, SortableItem } from "@/contexts/DragDrop";
 
 type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -353,30 +347,28 @@ export const M2MInput = ({
           </Text>
         )}
 
-        <DndProvider>
-          <DraggableStack
-            direction="column"
-            style={{ gap: 3 }}
-            onOrderChange={(newOrderIds: UniqueIdentifier[]) => {
-              const newValue = newOrderIds.map(
-                (id) => value.find((v) => v.__id === id) as RelatedItem,
-              );
-              console.log({ newValue, newOrderIds });
-              onChange(newValue);
-            }}
-          >
-            {value.map((junctionDoc: RelatedItem) => {
-              if (typeof junctionDoc === "number") {
-                junctionDoc = { id: junctionDoc };
-              }
+        <Sortable
+          direction="column"
+          style={{ gap: 3 }}
+          onOrderChange={(newOrderIds) => {
+            const newValue = newOrderIds.map(
+              (id) => value.find((v) => v.__id === id) as RelatedItem,
+            );
+            console.log({ newValue, newOrderIds });
+            onChange(newValue);
+          }}
+        >
+          {value.map((junctionDoc: RelatedItem) => {
+            if (typeof junctionDoc === "number") {
+              junctionDoc = { id: junctionDoc };
+            }
 
-              const isDeselected =
-                junctionDoc.__state === RelatedItemState.Deleted;
-              const isNew = junctionDoc.__state === RelatedItemState.Created;
-              const isUpdated =
-                junctionDoc.__state === RelatedItemState.Updated;
-              const isPicked = junctionDoc.__state === RelatedItemState.Picked;
-              /** console.log({
+            const isDeselected =
+              junctionDoc.__state === RelatedItemState.Deleted;
+            const isNew = junctionDoc.__state === RelatedItemState.Created;
+            const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
+            const isPicked = junctionDoc.__state === RelatedItemState.Picked;
+            /** console.log({
                       junctionDoc,
                       relatedDoc,
                       id,
@@ -386,154 +378,151 @@ export const M2MInput = ({
                       isDeselected,
                     }); */
 
-              /** database document */
-              const doc = relatedDocs?.items?.find(
-                (v) => String(v.id) === String(junctionDoc.__id),
-              );
+            /** database document */
+            const doc = relatedDocs?.items?.find(
+              (v) => String(v.id) === String(junctionDoc.__id),
+            );
 
-              /** draft junction document */
-              const draftJunctionDoc = value.find(
-                (v) =>
-                  String(v.id) === String(junctionDoc.__id) ||
-                  String(v.__id) === String(junctionDoc.__id),
-              );
+            /** draft junction document */
+            const draftJunctionDoc = value.find(
+              (v) =>
+                String(v.id) === String(junctionDoc.__id) ||
+                String(v.__id) === String(junctionDoc.__id),
+            );
 
-              /** draft related collection document */
-              const draftValue = draftJunctionDoc
-                ? (draftJunctionDoc as any)[relation?.field as string]
-                : undefined;
+            /** draft related collection document */
+            const draftValue = draftJunctionDoc
+              ? (draftJunctionDoc as any)[relation?.field as string]
+              : undefined;
 
-              /**
-               * note: if the interface template is used, directus returns the template path from the document
-               * otherwise parse it from the junction doc
-               */
-              const partsFromDoc = parseTemplateParts(
-                effectiveTemplate,
-                interfaceTemplate
-                  ? doc
-                  : (doc?.[relation?.field as string] ?? doc),
-                fields,
-              );
-              const partsFromValue = parseTemplateParts(
-                effectiveTemplate,
-                interfaceTemplate
-                  ? (draftJunctionDoc as any)
-                  : (draftValue as any),
-                fields,
-              );
+            /**
+             * note: if the interface template is used, directus returns the template path from the document
+             * otherwise parse it from the junction doc
+             */
+            const partsFromDoc = parseTemplateParts(
+              effectiveTemplate,
+              interfaceTemplate
+                ? doc
+                : (doc?.[relation?.field as string] ?? doc),
+              fields,
+            );
+            const partsFromValue = parseTemplateParts(
+              effectiveTemplate,
+              interfaceTemplate
+                ? (draftJunctionDoc as any)
+                : (draftValue as any),
+              fields,
+            );
 
-              /** related collection document id */
-              const relatedDocId = (doc ?? draftJunctionDoc)?.[
-                relation?.field as string
-              ]?.[relatedPrimaryKey as string];
+            /** related collection document id */
+            const relatedDocId = (doc ?? draftJunctionDoc)?.[
+              relation?.field as string
+            ]?.[relatedPrimaryKey as string];
 
-              return (
-                <Draggable
-                  key={junctionDoc.__id?.toString() ?? "" + documentSessionId}
-                  id={junctionDoc.__id?.toString() ?? ""}
-                  disabled={!sortField}
-                  activationDelay={200}
-                >
-                  <RelatedListItem
-                    isDeselected={isDeselected}
-                    isNew={isNew}
-                    isDraggable={!!sortField}
-                    isUpdated={isUpdated}
-                    isPicked={isPicked}
-                    append={
-                      <>
-                        {!isDeselected && !isPicked && (
-                          <Link
-                            href={{
-                              pathname: isNew
-                                ? `/modals/m2m/[collection]/add`
-                                : `/modals/m2m/[collection]/[id]`,
-                              params: isNew
-                                ? {
-                                    collection: relation.related_collection,
-                                    document_session_id: documentSessionId,
-                                    item_field: item.field,
-                                    id: relatedDocId as string | number,
-                                    draft_id: draftJunctionDoc?.__id,
-                                    draft: draftValue
-                                      ? objectToBase64(draftValue)
-                                      : undefined,
-                                  }
-                                : {
-                                    collection: relation.related_collection,
-                                    document_session_id: documentSessionId,
-                                    id: relatedDocId as string | number,
-                                    junction_id: docId as string | number,
-                                    draft_id: draftJunctionDoc?.__id,
-                                    item_field: item.field,
-                                    draft: draftValue
-                                      ? objectToBase64(draftValue)
-                                      : undefined,
-                                  },
-                            }}
-                            asChild
-                          >
-                            <Button variant="ghost" rounded>
-                              <DirectusIcon name="edit_square" />
-                            </Button>
-                          </Link>
-                        )}
+            return (
+              <SortableItem
+                key={junctionDoc.__id?.toString() ?? "" + documentSessionId}
+                id={junctionDoc.__id?.toString() ?? ""}
+                disabled={!sortField}
+                activationDelay={200}
+              >
+                <RelatedListItem
+                  isDeselected={isDeselected}
+                  isNew={isNew}
+                  isDraggable={!!sortField}
+                  isUpdated={isUpdated}
+                  isPicked={isPicked}
+                  append={
+                    <>
+                      {!isDeselected && !isPicked && (
+                        <Link
+                          href={{
+                            pathname: isNew
+                              ? `/modals/m2m/[collection]/add`
+                              : `/modals/m2m/[collection]/[id]`,
+                            params: isNew
+                              ? {
+                                  collection: relation.related_collection,
+                                  document_session_id: documentSessionId,
+                                  item_field: item.field,
+                                  id: relatedDocId as string | number,
+                                  draft_id: draftJunctionDoc?.__id,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                }
+                              : {
+                                  collection: relation.related_collection,
+                                  document_session_id: documentSessionId,
+                                  id: relatedDocId as string | number,
+                                  junction_id: docId as string | number,
+                                  draft_id: draftJunctionDoc?.__id,
+                                  item_field: item.field,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                },
+                          }}
+                          asChild
+                        >
+                          <Button variant="ghost" rounded>
+                            <DirectusIcon name="edit_square" />
+                          </Button>
+                        </Link>
+                      )}
 
-                        <Button
-                          variant="ghost"
-                          onPress={() => {
-                            if (isNew || isPicked) {
+                      <Button
+                        variant="ghost"
+                        onPress={() => {
+                          if (isNew || isPicked) {
+                            onChange(
+                              value.filter((v) => v.__id !== junctionDoc.__id),
+                            );
+                          } else {
+                            if (isDeselected) {
                               onChange(
-                                value.filter(
-                                  (v) => v.__id !== junctionDoc.__id,
+                                value.map((v) =>
+                                  v.__id === junctionDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Default,
+                                      }
+                                    : v,
                                 ),
                               );
                             } else {
-                              if (isDeselected) {
-                                onChange(
-                                  value.map((v) =>
-                                    v.__id === junctionDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Default,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              } else {
-                                onChange(
-                                  value.map((v) =>
-                                    v.__id === junctionDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Deleted,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              }
+                              onChange(
+                                value.map((v) =>
+                                  v.__id === junctionDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Deleted,
+                                      }
+                                    : v,
+                                ),
+                              );
                             }
-                          }}
-                          rounded
-                        >
-                          {isDeselected ? (
-                            <DirectusIcon name="settings_backup_restore" />
-                          ) : (
-                            <DirectusIcon name="close" />
-                          )}
-                        </Button>
-                      </>
-                    }
-                  >
-                    <TemplatePartsRenderer
-                      parts={draftValue ? partsFromValue : partsFromDoc}
-                    />
-                  </RelatedListItem>
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
+                          }
+                        }}
+                        rounded
+                      >
+                        {isDeselected ? (
+                          <DirectusIcon name="settings_backup_restore" />
+                        ) : (
+                          <DirectusIcon name="close" />
+                        )}
+                      </Button>
+                    </>
+                  }
+                >
+                  <TemplatePartsRenderer
+                    parts={draftValue ? partsFromValue : partsFromDoc}
+                  />
+                </RelatedListItem>
+              </SortableItem>
+            );
+          })}
+        </Sortable>
 
         {(error || helper) && (
           <Text

@@ -11,7 +11,6 @@ import { Modal } from "../display/modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { Sortable, SortableItem } from "react-native-reanimated-dnd";
 import {
   useCollection,
   useDocument,
@@ -38,13 +37,7 @@ import {
   RelatedItemState,
 } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import {
-  DndProvider,
-  Draggable,
-  DraggableStack,
-  Droppable,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { DragIcon, Trash } from "../icons";
@@ -63,6 +56,7 @@ import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
+import { Sortable, SortableItem } from "@/contexts/DragDrop";
 
 type O2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -273,11 +267,6 @@ export const O2MInput = ({
     sortField,
   ]);
 
-  const onOrderChange = (newOrder: UniqueIdentifier[]) => {
-    const newOrderIds = newOrder;
-    console.log({ newOrderIds });
-  };
-
   return (
     relation &&
     !value.some((v) => typeof v === "number") && (
@@ -287,77 +276,69 @@ export const O2MInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <DndProvider>
-          <DraggableStack
-            direction="column"
-            style={{ gap: 3 }}
-            onOrderChange={(newOrderIds: UniqueIdentifier[]) => {
-              const newValue = newOrderIds.map(
-                (id) => value.find((v) => v.__id === id) as RelatedItem,
-              );
-              console.log({ newValue, newOrderIds });
-              props.onChange(newValue);
-            }}
-          >
-            {value.map((relationDoc: RelatedItem) => {
-              const isDefault =
-                relationDoc.__state === RelatedItemState.Default;
-              const isDeselected =
-                relationDoc.__state === RelatedItemState.Deleted;
-              const isNew = relationDoc.__state === RelatedItemState.Created;
-              const isSortable = !!sortField;
-              const isPicked = relationDoc.__state === RelatedItemState.Picked;
-              const isUpdated =
-                relationDoc.__state === RelatedItemState.Updated;
+        <Sortable
+          direction="column"
+          style={{ gap: 3 }}
+          onOrderChange={(newOrderIds) => {
+            const newValue = newOrderIds.map(
+              (id) => value.find((v) => v.__id === id) as RelatedItem,
+            );
+            console.log({ newValue, newOrderIds });
+            props.onChange(newValue);
+          }}
+        >
+          {value.map((relationDoc: RelatedItem) => {
+            const isDefault = relationDoc.__state === RelatedItemState.Default;
+            const isDeselected =
+              relationDoc.__state === RelatedItemState.Deleted;
+            const isNew = relationDoc.__state === RelatedItemState.Created;
+            const isSortable = !!sortField;
+            const isPicked = relationDoc.__state === RelatedItemState.Picked;
+            const isUpdated = relationDoc.__state === RelatedItemState.Updated;
 
-              const doc = docs?.items?.find(
-                (v) =>
-                  String(getRelatedPkValue(v)) === String(relationDoc.__id),
-              );
+            const doc = docs?.items?.find(
+              (v) => String(getRelatedPkValue(v)) === String(relationDoc.__id),
+            );
 
-              const draftValue = relationDoc ? (relationDoc as any) : undefined;
+            const draftValue = relationDoc ? (relationDoc as any) : undefined;
 
-              const parsedFromDoc = parseTemplate(
-                effectiveTemplate,
-                doc,
-                fields,
-              );
-              const parsedFromValue = parseTemplate(
-                effectiveTemplate,
-                draftValue,
-                fields,
-              );
-              const partsFromDoc = parseTemplateParts(
-                effectiveTemplate,
-                doc,
-                fields,
-              );
-              const partsFromValue = parseTemplateParts(
-                effectiveTemplate,
-                draftValue,
-                fields,
-              );
+            const parsedFromDoc = parseTemplate(effectiveTemplate, doc, fields);
+            const parsedFromValue = parseTemplate(
+              effectiveTemplate,
+              draftValue,
+              fields,
+            );
+            const partsFromDoc = parseTemplateParts(
+              effectiveTemplate,
+              doc,
+              fields,
+            );
+            const partsFromValue = parseTemplateParts(
+              effectiveTemplate,
+              draftValue,
+              fields,
+            );
 
-              /**
-               * check if the draft value has values for non-primary key fields
-               */
-              const draftValueHasValues = Object.keys(draftValue || {}).some(
-                (key) => {
-                  const field = relatedFields?.find((f) => f.field === key);
-                  return (
-                    !!field &&
-                    !field?.schema?.is_primary_key &&
-                    field.field !== sortField
-                  );
-                },
-              );
+            /**
+             * check if the draft value has values for non-primary key fields
+             */
+            const draftValueHasValues = Object.keys(draftValue || {}).some(
+              (key) => {
+                const field = relatedFields?.find((f) => f.field === key);
+                return (
+                  !!field &&
+                  !field?.schema?.is_primary_key &&
+                  field.field !== sortField
+                );
+              },
+            );
 
-              const text =
-                draftValue && draftValueHasValues
-                  ? parsedFromValue
-                  : parsedFromDoc;
+            const text =
+              draftValue && draftValueHasValues
+                ? parsedFromValue
+                : parsedFromDoc;
 
-              /**console.log({
+            /**console.log({
   text,
   parsedFromDoc,
   parsedFromValue,
@@ -367,117 +348,114 @@ export const O2MInput = ({
   relationDoc,
 }); */
 
-              return (
-                <Draggable
-                  key={relationDoc.__id?.toString() ?? "" + documentSessionId}
-                  id={relationDoc.__id?.toString() ?? ""}
-                  disabled={!sortField}
-                  activationDelay={200}
-                >
-                  <RelatedListItem
-                    isDraggable={isSortable}
-                    isDeselected={isDeselected}
-                    isUpdated={isUpdated}
-                    isNew={isNew}
-                    isPicked={isPicked}
-                    append={
-                      <>
-                        {!isDeselected && !isPicked && (
-                          <Link
-                            href={{
-                              pathname: isNew
-                                ? `/modals/o2m/[collection]/add`
-                                : `/modals/o2m/[collection]/[id]`,
-                              params: isNew
-                                ? {
-                                    collection: relation.collection,
-                                    document_session_id: documentSessionId,
-                                    id: "",
-                                    item_field: item.field,
-                                    draft_id: relationDoc?.__id,
-                                    draft: draftValue
+            return (
+              <SortableItem
+                key={relationDoc.__id?.toString() ?? "" + documentSessionId}
+                id={relationDoc.__id?.toString() ?? ""}
+                disabled={!sortField}
+                activationDelay={200}
+              >
+                <RelatedListItem
+                  isDraggable={isSortable}
+                  isDeselected={isDeselected}
+                  isUpdated={isUpdated}
+                  isNew={isNew}
+                  isPicked={isPicked}
+                  append={
+                    <>
+                      {!isDeselected && !isPicked && (
+                        <Link
+                          href={{
+                            pathname: isNew
+                              ? `/modals/o2m/[collection]/add`
+                              : `/modals/o2m/[collection]/[id]`,
+                            params: isNew
+                              ? {
+                                  collection: relation.collection,
+                                  document_session_id: documentSessionId,
+                                  id: "",
+                                  item_field: item.field,
+                                  draft_id: relationDoc?.__id,
+                                  draft: draftValue
+                                    ? objectToBase64(draftValue)
+                                    : undefined,
+                                }
+                              : {
+                                  collection: relation.collection,
+                                  document_session_id: documentSessionId,
+                                  id: relationDoc.__id as string | number,
+                                  draft_id: relationDoc?.__id,
+                                  item_field: item.field,
+                                  draft:
+                                    !isDefault && draftValue
                                       ? objectToBase64(draftValue)
                                       : undefined,
-                                  }
-                                : {
-                                    collection: relation.collection,
-                                    document_session_id: documentSessionId,
-                                    id: relationDoc.__id as string | number,
-                                    draft_id: relationDoc?.__id,
-                                    item_field: item.field,
-                                    draft:
-                                      !isDefault && draftValue
-                                        ? objectToBase64(draftValue)
-                                        : undefined,
-                                  },
-                            }}
-                            asChild
-                          >
-                            <Button variant="ghost" rounded>
-                              <DirectusIcon name="edit_square" />
-                            </Button>
-                          </Link>
-                        )}
+                                },
+                          }}
+                          asChild
+                        >
+                          <Button variant="ghost" rounded>
+                            <DirectusIcon name="edit_square" />
+                          </Button>
+                        </Link>
+                      )}
 
-                        <Button
-                          variant="ghost"
-                          onPress={() => {
-                            if (isNew || isPicked) {
+                      <Button
+                        variant="ghost"
+                        onPress={() => {
+                          if (isNew || isPicked) {
+                            props.onChange(
+                              value.filter((v) => v.__id !== relationDoc.__id),
+                            );
+                          } else {
+                            if (isDeselected) {
                               props.onChange(
-                                value.filter(
-                                  (v) => v.__id !== relationDoc.__id,
+                                value.map((v) =>
+                                  v.__id === relationDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Default,
+                                      }
+                                    : v,
                                 ),
                               );
                             } else {
-                              if (isDeselected) {
-                                props.onChange(
-                                  value.map((v) =>
-                                    v.__id === relationDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Default,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              } else {
-                                props.onChange(
-                                  value.map((v) =>
-                                    v.__id === relationDoc.__id
-                                      ? {
-                                          ...v,
-                                          __state: RelatedItemState.Deleted,
-                                        }
-                                      : v,
-                                  ),
-                                );
-                              }
+                              props.onChange(
+                                value.map((v) =>
+                                  v.__id === relationDoc.__id
+                                    ? {
+                                        ...v,
+                                        __state: RelatedItemState.Deleted,
+                                      }
+                                    : v,
+                                ),
+                              );
                             }
-                          }}
-                          rounded
-                        >
-                          {isDeselected ? (
-                            <DirectusIcon name="settings_backup_restore" />
-                          ) : (
-                            <DirectusIcon name="close" />
-                          )}
-                        </Button>
-                      </>
+                          }
+                        }}
+                        rounded
+                      >
+                        {isDeselected ? (
+                          <DirectusIcon name="settings_backup_restore" />
+                        ) : (
+                          <DirectusIcon name="close" />
+                        )}
+                      </Button>
+                    </>
+                  }
+                >
+                  <TemplatePartsRenderer
+                    parts={
+                      draftValue && draftValueHasValues
+                        ? partsFromValue
+                        : partsFromDoc
                     }
-                  >
-                    <TemplatePartsRenderer
-                      parts={
-                        draftValue && draftValueHasValues
-                          ? partsFromValue
-                          : partsFromDoc
-                      }
-                    />
-                  </RelatedListItem>
-                </Draggable>
-              );
-            })}
-          </DraggableStack>
-        </DndProvider>
+                  />
+                </RelatedListItem>
+              </SortableItem>
+            );
+          })}
+        </Sortable>
         {(error || helper) && (
           <Text
             style={[

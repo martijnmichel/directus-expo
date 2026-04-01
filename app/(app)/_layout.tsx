@@ -175,16 +175,7 @@ export default function TabsLayout() {
           options={{ presentation: "modal" }}
         />
 
-        {/**
-         *
-         * Files
-         *
-         */}
-        <Stack.Screen
-          name="modals/files/pick"
-          dangerouslySingular={(_name, params) => `${params?.data}-pick-files`}
-          options={{ presentation: "modal" }}
-        />
+       
 
         <Stack.Screen
           name="modals/dynamic"

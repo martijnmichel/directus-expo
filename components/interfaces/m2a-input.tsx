@@ -48,16 +48,9 @@ import EventBus, {
   RelatedItemState,
 } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import {
-  DndProvider,
-  Draggable,
-  DraggableStack,
-  Droppable,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
+import { Sortable, SortableItem } from "@/contexts/DragDrop";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
-import { count } from "console";
 import { DragIcon, Trash } from "../icons";
 import {
   getAllPathsFromTemplate,
@@ -329,9 +322,7 @@ export const M2AInput = ({
     existingItems,
   }); */
 
-  const RenderItem = ({
-    item: junctionDoc,
-  }:  RelatedItem) => {
+  const RenderItem = ({ item: junctionDoc }: RelatedItem) => {
     const { data: collection } = useCollection(
       junctionDoc?.[oneCollectionField as string] as keyof CoreSchema,
     );
@@ -638,31 +629,27 @@ export const M2AInput = ({
           </Text>
         )}
 
-        <DndProvider>
-          <DraggableStack
-            
-            direction="column"
-            style={{ gap: 3 }}
-            onOrderChange={(newOrderIds: UniqueIdentifier[]) => {
-              const newValue = newOrderIds.map(
-                (id) => value.find((v) => v.__id === id) as RelatedItem,
-              );
-              console.log({ newValue, newOrderIds });
-              onChange(newValue);
-            }}
-          >
-            {value.map((item, index) => (
-              <Draggable
-                key={item.__id + documentSessionId}
-                id={item.__id.toString()}
-                disabled={!sortField}
-                activationDelay={200}
-              >
-                <RenderItem item={item} />
-              </Draggable>
-            ))}
-          </DraggableStack>
-        </DndProvider>
+        <Sortable
+          direction="column"
+          style={{ gap: 3 }}
+          onOrderChange={(newOrderIds) => {
+            const newValue = newOrderIds.map(
+              (id) => value.find((v) => v.__id === id) as RelatedItem,
+            );
+            onChange(newValue);
+          }}
+        >
+          {value.map((item) => (
+            <SortableItem
+              key={item.__id + documentSessionId}
+              id={item.__id.toString()}
+              disabled={!sortField}
+              activationDelay={200}
+            >
+              <RenderItem item={item} />
+            </SortableItem>
+          ))}
+        </Sortable>
 
         {(error || helper) && (
           <Text
