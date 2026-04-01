@@ -99,14 +99,11 @@ export const DocumentEditor = ({
     }
   }, [form, isDirty]);
 
-  const [revision, setRevision] = useState<number>(0);
-  const modalContext = useContext(ModalContext);
   const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
     collection as keyof CoreSchema,
     id as number,
   );
 
-  const { data } = useCollection(collection as keyof CoreSchema);
   const {
     data: document,
     error,
@@ -116,7 +113,7 @@ export const DocumentEditor = ({
     collection: collection as keyof CoreSchema,
     id,
     query: {
-      enabled: id !== "+" && !defaultValues,
+      enabled: id !== "+",
     },
   });
 
@@ -139,6 +136,8 @@ export const DocumentEditor = ({
     //console.log("defaultValues", defaultValues);
     // if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
+
+    console.log({ collection, id, document, defaultValues, mergedDocument: merge(document, defaultValues) });
     if (document) {
       context.reset(
         getDocumentFieldValues(
@@ -287,7 +286,7 @@ export const DocumentEditor = ({
     return null;
   }
   return (
-    <FormProvider key={revision + collection + id} {...context}>
+    <FormProvider key={collection + id} {...context}>
       {submitType !== "inline" && (
         <Stack.Screen
           options={{

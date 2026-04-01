@@ -66,11 +66,7 @@ import {
   parseTemplate,
   parseTemplateParts,
 } from "@/helpers/document/template";
-import {
-  getPrimaryKey,
-  getPrimaryKeyFromAllFields,
-  getPrimaryKeyValue,
-} from "@/hooks/usePrimaryKey";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { DirectusIcon } from "../display/directus-icon";
 import { Text } from "../display/typography";
 import { getCollectionTranslation } from "@/helpers/collections/getCollectionTranslation";
@@ -342,7 +338,7 @@ export const M2AInput = ({
 
     const relatedItem = junctionDoc?.[junctionItemField as string];
     const relatedItemId =
-      typeof relatedItem === "object"
+      typeof relatedItem === "object" && !!relatedPrimaryKey
         ? relatedItem?.[relatedPrimaryKey]
         : relatedItem;
 
@@ -403,20 +399,16 @@ export const M2AInput = ({
       options: { fields: requestFields as any },
       query: {
         enabled:
-          !!relatedCollection && relatedItemId != null && relatedItemId !== "",
+          !!relatedCollection &&
+          relatedItemId != null &&
+          relatedItemId !== "" &&
+          !!relatedPrimaryKey,
       },
     });
 
-    const draftValue = junctionDoc?.[junctionItemField as string];
+    const draftValue = relatedItem;
 
     const draftValueHasValues = typeof relatedItem === "object";
-
-    const parsedFromDoc = parseTemplate(effectiveTemplate, relatedDoc, fields);
-    const parsedFromValue = parseTemplate(
-      effectiveTemplate,
-      draftValue,
-      fields,
-    );
 
     const partsFromDoc = parseTemplateParts(
       effectiveTemplate,
@@ -439,8 +431,6 @@ export const M2AInput = ({
       requestFields,
       relatedFields,
       relatedDoc,
-      parsedFromDoc,
-      parsedFromValue,
       partsFromDoc,
       partsFromValue,
       parts,
@@ -462,7 +452,20 @@ export const M2AInput = ({
     }
 
     return junctionDoc ? (
-      <SortableItem id={__sortId} data={junctionDoc} {...rest}>
+      <SortableItem
+        
+        id={__sortId}
+        data={junctionDoc}
+        onDrop={(id, position, allPositions) => {
+          onChange(
+            value.map((v) => ({
+              ...v,
+              [sortField as string]: allPositions?.[v.__id],
+            })),
+          );
+        }}
+        {...rest}
+      >
         <RelatedListItem
           isDraggable={!!sortField}
           isDeselected={isDeselected}
@@ -487,7 +490,10 @@ export const M2AInput = ({
                       ?.id as string | number,
                     id: relatedItemId as string | number,
                     draft_id: junctionDoc.__id,
-                    draft: draftValue ? objectToBase64(draftValue) : undefined,
+                    draft:
+                      draftValue && typeof draftValue === "object"
+                        ? objectToBase64(draftValue)
+                        : undefined,
                   },
                 }}
                 asChild
@@ -555,6 +561,8 @@ export const M2AInput = ({
     collection: string;
     onPress: (href: Href) => void;
   }) => {
+    const { data: relatedFields } = useFields(collection as any);
+    const relatedPrimaryKey = getPrimaryKey(relatedFields);
     return (
       !!junction &&
       !!relation && (
@@ -571,14 +579,17 @@ export const M2AInput = ({
                 related_collection: relation.related_collection,
                 related_field: relation.field,
                 current_value: [
-                  ...(pickedItems?.items?.map((i: any) => {
-                    const raw = i?.[junction.meta.junction_field as string];
-                    if (raw == null) return undefined;
-                    return getPrimaryKeyValue(raw, undefined, raw);
+                  ...(existingItems?.items?.map((i: any) => {
+                    const raw = i?.[junctionItemField as string];
+                    typeof raw === "object" && !!relatedPrimaryKey
+                      ? raw?.[relatedPrimaryKey]
+                      : raw;
                   }) ?? []),
                   ...value.map((i: any) => {
                     const v = i?.[junctionItemField];
-                    return getPrimaryKeyValue(v, undefined, v);
+                    typeof v === "object" && !!relatedPrimaryKey
+                      ? v?.[relatedPrimaryKey]
+                      : v;
                   }),
                 ]
                   .filter(Boolean)

@@ -72,7 +72,10 @@ export default function Collection() {
   const { data: options, refetch } = useDocuments(
     collection as keyof CoreSchema,
     {
-      fields: [primaryKey as string, ...tableFields.filter((f: string) => !f.includes("."))],
+      fields: [
+        primaryKey as string,
+        ...tableFields.filter((f: string) => !f.includes(".")),
+      ],
 
       page,
       limit,
@@ -86,31 +89,32 @@ export default function Collection() {
             }
           : {}),
       },
-    }
+    },
   );
 
   const nestedFields = tableFields.filter((f: string) => f.includes("."));
   const expandedFields = nestedFields.map((f: string) =>
-    f.includes(".$") ? f.split(".$")[0] : f
+    f.includes(".$") ? f.split(".$")[0] : f,
   );
 
-  const relatedIds = map(options?.items, (doc) => doc[primaryKey as string]) ?? [];
+  const relatedIds =
+    map(options?.items, (doc) => doc[primaryKey as string]) ?? [];
   const hasRelatedIds = relatedIds.length > 0;
 
-  const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
-    collection as keyof CoreSchema,
-    {
-      fields: [...expandedFields, primaryKey as any],
-      limit: -1,
-      filter:
-        hasRelatedIds
+  const { data: relatedDocuments, refetch: refetchRelatedDocuments } =
+    useDocuments(
+      collection as keyof CoreSchema,
+      {
+        fields: [...expandedFields, primaryKey as any],
+        limit: -1,
+        filter: hasRelatedIds
           ? { [primaryKey as any]: { _in: relatedIds } }
           : { [primaryKey as any]: { _eq: null } },
-    },
-    {
-      enabled: hasRelatedIds && nestedFields.length > 0,
-    }
-  );
+      },
+      {
+        enabled: hasRelatedIds && nestedFields.length > 0,
+      },
+    );
 
   useEffect(() => {
     refetch();
@@ -139,7 +143,7 @@ export default function Collection() {
             ...prev,
             [curr]: label(curr.split(".")[curr.split(".").length - 1]) || "",
           }),
-          {}
+          {},
         )}
         toolbarItems={
           <>
@@ -152,8 +156,10 @@ export default function Collection() {
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
           map(tableFields, (f) => {
-            const relatedDoc = (relatedDocuments?.items as Record<string, unknown>[] | undefined)?.find(
-              (r) => r[primaryKey as string] === doc[primaryKey as string]
+            const relatedDoc = (
+              relatedDocuments?.items as Record<string, unknown>[] | undefined
+            )?.find(
+              (r) => r[primaryKey as string] === doc[primaryKey as string],
             );
             return (
               <DataTableColumn
@@ -171,10 +177,13 @@ export default function Collection() {
           router.dismiss();
           requestAnimationFrame(() => {
             EventBus.emit("m2a:add", {
-              data: doc as CoreSchemaDocument,
-              uuid: uuid as string,
+              data: {
+                [primaryKey as string]: doc[primaryKey as string],
+              } as CoreSchemaDocument,
+              document_session_id: uuid as string,
               field: item_field as string,
               collection: collection as keyof CoreSchema,
+              __id: doc[primaryKey as string] as string,
             });
           });
         }}
