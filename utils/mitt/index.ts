@@ -50,10 +50,19 @@ export type MittEvents = {
   /**
    * M2O (Many to One)
    */
-  "m2o:pick": {
+  "m2o:add": {
     data: CoreSchemaDocument;
     field: string;
     document_session_id: string;
+    draft_id?: string;
+    // __id set by picking an existing item
+    __id?: string;
+  };
+  "m2o:update": {
+    document_session_id: string | number;
+    field: string;
+    data: CoreSchemaDocument;
+    draft_id: string;
   };
 
   /**

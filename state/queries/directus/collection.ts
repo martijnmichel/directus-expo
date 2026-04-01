@@ -153,6 +153,7 @@ export const usePresets = () => {
   const { directus, user } = useAuth();
   return useQuery({
     queryKey: ["presets", user?.id],
+    staleTime: 60 * 1000, // 1 minute
     queryFn: () => directus?.request(readPresets()),
   });
 };

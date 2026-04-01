@@ -217,7 +217,7 @@ export const M2AInput = ({
 
         const item = !!valueItem ? valueItem : existingItem;
 
-        console.log({ existingItem, valueItem });
+        //console.log({ existingItem, valueItem });
         return {
           ...v,
           __id: createJunctionId(v.__id, item?.[oneCollectionField as string]),
@@ -322,7 +322,7 @@ export const M2AInput = ({
     item.field,
   ]);
 
-  console.log({
+  /**console.log({
     item,
     docId,
     valueProp,
@@ -331,7 +331,7 @@ export const M2AInput = ({
     sortField,
     relation,
     existingItems,
-  });
+  }); */
 
   const RenderItem = ({
     item: junctionDoc,
@@ -450,7 +450,7 @@ export const M2AInput = ({
     const parts =
       !!draftValue && !!draftValueHasValues ? partsFromValue : partsFromDoc;
 
-    console.log({
+   /** console.log({
       junctionDoc,
       relatedPrimaryKey,
       displayTemplate,
@@ -469,7 +469,7 @@ export const M2AInput = ({
       draftValueHasValues,
       item,
     });
-
+ */
     if (!relation) {
       return (
         <RelatedListItem>

@@ -70,8 +70,7 @@ export default function Collection() {
               onSave={async (document) => {
                 router.dismiss();
                 console.log({ collection, id });
-                EventBus.emit("o2m:update", {
-                  collection: collection as keyof CoreSchema,
+                EventBus.emit("m2o:update", {
                   document_session_id: document_session_id as string,
                   field: item_field as string,
                   data: {[primaryKey as string]: id, ...document} as CoreSchemaDocument,

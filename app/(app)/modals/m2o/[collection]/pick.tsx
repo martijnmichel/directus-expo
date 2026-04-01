@@ -47,8 +47,8 @@ type PickModalParams = {
 };
 
 export default function Collection() {
-  const { data, collection } = useLocalSearchParams();
-  const { field, value, filter, uuid } = base64ToObject(data as string);
+  const { collection, field, document_session_id, filter: filterParam } = useLocalSearchParams();
+  const filter = filterParam ? base64ToObject(filterParam as string) : undefined;
 
   const { data: fields } = useFields(collection as keyof CoreSchema);
 
@@ -70,7 +70,7 @@ export default function Collection() {
     collection as keyof CoreSchema,
     {
       fields: [`*`],
-      filter,
+      ...(filter ? { filter } : {}),
       page,
       limit,
       search,
@@ -143,10 +143,11 @@ export default function Collection() {
         }
         onRowPress={(doc) => {
           router.dismiss();
-          EventBus.emit("m2o:pick", {
-            data: doc as CoreSchemaDocument,
-            uuid: uuid as string,
+          EventBus.emit("m2o:add", {
+            data: {[primaryKey as string]: doc?.[primaryKey as string]} as CoreSchemaDocument,
+            document_session_id: document_session_id as string,
             field: field as string,
+            __id: doc?.[primaryKey as string] as string,
           });
         }}
       />

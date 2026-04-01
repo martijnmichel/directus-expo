@@ -19,25 +19,17 @@ import { DocumentEditor } from "@/components/content/DocumentEditor";
 import { map } from "lodash";
 import { CoreSchema, createItem, readItem } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
-import {
-  useCollection,
-  useDocument,
-} from "@/state/queries/directus/collection";
+import { useCollection } from "@/state/queries/directus/collection";
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
-import { EventBus } from "@/utils/mitt";
-import { usePrimaryKey } from "@/hooks/usePrimaryKey";
-import { base64ToObject } from "@/helpers/document/docToBase64";
+import EventBus from "@/utils/mitt";
+import { useAuth } from "@/contexts/AuthContext";
 import { CoreSchemaDocument } from "@/types/directus";
+import { useTranslation } from "react-i18next";
+import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const {
-    collection,
-    id,
-    document_session_id,
-    draft_id,
-    draft: draftData,
-    item_field,
-  } = useLocalSearchParams();
+  const { collection, item_field, document_session_id, draft_id, draft: draftData } = useLocalSearchParams();
   const draft = draftData ? base64ToObject(draftData as string) : undefined;
+  const id = "+";
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -45,17 +37,16 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
+  const { directus } = useAuth();
 
-  const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
-
-  const headerStyles = useHeaderStyles({ isModal: true });
-
+  const headerStyle = useHeaderStyles({ isModal: true });
+  const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>
       <Stack.Screen
         options={{
           headerTitle,
-          ...headerStyles,
+          ...headerStyle,
           presentation: "modal",
         }}
       />
@@ -65,16 +56,14 @@ export default function Collection() {
             <DocumentEditor
               collection={collection as keyof CoreSchema}
               id={id as string}
-              defaultValues={draft}
               submitType="raw"
+              defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
-                console.log({ collection, id });
-                EventBus.emit("o2m:update", {
-                  collection: collection as keyof CoreSchema,
-                  document_session_id: document_session_id as string,
+                EventBus.emit("m2o:add", {
+                  data: document as CoreSchemaDocument,
                   field: item_field as string,
-                  data: {[primaryKey as string]: id, ...document} as CoreSchemaDocument,
+                  document_session_id: document_session_id as string,
                   draft_id: draft_id as string,
                 });
               }}

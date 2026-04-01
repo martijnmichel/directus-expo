@@ -113,6 +113,21 @@ export default function TabsLayout() {
           options={{ presentation: "modal" }}
         />
 
+        <Stack.Screen
+          name="modals/m2o/[collection]/[id]/index"
+          dangerouslySingular={(_name, params) =>
+            `${params?.collection}-${params?.id}-${params?.item_field}-${params?.document_session_id}-edit-m2o`
+          }
+          options={{ presentation: "modal" }}
+        />
+
+        <Stack.Screen
+          name="modals/m2o/[collection]/add"
+          dangerouslySingular={(_name, params) =>
+            `${params?.collection}-${params?.item_field}-${params?.document_session_id}-add-m2o`
+          }
+          options={{ presentation: "modal" }}
+        />
         {/**
          *
          * O2M

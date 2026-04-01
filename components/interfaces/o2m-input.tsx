@@ -172,7 +172,7 @@ export const O2MInput = ({
     },
   );
 
-  console.log({
+  /**console.log({
     docs,
     value,
     primaryKey,
@@ -181,7 +181,7 @@ export const O2MInput = ({
     relation,
     relatedCollectionMeta,
     sortField,
-  });
+  }); */
 
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
@@ -343,7 +343,7 @@ export const O2MInput = ({
                 ? parsedFromValue
                 : parsedFromDoc;
 
-            console.log({
+            /**console.log({
               text,
               parsedFromDoc,
               parsedFromValue,
@@ -351,7 +351,7 @@ export const O2MInput = ({
               draftValueHasValues,
               doc,
               relationDoc,
-            });
+            }); */
 
             return (
               <SortableItem

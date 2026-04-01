@@ -19,7 +19,7 @@ type ButtonColorScheme =
   | "success"
   | "warning"
   | "normal";
-type ButtonSize = "xs" | "sm" | "md" | "lg";
+type ButtonSize = "xs" | "sm" | "md" | "lg" | "icon";
 
 interface IconProps {
   color?: string;
@@ -315,6 +315,13 @@ const stylesheet = createStyleSheet((theme) => ({
     minWidth: 48,
   },
 
+  icon: {
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.sm,
+    minHeight: 24,
+    minWidth: 24,
+  },
+
   // Text styles
   text: {
     fontSize: theme.typography.body.fontSize,
@@ -332,6 +339,9 @@ const stylesheet = createStyleSheet((theme) => ({
   },
   lgText: {
     fontSize: 18,
+  },
+  iconText: {
+    fontSize: 20,
   },
   // States
   disabled: {

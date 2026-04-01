@@ -15,7 +15,15 @@ export function getValuesAtPath(obj: unknown, path: string): unknown[] {
     typeof obj === "object" && obj !== null && key in obj
       ? (obj as Record<string, unknown>)[key]
       : undefined;
-  if (rest.length === 0) return val != null ? [val] : [];
+  if (rest.length === 0) {
+    if (val == null) return [];
+    // If the leaf value itself is an array (e.g. tags: ["ok"]),
+    // return its members so template parsers can render them.
+    if (Array.isArray(val)) {
+      return val.filter((item) => item !== null && item !== undefined);
+    }
+    return [val];
+  }
   if (Array.isArray(val))
     return val.flatMap((item) => getValuesAtPath(item, restPath));
   return getValuesAtPath(val, restPath);
