@@ -130,6 +130,7 @@ export const ImageInput = ({
                   Authorization: `Bearer ${token}`,
                 },
               }}
+              contentFit="cover"
               style={styles.image}
             />
           )}
@@ -289,8 +290,7 @@ const imageStyles = createStyleSheet((theme) => ({
   },
   image: {
     width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    height: "100%"
   },
   overlay: {
     backgroundColor: "rgba(0,0,0,0.3)",
