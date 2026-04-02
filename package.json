@@ -1,7 +1,7 @@
 {
   "name": "directus-expo",
   "main": "expo-router/entry",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "scripts": {
     "postinstall": "patch-package",
     "eas-build-pre-install": "node scripts/cleanup-android-launcher-webp.js",

@@ -1,3 +1,7 @@
+## 0.14.0 (2026-04-02)
+
+* build: bump version ([4545b25](https://github.com/martijnmichel/directus-expo/commit/4545b25))
+
 ## 0.13.0 (2026-04-02)
 
 * __state deselected ([a1418c1](https://github.com/martijnmichel/directus-expo/commit/a1418c1))
