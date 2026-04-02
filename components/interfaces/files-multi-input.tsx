@@ -258,7 +258,7 @@ export const FilesMultiInput = ({
         <Sortable.Grid
           columns={1}
           rowGap={3}
-          sortEnabled={!!sortField}
+          sortEnabled={!!sortField || disabled}
           keyExtractor={(item) => item.__id}
           data={value}
           onDragEnd={(updatedValue) => {

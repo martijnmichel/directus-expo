@@ -351,7 +351,7 @@ export const M2MInput = ({
           columns={1}
           rowGap={3}
           data={value}
-          sortEnabled={!!sortField}
+          sortEnabled={!!sortField || disabled}
           keyExtractor={(item) => item.__id}
           onDragEnd={(updatedValue) => {
             console.log({ updatedValue });

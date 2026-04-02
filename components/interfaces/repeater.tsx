@@ -112,6 +112,7 @@ export const RepeaterInput = ({
         columns={1}
         rowGap={3}
         data={value}
+        sortEnabled={disabled}
         keyExtractor={(item) => item.__id}
         onDragEnd={(updatedValue) => {
           console.log({ updatedValue });
