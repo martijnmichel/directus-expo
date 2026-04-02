@@ -3,7 +3,7 @@
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
   <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
-  <string name="expo_runtime_version">12</string>
+  <string name="expo_runtime_version">14</string>
   <string name="widget_latest_items_description">Shows latest items from a Directus collection.</string>
   <string name="widget_latest_items_title">Latest Items</string>
 </resources>
