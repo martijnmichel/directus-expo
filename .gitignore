@@ -49,3 +49,6 @@ yarn-error.*
 build-*.tar.gz
 
 .env
+
+database
+uploads
