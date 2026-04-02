@@ -169,22 +169,6 @@ export const FilesMultiInput = ({
     "+",
   );
 
-
-  const interfaceTemplate = item.meta.options?.template || "";
-
-  const effectiveTemplate =
-    interfaceTemplate ||
-    (relatedCollection?.meta?.display_template as string | undefined) ||
-    "";
-
-  const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
-    .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
-    .filter(Boolean);
-
-  const prefixedTemplatePaths = templatePaths.map((p) =>
-    p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
-  );
-
   const requestFields = uniq([
     pk,
     junctionField,
@@ -301,7 +285,7 @@ export const FilesMultiInput = ({
               ? (junctionDocFromDB as any)[relation?.field as string]
               : undefined;
 
-            console.log({
+            /**console.log({
               relatedDocs,
               doc,
               value,
@@ -317,7 +301,7 @@ export const FilesMultiInput = ({
               newFilesIds,
               newDoc,
               junctionDocFromDB,
-            });
+            }); */
 
             return (
               <RelatedListItem
