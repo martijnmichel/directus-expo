@@ -33,6 +33,16 @@ import Animated, {
 // --- delimiter: unlikely in user ids (e.g. UUID / numeric string ids) ---
 const ID_SEP = "\uE000";
 
+// Debug helper: limited console noise so we can understand cold-start behavior.
+// Budget keeps logging from flooding device logs.
+let DND_LOG_BUDGET = 80;
+function dndLog(...args: unknown[]) {
+  if (DND_LOG_BUDGET <= 0) return;
+  DND_LOG_BUDGET -= 1;
+  // eslint-disable-next-line no-console
+  console.log("[DND]", ...args);
+}
+
 // ---------------------------------------------------------------------------
 // Drag / drop UI context (scroll lock, etc.)
 // ---------------------------------------------------------------------------
@@ -402,6 +412,8 @@ function useSortableDraggable({
           activationDelay,
           activationTolerance,
         };
+        // Log on first registration so we can see cold-start measurement timing.
+        runOnJS(dndLog)("layoutRegistered", { id, layouts: Object.keys(draggableLayouts.value).length });
       });
     };
     runOnUI(runLayoutEffect)();
@@ -514,13 +526,29 @@ function useDraggableSort({
   useAnimatedReaction(
     () => childrenIds,
     (next, prev) => {
-      if (prev === null) return;
+      // When `childrenIds` changes identity, Reanimated recreates the reaction and
+      // `prev` is `null` for the first evaluation. We still need to initialize our
+      // internal sort order from `next` (especially on cold start where `next`
+      // transitions from empty -> non-empty).
+      if (prev === null) {
+        if (next.length > 0) {
+          draggableSortOrder.value = next.slice();
+          draggableLastOrder.value = next.slice();
+          draggablePlaceholderIndex.value = -1;
+          draggableActiveLayout.value = null;
+        }
+        return;
+      }
       if (arraysEqual(next, prev)) {
         return;
       }
 
       // Empty → first items: initialise order (upstream skipped prev.length === 0)
       if (prev.length === 0 && next.length > 0) {
+        runOnJS(dndLog)("sortOrderInit", {
+          prevLen: prev.length,
+          nextLen: next.length,
+        });
         draggableSortOrder.value = next.slice();
         draggableLastOrder.value = next.slice();
         return;
@@ -533,6 +561,9 @@ function useDraggableSort({
         arraysEqual(prev.slice().sort(), next.slice().sort()) &&
         !arraysEqual(prev, next)
       ) {
+        runOnJS(dndLog)("sortOrderSyncPermutation", {
+          len: next.length,
+        });
         draggableSortOrder.value = next.slice();
         draggableLastOrder.value = next.slice();
         draggablePlaceholderIndex.value = -1;
@@ -548,6 +579,11 @@ function useDraggableSort({
 
       const removedIds = prev.filter((id) => !next.includes(id));
       if (removedIds.length > 0) {
+        runOnJS(dndLog)("sortOrderRemoved", {
+          removedLen: removedIds.length,
+          prevLen: prev.length,
+          nextLen: next.length,
+        });
         draggableSortOrder.value = draggableSortOrder.value.filter(
           (itemId) => !removedIds.includes(itemId),
         );
@@ -555,6 +591,12 @@ function useDraggableSort({
 
       const layouts = draggableLayouts.value;
       const addedIds = next.filter((id) => !prev.includes(id));
+      if (addedIds.length > 0) {
+        runOnJS(dndLog)("sortOrderAdd", {
+          addedLen: addedIds.length,
+          firstAdded: addedIds[0],
+        });
+      }
       addedIds.forEach((addId) => {
         const positionEntries = Object.entries(layouts).map(([key, l]) => [
           key,
@@ -598,7 +640,15 @@ function useDraggableSort({
         return;
       }
       if (!childrenIds.includes(nextActiveId)) return;
-      draggablePlaceholderIndex.value = findPlaceholderIndex(nextActiveLayout);
+      const placeholder = findPlaceholderIndex(nextActiveLayout);
+      draggablePlaceholderIndex.value = placeholder;
+      if (placeholder === -1 && DND_LOG_BUDGET > 0) {
+        runOnJS(dndLog)("placeholderIndexMiss", {
+          activeId: nextActiveId,
+          sortOrderLen: draggableSortOrder.value.length,
+          layoutsKnownLen: Object.keys(draggableLayouts.value).length,
+        });
+      }
     },
     [childrenIds],
   );
@@ -619,6 +669,18 @@ function useDraggableSort({
               prevOrder.length === childrenIds.length &&
               sameStringMultiset(prevOrder, childrenIds)
             ) {
+              runOnJS(dndLog)("placeholderDropEnd", {
+                prevPlaceholderIndex,
+                emittedLen: prevOrder.length,
+              });
+              runOnJS(dndLog)(
+                "onOrderChange",
+                {
+                  emittedLen: prevOrder.length,
+                  first: prevOrder[0],
+                  last: prevOrder[prevOrder.length - 1],
+                } as Record<string, unknown>,
+              );
               runOnJS(onOrderChange)(prevOrder.slice());
             }
           }
@@ -808,6 +870,8 @@ const SortableInner = forwardRef<
     shouldSwapWorklet,
   });
 
+  const prevChildrenLenRef = useRef<number | null>(null);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -818,7 +882,49 @@ const SortableInner = forwardRef<
   );
 
   useEffect(() => {
-    runOnUI(refreshOffsets)();
+    // Items register their layout measurements asynchronously (via requestAnimationFrame
+    // inside SortableItem). On a full app refresh, some sibling sortables can mount before
+    // their first measurements land, resulting in “no placeholder / no reorder”.
+    const prevLen = prevChildrenLenRef.current;
+    const shouldRetry = prevLen === null || prevLen !== childrenIds.length;
+    prevChildrenLenRef.current = childrenIds.length;
+
+    // On initial mount / add-remove, item measurements arrive asynchronously
+    // (requestAnimationFrame inside SortableItem). Retry a few frames so every
+    // instance gets placeholder/layouts before first interaction.
+    // On pure reorder (same length), do only one refresh to avoid flashes.
+    // Some list items (eg. template-heavy related item render) may register their
+    // layout measurements noticeably later on a full app cold start.
+    // Increase initial retry window so placeholder/index logic works on first open.
+    // Cold-start template rendering can delay `measureLayout` for some items.
+    // Keep retrying for a few seconds to ensure sibling placeholders can be computed.
+    const maxRaf = shouldRetry ? 240 : 1;
+
+    dndLog("SortableInner.refreshOffsetsStart", {
+      shouldRetry,
+      maxRaf,
+      childrenLen: childrenIds.length,
+    });
+
+    let cancelled = false;
+    let rafCount = 0;
+
+    const tick = () => {
+      if (cancelled) return;
+      if (rafCount < 3) {
+        dndLog("SortableInner.refreshOffsetsTick", { rafCount });
+      }
+      runOnUI(refreshOffsets)();
+      rafCount += 1;
+      if (rafCount < maxRaf) {
+        requestAnimationFrame(tick);
+      }
+    };
+
+    tick();
+    return () => {
+      cancelled = true;
+    };
   }, [childrenIds, refreshOffsets]);
 
   return <>{children}</>;
