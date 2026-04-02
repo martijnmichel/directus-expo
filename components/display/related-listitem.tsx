@@ -106,7 +106,7 @@ export const listStyles = createStyleSheet((theme) => ({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-
+    flexShrink: 1,
     fontFamily: theme.typography.body.fontFamily,
   },
 }));

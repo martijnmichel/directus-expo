@@ -27,7 +27,7 @@ export const TemplatePartsRenderer = ({
         }
 
         return (
-          <Text key={`text-${index}-${part.value}`} numberOfLines={1}>
+          <Text key={`text-${index}-${part.value}`} numberOfLines={1} style={{ flexShrink: 1 }}>
             {preserveWhitespace(part.value)}
           </Text>
         );
