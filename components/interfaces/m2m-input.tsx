@@ -352,7 +352,10 @@ export const M2MInput = ({
           style={{ gap: 3 }}
           onOrderChange={(newOrderIds) => {
             const newValue = newOrderIds.map(
-              (id) => value.find((v) => v.__id === id.split("-")[0]) as RelatedItem,
+              (id) => {
+                const rawId = id.split("::")[0];
+                return value.find((v) => String(v.__id) === rawId) as RelatedItem;
+              },
             );
             onChange(newValue);
           }}
@@ -420,8 +423,8 @@ export const M2MInput = ({
 
             return (
               <SortableItem
-                key={junctionDoc.__id?.toString() ?? "" + documentSessionId + item.field}
-                id={`${junctionDoc.__id?.toString() ?? ""}-${documentSessionId}-${item.field}`}
+                key={`${String(junctionDoc.__id ?? "")}::${String(documentSessionId)}::${String(item.field)}`}
+                id={`${String(junctionDoc.__id ?? "")}::${String(documentSessionId)}::${String(item.field)}`}
                 disabled={!sortField}
                 activationDelay={200}
               >

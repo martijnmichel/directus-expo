@@ -281,7 +281,7 @@ export const O2MInput = ({
           style={{ gap: 3 }}
           onOrderChange={(newOrderIds) => {
             const newValue = newOrderIds.map(
-              (id) => value.find((v) => v.__id === id) as RelatedItem,
+              (id) => value.find((v) => v.__id === id.split("::")[0]) as RelatedItem,
             );
             console.log({ newValue, newOrderIds });
             props.onChange(newValue);
@@ -351,7 +351,7 @@ export const O2MInput = ({
             return (
               <SortableItem
                 key={relationDoc.__id?.toString() ?? "" + documentSessionId}
-                id={relationDoc.__id?.toString() ?? ""}
+                id={`${relationDoc.__id?.toString() ?? ""}::${documentSessionId}::${item.field}`}
                 disabled={!sortField}
                 activationDelay={200}
               >
