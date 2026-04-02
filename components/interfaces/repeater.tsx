@@ -7,7 +7,7 @@ import { formStyles } from "./style";
 import { Link } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { Sortable, SortableItem } from "@/contexts/DragDrop";
-import EventBus from "@/utils/mitt";
+import EventBus, { MittEvents, RelatedItem } from "@/utils/mitt";
 import { DragIcon, Trash, Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
@@ -52,13 +52,6 @@ export const RepeaterInput = ({
       : [];
   }, [valueProp]);
 
-  const onOrderChange = useCallback(
-    (order: string[]) => {
-      const newItems = order.map((index) => value[parseInt(index, 10)]);
-      onChange?.(newItems);
-    },
-    [value, onChange],
-  );
 
   const getDisplayValue = (repeatItem: any) => {
     const format = item.meta?.display_options?.format;
@@ -71,21 +64,35 @@ export const RepeaterInput = ({
   };
 
   useEffect(() => {
-    EventBus.on("repeater:add", (data) => {
-      if (data.field === item.field && data.document_session_id === documentSessionId) {
+    const addRepeater = (data: MittEvents["repeater:add"]) => {
+      if (
+        data.field === item.field &&
+        data.document_session_id === documentSessionId
+      ) {
         onChange([...value, { ...data.data, __id: generateUUID() }]);
       }
-    });
+    };
 
-    EventBus.on("repeater:edit", (data) => {
-      if (data.field === item.field && data.document_session_id === documentSessionId) {
+    const editRepeater = (data: MittEvents["repeater:edit"]) => {
+      if (
+        data.field === item.field &&
+        data.document_session_id === documentSessionId
+      ) {
         const newValue = [...value, { ...data.data, __id: generateUUID() }];
         onChange(newValue);
       }
-    });
+    };
+
+    EventBus.on("repeater:add", addRepeater);
+    EventBus.on("repeater:edit", editRepeater);
+
+    return () => {
+      EventBus.off("repeater:add", addRepeater);
+      EventBus.off("repeater:edit", editRepeater);
+    };
   }, [onChange, item.field, documentSessionId, value]);
 
-  console.log({ item, value })
+  console.log({ item, value });
 
   return (
     <Vertical spacing="xs">
@@ -99,19 +106,27 @@ export const RepeaterInput = ({
         <Alert message={t("components.repeater.noItems")} status="info" />
       )}
 
-      <Sortable direction="column" style={{ gap: 3 }} onOrderChange={onOrderChange}>
+      <Sortable
+        direction="column"
+        style={{ gap: 3 }}
+        onOrderChange={(newOrderIds) => {
+          const newValue = newOrderIds.map(
+            (id) => value.find((v) => v.__id === id) as RelatedItem,
+          );
+          console.log({ newValue, newOrderIds });
+          onChange(newValue);
+        }}
+      >
         {(value || []).map((repeaterItem, index) => (
           <SortableItem
             key={repeaterItem.__id}
             id={repeaterItem.__id.toString()}
-            disabled={!item.meta?.options?.sortable}
             activationDelay={200}
           >
             <RelatedListItem
               isDraggable
               append={
                 <>
-                  
                   <Link
                     href={{
                       pathname: `/modals/repeater/edit`,
