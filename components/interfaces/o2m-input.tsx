@@ -56,7 +56,7 @@ import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
-import { Sortable, SortableItem } from "@/contexts/DragDrop";
+import Sortable from "react-native-sortables";
 
 type O2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -276,18 +276,17 @@ export const O2MInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <Sortable
-          direction="column"
-          style={{ gap: 3 }}
-          onOrderChange={(newOrderIds) => {
-            const newValue = newOrderIds.map(
-              (id) => value.find((v) => v.__id === id.split("::")[0]) as RelatedItem,
-            );
-            console.log({ newValue, newOrderIds });
-            props.onChange(newValue);
+        <Sortable.Grid
+          columns={1}
+          rowGap={3}
+          data={value}
+          sortEnabled={!!sortField}
+          keyExtractor={(item) => item.__id}
+          onDragEnd={(updatedValue) => {
+            console.log({ updatedValue });
+            props.onChange(updatedValue.data);
           }}
-        >
-          {value.map((relationDoc: RelatedItem) => {
+          renderItem={({ item: relationDoc }: { item: RelatedItem }) => {
             const isDefault = relationDoc.__state === RelatedItemState.Default;
             const isDeselected =
               relationDoc.__state === RelatedItemState.Deleted;
@@ -349,113 +348,106 @@ export const O2MInput = ({
 }); */
 
             return (
-              <SortableItem
-                key={relationDoc.__id?.toString() ?? "" + documentSessionId}
-                id={`${relationDoc.__id?.toString() ?? ""}::${documentSessionId}::${item.field}`}
-                disabled={!sortField}
-                activationDelay={200}
-              >
-                <RelatedListItem
-                  isDraggable={isSortable}
-                  isDeselected={isDeselected}
-                  isUpdated={isUpdated}
-                  isNew={isNew}
-                  isPicked={isPicked}
-                  append={
-                    <>
-                      {!isDeselected && !isPicked && (
-                        <Link
-                          href={{
-                            pathname: isNew
-                              ? `/modals/o2m/[collection]/add`
-                              : `/modals/o2m/[collection]/[id]`,
-                            params: isNew
-                              ? {
-                                  collection: relation.collection,
-                                  document_session_id: documentSessionId,
-                                  id: "",
-                                  item_field: item.field,
-                                  draft_id: relationDoc?.__id,
-                                  draft: draftValue
+              <RelatedListItem
+                isDraggable={isSortable}
+                isDeselected={isDeselected}
+                isUpdated={isUpdated}
+                isNew={isNew}
+                isPicked={isPicked}
+                append={
+                  <>
+                    {!isDeselected && !isPicked && (
+                      <Link
+                        href={{
+                          pathname: isNew
+                            ? `/modals/o2m/[collection]/add`
+                            : `/modals/o2m/[collection]/[id]`,
+                          params: isNew
+                            ? {
+                                collection: relation.collection,
+                                document_session_id: documentSessionId,
+                                id: "",
+                                item_field: item.field,
+                                draft_id: relationDoc?.__id,
+                                draft: draftValue
+                                  ? objectToBase64(draftValue)
+                                  : undefined,
+                              }
+                            : {
+                                collection: relation.collection,
+                                document_session_id: documentSessionId,
+                                id: relationDoc.__id as string | number,
+                                draft_id: relationDoc?.__id,
+                                item_field: item.field,
+                                draft:
+                                  !isDefault && draftValue
                                     ? objectToBase64(draftValue)
                                     : undefined,
-                                }
-                              : {
-                                  collection: relation.collection,
-                                  document_session_id: documentSessionId,
-                                  id: relationDoc.__id as string | number,
-                                  draft_id: relationDoc?.__id,
-                                  item_field: item.field,
-                                  draft:
-                                    !isDefault && draftValue
-                                      ? objectToBase64(draftValue)
-                                      : undefined,
-                                },
-                          }}
-                          asChild
-                        >
-                          <Button variant="ghost" rounded>
-                            <DirectusIcon name="edit_square" />
-                          </Button>
-                        </Link>
-                      )}
+                              },
+                        }}
+                        asChild
+                      >
+                        <Button variant="ghost" rounded>
+                          <DirectusIcon name="edit_square" />
+                        </Button>
+                      </Link>
+                    )}
 
-                      <Button
-                        variant="ghost"
-                        onPress={() => {
-                          if (isNew || isPicked) {
+                    <Button
+                      variant="ghost"
+                      onPress={() => {
+                        if (isNew || isPicked) {
+                          props.onChange(
+                            value.filter((v) => v.__id !== relationDoc.__id),
+                          );
+                        } else {
+                          if (isDeselected) {
                             props.onChange(
-                              value.filter((v) => v.__id !== relationDoc.__id),
+                              value.map((v) =>
+                                v.__id === relationDoc.__id
+                                  ? {
+                                      ...v,
+                                      __state: RelatedItemState.Default,
+                                    }
+                                  : v,
+                              ),
                             );
                           } else {
-                            if (isDeselected) {
-                              props.onChange(
-                                value.map((v) =>
-                                  v.__id === relationDoc.__id
-                                    ? {
-                                        ...v,
-                                        __state: RelatedItemState.Default,
-                                      }
-                                    : v,
-                                ),
-                              );
-                            } else {
-                              props.onChange(
-                                value.map((v) =>
-                                  v.__id === relationDoc.__id
-                                    ? {
-                                        ...v,
-                                        __state: RelatedItemState.Deleted,
-                                      }
-                                    : v,
-                                ),
-                              );
-                            }
+                            props.onChange(
+                              value.map((v) =>
+                                v.__id === relationDoc.__id
+                                  ? {
+                                      ...v,
+                                      __state: RelatedItemState.Deleted,
+                                    }
+                                  : v,
+                              ),
+                            );
                           }
-                        }}
-                        rounded
-                      >
-                        {isDeselected ? (
-                          <DirectusIcon name="settings_backup_restore" />
-                        ) : (
-                          <DirectusIcon name="close" />
-                        )}
-                      </Button>
-                    </>
+                        }
+                      }}
+                      rounded
+                    >
+                      {isDeselected ? (
+                        <DirectusIcon name="settings_backup_restore" />
+                      ) : (
+                        <DirectusIcon name="close" />
+                      )}
+                    </Button>
+                  </>
+                }
+              >
+                <TemplatePartsRenderer
+                  parts={
+                    draftValue && draftValueHasValues
+                      ? partsFromValue
+                      : partsFromDoc
                   }
-                >
-                  <TemplatePartsRenderer
-                    parts={
-                      draftValue && draftValueHasValues
-                        ? partsFromValue
-                        : partsFromDoc
-                    }
-                  />
-                </RelatedListItem>
-              </SortableItem>
+                />
+              </RelatedListItem>
             );
-          })}
-        </Sortable>
+          }}
+        />
         {(error || helper) && (
           <Text
             style={[

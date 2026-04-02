@@ -48,7 +48,7 @@ import EventBus, {
   RelatedItemState,
 } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import { Sortable, SortableItem } from "@/contexts/DragDrop";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";
 import { DragIcon, Trash } from "../icons";
@@ -71,6 +71,7 @@ import { generateUUID } from "@/hooks/useUUID";
 
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
+import Sortable from "react-native-sortables";
 
 type M2AInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -629,27 +630,25 @@ export const M2AInput = ({
           </Text>
         )}
 
-        <Sortable
-          direction="column"
-          style={{ gap: 3 }}
-          onOrderChange={(newOrderIds) => {
-            const newValue = newOrderIds.map(
-              (id) => value.find((v) => v.__id === id) as RelatedItem,
-            );
-            onChange(newValue);
+        <Sortable.Grid
+          columns={1}
+          rowGap={3}
+          data={value}
+          sortEnabled={!!sortField}
+          keyExtractor={(item) => item.__id}
+          onDragEnd={(updatedValue) => {
+            console.log({ updatedValue });
+            onChange(updatedValue.data);
           }}
-        >
-          {value.map((item) => (
-            <SortableItem
-              key={item.__id + documentSessionId}
-              id={item.__id.toString()}
-              disabled={!sortField}
-              activationDelay={200}
-            >
-              <RenderItem item={item} />
-            </SortableItem>
-          ))}
-        </Sortable>
+          renderItem={({ item: junctionDoc }: { item: RelatedItem }) => {
+            return (
+              <RenderItem
+                key={`${junctionDoc.__id}-${documentSessionId}`}
+                item={junctionDoc}
+              />
+            );
+          }}
+        />
 
         {(error || helper) && (
           <Text

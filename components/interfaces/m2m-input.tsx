@@ -56,7 +56,7 @@ import { InterfaceProps } from ".";
 import { generateUUID } from "@/hooks/useUUID";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
-import { Sortable, SortableItem } from "@/contexts/DragDrop";
+import Sortable from "react-native-sortables";
 
 type M2MInputProps = InterfaceProps<{
   value: number[] | RelatedItem[];
@@ -347,20 +347,17 @@ export const M2MInput = ({
           </Text>
         )}
 
-        <Sortable
-          direction="column"
-          style={{ gap: 3 }}
-          onOrderChange={(newOrderIds) => {
-            const newValue = newOrderIds.map(
-              (id) => {
-                const rawId = id.split("::")[0];
-                return value.find((v) => String(v.__id) === rawId) as RelatedItem;
-              },
-            );
-            onChange(newValue);
+        <Sortable.Grid
+          columns={1}
+          rowGap={3}
+          data={value}
+          sortEnabled={!!sortField}
+          keyExtractor={(item) => item.__id}
+          onDragEnd={(updatedValue) => {
+            console.log({ updatedValue });
+            onChange(updatedValue.data);
           }}
-        >
-          {value.map((junctionDoc: RelatedItem) => {
+          renderItem={({ item: junctionDoc }: { item: RelatedItem }) => {
             if (typeof junctionDoc === "number") {
               junctionDoc = { id: junctionDoc };
             }
@@ -422,109 +419,102 @@ export const M2MInput = ({
             ]?.[relatedPrimaryKey as string];
 
             return (
-              <SortableItem
-                key={`${String(junctionDoc.__id ?? "")}::${String(documentSessionId)}::${String(item.field)}`}
-                id={`${String(junctionDoc.__id ?? "")}::${String(documentSessionId)}::${String(item.field)}`}
-                disabled={!sortField}
-                activationDelay={200}
-              >
-                <RelatedListItem
-                  isDeselected={isDeselected}
-                  isNew={isNew}
-                  isDraggable={!!sortField}
-                  isUpdated={isUpdated}
-                  isPicked={isPicked}
-                  append={
-                    <>
-                      {!isDeselected && !isPicked && (
-                        <Link
-                          href={{
-                            pathname: isNew
-                              ? `/modals/m2m/[collection]/add`
-                              : `/modals/m2m/[collection]/[id]`,
-                            params: isNew
-                              ? {
-                                  collection: relation.related_collection,
-                                  document_session_id: documentSessionId,
-                                  item_field: item.field,
-                                  id: relatedDocId as string | number,
-                                  draft_id: draftJunctionDoc?.__id,
-                                  draft: draftValue
-                                    ? objectToBase64(draftValue)
-                                    : undefined,
-                                }
-                              : {
-                                  collection: relation.related_collection,
-                                  document_session_id: documentSessionId,
-                                  id: relatedDocId as string | number,
-                                  junction_id: docId as string | number,
-                                  draft_id: draftJunctionDoc?.__id,
-                                  item_field: item.field,
-                                  draft: draftValue
-                                    ? objectToBase64(draftValue)
-                                    : undefined,
-                                },
-                          }}
-                          asChild
-                        >
-                          <Button variant="ghost" rounded>
-                            <DirectusIcon name="edit_square" />
-                          </Button>
-                        </Link>
-                      )}
+              <RelatedListItem
+                isDeselected={isDeselected}
+                isNew={isNew}
+                isDraggable={!!sortField}
+                isUpdated={isUpdated}
+                isPicked={isPicked}
+                append={
+                  <>
+                    {!isDeselected && !isPicked && (
+                      <Link
+                        href={{
+                          pathname: isNew
+                            ? `/modals/m2m/[collection]/add`
+                            : `/modals/m2m/[collection]/[id]`,
+                          params: isNew
+                            ? {
+                                collection: relation.related_collection,
+                                document_session_id: documentSessionId,
+                                item_field: item.field,
+                                id: relatedDocId as string | number,
+                                draft_id: draftJunctionDoc?.__id,
+                                draft: draftValue
+                                  ? objectToBase64(draftValue)
+                                  : undefined,
+                              }
+                            : {
+                                collection: relation.related_collection,
+                                document_session_id: documentSessionId,
+                                id: relatedDocId as string | number,
+                                junction_id: docId as string | number,
+                                draft_id: draftJunctionDoc?.__id,
+                                item_field: item.field,
+                                draft: draftValue
+                                  ? objectToBase64(draftValue)
+                                  : undefined,
+                              },
+                        }}
+                        asChild
+                      >
+                        <Button variant="ghost" rounded>
+                          <DirectusIcon name="edit_square" />
+                        </Button>
+                      </Link>
+                    )}
 
-                      <Button
-                        variant="ghost"
-                        onPress={() => {
-                          if (isNew || isPicked) {
+                    <Button
+                      variant="ghost"
+                      onPress={() => {
+                        if (isNew || isPicked) {
+                          onChange(
+                            value.filter((v) => v.__id !== junctionDoc.__id),
+                          );
+                        } else {
+                          if (isDeselected) {
                             onChange(
-                              value.filter((v) => v.__id !== junctionDoc.__id),
+                              value.map((v) =>
+                                v.__id === junctionDoc.__id
+                                  ? {
+                                      ...v,
+                                      __state: RelatedItemState.Default,
+                                    }
+                                  : v,
+                              ),
                             );
                           } else {
-                            if (isDeselected) {
-                              onChange(
-                                value.map((v) =>
-                                  v.__id === junctionDoc.__id
-                                    ? {
-                                        ...v,
-                                        __state: RelatedItemState.Default,
-                                      }
-                                    : v,
-                                ),
-                              );
-                            } else {
-                              onChange(
-                                value.map((v) =>
-                                  v.__id === junctionDoc.__id
-                                    ? {
-                                        ...v,
-                                        __state: RelatedItemState.Deleted,
-                                      }
-                                    : v,
-                                ),
-                              );
-                            }
+                            onChange(
+                              value.map((v) =>
+                                v.__id === junctionDoc.__id
+                                  ? {
+                                      ...v,
+                                      __state: RelatedItemState.Deleted,
+                                    }
+                                  : v,
+                              ),
+                            );
                           }
-                        }}
-                        rounded
-                      >
-                        {isDeselected ? (
-                          <DirectusIcon name="settings_backup_restore" />
-                        ) : (
-                          <DirectusIcon name="close" />
-                        )}
-                      </Button>
-                    </>
-                  }
-                >
-                  <TemplatePartsRenderer
-                    parts={draftValue ? partsFromValue : partsFromDoc}
-                  />
-                </RelatedListItem>
-              </SortableItem>
+                        }
+                      }}
+                      rounded
+                    >
+                      {isDeselected ? (
+                        <DirectusIcon name="settings_backup_restore" />
+                      ) : (
+                        <DirectusIcon name="close" />
+                      )}
+                    </Button>
+                  </>
+                }
+              >
+                <TemplatePartsRenderer
+                  parts={draftValue ? partsFromValue : partsFromDoc}
+                />
+              </RelatedListItem>
             );
-          })}
-        </Sortable>
+          }}
+        />
 
         {(error || helper) && (
           <Text

@@ -37,7 +37,6 @@ const RepeaterModal = () => {
                 EventBus.emit("repeater:edit", {
                   field: item_field as string,
                   data: doc,
-                  index: parseInt(index as string),
                   document_session_id: document_session_id as string | number,
                 });
               }}

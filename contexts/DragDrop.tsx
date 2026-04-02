@@ -421,11 +421,13 @@ function useSortableDraggable({
       const cleanupLayoutEffect = () => {
         "worklet";
         requestAnimationFrame(() => {
-          delete draggableLayouts.value[id];
-          delete draggableOffsets.value[id];
-          delete draggableRestingOffsets.value[id];
-          delete draggableOptions.value[id];
-          delete draggableStates.value[id];
+          // Do NOT delete shared values immediately on unmount.
+          // On iOS, removing an item can overlap with a running worklet (refresh/placeholder)
+          // which would still read these maps and crash if the entry disappears mid-frame.
+          // Instead, "tombstone" the draggable so it won't be activated again.
+          if (draggableOptions.value[id]) {
+            draggableOptions.value[id].disabled = true;
+          }
         });
       };
       runOnUI(cleanupLayoutEffect)();
@@ -511,7 +513,7 @@ function useDraggableSort({
     for (let itemIndex = 0; itemIndex < sortOrder.length; itemIndex++) {
       const itemId = sortOrder[itemIndex];
       if (itemId === activeId) continue;
-      if (!layouts[itemId]) continue;
+      if (!layouts[itemId] || !offsets[itemId]) continue;
       const itemLayout = applyOffset(layouts[itemId]!.value, {
         x: offsets[itemId]!.x.value,
         y: offsets[itemId]!.y.value,
@@ -811,6 +813,7 @@ function useDraggableStack({
       const offsets = draggableOffsets.value;
       const restingOffsets = draggableRestingOffsets.value;
       if (!activeId) return;
+      if (!layouts[activeId] || !restingOffsets[activeId]) return;
       const activeLayout = layouts[activeId]!.value;
       const prevActiveIndex = prevOrder.findIndex((i) => i === activeId);
       const nextActiveIndex = nextOrder.findIndex((i) => i === activeId);
@@ -820,6 +823,7 @@ function useDraggableStack({
       for (let nextIndex = 0; nextIndex < nextOrder.length; nextIndex++) {
         const iid = nextOrder[nextIndex];
         if (iid === activeId) continue;
+        if (!offsets[iid] || !restingOffsets[iid] || !layouts[iid]) continue;
         const prevIndex = prevOrder.findIndex((i) => i === iid);
         if (nextIndex === prevIndex) continue;
         const moveCol = nextIndex - prevIndex;
@@ -1218,6 +1222,14 @@ export const Sortable = forwardRef(function Sortable(
 
         const activeId = findActiveLayoutId({ x, y });
         if (activeId !== null) {
+          if (
+            !layouts[activeId] ||
+            !offsets[activeId] ||
+            !restingOffsets[activeId] ||
+            !states[activeId]
+          ) {
+            return;
+          }
           const activeLayout = layouts[activeId]!.value;
           const activeOffset = offsets[activeId]!;
           const restingOffset = restingOffsets[activeId]!;
@@ -1273,6 +1285,13 @@ export const Sortable = forwardRef(function Sortable(
           }
           return;
         }
+        if (!offsets[activeId] || !layouts[activeId]) {
+          // Active item was removed/unmounted mid-gesture.
+          draggableActiveId.value = null;
+          draggableActiveLayout.value = null;
+          droppableActiveId.value = null;
+          return;
+        }
 
         const activeOffset = offsets[activeId]!;
         activeOffset.x.value = draggableInitialOffset.x.value + translationX;
@@ -1306,6 +1325,13 @@ export const Sortable = forwardRef(function Sortable(
             }
             draggablePendingId.value = null;
           }
+          return;
+        }
+        if (!offsets[activeId] || !restingOffsets[activeId] || !states[activeId]) {
+          draggablePendingId.value = null;
+          draggableActiveId.value = null;
+          droppableActiveId.value = null;
+          draggableActiveLayout.value = null;
           return;
         }
 

@@ -25,7 +25,7 @@ import {
 import { Horizontal, Vertical } from "../layout/Stack";
 import EventBus, { MittEvents } from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
-import { Sortable, SortableItem } from "@/contexts/DragDrop";
+import Sortable from "react-native-sortables";
 import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
 import { mutateDocuments } from "@/state/actions/updateDocuments";
@@ -118,11 +118,6 @@ export const FilesMultiInput = ({
     );
   };
 
-  const onOrderChange = (newOrder: string[]) => {
-    const newOrderIds = newOrder.map((id) => parseInt(id, 10));
-    props.onChange?.(newOrderIds);
-  };
-
   const Item = ({
     docId,
     junction,
@@ -190,8 +185,6 @@ export const FilesMultiInput = ({
         }
         append={
           <>
-            
-
             <Button
               variant="ghost"
               onPress={() =>
@@ -224,51 +217,48 @@ export const FilesMultiInput = ({
             {label} {required && "*"}
           </Text>
         )}
-        <Sortable
-          direction="column"
-          onOrderChange={onOrderChange}
-          style={{ gap: 3 }}
-        >
-          {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
+        <Sortable.Grid
+          columns={1}
+          rowGap={3}
+          data={uniq([...(valueProp || []), ...(value || [])])}
+          sortEnabled={!!sortField}
+          keyExtractor={(item) => item.toString()}
+          onDragEnd={(updatedValue) => {
+            console.log({ updatedValue });
+            props.onChange(updatedValue.data);
+          }}
+          renderItem={({ item: id }: { item: number }) => {
             const isDeselected = value?.includes(id) && !valueProp.includes(id);
-            const isNew = !value?.includes(id);
-
+            const isNew = !valueProp?.includes(id);
             return (
-              <SortableItem
-                key={id + "draggable"}
-                id={id.toString()}
-                disabled={!sortField}
-                activationDelay={200}
-              >
-                <Item
-                  key={id}
-                  docId={id}
-                  junction={junction!}
-                  relation={relation!}
-                  template={item?.meta.options?.template}
-                  isSortable={!!sortField}
-                  onAdd={(item: Record<string, unknown>) => {
-                    setAddedDocIds([...addedDocIds, item.id as number]);
-                    props.onChange([...valueProp, item.id as number]);
-                  }}
-                  onDelete={(item) => {
-                    console.log({ item });
-                    setAddedDocIds(
-                      addedDocIds.filter(
-                        (v) =>
-                          v !==
-                          (item[relation.field as keyof typeof item] as any),
-                      ),
-                    );
-                    props.onChange(valueProp.filter((v) => v !== id));
-                  }}
-                  isNew={isNew}
-                  isDeselected={isDeselected}
-                />
-              </SortableItem>
+              <Item
+                key={id}
+                docId={id}
+                junction={junction!}
+                relation={relation!}
+                template={item?.meta.options?.template}
+                isSortable={!!sortField}
+                onAdd={(item: Record<string, unknown>) => {
+                  setAddedDocIds([...addedDocIds, item.id as number]);
+                  props.onChange([...valueProp, item.id as number]);
+                }}
+                onDelete={(item) => {
+                  console.log({ item });
+                  setAddedDocIds(
+                    addedDocIds.filter(
+                      (v) =>
+                        v !==
+                        (item[relation.field as keyof typeof item] as any),
+                    ),
+                  );
+                  props.onChange(valueProp.filter((v) => v !== id));
+                }}
+                isNew={isNew}
+                isDeselected={isDeselected}
+              />
             );
-          })}
-        </Sortable>
+          }}
+        />
         {(error || helper) && (
           <Text
             style={[

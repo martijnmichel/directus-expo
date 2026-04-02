@@ -101,7 +101,6 @@ export type MittEvents = {
   "repeater:edit": {
     data: Record<string, any>;
     field: string;
-    index: number;
     document_session_id: string | number;
     __id?: string;
   };
