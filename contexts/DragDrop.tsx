@@ -768,6 +768,12 @@ function useDraggableStack({
   const refreshOffsets = useCallback(() => {
     "worklet";
     requestAnimationFrame(() => {
+      // If a drag session has started, don't recalculate offsets mid-gesture.
+      // That can cause the active item (especially the first one) to "snap"
+      // toward the list positions instead of following the finger smoothly.
+      if (draggableActiveId.value !== null) {
+        return;
+      }
       const ax = horizontal ? "x" : "y";
       const offsets = draggableOffsets.value;
       const restingOffsets = draggableRestingOffsets.value;
