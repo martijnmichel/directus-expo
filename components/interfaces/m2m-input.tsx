@@ -562,7 +562,12 @@ export const M2MInput = ({
                         v.__state !== RelatedItemState.Picked ||
                         v.__state !== RelatedItemState.Default,
                     )
-                    .map((v) => v?.[relation?.field as string]?.[relatedPrimaryKey as string])
+                    .map(
+                      (v) =>
+                        (v as RelatedItem)?.[relation?.field as string]?.[
+                          relatedPrimaryKey as string
+                        ],
+                    )
 
                     .filter(Boolean),
                   junction_field: junction.field,
