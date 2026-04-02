@@ -123,6 +123,12 @@ export const lightTheme = {
       fontWeight: "600" as const,
       fontFamily: "Inter_600SemiBold",
     },
+    monospace: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: "400" as const,
+      fontFamily: "RobotoMono_400Regular",
+    },
   },
 } as const;
 

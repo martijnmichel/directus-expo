@@ -142,18 +142,19 @@ const jsonStyles = createStyleSheet((theme) => ({
     backgroundColor: theme.colors.backgroundAlt,
     borderRightWidth: 1,
     borderRightColor: theme.colors.border,
-    width: 44,
+    width: 32,
+    maxWidth: 32,
   },
   lineNumberContainer: {
     paddingHorizontal: theme.spacing.sm,
     height: theme.typography.body.lineHeight,
     justifyContent: "center",
-    width: 44,
+    width: 32,
   },
   lineNumber: {
     color: theme.colors.textTertiary,
     fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.body.fontFamily,
+    fontFamily: theme.typography.monospace.fontFamily,
     textAlign: "right",
   },
   errorLineIndicator: {
@@ -170,7 +171,7 @@ const jsonStyles = createStyleSheet((theme) => ({
     color: theme.colors.textPrimary,
     fontSize: theme.typography.body.fontSize,
     lineHeight: theme.typography.body.lineHeight,
-    fontFamily: "monospace",
+    fontFamily: theme.typography.monospace.fontFamily,
     width: "100%",
   },
 }));
