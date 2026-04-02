@@ -18,7 +18,7 @@ import {
   useDocuments,
   useFields,
 } from "@/state/queries/directus/collection";
-import { usePermissions, useRelations } from "@/state/queries/directus/core";
+import { useFiles, usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { get, map, uniq } from "lodash";
 import {
@@ -47,8 +47,14 @@ import { Image } from "expo-image";
 import { InterfaceProps } from ".";
 import { useModalStore } from "@/state/stores/modalStore";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
-import { getFieldPathsFromTemplate, parseTemplate, parseTemplateParts } from "@/helpers/document/template";
+import {
+  getFieldPathsFromTemplate,
+  parseTemplate,
+  parseTemplateParts,
+} from "@/helpers/document/template";
 import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
+import { Thumbnail } from "../content/Thumbnail";
+import { formatFileSize } from "@/helpers/formatFileSize";
 
 type FilesMultiInputProps = InterfaceProps<{
   value?: number[] | RelatedItem[];
@@ -70,6 +76,8 @@ export const FilesMultiInput = ({
     return null;
   }
 
+  const openFilePicker = useModalStore((state) => state.open);
+  const closeFilePicker = useModalStore((state) => state.close);
   const { styles: formControlStyles, theme } = useStyles(formStyles);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
@@ -135,6 +143,7 @@ export const FilesMultiInput = ({
               id,
               __id: id?.toString(),
               __state: RelatedItemState.Default,
+             
               ...(sortField && { [sortField]: index }),
             })),
           ]
@@ -160,32 +169,6 @@ export const FilesMultiInput = ({
     "+",
   );
 
-  const { mutate: addMultipleFiles } = mutateDocuments(
-    junction?.collection as keyof CoreSchema,
-    "+",
-  );
-
-  const add = (id: number | string) => {
-    const data = {
-      [relation?.field as string]: id,
-    };
-    mutateOptions(
-      data,
-      // @ts-ignore
-      {
-        onSuccess: (newData: any) => {
-          props.onChange([
-            ...value,
-            {
-              __id: newData.id.toString(),
-              __state: RelatedItemState.Created,
-              [relation?.field as string]: newData.id,
-            },
-          ]);
-        },
-      },
-    );
-  };
 
   const interfaceTemplate = item.meta.options?.template || "";
 
@@ -206,8 +189,13 @@ export const FilesMultiInput = ({
     pk,
     junctionField,
     `${junctionField}.${relatedPrimaryKey}`,
-    ...templatePaths,
-  ]).filter(Boolean).filter(s => !s?.includes("$"));
+    `${junctionField}.title`,
+    `${junctionField}.filename_disk`,
+    `${junctionField}.type`,
+    `${junctionField}.filesize`,
+  ])
+    .filter(Boolean)
+    .filter((s) => !s?.includes("$"));
 
   /**
    * filter the junction ids, newly created items will have an uuid as __id
@@ -220,7 +208,7 @@ export const FilesMultiInput = ({
    * get the related documents
    */
   const { data: relatedDocs } = useDocuments(
-    junction?.collection as keyof CoreSchema,
+    junction?.meta.many_collection as keyof CoreSchema,
     {
       fields: requestFields as any,
       filter: {
@@ -237,6 +225,42 @@ export const FilesMultiInput = ({
         !!pk,
     },
   );
+
+  const newFilesIds = value.filter((v) => v.__state === RelatedItemState.Created).map((v) => v.__id);
+
+  const { data:newDocs } = useFiles({
+    filter: {
+      id: { _in: newFilesIds.length > 0 ? newFilesIds : undefined },
+    },
+    fields: ["id", "filename_disk", "title", "type", "filesize"],
+  
+   
+  });
+
+  const RenderItem = ({
+    file: { filename_disk, title, type, filesize, id },
+  }: {
+    file: DirectusFile;
+  }) => {
+    return (
+      <Horizontal spacing="sm" style={{ flex: 1 }}>
+        {type?.startsWith("image/") && <Thumbnail id={id} />}
+        <Vertical style={{ flex: 1, gap: 0 }}>
+          <Text numberOfLines={1} style={{ flex: 1 }}>
+            {filename_disk || title}
+          </Text>
+          <Text style={{ fontSize: 12, color: theme.colors.secondaryText }}>
+            {type}
+          </Text>
+        </Vertical>
+        <Text style={{ fontSize: 12, color: theme.colors.secondaryText }}>
+          {formatFileSize(
+            typeof filesize === "number" ? filesize : (Number(filesize) ?? 0),
+          )}
+        </Text>
+      </Horizontal>
+    );
+  };
 
   return (
     relation &&
@@ -258,23 +282,42 @@ export const FilesMultiInput = ({
             props.onChange(updatedValue.data);
           }}
           renderItem={({ item: junctionDoc }: { item: RelatedItem }) => {
-            const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
+            const isDeselected =
+              junctionDoc.__state === RelatedItemState.Deleted;
             const isNew = junctionDoc.__state === RelatedItemState.Created;
             const isPicked = junctionDoc.__state === RelatedItemState.Picked;
             const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
             const isDefault = junctionDoc.__state === RelatedItemState.Default;
 
-            const doc = relatedDocs?.items?.find(
+            const junctionDocFromDB = relatedDocs?.items?.find(
               (v) => String(v.id) === String(junctionDoc.__id),
             );
 
-            const draftValue = doc ? (doc as any) : undefined;
+            const newDoc = newDocs?.items?.find(
+              (v) => String(v.id) === String(junctionDoc.__id),
+            );
 
+            const doc = !!junctionDocFromDB
+              ? (junctionDocFromDB as any)[relation?.field as string]
+              : undefined;
 
-            const partsFromDoc = parseTemplateParts(effectiveTemplate, doc, fields);
-            const partsFromValue = parseTemplateParts(effectiveTemplate, draftValue, fields);
-
-            console.log({ partsFromDoc, partsFromValue, relatedDocs, doc, value, item, junctionDoc, junction, junctionField, prefixedTemplatePaths, requestFields, interfaceTemplate, effectiveTemplate });
+            console.log({
+              relatedDocs,
+              doc,
+              value,
+              item,
+              junctionDoc,
+              junction,
+              junctionField,
+              prefixedTemplatePaths,
+              requestFields,
+              interfaceTemplate,
+              effectiveTemplate,
+              newDocs,
+              newFilesIds,
+              newDoc,
+              junctionDocFromDB,
+            });
 
             return (
               <RelatedListItem
@@ -284,12 +327,46 @@ export const FilesMultiInput = ({
                 isPicked={isPicked}
                 isDraggable={!!sortField}
                 append={
-                  <Button variant="ghost" rounded>
-                    <DirectusIcon name="close" />
+                  <Button
+                    variant="ghost"
+                    rounded
+                    onPress={() => {
+                      if (isNew) {
+                        props.onChange(
+                          value.filter((v) => v.__id !== junctionDoc.__id),
+                        );
+                      } else {
+                        if (isDeselected) {
+                          props.onChange(
+                            value.map((v) =>
+                              v.__id === junctionDoc.__id
+                                ? { ...v, __state: RelatedItemState.Default }
+                                : v,
+                            ),
+                          );
+                        } else {
+                          props.onChange(
+                            value.map((v) =>
+                              v.__id === junctionDoc.__id
+                                ? { ...v, __state: RelatedItemState.Deleted }
+                                : v,
+                            ),
+                          );
+                        }
+                      }
+                    }}
+                  >
+                    {isNew ? (
+                      <DirectusIcon name="close" />
+                    ) : isDeselected ? (
+                      <DirectusIcon name="settings_backup_restore" />
+                    ) : (
+                      <DirectusIcon name="close" />
+                    )}
                   </Button>
                 }
               >
-                <TemplatePartsRenderer parts={partsFromValue} />
+               {(!!doc || !!newDoc) ? <RenderItem file={doc ?? newDoc} /> : null}
               </RelatedListItem>
             );
           }}
@@ -317,8 +394,19 @@ export const FilesMultiInput = ({
                     <ImageInput
                       sources={["device", "url"]}
                       onChange={(file) => {
-                        add(file as string);
                         close();
+                        console.log({ file });
+                        if (file) {
+                          props.onChange([
+                            ...value,
+                            {
+                              __id: file.toString(),
+                              __state: RelatedItemState.Created,
+                              [junctionField]: { id: file },
+                              [relation?.field as string]: file,
+                            },
+                          ]);
+                        }
                       }}
                     />
                   )}
@@ -342,24 +430,18 @@ export const FilesMultiInput = ({
                           }
                           onSelect={(files) => {
                             closeFilePicker();
-                            addMultipleFiles(
-                              (files as string[]).map((f) => ({
-                                [relation.field as string]: f,
+
+                            props.onChange([
+                              ...value,
+                              ...(files as string[]).map((id: string) => ({
+                                [junctionField]: { id },
+                                __id: id.toString(),
+                                __state: RelatedItemState.Created,
+                                ...(sortField
+                                  ? { [sortField]: value.length + 1 }
+                                  : {}),
                               })),
-                              // @ts-ignore
-                              {
-                                onSuccess: (newData: any[]) => {
-                                  setAddedDocIds([
-                                    ...addedDocIds,
-                                    ...newData.map((d) => d.id),
-                                  ]);
-                                  props.onChange([
-                                    ...valueProp,
-                                    ...newData.map((d) => d.id),
-                                  ]);
-                                },
-                              },
-                            );
+                            ]);
                           }}
                         />
                         <View style={{ height: 80 }} />
