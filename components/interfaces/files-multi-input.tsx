@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import {
   CoreSchema,
@@ -12,7 +12,12 @@ import { Modal } from "../display/modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { useDocument, useFields } from "@/state/queries/directus/collection";
+import {
+  useCollection,
+  useDocument,
+  useDocuments,
+  useFields,
+} from "@/state/queries/directus/collection";
 import { usePermissions, useRelations } from "@/state/queries/directus/core";
 import { formStyles } from "./style";
 import { get, map, uniq } from "lodash";
@@ -23,7 +28,11 @@ import {
   useLocalSearchParams,
 } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
-import EventBus, { MittEvents } from "@/utils/mitt";
+import EventBus, {
+  MittEvents,
+  RelatedItem,
+  RelatedItemState,
+} from "@/utils/mitt";
 import { mutateDocument } from "@/state/actions/updateDocument";
 import Sortable from "react-native-sortables";
 import { ImageInput } from "./image-input";
@@ -37,10 +46,13 @@ import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { Image } from "expo-image";
 import { InterfaceProps } from ".";
 import { useModalStore } from "@/state/stores/modalStore";
+import { getPrimaryKey } from "@/hooks/usePrimaryKey";
+import { getFieldPathsFromTemplate, parseTemplate, parseTemplateParts } from "@/helpers/document/template";
+import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
 type FilesMultiInputProps = InterfaceProps<{
-  value?: number[];
-  onChange: (value: number[]) => void;
+  value?: number[] | RelatedItem[];
+  onChange: (value: RelatedItem[]) => void;
 }>;
 export const FilesMultiInput = ({
   docId,
@@ -53,41 +65,92 @@ export const FilesMultiInput = ({
   required,
   ...props
 }: FilesMultiInputProps) => {
+  if (!item) {
+    console.warn(`FilesMultiInput ${label}: item is required`);
+    return null;
+  }
+
   const { styles: formControlStyles, theme } = useStyles(formStyles);
-  const { directus } = useAuth();
-  const [value] = useState<number[]>(valueProp);
-  const [createItemOpen, setCreateItemOpen] = useState(false);
-  const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
-  const openFilePicker = useModalStore((state) => state.open);
-  const closeFilePicker = useModalStore((state) => state.close);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item?.collection as keyof CoreSchema);
 
+  const { t } = useTranslation();
+
+  /**
+   * find the junction relation
+   */
   const junction = relations?.find(
     (r) =>
-      r.related_collection === item?.collection &&
-      r.meta.one_field === item?.field,
+      r.related_collection === item.collection &&
+      r.meta.one_field === item.field,
+  );
+
+  /**
+   * find the relation that connects the junction to the related collection
+   */
+  const relation = relations?.find(
+    (r) =>
+      r.field === junction?.meta.junction_field &&
+      r.collection === junction.meta.many_collection,
+  );
+
+  /**
+   * get the related collection
+   */
+  const { data: relatedCollection } = useCollection(
+    relation?.related_collection as keyof CoreSchema,
+  );
+
+  const { data: relatedFields } = useFields(
+    relatedCollection?.collection as any,
   );
 
   const sortField = junction?.meta.sort_field;
 
-  const { t } = useTranslation();
+  const junctionParentIdField = junction?.field;
+  const junctionField = String(junction?.meta.junction_field);
 
-  const relation = relations?.find(
-    (r) => r.field === junction?.meta.junction_field,
+  const pk = getPrimaryKey(fields);
+
+  const relatedPrimaryKey = relatedFields
+    ? getPrimaryKey(relatedFields)
+    : undefined;
+
+  /**
+   * check if the value is an array of ids
+   */
+  const isInitial = valueProp?.some(
+    (v) => typeof v === "number" || typeof v !== "object",
   );
 
-  const junctionPermissions =
-    permissions?.[junction?.meta.many_collection as keyof typeof permissions];
+  /**
+   * create a shallow copy of the value prop to avoid mutating the original value prop
+   */
+  const value = useMemo(
+    () =>
+      isInitial
+        ? [
+            ...map(valueProp as number[], (id, index) => ({
+              id,
+              __id: id?.toString(),
+              __state: RelatedItemState.Default,
+              ...(sortField && { [sortField]: index }),
+            })),
+          ]
+        : (valueProp as Record<string, any>[]),
+    [valueProp, sortField, isInitial],
+  );
+
+  /**
+   * check if the user has permission to create items in the related collection
+   */
   const relationPermission =
     permissions?.[relation?.related_collection as keyof typeof permissions];
 
-  const allowJunctionCreate =
-    junctionPermissions?.create.access === "full" ||
-    (junction?.meta.one_field &&
-      junctionPermissions?.create.fields?.includes(junction?.meta.one_field));
-
+  /**
+   * check if the user has permission to create items in the related collection
+   */
   const allowCreate =
     relationPermission?.create.access === "full" &&
     get(item, "meta.options.enableCreate") !== false;
@@ -111,102 +174,69 @@ export const FilesMultiInput = ({
       // @ts-ignore
       {
         onSuccess: (newData: any) => {
-          setAddedDocIds([...addedDocIds, newData.id]);
-          props.onChange([...valueProp, newData.id]);
+          props.onChange([
+            ...value,
+            {
+              __id: newData.id.toString(),
+              __state: RelatedItemState.Created,
+              [relation?.field as string]: newData.id,
+            },
+          ]);
         },
       },
     );
   };
 
-  const Item = ({
-    docId,
-    junction,
-    relation,
-    template,
-    onDelete,
-    onAdd,
-    isNew,
-    isDeselected,
-    isSortable,
-    ...props
-  }: {
-    docId: string | number;
-    junction: ReadRelationOutput<CoreSchema>;
-    relation: ReadRelationOutput<CoreSchema>;
-    template?: string;
-    onDelete?: (doc: Record<string, unknown>) => void;
-    onAdd?: (doc: Record<string, unknown>) => void;
-    isNew?: boolean;
-    isDeselected?: boolean;
-    isSortable?: boolean;
-  }) => {
-    const {
-      data: doc,
-      isLoading,
-      refetch,
-      error,
-    } = useDocument({
-      collection: junction?.meta.many_collection as keyof CoreSchema,
-      id: docId,
-      options: {
-        fields: ["*.*"],
+  const interfaceTemplate = item.meta.options?.template || "";
+
+  const effectiveTemplate =
+    interfaceTemplate ||
+    (relatedCollection?.meta?.display_template as string | undefined) ||
+    "";
+
+  const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+    .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+    .filter(Boolean);
+
+  const prefixedTemplatePaths = templatePaths.map((p) =>
+    p.startsWith(`${junctionField}.`) ? p : `${junctionField}.${p}`,
+  );
+
+  const requestFields = uniq([
+    pk,
+    junctionField,
+    `${junctionField}.${relatedPrimaryKey}`,
+    ...templatePaths,
+  ]).filter(Boolean).filter(s => !s?.includes("$"));
+
+  /**
+   * filter the junction ids, newly created items will have an uuid as __id
+   */
+  const filteredJunctionIds = value
+    .map((v) => v.__id)
+    .filter((v) => !isNaN(Number(v)));
+
+  /**
+   * get the related documents
+   */
+  const { data: relatedDocs } = useDocuments(
+    junction?.collection as keyof CoreSchema,
+    {
+      fields: requestFields as any,
+      filter: {
+        id: { _in: filteredJunctionIds },
       },
-    });
-
-    const { directus, token } = useAuth();
-
-    const file = doc?.[
-      junction.meta.junction_field as keyof typeof doc
-    ] as unknown as DirectusFile;
-
-    if (error) {
-      return (
-        <RelatedListItem>
-          {(error as DirectusErrorResponse).errors?.[0].message}
-        </RelatedListItem>
-      );
-    }
-
-    return doc && file ? (
-      <RelatedListItem
-        isDraggable={isSortable}
-        isDeselected={isDeselected}
-        isNew={isNew}
-        prepend={
-          <Image
-            source={{
-              uri: `${directus?.url.origin}/assets/${file.id}`,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }}
-            style={{ width: 28, height: 28, borderRadius: 4 }}
-          />
-        }
-        append={
-          <>
-            <Button
-              variant="ghost"
-              onPress={() =>
-                isDeselected
-                  ? onAdd?.(doc as Record<string, unknown>)
-                  : onDelete?.(doc as Record<string, unknown>)
-              }
-              rounded
-            >
-              {isDeselected ? (
-                <DirectusIcon name="settings_backup_restore" />
-              ) : (
-                <DirectusIcon name="close" />
-              )}
-            </Button>
-          </>
-        }
-      >
-        {file.title || file.filename_disk}
-      </RelatedListItem>
-    ) : null;
-  };
+    },
+    {
+      enabled:
+        !!junction &&
+        !!junction?.meta.many_collection &&
+        filteredJunctionIds.length > 0 &&
+        !!relatedPrimaryKey &&
+        !!junctionField &&
+        !!pk,
+    },
+  );
 
   return (
     relation &&
@@ -220,42 +250,47 @@ export const FilesMultiInput = ({
         <Sortable.Grid
           columns={1}
           rowGap={3}
-          data={uniq([...(valueProp || []), ...(value || [])])}
           sortEnabled={!!sortField}
-          keyExtractor={(item) => item.toString()}
+          keyExtractor={(item) => item.__id}
+          data={value}
           onDragEnd={(updatedValue) => {
             console.log({ updatedValue });
             props.onChange(updatedValue.data);
           }}
-          renderItem={({ item: id }: { item: number }) => {
-            const isDeselected = value?.includes(id) && !valueProp.includes(id);
-            const isNew = !valueProp?.includes(id);
+          renderItem={({ item: junctionDoc }: { item: RelatedItem }) => {
+            const isDeselected = junctionDoc.__state === RelatedItemState.Deleted;
+            const isNew = junctionDoc.__state === RelatedItemState.Created;
+            const isPicked = junctionDoc.__state === RelatedItemState.Picked;
+            const isUpdated = junctionDoc.__state === RelatedItemState.Updated;
+            const isDefault = junctionDoc.__state === RelatedItemState.Default;
+
+            const doc = relatedDocs?.items?.find(
+              (v) => String(v.id) === String(junctionDoc.__id),
+            );
+
+            const draftValue = doc ? (doc as any) : undefined;
+
+
+            const partsFromDoc = parseTemplateParts(effectiveTemplate, doc, fields);
+            const partsFromValue = parseTemplateParts(effectiveTemplate, draftValue, fields);
+
+            console.log({ partsFromDoc, partsFromValue, relatedDocs, doc, value, item, junctionDoc, junction, junctionField, prefixedTemplatePaths, requestFields, interfaceTemplate, effectiveTemplate });
+
             return (
-              <Item
-                key={id}
-                docId={id}
-                junction={junction!}
-                relation={relation!}
-                template={item?.meta.options?.template}
-                isSortable={!!sortField}
-                onAdd={(item: Record<string, unknown>) => {
-                  setAddedDocIds([...addedDocIds, item.id as number]);
-                  props.onChange([...valueProp, item.id as number]);
-                }}
-                onDelete={(item) => {
-                  console.log({ item });
-                  setAddedDocIds(
-                    addedDocIds.filter(
-                      (v) =>
-                        v !==
-                        (item[relation.field as keyof typeof item] as any),
-                    ),
-                  );
-                  props.onChange(valueProp.filter((v) => v !== id));
-                }}
+              <RelatedListItem
                 isNew={isNew}
+                isUpdated={isUpdated}
                 isDeselected={isDeselected}
-              />
+                isPicked={isPicked}
+                isDraggable={!!sortField}
+                append={
+                  <Button variant="ghost" rounded>
+                    <DirectusIcon name="close" />
+                  </Button>
+                }
+              >
+                <TemplatePartsRenderer parts={partsFromValue} />
+              </RelatedListItem>
             );
           }}
         />
