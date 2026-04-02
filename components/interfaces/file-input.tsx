@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
 import { InterfaceProps } from ".";
 import * as DocumentPicker from "expo-document-picker";
+import { useModalStore } from "@/state/stores/modalStore";
 type FileInputProps = InterfaceProps<{
   value?: string | null;
   onChange?: (value: string | null) => void;
@@ -46,6 +47,7 @@ export const FileInput = ({
   onChange,
   disabled,
   required,
+  item,
   sources = ["device", "url", "library"],
 }: FileInputProps) => {
   const { styles, theme } = useStyles(formStyles);
@@ -60,6 +62,8 @@ export const FileInput = ({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const { mutateAsync: upload } = addUploadFiles();
   const { mutateAsync: importFile } = addImportFiles();
+  const openFilePicker = useModalStore((state) => state.open);
+  const closeFilePicker = useModalStore((state) => state.close);
 
   const pickFile = async () => {
     try {
@@ -149,6 +153,7 @@ export const FileInput = ({
         </Horizontal>
       );
   };
+  console.log({ item })
 
   return (
     <View style={[styles.formControl, { position: "relative", zIndex: 1 }]}>
@@ -237,8 +242,26 @@ export const FileInput = ({
                   <Pressable
                     style={dropdownStyles.dropdownItem}
                     onPress={() => {
-                      setLibraryOpen(true);
-                      setIsOpen(false);
+                      openFilePicker(() => {
+                        return (
+                          <>
+                            <ScrollView contentContainerStyle={{ paddingTop: theme.spacing.lg }}>
+                              <FileSelect
+                                multiple={false}
+                                mimeTypes={(item?.meta.options?.allowedMimeTypes as string[] ?? ["*/*"])}
+                                onSelect={(v) => {
+                                  closeFilePicker();
+                                  requestAnimationFrame(() => {
+                                    onChange?.(v as string);
+                                  });
+                                }}
+                              />
+                              <View style={{ height: 80 }} />
+                            </ScrollView>
+                            <FloatingToolbarHost />
+                          </>
+                        );
+                      }, t("components.shared.selectFile"));
                     }}
                   >
                     <Gallery color={theme.colors.textSecondary} />
@@ -289,7 +312,7 @@ export const FileInput = ({
               <>
                 <ScrollView>
                   <FileSelect
-                    type={["images", "files"]}
+                    mimeTypes={item?.meta.options?.allowedMimeTypes as string[]}
                     onSelect={(v) => {
                       const selected = Array.isArray(v) ? v[0] : v;
                       if (!selected) return;

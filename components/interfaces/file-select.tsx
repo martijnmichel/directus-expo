@@ -21,14 +21,14 @@ import { Horizontal } from "../layout/Stack";
 type FileSelectProps = InterfaceProps<{
   onSelect?: (files: string | string[]) => void;
   multiple?: boolean;
-  type?: ("images" | "files")[];
+  mimeTypes?: string[];
   extensions?: string[];
 }>;
 
 export const FileSelect = ({
   onSelect,
   multiple = false,
-  type,
+  mimeTypes = ["*/*"],
   extensions,
 }: FileSelectProps) => {
   const [selectedFiles, setSelectedFiles] = useState<DirectusFile[]>([]);
@@ -54,15 +54,22 @@ export const FileSelect = ({
   );
 
   const filteredFiles = useMemo(() => {
-    const selectedTypes =
-      Array.isArray(type) && type.length > 0 ? type : ["images", "files"];
-    const allowImages = selectedTypes.includes("images");
-    const allowNonImages = selectedTypes.includes("files");
+    const acceptedMimePatterns = (mimeTypes ?? [])
+      .map((m) => String(m).trim().toLowerCase())
+      .filter(Boolean);
     return (files?.items ?? []).filter((file) => {
       const mime = String(file.type ?? "").toLowerCase();
-      const isImage = mime.startsWith("image/");
-      const typeAllowed = isImage ? allowImages : allowNonImages;
-      if (!typeAllowed) return false;
+      if (acceptedMimePatterns.length > 0) {
+        const matchesMime = acceptedMimePatterns.some((pattern) => {
+          if (pattern === "*" || pattern === "*/*") return true;
+          if (pattern.endsWith("/*")) {
+            const prefix = pattern.slice(0, -1); // keep trailing '/'
+            return mime.startsWith(prefix);
+          }
+          return mime === pattern;
+        });
+        if (!matchesMime) return false;
+      }
       if (acceptedExtensions.length === 0) return true;
       const filename = String(
         file.filename_download ?? file.filename_disk ?? "",
@@ -72,7 +79,7 @@ export const FileSelect = ({
         : "";
       return acceptedExtensions.includes(ext);
     });
-  }, [files?.items, type, acceptedExtensions]);
+  }, [files?.items, mimeTypes, acceptedExtensions]);
 
   const handleSelect = (file: DirectusFile) => {
     if (multiple) {
@@ -181,6 +188,7 @@ export const FileSelect = ({
           headerRight: () => (
             <Button
               rounded
+              size="sm"
               disabled={multiple ? selectedFiles.length === 0 : !selectedFile}
               onPress={handleSubmit}
             >

@@ -228,7 +228,9 @@
       "chooseCollection": "Choose collection",
       "error": {
         "somethingWentWrong": "Relation is not setup correctly"
-      }
+      },
+      "selectImage": "Pick an image",
+      "selectFiles": "Select files"
     },
     "apiSelect": {
       "editApi": "Edit API",

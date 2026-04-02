@@ -576,6 +576,7 @@ export const mapFields = ({
                       <ImageInput
                         {...defaultProps}
                         onChange={onChange}
+                        item={item}
                         value={value as string}
                         error={error?.message}
                       />
@@ -620,6 +621,7 @@ export const mapFields = ({
                         {...defaultProps}
                         onChange={onChange}
                         value={value as string}
+                        item={item}
                         error={error?.message}
                       />
                     )}
@@ -1002,7 +1004,7 @@ export const mapFields = ({
                       <RepeaterInput
                         {...defaultProps}
                         onChange={onChange}
-                        value={value as (string | number)[]}
+                        value={value as Record<string, any>[]}
                         item={item}
                         uuid={uuid}
                         error={error?.message}

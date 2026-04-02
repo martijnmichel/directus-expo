@@ -223,7 +223,9 @@
       "chooseCollection": "Kies verzameling",
       "error": {
         "somethingWentWrong": "De instellingen van dit item zijn onjuist."
-      }
+      },
+      "selectImage": "Kies een plaatje",
+      "selectFiles": "Selecteer bestanden"
     },
     "apiSelect": {
       "confirmDelete": "Wil je deze API echt verwijderen?",

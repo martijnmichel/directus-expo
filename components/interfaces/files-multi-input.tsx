@@ -36,6 +36,7 @@ import { DirectusIcon } from "../display/directus-icon";
 import { CoreSchemaDocument, DirectusErrorResponse } from "@/types/directus";
 import { Image } from "expo-image";
 import { InterfaceProps } from ".";
+import { useModalStore } from "@/state/stores/modalStore";
 
 type FilesMultiInputProps = InterfaceProps<{
   value?: number[];
@@ -52,12 +53,13 @@ export const FilesMultiInput = ({
   required,
   ...props
 }: FilesMultiInputProps) => {
-  const { styles: formControlStyles } = useStyles(formStyles);
+  const { styles: formControlStyles, theme } = useStyles(formStyles);
   const { directus } = useAuth();
   const [value] = useState<number[]>(valueProp);
   const [createItemOpen, setCreateItemOpen] = useState(false);
   const [addedDocIds, setAddedDocIds] = useState<number[]>([]);
-
+  const openFilePicker = useModalStore((state) => state.open);
+  const closeFilePicker = useModalStore((state) => state.close);
   const { data: relations } = useRelations();
   const { data: permissions } = usePermissions();
   const { data: fields } = useFields(item?.collection as keyof CoreSchema);
@@ -65,7 +67,7 @@ export const FilesMultiInput = ({
   const junction = relations?.find(
     (r) =>
       r.related_collection === item?.collection &&
-      r.meta.one_field === item?.field
+      r.meta.one_field === item?.field,
   );
 
   const sortField = junction?.meta.sort_field;
@@ -73,7 +75,7 @@ export const FilesMultiInput = ({
   const { t } = useTranslation();
 
   const relation = relations?.find(
-    (r) => r.field === junction?.meta.junction_field
+    (r) => r.field === junction?.meta.junction_field,
   );
 
   const junctionPermissions =
@@ -92,12 +94,12 @@ export const FilesMultiInput = ({
 
   const { mutate: mutateOptions } = mutateDocument(
     junction?.collection as keyof CoreSchema,
-    "+"
+    "+",
   );
 
   const { mutate: addMultipleFiles } = mutateDocuments(
     junction?.collection as keyof CoreSchema,
-    "+"
+    "+",
   );
 
   const add = (id: number | string) => {
@@ -112,7 +114,7 @@ export const FilesMultiInput = ({
           setAddedDocIds([...addedDocIds, newData.id]);
           props.onChange([...valueProp, newData.id]);
         },
-      }
+      },
     );
   };
 
@@ -161,8 +163,6 @@ export const FilesMultiInput = ({
     const file = doc?.[
       junction.meta.junction_field as keyof typeof doc
     ] as unknown as DirectusFile;
-
-   
 
     if (error) {
       return (
@@ -247,8 +247,7 @@ export const FilesMultiInput = ({
           style={{ gap: 3 }}
         >
           {uniq([...(valueProp || []), ...(value || [])]).map((id) => {
-            const isDeselected =
-              value?.includes(id) && !valueProp.includes(id);
+            const isDeselected = value?.includes(id) && !valueProp.includes(id);
             const isNew = !value?.includes(id);
 
             return (
@@ -259,30 +258,30 @@ export const FilesMultiInput = ({
                 activationDelay={200}
               >
                 <Item
-                    key={id}
-                    docId={id}
-                    junction={junction!}
-                    relation={relation!}
-                    template={item?.meta.options?.template}
-                    isSortable={!!sortField}
-                    onAdd={(item: Record<string, unknown>) => {
-                      setAddedDocIds([...addedDocIds, item.id as number]);
-                      props.onChange([...valueProp, item.id as number]);
-                    }}
-                    onDelete={(item) => {
-                      console.log({ item });
-                      setAddedDocIds(
-                        addedDocIds.filter(
-                          (v) =>
-                            v !==
-                            (item[relation.field as keyof typeof item] as any)
-                        )
-                      );
-                      props.onChange(valueProp.filter((v) => v !== id));
-                    }}
-                    isNew={isNew}
-                    isDeselected={isDeselected}
-                  />
+                  key={id}
+                  docId={id}
+                  junction={junction!}
+                  relation={relation!}
+                  template={item?.meta.options?.template}
+                  isSortable={!!sortField}
+                  onAdd={(item: Record<string, unknown>) => {
+                    setAddedDocIds([...addedDocIds, item.id as number]);
+                    props.onChange([...valueProp, item.id as number]);
+                  }}
+                  onDelete={(item) => {
+                    console.log({ item });
+                    setAddedDocIds(
+                      addedDocIds.filter(
+                        (v) =>
+                          v !==
+                          (item[relation.field as keyof typeof item] as any),
+                      ),
+                    );
+                    props.onChange(valueProp.filter((v) => v !== id));
+                  }}
+                  isNew={isNew}
+                  isDeselected={isDeselected}
+                />
               </SortableItem>
             );
           })}
@@ -319,46 +318,52 @@ export const FilesMultiInput = ({
               </Modal>
             )}
 
-            <Modal>
-              <Modal.Trigger>
-                <Button>{t("components.shared.addExisting")}</Button>
-              </Modal.Trigger>
-              <Modal.Content variant="bottomSheet">
-                {({ close }) => (
-                  <>
-                    <ScrollView>
-                      <FileSelect
-                        multiple={true}
-                        type={["images", "files"]}
-                        onSelect={(files) => {
-                          addMultipleFiles(
-                            (files as string[]).map((f) => ({
-                              [relation.field as string]: f,
-                            })),
-                            // @ts-ignore
-                            {
-                              onSuccess: (newData: any[]) => {
-                                setAddedDocIds([
-                                  ...addedDocIds,
-                                  ...newData.map((d) => d.id),
-                                ]);
-                                props.onChange([
-                                  ...valueProp,
-                                  ...newData.map((d) => d.id),
-                                ]);
+            <Button
+              onPress={() => {
+                openFilePicker(() => {
+                  return (
+                    <>
+                      <ScrollView
+                        contentContainerStyle={{ paddingTop: theme.spacing.lg }}
+                      >
+                        <FileSelect
+                          multiple={true}
+                          mimeTypes={
+                            (item?.meta.options
+                              ?.allowedMimeTypes as string[]) ?? ["*/*"]
+                          }
+                          onSelect={(files) => {
+                            closeFilePicker();
+                            addMultipleFiles(
+                              (files as string[]).map((f) => ({
+                                [relation.field as string]: f,
+                              })),
+                              // @ts-ignore
+                              {
+                                onSuccess: (newData: any[]) => {
+                                  setAddedDocIds([
+                                    ...addedDocIds,
+                                    ...newData.map((d) => d.id),
+                                  ]);
+                                  props.onChange([
+                                    ...valueProp,
+                                    ...newData.map((d) => d.id),
+                                  ]);
+                                },
                               },
-                            }
-                          );
-                          close();
-                        }}
-                      />
-                      <View style={{ height: 80 }} />
-                    </ScrollView>
-                    <FloatingToolbarHost />
-                  </>
-                )}
-              </Modal.Content>
-            </Modal>
+                            );
+                          }}
+                        />
+                        <View style={{ height: 80 }} />
+                      </ScrollView>
+                      <FloatingToolbarHost />
+                    </>
+                  );
+                }, t("components.shared.selectFiles"));
+              }}
+            >
+              {t("components.shared.addExisting")}
+            </Button>
           </Horizontal>
         )}
       </Vertical>

@@ -49,6 +49,7 @@ export const ImageInput = ({
   value,
   onChange,
   disabled,
+  item,
   required,
   sources = ["device", "url", "library"],
 }: ImageInputProps) => {
@@ -99,12 +100,9 @@ export const ImageInput = ({
     }
   };
 
-  const handleFilePick = useCallback(
-    (file: { data: string | string[] }) => {
-      onChangeRef.current?.(file.data);
-    },
-    [],
-  );
+  const handleFilePick = useCallback((file: { data: string | string[] }) => {
+    onChangeRef.current?.(file.data);
+  }, []);
 
   useEffect(() => {
     EventBus.on("file:pick", handleFilePick);
@@ -113,6 +111,7 @@ export const ImageInput = ({
       EventBus.off("file:pick", handleFilePick);
     };
   }, [handleFilePick]);
+
   return (
     <View style={formStyle.formControl}>
       {label && (
@@ -123,15 +122,17 @@ export const ImageInput = ({
 
       <View style={styles.container}>
         <View style={styles.imagePreview}>
-          {!!value &&<Image
-            source={{
-              uri: `${directus?.url}assets/${value}`,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }}
-            style={styles.image}
-          />}
+          {!!value && (
+            <Image
+              source={{
+                uri: `${directus?.url}assets/${value}`,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }}
+              style={styles.image}
+            />
+          )}
         </View>
 
         {!disabled && (
@@ -203,10 +204,19 @@ export const ImageInput = ({
                       openFilePicker(() => {
                         return (
                           <>
-                            <ScrollView>
+                            <ScrollView
+                              contentContainerStyle={{
+                                paddingTop: theme.spacing.lg,
+                              }}
+                            >
                               <FileSelect
                                 multiple={false}
-                                type={["images"]}
+                                mimeTypes={
+                                  (item?.meta.options
+                                    ?.allowedMimeTypes as string[]) ?? [
+                                    "image/*",
+                                  ]
+                                }
                                 onSelect={(v) => {
                                   closeFilePicker();
                                   requestAnimationFrame(() => {
@@ -216,9 +226,10 @@ export const ImageInput = ({
                               />
                               <View style={{ height: 80 }} />
                             </ScrollView>
+                            <FloatingToolbarHost />
                           </>
                         );
-                      });
+                      }, t("components.shared.selectImage"));
                     }}
                   >
                     <Gallery />
@@ -226,7 +237,11 @@ export const ImageInput = ({
                 )}
 
                 {!!value && (
-                  <Button variant="soft" rounded onPress={() => onChange?.(null)}>
+                  <Button
+                    variant="soft"
+                    rounded
+                    onPress={() => onChange?.(null)}
+                  >
                     <X />
                   </Button>
                 )}
