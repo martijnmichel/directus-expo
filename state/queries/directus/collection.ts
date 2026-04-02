@@ -46,46 +46,47 @@ export const useDocuments = (
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
   const { data: fields } = useFields(collection);
+  
   return coreCollection?.readItems
-    ? coreCollection.readItems(query)
+    ? coreCollection.readItems(query as any)
     : useQuery({
-        queryKey: ["documents", collection, query],
+      queryKey: ["documents", collection, query, options],
 
-        queryFn: async () => {
-          const items = await directus?.request(
-            readItems(collection as any, query)
-          );
-          const aggregateQuery = { ...query };
-          unset(aggregateQuery, ["page"]);
-          const pk = getPrimaryKey(fields);
-          const pagination = await directus?.request(
-            aggregate(collection as any, {
-              aggregate: { countDistinct: `${pk}` },
-              query: aggregateQuery,
-            })
-          );
+      queryFn: async () => {
+        const items = await directus?.request(
+          readItems(collection as any, query)
+        );
+        const aggregateQuery = { ...query };
+        unset(aggregateQuery, ["page"]);
+        const pk = getPrimaryKey(fields);
+        const pagination = !!pk ? await directus?.request(
+          aggregate(collection as any, {
+            aggregate: { countDistinct: `${pk}` },
+            query: aggregateQuery,
+          })
+        ) : undefined;
 
-          const total = Number(get(pagination, `0.countDistinct.${pk}`));
+        const total = !!pk ? Number(get(pagination, `0.countDistinct.${pk}`)) : 0;
 
-          return {
-            items: items || [],
-            total: !isNaN(total) ? total : 0,
-          };
-        },
-        ...options,
-      });
+        return {
+          items: items || [],
+          total: !isNaN(total) ? total : 0,
+        };
+      },
+      ...options,
+    });
 };
 
 export const useDocument = ({
   collection,
   id,
   options,
-  ...queryOptions
+  query
 }: {
   collection: keyof CoreSchema;
   id?: number | string | "+";
   options?: Query<CoreSchema, any>;
-  query?: Omit<UseQueryOptions, "queryKey" | "queryFn">;
+  query?: Omit<UseQueryOptions<any, Error | DirectusErrorResponse>, "queryKey" | "queryFn">;
 }): UseQueryResult<
   Record<string, unknown> | undefined,
   Error | DirectusErrorResponse
@@ -101,27 +102,27 @@ export const useDocument = ({
     return useQuery({
       queryKey: ["document-add", collection, "+"],
       queryFn: async () => ({}),
-      ...queryOptions,
+      ...query,
     });
   }
 
   if (collectionData?.meta.singleton) {
     return useQuery({
-      queryKey: ["document", collection, id],
+      queryKey: ["document", collection, id, options, query],
       queryFn: async () =>
         directus?.request(readSingleton(collection as any, options)),
       retry: false,
-      ...queryOptions,
+      ...query,
     });
   } else
     return coreCollection?.readItem
       ? coreCollection.readItem(id as string)
       : useQuery({
-          queryKey: ["document", collection, id],
-          queryFn: async () =>
-            directus?.request(readItem(collection as any, id!, options)),
-          ...queryOptions,
-        });
+        queryKey: ["document", collection, id],
+        queryFn: async () =>
+          directus?.request(readItem(collection as any, id!, options)),
+        ...query,
+      });
 };
 
 export const useFields = (collection: keyof CoreSchema) => {
@@ -152,6 +153,7 @@ export const usePresets = () => {
   const { directus, user } = useAuth();
   return useQuery({
     queryKey: ["presets", user?.id],
+    staleTime: 60 * 1000, // 1 minute
     queryFn: () => directus?.request(readPresets()),
   });
 };

@@ -26,6 +26,7 @@ import {
 } from "@/state/queries/directus/core";
 import {
   CoreSchema,
+  ReadRelationOutput,
   readItemPermissions,
   ReadUserPermissionsOutput,
 } from "@directus/sdk";
@@ -65,6 +66,8 @@ export const mapFields = ({
   styles,
   uuid,
   fallbackInterface,
+  relations,
+  t,
 }: {
   fields?: ReadFieldOutput<CoreSchema>[];
   parent?: string;
@@ -74,13 +77,37 @@ export const mapFields = ({
   permissions?: ReadUserPermissionsOutput;
   styles?: any;
   uuid?: string;
-  fallbackInterface?: "input"
+  fallbackInterface?: "input";
+  relations?: ReadRelationOutput<CoreSchema>[];
+  t: (d: string) => string;
 }): ReactNode => {
   const getLabel = (field: string) =>
     fields
       ?.find((f) => f.field === field)
       ?.meta.translations?.find((t) => t.language === "nl-NL")?.translation ||
     field;
+
+  const isO2MBacklinkManyField = (item: ReadFieldOutput<CoreSchema>) => {
+    return !!relations?.some((relation) => {
+      const relationMeta = relation.meta;
+      if (!relationMeta) return false;
+
+      return (
+        relationMeta.many_collection === item.collection &&
+        relationMeta.many_field === item.field &&
+        !!relationMeta.one_field &&
+        !relationMeta.junction_field
+      );
+    });
+  };
+
+  
+    const isRequired = (item: ReadFieldOutput<CoreSchema>) => !!item.meta.required;
+    const getItemRules = (item: ReadFieldOutput<CoreSchema>) => ({
+      required: isRequired(item) && !isO2MBacklinkManyField(item)
+        ? (t?.("common.thisFieldIsRequired") ?? "common.thisFieldIsRequired")
+        : false,
+    });
 
   const filtered = parent
     ? fields?.filter((f) => f.meta.group === parent)
@@ -100,8 +127,10 @@ export const mapFields = ({
       const defaultProps = {
         label: getLabel(item.field),
         helper: item.meta.note || undefined,
+        documentSessionId: uuid,
         disabled:
           item.meta.readonly ||
+          isO2MBacklinkManyField(item) ||
           (docId === "+" && !canCreate) ||
           (docId !== "+" && !canUpdate) ||
           (docId !== "+" && !canUpdateItem),
@@ -130,6 +159,8 @@ export const mapFields = ({
               canUpdateItem,
               permissions,
               styles,
+              relations,
+              t,
             })}
           </Accordion>
         );
@@ -156,6 +187,8 @@ export const mapFields = ({
                   canUpdateItem,
                   permissions,
                   styles,
+                  relations,
+                  t,
                 })}
               </View>
             </CollapsibleContent>
@@ -168,7 +201,7 @@ export const mapFields = ({
             <Controller
               key={item.field}
               control={control}
-              rules={{ required: item.meta.required }}
+              rules={getItemRules(item)}
               name={item.field as keyof CoreSchema[keyof CoreSchema]}
               render={({ field: { onChange, value }, fieldState: { error } }) => (
                 <Input
@@ -191,7 +224,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -212,7 +245,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -232,7 +265,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({ field: { onChange, value } }) => (
                       <TinyMCEEditor
@@ -250,7 +283,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -272,7 +305,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -294,7 +327,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -316,7 +349,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -337,7 +370,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -361,7 +394,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -391,7 +424,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -416,7 +449,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -439,7 +472,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -464,7 +497,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -491,7 +524,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({ field: { onChange, value } }) => (
                       <Input
@@ -511,7 +544,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({ field: { onChange, value } }) => (
                       <Input
@@ -534,7 +567,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -543,6 +576,7 @@ export const mapFields = ({
                       <ImageInput
                         {...defaultProps}
                         onChange={onChange}
+                        item={item}
                         value={value as string}
                         error={error?.message}
                       />
@@ -554,7 +588,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -577,7 +611,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -587,6 +621,7 @@ export const mapFields = ({
                         {...defaultProps}
                         onChange={onChange}
                         value={value as string}
+                        item={item}
                         error={error?.message}
                       />
                     )}
@@ -597,7 +632,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -618,7 +653,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -671,7 +706,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -693,7 +728,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -716,7 +751,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -727,7 +762,7 @@ export const mapFields = ({
                         onChange={onChange}
                         value={value as number[]}
                         item={item}
-                        uuid={uuid}
+                        documentSessionId={uuid}
                         docId={docId}
                         error={error?.message}
                       />
@@ -739,7 +774,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -762,7 +797,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -785,7 +820,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -827,7 +862,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -847,7 +882,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -873,7 +908,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -895,7 +930,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -917,7 +952,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -938,7 +973,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -960,7 +995,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -969,7 +1004,7 @@ export const mapFields = ({
                       <RepeaterInput
                         {...defaultProps}
                         onChange={onChange}
-                        value={value as (string | number)[]}
+                        value={value as Record<string, any>[]}
                         item={item}
                         uuid={uuid}
                         error={error?.message}
@@ -983,7 +1018,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -1006,7 +1041,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -1033,7 +1068,7 @@ export const mapFields = ({
                   <Controller
                     key={item.field}
                     control={control}
-                    rules={{ required: item.meta.required }}
+                    rules={getItemRules(item)}
                     name={item.field as keyof CoreSchema[keyof CoreSchema]}
                     render={({
                       field: { onChange, value },
@@ -1060,7 +1095,7 @@ export const mapFields = ({
               <Controller
                 key={item.field}
                 control={control}
-                rules={{ required: item.meta.required }}
+                rules={getItemRules(item)}
                 name={item.field as keyof CoreSchema[keyof CoreSchema]}
                 render={({
                   field: { onChange, value },

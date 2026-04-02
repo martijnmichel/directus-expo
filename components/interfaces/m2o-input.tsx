@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, View } from "react-native";
 import { CoreSchema, ReadFieldOutput, readItems } from "@directus/sdk";
 import { Select } from "./select";
 import {
+  getFieldPathsFromTemplate,
   getFieldsFromTemplate,
   parseRepeaterTemplate,
   parseTemplate,
+  parseTemplateParts,
 } from "@/helpers/document/template";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "../display/button";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
 import { formStyles } from "./style";
 import { useStyles } from "react-native-unistyles";
@@ -22,27 +24,34 @@ import {
   useFields,
 } from "@/state/queries/directus/collection";
 import { Center } from "../layout/Center";
-import EventBus from "@/utils/mitt";
+import EventBus, {
+  MittEvents,
+  RelatedItem,
+  RelatedItemState,
+} from "@/utils/mitt";
 import { getPrimaryKey } from "@/hooks/usePrimaryKey";
 import { Text } from "../display/typography";
 import { DirectusIcon } from "../display/directus-icon";
 import { InterfaceProps } from ".";
-import { filter, map } from "lodash";
+import { filter, map, merge, uniq } from "lodash";
 import { FieldValue } from "../content/FieldValue";
+import { generateUUID } from "@/hooks/useUUID";
+import { useRelations } from "@/state/queries/directus/core";
+import { TemplatePartsRenderer } from "../content/TemplatePartsRenderer";
 
 interface Schema {
   [key: string]: any;
 }
 
 type M2OInputProps = InterfaceProps<{
-  value?: string | number;
-  onValueChange?: (value: string | number | null) => void;
+  value?: string | number | RelatedItem;
+  onValueChange?: (value: string | number | RelatedItem | null) => void;
 }>;
 
 export const M2OInput = ({
   item,
-  value,
-  uuid,
+  value: valueProp,
+  documentSessionId,
   onValueChange,
   label,
   error,
@@ -55,110 +64,143 @@ export const M2OInput = ({
     return null;
   }
 
+  const { data: relations } = useRelations();
+
+  const relation = relations?.find(
+    (r) => r.related_collection === item.schema.foreign_key_table,
+  );
+
+  const { data: relatedFields } = useFields(
+    item.schema.foreign_key_table as any,
+  );
+
+  const { data: relatedCollection } = useCollection(
+    item.schema.foreign_key_table as any,
+  );
+
+  const relatedPk = getPrimaryKey(relatedFields);
+
+  const value = useMemo(() => {
+    return typeof valueProp === "object"
+      ? valueProp
+      : !!valueProp
+        ? {
+            [relatedPk as string]: valueProp,
+            __id: valueProp?.toString(),
+            __state: RelatedItemState.Default,
+          }
+        : undefined;
+  }, [valueProp, relatedPk, item.field, documentSessionId]);
+
+  const hasValue = !!value;
+
+  const relatedId = !!value ? value?.[relatedPk as string] : undefined;
+
+  const interfaceTemplate = item.meta.options?.template || "";
+
+  const effectiveTemplate =
+    interfaceTemplate ||
+    (relatedCollection?.meta?.display_template as string | undefined) ||
+    "";
+
+  const templatePaths = getFieldPathsFromTemplate(effectiveTemplate)
+    .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
+    .filter(Boolean);
+
+  const requestFields = relation
+    ? uniq([relatedPk, ...templatePaths]).filter(Boolean)
+    : [];
+
+  const isNew = value?.__state === RelatedItemState.Created;
+  const isUpdated = value?.__state === RelatedItemState.Updated;
+  const isPicked = value?.__state === RelatedItemState.Picked;
+  const isDeleted = value?.__state === RelatedItemState.Deleted;
+  const isDefault = value?.__state === RelatedItemState.Default;
+
+  const { data: doc } = useDocument({
+    collection: item.schema.foreign_key_table as any,
+    id: relatedId,
+    options: {
+      fields: requestFields as any,
+    },
+    query: {
+      enabled: hasValue && !!relatedId && !!relatedPk,
+    },
+  });
+
   const { styles, theme } = useStyles(formStyles);
 
-  const { data: fields } = useFields(item.schema.foreign_key_table as any);
-  const pk = getPrimaryKey(fields);
   useEffect(() => {
-    EventBus.on("m2o:pick", (data) => {
-      console.log({ data, fields, pk });
-      if (data.field === item.field && data.uuid === uuid) {
-        onValueChange?.(data.data[pk as any]);
+    const addM2OAdd = (event: MittEvents["m2o:add"]) => {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
+        onValueChange?.({
+          ...merge(value, event.data),
+          __id: event.__id ?? event.draft_id ?? generateUUID(),
+          __state: event.__id
+            ? RelatedItemState.Picked
+            : RelatedItemState.Created,
+        });
       }
-    });
-
-    return () => {
-      EventBus.off("m2o:pick", (data) => {
-        console.log(data);
-      });
     };
-  }, [fields, pk, item.field, uuid]);
 
- 
-
-  const Item = () => {
-    const { data: collection } = useCollection(
-      item.schema.foreign_key_table as any
-    );
-
-    // optionally add the template from Display tab -> related values
-    const relatedFields = getFieldsFromTemplate(item.meta?.options?.template || collection?.meta.display_template);
-   
-
-    const { data, isLoading, refetch } = useDocument({
-      collection: item.schema.foreign_key_table as any,
-      id: value,
-      options: {
-        fields: relatedFields.length
-          ? map(
-              filter(relatedFields, (f) => f.type === "transform"),
-              (field) => field.name
-            )
-          : [`*`],
-      },
-      query: {
-        retry: false,
-        enabled: false,
-      },
-    });
-
-    useEffect(() => {
-      if (value) {
-        refetch();
+    const updateM2OUpdate = (event: MittEvents["m2o:update"]) => {
+      if (
+        event.field === item.field &&
+        event.document_session_id === documentSessionId
+      ) {
+        onValueChange?.({
+          ...merge(value, event.data),
+          __state: RelatedItemState.Updated,
+        });
       }
-    }, [value]);
+    };
 
-    console.log({
-      relatedFields,
-      data,
-      collection,
-      pkField: fields?.find((f) => f.schema.is_primary_key),
-      
-    });
+    EventBus.on("m2o:add", addM2OAdd);
+    EventBus.on("m2o:update", updateM2OUpdate);
+    return () => {
+      EventBus.off("m2o:add", addM2OAdd);
+      EventBus.off("m2o:update", updateM2OUpdate);
+    };
+  }, [relatedPk, item.field, documentSessionId, onValueChange, value]);
 
-    if (isLoading) return null;
+  const partsFromDoc = parseTemplateParts(
+    effectiveTemplate,
+    doc,
+    relatedFields,
+  );
 
-    if (relatedFields.length) {
-      return (
-        <Text>
-          {map(relatedFields, (field) => {
-            if (field.type === "string") {
-              return field.value;
-            } else {
-              // Handle transform fields
-              const fieldPath = field.name;
-              const value = fieldPath
-                .split(".")
-                .reduce(
-                  (obj: unknown, key: string) => {
-                    if (Array.isArray(obj)) {
-                      // If we hit an array, join all the values from the array
-                      return obj.map(item => (item as Record<string, unknown>)?.[key]).filter(Boolean).join(", ");
-                    }
-                    return (obj as Record<string, unknown>)?.[key];
-                  },
-                  data as unknown
-                );
-              return value || "";
-            }
-          }).join("")}
-        </Text>
-      );
-    } else {
-      return (
-        <Text>
-          {
-            data?.[
-              fields?.find((f) => f.schema.is_primary_key)
-                ?.field as keyof typeof data
-            ] as string
-          }
-        </Text>
-      );
-    }
-  };
+  const partsFromValue = parseTemplateParts(
+    effectiveTemplate,
+    value,
+    relatedFields,
+  );
 
-  console.log({ m2o: item, fields, value });
+  const draftValueHasValues = Object.keys(value || {}).some((key) => {
+    const field = relatedFields?.find((f) => f.field === key);
+    return !!field && !field?.schema?.is_primary_key && !key.startsWith("__");
+  });
+
+  const parts = !!value && draftValueHasValues ? partsFromValue : partsFromDoc;
+
+  console.log({
+    item,
+    relatedFields,
+    relatedCollection,
+    value,
+    relatedId,
+    doc,
+    valueProp,
+    requestFields,
+    effectiveTemplate,
+    templatePaths,
+    relation,
+    partsFromDoc,
+    partsFromValue,
+    parts,
+  });
 
   return (
     <View style={styles.formControl}>
@@ -175,30 +217,126 @@ export const M2OInput = ({
         ]}
       >
         <Pressable
-          style={[
-            styles.input,
-            { display: "flex", flexDirection: "row", alignItems: "center" },
-          ]}
-          disabled={disabled}
           onPress={() => {
             router.push({
               pathname: `/modals/m2o/[collection]/pick`,
               params: {
                 collection: item.schema.foreign_key_table as string,
-                data: objectToBase64({
-                  field: item.field,
-                  value: value,
-                  uuid: uuid as string,
-                  filter: item.meta.options?.filter || [],
-                }),
+                field: item.field,
+                document_session_id: documentSessionId,
               },
             });
           }}
+          style={[
+            styles.input,
+            { display: "flex", flexDirection: "row", alignItems: "center" },
+          ]}
         >
-          <Item />
+          <TemplatePartsRenderer parts={parts} />
         </Pressable>
         <View style={styles.append}>
-          <ChevronDown size={20} color={theme.colors.textPrimary} />
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 0,
+            }}
+          >
+            {!disabled && (
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 0,
+                }}
+              >
+                {(isPicked || isUpdated || isDefault) && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/[id]`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        id: value?.[relatedPk as string],
+                        draft_id: value?.__id,
+                        draft:
+                          value && draftValueHasValues
+                            ? objectToBase64(value)
+                            : undefined,
+                        item_field: item.field,
+                        document_session_id: documentSessionId,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="edit_square" />
+                    </Button>
+                  </Link>
+                )}
+
+                {isNew && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/add`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        document_session_id: documentSessionId,
+                        item_field: item.field,
+                        draft_id: value?.__id,
+                        draft:
+                          value && draftValueHasValues
+                            ? objectToBase64(value)
+                            : undefined,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="edit_square" />
+                    </Button>
+                  </Link>
+                )}
+
+                {!hasValue && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/add`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        document_session_id: documentSessionId,
+
+                        item_field: item.field,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="add" />
+                    </Button>
+                  </Link>
+                )}
+
+                {!!hasValue && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onPress={() => {
+                      onValueChange?.(null);
+                    }}
+                  >
+                    <DirectusIcon name="close" />
+                  </Button>
+                )}
+              </View>
+            )}
+            {!hasValue && (
+              <View>
+                <ChevronDown size={20} color={theme.colors.textPrimary} />
+              </View>
+            )}
+          </View>
         </View>
       </View>
       {(error || helper) && (

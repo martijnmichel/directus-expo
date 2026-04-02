@@ -9,6 +9,7 @@ import { Check, Trash } from "../icons";
 import { Stack } from "expo-router";
 import { Button } from "../display/button";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export const RepeaterDocument = ({
   fields,
@@ -20,6 +21,7 @@ export const RepeaterDocument = ({
   onSave?: (data: Record<string, any>) => void;
 }) => {
   const { styles } = useStyles(formStyles);
+  const { t } = useTranslation();
   const context = useForm({ defaultValues });
   const {
     control,
@@ -41,6 +43,7 @@ export const RepeaterDocument = ({
   const SubmitButton = () => (
     <Button
       rounded
+      size="sm"
       loading={isSubmitting}
       disabled={!isDirty || !isValid || isSubmitting}
       onPress={handleSubmit(submit)}
@@ -66,6 +69,7 @@ export const RepeaterDocument = ({
           control,
           styles,
           fallbackInterface: "input",
+          t,
         })}
       </View>
     </FormProvider>

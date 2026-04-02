@@ -24,8 +24,10 @@ import {
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { CoreSchemaDocument } from "@/types/directus";
+import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const { collection, id, uuid } = useLocalSearchParams();
+  const { collection, id, document_session_id, item_field, junction_id, draft_id, draft: draftData } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -33,8 +35,10 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
-
+  const draft = draftData ? base64ToObject(draftData as string) : undefined;
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
+
+  console.log({ draft })
 
   const headerStyles = useHeaderStyles({ isModal: true });
 
@@ -53,13 +57,18 @@ export default function Collection() {
             <DocumentEditor
               collection={collection as keyof CoreSchema}
               id={id as string}
+              submitType="raw"
+              defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
                 console.log({ collection, id });
                 EventBus.emit("m2a:update", {
                   collection: collection as keyof CoreSchema,
-                  docId: document[primaryKey as any] as string,
-                  uuid: uuid as string,
+                  data: { [primaryKey as string]: id, ...document } as CoreSchemaDocument,
+                  document_session_id: document_session_id as string | number,
+                  field: item_field as string,
+                  junction_id: junction_id as string | number,
+                  draft_id: draft_id as string,
                 });
               }}
             />

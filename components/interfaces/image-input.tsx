@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -34,10 +34,11 @@ import { objectToBase64 } from "@/helpers/document/docToBase64";
 import EventBus from "@/utils/mitt";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
 import { InterfaceProps } from ".";
+import { useModalStore } from "@/state/stores/modalStore";
 
 type ImageInputProps = InterfaceProps<{
   value?: string;
-  onChange?: (value: string | string[]) => void;
+  onChange?: (value: string | string[] | null) => void;
   sources?: ("device" | "url" | "library")[];
 }>;
 
@@ -48,6 +49,7 @@ export const ImageInput = ({
   value,
   onChange,
   disabled,
+  item,
   required,
   sources = ["device", "url", "library"],
 }: ImageInputProps) => {
@@ -56,10 +58,18 @@ export const ImageInput = ({
   const [imageUrl, setImageUrl] = useState("");
   const { directus, token } = useAuth();
 
+  const openFilePicker = useModalStore((state) => state.open);
+  const closeFilePicker = useModalStore((state) => state.close);
+
   const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
   const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
 
   const { t } = useTranslation();
+  const onChangeRef = useRef(onChange);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const pickImage = async () => {
     try {
@@ -90,17 +100,18 @@ export const ImageInput = ({
     }
   };
 
+  const handleFilePick = useCallback((file: { data: string | string[] }) => {
+    onChangeRef.current?.(file.data);
+  }, []);
+
   useEffect(() => {
-    EventBus.on("file:pick", (file) => {
-      onChange?.(file.data);
-    });
+    EventBus.on("file:pick", handleFilePick);
 
     return () => {
-      EventBus.off("file:pick", (file) => {
-        onChange?.(file.data);
-      });
+      EventBus.off("file:pick", handleFilePick);
     };
-  }, []);
+  }, [handleFilePick]);
+
   return (
     <View style={formStyle.formControl}>
       {label && (
@@ -111,15 +122,18 @@ export const ImageInput = ({
 
       <View style={styles.container}>
         <View style={styles.imagePreview}>
-          <Image
-            source={{
-              uri: `${directus?.url}/assets/${value}`,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }}
-            style={styles.image}
-          />
+          {!!value && (
+            <Image
+              source={{
+                uri: `${directus?.url}assets/${value}`,
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }}
+              contentFit="cover"
+              style={styles.image}
+            />
+          )}
         </View>
 
         {!disabled && (
@@ -184,38 +198,51 @@ export const ImageInput = ({
                   </Button>
                   */
 
-                  <Modal>
-                    <Modal.Trigger>
-                      <Button rounded variant="soft">
-                        <Gallery />
-                      </Button>
-                    </Modal.Trigger>
-                    <Modal.Content
-                      variant="bottomSheet"
-                      title={t("components.shared.selectFromLibrary")}
-                    >
-                      {({ close }) => (
-                        <>
-                          <ScrollView>
-                            <FileSelect
-                              onSelect={(v) => {
-                                close();
-                                requestAnimationFrame(() => {
-                                  onChange?.(v);
-                                });
+                  <Button
+                    rounded
+                    variant="soft"
+                    onPress={() => {
+                      openFilePicker(() => {
+                        return (
+                          <>
+                            <ScrollView
+                              contentContainerStyle={{
+                                paddingTop: theme.spacing.lg,
                               }}
-                            />
-                            <View style={{ height: 80 }} />
-                          </ScrollView>
-                          <FloatingToolbarHost />
-                        </>
-                      )}
-                    </Modal.Content>
-                  </Modal>
+                            >
+                              <FileSelect
+                                multiple={false}
+                                mimeTypes={
+                                  (item?.meta.options
+                                    ?.allowedMimeTypes as string[]) ?? [
+                                    "image/*",
+                                  ]
+                                }
+                                onSelect={(v) => {
+                                  closeFilePicker();
+                                  requestAnimationFrame(() => {
+                                    onChange?.(v);
+                                  });
+                                }}
+                              />
+                              <View style={{ height: 80 }} />
+                            </ScrollView>
+                            <FloatingToolbarHost />
+                          </>
+                        );
+                      }, t("components.shared.selectImage"));
+                    }}
+                  >
+                    <Gallery />
+                  </Button>
                 )}
 
-                {value && (
-                  <Button variant="soft" rounded onPress={() => onChange?.("")}>
+                {!!value && (
+                  <Button
+                    variant="soft"
+                    rounded
+                    onPress={() => onChange?.(null)}
+                  >
                     <X />
                   </Button>
                 )}
@@ -263,8 +290,7 @@ const imageStyles = createStyleSheet((theme) => ({
   },
   image: {
     width: "100%",
-    height: "100%",
-    resizeMode: "cover",
+    height: "100%"
   },
   overlay: {
     backgroundColor: "rgba(0,0,0,0.3)",

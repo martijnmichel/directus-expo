@@ -26,8 +26,19 @@ import {
 import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { EventBus } from "@/utils/mitt";
 import { usePrimaryKey } from "@/hooks/usePrimaryKey";
+import { CoreSchemaDocument } from "@/types/directus";
+import { useDraft, useDraftStore } from "@/state/stores/draftStore";
+import { base64ToObject } from "@/helpers/document/docToBase64";
 export default function Collection() {
-  const { collection, id, uuid } = useLocalSearchParams();
+  const {
+    collection,
+    id,
+    document_session_id,
+    junction_id,
+    item_field,
+    draft: draftData,
+    draft_id,
+  } = useLocalSearchParams();
   const { data } = useCollection(collection as keyof CoreSchema);
   const path = usePathname();
   const headerTitle = useDocumentDisplayTemplate({
@@ -35,9 +46,9 @@ export default function Collection() {
     docId: id as string,
     template: data?.meta.display_template || "",
   });
-
+  const draft = draftData ? base64ToObject(draftData as string) : undefined;
   const primaryKey = usePrimaryKey(collection as keyof CoreSchema);
-
+  const { pushPatch } = useDraftStore();
   const headerStyles = useHeaderStyles({ isModal: true });
 
   return (
@@ -55,13 +66,18 @@ export default function Collection() {
             <DocumentEditor
               collection={collection as keyof CoreSchema}
               id={id as string}
+              submitType="raw"
+              defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
-                console.log({ collection, id });
                 EventBus.emit("m2m:update", {
                   collection: collection as keyof CoreSchema,
-                  docId: document[primaryKey as any] as string,
-                  uuid: uuid as string,
+                  document_session_id: document_session_id as string | number,
+                  junction_id: (junction_id as string | number) ?? id,
+                  field: item_field as string,
+                  /** primary key is needed so directus knows which doc on junction item it will update, otherwise it will create a new item */
+                  data: { [primaryKey]: id, ...document } as CoreSchemaDocument,
+                  draft_id: draft_id as string,
                 });
               }}
             />

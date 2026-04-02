@@ -60,7 +60,7 @@ export default function Collection() {
               defaultValues={draft}
               onSave={async (document) => {
                 router.dismiss();
-                EventBus.emit("o2m:add", {
+                EventBus.emit("m2o:add", {
                   data: document as CoreSchemaDocument,
                   field: item_field as string,
                   document_session_id: document_session_id as string,

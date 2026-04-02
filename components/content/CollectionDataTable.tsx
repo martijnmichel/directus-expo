@@ -161,7 +161,7 @@ export function CollectionDataTable({ collection }: { collection: string }) {
       ],
       limit: -1,
       filter: documentIds?.length
-        ? { [primaryKey]: { _in: documentIds } }
+        ? { [primaryKey as string]: { _in: documentIds } }
         : {},
     };
   }, [

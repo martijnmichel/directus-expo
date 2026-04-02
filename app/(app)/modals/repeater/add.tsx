@@ -13,7 +13,7 @@ import { useHeaderStyles } from "@/unistyles/useHeaderStyles";
 import { useTranslation } from "react-i18next";
 
 const RepeaterModal = () => {
-  const { fields, item_field, uuid } = useLocalSearchParams();
+  const { fields, item_field, document_session_id } = useLocalSearchParams();
   const router = useRouter();
   const headerStyle = useHeaderStyles({ isModal: true });
   const { t } = useTranslation();
@@ -36,7 +36,7 @@ const RepeaterModal = () => {
                 EventBus.emit("repeater:add", {
                   field: item_field as string,
                   data: doc,
-                  uuid: uuid as string,
+                  document_session_id: document_session_id as string | number,
                 });
               }}
             />

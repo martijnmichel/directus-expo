@@ -15,7 +15,8 @@ import {
   useDocument,
   useFields,
 } from "@/state/queries/directus/collection";
-import { Alert, View } from "react-native";
+import { useRelations } from "@/state/queries/directus/core";
+import { Alert, Platform, View } from "react-native";
 import { Check, Trash } from "../icons";
 import {
   coreCollections,
@@ -26,7 +27,7 @@ import { ModalContext } from "../display/modal";
 import { PortalOutlet } from "../layout/Portal";
 import { Horizontal } from "../layout/Stack";
 import { Accordion } from "../display/accordion";
-import { each, filter, find, isEmpty, map } from "lodash";
+import { each, filter, find, isEmpty, map, merge } from "lodash";
 import { queryClient } from "@/utils/react-query";
 import { DirectusErrorResponse } from "@/types/directus";
 import { mapFields } from "@/helpers/document/mapFields";
@@ -39,11 +40,12 @@ import { mutateDocument } from "@/state/actions/updateDocument";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import ToastManager from "@/utils/toast";
 import { useUUID } from "@/hooks/useUUID";
+import { RelatedItemState } from "@/utils/mitt";
 
 export const DocumentEditor = ({
   collection,
   id,
-  defaultValues = {},
+  defaultValues = undefined,
   onSave,
   onChange,
   onDelete,
@@ -58,7 +60,10 @@ export const DocumentEditor = ({
   submitType?: "submit" | "raw" | "inline";
 }) => {
   const uuid = useUUID();
+  const { token } = useAuth();
+  const { t } = useTranslation();
   const { data: fields } = useFields(collection as keyof CoreSchema);
+  const { data: relations } = useRelations();
 
   const { data: itemPermissions } = useItemPermissions(
     collection as keyof CoreSchema,
@@ -76,12 +81,14 @@ export const DocumentEditor = ({
   } = context;
   const fieldComponents = mapFields({
     fields,
+    relations,
     control,
     docId: id,
     canUpdateItem: itemPermissions?.update.access,
     permissions,
     styles,
     uuid,
+    t,
   });
 
   const form = useWatch({ control });
@@ -92,15 +99,11 @@ export const DocumentEditor = ({
     }
   }, [form, isDirty]);
 
-  const { t } = useTranslation();
-  const [revision, setRevision] = useState<number>(0);
-  const modalContext = useContext(ModalContext);
   const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
     collection as keyof CoreSchema,
     id as number,
   );
 
-  const { data } = useCollection(collection as keyof CoreSchema);
   const {
     data: document,
     error,
@@ -130,13 +133,19 @@ export const DocumentEditor = ({
   };
 
   useEffect(() => {
+    //console.log("defaultValues", defaultValues);
+    // if (defaultValues) return;
     /** if a document is fetched, reset the form with the document */
+
+    console.log({ collection, id, document, defaultValues, mergedDocument: merge(document, defaultValues) });
     if (document) {
       context.reset(
-        getDocumentFieldValues(document as Record<string, unknown>),
+        getDocumentFieldValues(
+          merge(document, defaultValues) as Record<string, unknown>,
+        ),
       );
       //console.log("reset", document);
-      setRevision((state) => state + 1);
+      //setRevision((state) => state + 1);
     }
   }, [document]);
 
@@ -176,7 +185,47 @@ export const DocumentEditor = ({
         onSave?.(data);
         break;
       case "submit": {
-        await updateDoc(data, {
+        /**
+         * Transforms the form data to the Directus API detailed relationship format from __state fields
+         * @param value - The value to transform
+         * @returns
+         */
+        const transformFormData = (value: unknown): unknown => {
+          if (value === null || typeof value !== "object") {
+            return value;
+          }
+          if (Array.isArray(value)) {
+            return value
+              .filter((item) => {
+                if (item && typeof item === "object" && !Array.isArray(item)) {
+                  return item.__state !== RelatedItemState.Deleted;
+                }
+                return true;
+              })
+              .map((item) => transformFormData(item));
+          }
+          const obj = value as Record<string, unknown>;
+          if (obj.__state === RelatedItemState.Deleted) {
+            return undefined;
+          }
+          return Object.keys(obj).reduce(
+            (acc, key) => {
+              if (key.startsWith("__") || key === "null") {
+                return acc;
+              }
+              const cleaned = transformFormData(obj[key]);
+              if (cleaned === undefined) {
+                return acc;
+              }
+              return { ...acc, [key]: cleaned };
+            },
+            {} as Record<string, unknown>,
+          );
+        };
+
+        const cleanedData = transformFormData(data) as Record<string, unknown>;
+
+        await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {
             context.reset(updatedDoc);
 
@@ -230,14 +279,16 @@ export const DocumentEditor = ({
   };
 
   const handleSave = () => {
-    context.handleSubmit(handleSubmit)();
+    context.handleSubmit(handleSubmit, (errors) => {
+      console.log({ errors });
+    })();
   };
 
   if (isFetching) {
     return null;
   }
   return (
-    <FormProvider key={revision + collection + id} {...context}>
+    <FormProvider key={collection + id} {...context}>
       {submitType !== "inline" && (
         <Stack.Screen
           options={{
@@ -273,6 +324,32 @@ export const DocumentEditor = ({
           <Check />
         </Button>
       </PortalOutlet> */}
+
+      {Platform.OS === "web" && submitType !== "submit" && __DEV__ && (
+        <Horizontal style={{ justifyContent: "flex-end", paddingBottom: 10 }}>
+          {itemPermissions?.delete.access && id !== "+" && (
+            <Button
+              rounded
+              variant="soft"
+              size="sm"
+              onPress={handleDelete}
+              loading={isDeleting}
+            >
+              <Trash />
+            </Button>
+          )}
+          <Button
+            rounded
+            disabled={!isDirty || !isValid || isSubmitting}
+            loading={isSubmitting}
+            size="sm"
+            onPress={handleSave}
+          >
+            <Check />
+          </Button>
+        </Horizontal>
+      )}
+
       <View style={styles.form}>{fieldComponents}</View>
     </FormProvider>
   );

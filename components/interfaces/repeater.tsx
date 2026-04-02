@@ -1,40 +1,36 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Text, View, FlatList } from "react-native";
+import React, { useEffect, useCallback, useMemo } from "react";
+import { Text, View } from "react-native";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { Button } from "../display/button";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
 import { formStyles } from "./style";
 import { Link } from "expo-router";
 import { Horizontal, Vertical } from "../layout/Stack";
-import {
-  DndProvider,
-  Draggable,
-  DraggableGrid,
-  DraggableStack,
-  UniqueIdentifier,
-} from "@mgcrea/react-native-dnd";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import EventBus, { MittEvents } from "@/utils/mitt";
+import Sortable from "react-native-sortables";
+import EventBus, { MittEvents, RelatedItem } from "@/utils/mitt";
 import { DragIcon, Trash, Edit } from "../icons";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
 import { parseRepeaterTemplate } from "@/helpers/document/template";
-import { runOnJS } from "react-native-reanimated";
 import { useTranslation } from "react-i18next";
 import { Alert } from "../display/alert";
 import { InterfaceProps } from ".";
+import { generateUUID } from "@/hooks/useUUID";
+import { RelatedListItem } from "../display/related-listitem";
+import { DirectusIcon } from "../display/directus-icon";
+import { merge } from "lodash";
 
 type RepeaterInputProps = InterfaceProps<{
-  value: any[] | undefined;
-  onChange: (value: any[]) => void;
+  value: Record<string, any>[] | undefined;
+  onChange: (value: Record<string, any>[]) => void;
 }>;
 
 export const RepeaterInput = ({
   item,
   label,
   error,
-  uuid,
+  documentSessionId,
   helper,
-  value = [],
+  value: valueProp = [],
   onChange,
   disabled,
   required,
@@ -48,40 +44,57 @@ export const RepeaterInput = ({
   const { styles } = useStyles(stylesheet);
   const { t } = useTranslation();
 
-  const onOrderChange = useCallback(
-    (order: UniqueIdentifier[]) => {
-      console.log({ order });
-      // Reorder the items based on the new order
-      const newItems = order.map((index) => value[parseInt(index as string)]);
-      console.log({ newItems });
-      onChange?.(newItems);
-    },
-    [value, onChange],
-  );
+  const value = useMemo(() => {
+    return valueProp?.length
+      ? valueProp.map((v) => ({
+          ...v,
+          __id: v.__id ?? generateUUID(),
+        }))
+      : [];
+  }, [valueProp]);
 
-  console.log({ item });
   const getDisplayValue = (repeatItem: any) => {
     const format = item.meta?.display_options?.format;
     return format
       ? parseRepeaterTemplate(format, repeatItem)
-      : Object.values(repeatItem).slice(0, 3).map((v: any) => v?.toString()).join(" - ") || "--";
+      : Object.values(repeatItem)
+          .slice(0, 3)
+          .map((v: any) => v?.toString())
+          .join(" - ") || "--";
   };
 
   useEffect(() => {
-    EventBus.on("repeater:add", (data) => {
-      if (data.field === item.field && data.uuid === uuid) {
-        onChange([...value, data.data]);
+    const addRepeater = (data: MittEvents["repeater:add"]) => {
+      if (
+        data.field === item.field &&
+        data.document_session_id === documentSessionId
+      ) {
+        onChange([...value, { ...data.data, __id: generateUUID() }]);
       }
-    });
+    };
 
-    EventBus.on("repeater:edit", (data) => {
-      if (data.field === item.field && data.uuid === uuid) {
-        const newValue = [...value];
-        newValue[data.index] = data.data;
+    const editRepeater = (data: MittEvents["repeater:edit"]) => {
+      if (
+        data.field === item.field &&
+        data.document_session_id === documentSessionId
+      ) {
+        const newValue = value.map((v) =>
+          v.__id === data.data.__id ? merge(v, data.data) : v,
+        );
         onChange(newValue);
       }
-    });
-  }, [onChange, item.field, uuid]);
+    };
+
+    EventBus.on("repeater:add", addRepeater);
+    EventBus.on("repeater:edit", editRepeater);
+
+    return () => {
+      EventBus.off("repeater:add", addRepeater);
+      EventBus.off("repeater:edit", editRepeater);
+    };
+  }, [onChange, item.field, documentSessionId, value]);
+
+  console.log({ item, value });
 
   return (
     <Vertical spacing="xs">
@@ -95,72 +108,65 @@ export const RepeaterInput = ({
         <Alert message={t("components.repeater.noItems")} status="info" />
       )}
 
-      <DndProvider>
-        <DraggableStack
-          key={JSON.stringify(value)}
-          direction="column"
-          onOrderChange={onOrderChange}
-        >
-          {(value || []).map((repeaterItem, index) => (
-            <Draggable
-              key={index}
-              id={index.toString()}
-              disabled={!!item.meta?.options?.sortable}
-              data={repeaterItem}
-              activationDelay={200}
-              style={[styles.listItem, styles.fullWidth]}
-            >
-              <View style={styles.dragHandle}>
-                <DragIcon />
-              </View>
-
-              <Text numberOfLines={1} style={styles.content}>
-                {getDisplayValue(repeaterItem)}
-              </Text>
-
-              <Link
-                href={{
-                  pathname: `/modals/repeater/edit`,
-                  params: {
-                    document: objectToBase64(repeaterItem),
-                    fields: objectToBase64(
-                      item.meta?.options?.fields.map((f: any) => ({
-                        ...f,
-                        type: f.type || "string",
-                        meta: {
-                          ...f.meta,
-                          interface: f.meta?.interface || "input",
-                        },
-                      })) || [],
-                    ),
-                    item_field: item.field,
-                    uuid,
-                    index: index,
-                  },
-                }}
-                asChild
-              >
-                <Button variant="ghost" rounded>
-                  <Edit />
+      <Sortable.Grid
+        columns={1}
+        rowGap={3}
+        data={value}
+        keyExtractor={(item) => item.__id}
+        onDragEnd={(updatedValue) => {
+          console.log({ updatedValue });
+          onChange(updatedValue.data);
+        }}
+        renderItem={({ item: repeaterItem }: { item: Record<string, any> }) => (
+          <RelatedListItem
+            isDraggable
+            append={
+              <>
+                <Link
+                  href={{
+                    pathname: `/modals/repeater/edit`,
+                    params: {
+                      document: objectToBase64(repeaterItem),
+                      fields: objectToBase64(
+                        item.meta?.options?.fields.map((f: any) => ({
+                          ...f,
+                          type: f.type || "string",
+                          meta: {
+                            ...f.meta,
+                            interface: f.meta?.interface || "input",
+                          },
+                        })) || [],
+                      ),
+                      item_field: item.field,
+                      document_session_id: documentSessionId,
+                    },
+                  }}
+                  asChild
+                >
+                  <Button variant="ghost" rounded>
+                    <DirectusIcon name="edit_square" />
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  disabled={disabled}
+                  onPress={() => {
+                    const newValue = value.filter(
+                      (v) => v.__id !== repeaterItem.__id,
+                    );
+                    onChange?.(newValue);
+                  }}
+                  rounded
+                >
+                  <DirectusIcon name="close" />
                 </Button>
-              </Link>
-
-              <Button
-                variant="ghost"
-                disabled={disabled}
-                onPress={() => {
-                  const newValue = [...value];
-                  newValue.splice(index, 1);
-                  onChange?.(newValue);
-                }}
-                rounded
-              >
-                <Trash />
-              </Button>
-            </Draggable>
-          ))}
-        </DraggableStack>
-      </DndProvider>
+              </>
+            }
+          >
+            {getDisplayValue(repeaterItem)}
+          </RelatedListItem>
+        )}
+      />
 
       {(error || helper) && (
         <Text
@@ -190,7 +196,7 @@ export const RepeaterInput = ({
                   })) || [],
                 ),
                 item_field: item.field,
-                uuid,
+                document_session_id: documentSessionId,
               },
             }}
             asChild

@@ -24,7 +24,10 @@ import {
   Inter_700Bold,
   Inter_800ExtraBold,
   Inter_900Black,
+  
 } from "@expo-google-fonts/inter";
+
+import { RobotoMono_400Regular } from "@expo-google-fonts/roboto-mono";
 import { queryClient } from "@/utils/react-query";
 import Toast from "react-native-toast-message";
 import { DateUtils } from "@/utils/dayjs";
@@ -101,6 +104,7 @@ const Preload = ({ children }: { children: React.ReactNode }) => {
     Inter_700Bold,
     Inter_800ExtraBold,
     Inter_900Black,
+    RobotoMono_400Regular,
   });
 
   if (!fontsLoaded || isLoading) {

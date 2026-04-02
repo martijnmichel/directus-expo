@@ -12,7 +12,7 @@ import {
   useNavigation,
 } from "expo-router";
 import { DocumentEditor } from "@/components/content/DocumentEditor";
-import { map, reduce } from "lodash";
+import { map, merge, reduce } from "lodash";
 import { CoreSchema, createItem, readItem, readItems } from "@directus/sdk";
 import { useDocumentDisplayTemplate } from "@/hooks/useDocumentDisplayTemplate";
 import {
@@ -40,6 +40,7 @@ import { SearchFilter } from "@/components/content/filters/search-filter-modal";
 import { Horizontal } from "@/components/layout/Stack";
 import { useCollectionTableFields } from "@/hooks/useCollectionTableFields";
 import { DataTableColumn } from "@/components/content/DataTableColumn";
+import { generateUUID } from "@/hooks/useUUID";
 export default function Collection() {
   const {
     related_collection,
@@ -49,7 +50,7 @@ export default function Collection() {
     junction_field,
     doc_id,
     item_field,
-    uuid,
+    document_session_id,
   } = useLocalSearchParams();
   const primaryKey = usePrimaryKey(related_collection as keyof CoreSchema);
 
@@ -68,6 +69,12 @@ export default function Collection() {
     collection: related_collection as keyof CoreSchema,
   });
 
+  const nestedFields = tableFields.filter((f: string) => f.includes("."));
+  const expandedFields = nestedFields.map((f: string) =>
+    f.includes(".$") ? f.split(".$")[0] : f,
+  );
+
+  console.log({ value });
   const { data: options, refetch } = useDocuments(
     related_collection as keyof CoreSchema,
     {
@@ -78,6 +85,7 @@ export default function Collection() {
       search,
       filter: {
         _and: [
+          // value with docIds that were picked, not yet in the junction
           ...(value?.length > 0
             ? [
                 {
@@ -87,6 +95,9 @@ export default function Collection() {
                 },
               ]
             : []),
+          /**
+           * follow docs not having a junction doc with the current doc_id
+           */
           ...(doc_id &&
           doc_id !== "+" &&
           junction_collection &&
@@ -109,28 +120,29 @@ export default function Collection() {
     },
   );
 
-  const { data: relatedDocuments, refetch: refetchRelatedDocuments } = useDocuments(
-    related_collection as keyof CoreSchema,
-    {
-      fields: [...tableFields.filter((f: string) => f.includes(".")), primaryKey as any],
-      limit: -1,
-      filter: {
-        [primaryKey as any]: {
-          _in: map(options?.items, (doc) => doc[primaryKey as string]),
+  const { data: relatedDocuments, refetch: refetchRelatedDocuments } =
+    useDocuments(
+      related_collection as keyof CoreSchema,
+      {
+        fields: [...expandedFields, primaryKey as any],
+        limit: -1,
+        filter: {
+          [primaryKey as any]: {
+            _in: map(options?.items, (doc) => doc[primaryKey as string]),
+          },
         },
       },
-    },
-    {
-      enabled: !!options?.items?.length ,
-    }
-  );
+      {
+        enabled: !!options?.items?.length,
+      },
+    );
 
- 
+  //console.log({ relatedDocuments, tableFields, primaryKey, related_collection, expandedFields });
 
   useEffect(() => {
     refetch();
     refetchRelatedDocuments();
-  }, [current_value]);
+  }, [options]);
 
   const headerStyles = useHeaderStyles({ isModal: true });
   const { label } = useFieldMeta(related_collection as keyof CoreSchema);
@@ -167,15 +179,16 @@ export default function Collection() {
         widths={preset?.layout_options?.tabular?.widths}
         renderRow={(doc) =>
           map(tableFields, (f) => {
-            const relatedDoc = (relatedDocuments?.items as Record<string, unknown>[] | undefined)?.find(
-              (r) => r[primaryKey as string] === doc[primaryKey as string]
+            const relatedDoc = (
+              relatedDocuments?.items as Record<string, unknown>[] | undefined
+            )?.find(
+              (r) => r[primaryKey as string] === doc[primaryKey as string],
             );
-            console.log({ relatedDoc, doc, primaryKey });
+            //console.log({ relatedDoc, doc, mergedDoc: merge(doc, relatedDoc), primaryKey, relatedDocuments });
             return (
               <DataTableColumn
                 template={f}
-                document={doc}
-                relatedDocument={relatedDoc}
+                document={merge(doc, relatedDoc)}
                 collection={related_collection as keyof CoreSchema}
                 key={`table-${related_collection}-column-${f}`}
               />
@@ -187,9 +200,12 @@ export default function Collection() {
           router.dismiss();
           requestAnimationFrame(() => {
             EventBus.emit("m2m:add", {
-              data: doc as CoreSchemaDocument,
+              data: {
+                [primaryKey as string]: doc?.[primaryKey as string],
+              } as CoreSchemaDocument,
               field: item_field as string,
-              uuid: uuid as string,
+              document_session_id: document_session_id as string | number,
+              __id: doc?.[primaryKey as string] as string,
             });
           });
         }}

@@ -41,6 +41,10 @@ export const formStyles = createStyleSheet((theme) => ({
     padding: theme.spacing.md,
   },
   append: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
     padding: theme.spacing.md,
   },
   helperText: {

@@ -4,7 +4,14 @@ export const lightTheme = {
   colors: {
     // Main colors
     primary: "#6644FF" as string, // Directus primary purple
+    primaryBackground: "#f0f4f9" as string,
+    primaryText: "#6644FF" as string,
+    primaryBorder: "#6644FF" as string,
+
     secondary: "#172940" as string, // Dark blue used in secondary elements
+    secondaryBackground: "#f0f4f9" as string,
+    secondaryText: "#172940" as string,
+    secondaryBorder: "#172940" as string,
 
     error: "#de4f67" as string, // Error red
     errorBackground: "#fceef0" as string,
@@ -115,6 +122,12 @@ export const lightTheme = {
       lineHeight: 24,
       fontWeight: "600" as const,
       fontFamily: "Inter_600SemiBold",
+    },
+    monospace: {
+      fontSize: 14,
+      lineHeight: 20,
+      fontWeight: "400" as const,
+      fontFamily: "RobotoMono_400Regular",
     },
   },
 } as const;

@@ -15,7 +15,15 @@ export function getValuesAtPath(obj: unknown, path: string): unknown[] {
     typeof obj === "object" && obj !== null && key in obj
       ? (obj as Record<string, unknown>)[key]
       : undefined;
-  if (rest.length === 0) return val != null ? [val] : [];
+  if (rest.length === 0) {
+    if (val == null) return [];
+    // If the leaf value itself is an array (e.g. tags: ["ok"]),
+    // return its members so template parsers can render them.
+    if (Array.isArray(val)) {
+      return val.filter((item) => item !== null && item !== undefined);
+    }
+    return [val];
+  }
   if (Array.isArray(val))
     return val.flatMap((item) => getValuesAtPath(item, restPath));
   return getValuesAtPath(val, restPath);
@@ -45,30 +53,21 @@ export const parseTemplate = <T>(
   fields?: ReadFieldOutput<CoreSchema>[]
 ): string => {
   const pk = getPrimaryKey(fields as any);
-  return (
-    template?.replace(/\{\{(.*?)\}\}/g, (_, path) => {
-      return (
-        path
-          .trim()
-          .split(".")
-          .reduce(
-            (obj: unknown, key: string) => {
-              if (Array.isArray(obj)) {
-                // If we hit an array, join all the values from the array
-                return obj.map(item => (item as Record<string, unknown>)?.[key]).filter(Boolean).join(", ");
-              }
-              return (obj as Record<string, unknown>)?.[key];
-            },
-            data as unknown
-          ) ||
-        data?.[pk as any] ||
-        ""
-      );
-    }) ||
-    data?.[pk as any] ||
-    data?.id ||
-    ""
-  );
+  const renderedTemplate = template?.replace(/\{\{(.*?)\}\}/g, (_, rawPath) => {
+    const path = rawPath.trim();
+    const values = getValuesAtPath(data, path);
+
+    const text = values
+      .filter((value) => value !== null && value !== undefined)
+      .map((value) =>
+        typeof value === "object" ? "" : String(value),
+      )
+      .join(", ");
+
+    return text;
+  });
+
+  return renderedTemplate || data?.[pk as any] || data?.id || "";
 };
 
 export const parseRepeaterTemplate = <T>(
@@ -109,6 +108,10 @@ type FieldValueTransform = FieldValueBase & {
 };
 
 export type FieldTransform = FieldValueString | FieldValueTransform;
+
+export type ParsedTemplatePart =
+  | { type: "text"; value: string }
+  | { type: "thumbnail"; value: string };
 
 /** Return dot paths to request for a template (e.g. ["translations.title"]). */
 export function getFieldPathsFromTemplate(template?: string): string[] {
@@ -175,4 +178,57 @@ export const getFieldsFromTemplate = (template?: string): FieldTransform[] => {
   }
 
   return segments;
+};
+
+export const parseTemplateParts = <T>(
+  template?: string,
+  data?: T & { [key: string]: any },
+  fields?: ReadFieldOutput<CoreSchema>[]
+): ParsedTemplatePart[] => {
+  const pk = getPrimaryKey(fields as any);
+
+  const parts = getFieldsFromTemplate(template).flatMap((segment) => {
+    if (segment.type === "string") {
+      return [{ type: "text", value: segment.value ?? "" } as ParsedTemplatePart];
+    }
+
+    const path = (segment.path || segment.name || "")
+      .split(".")
+      .filter((part) => part && !part.startsWith("$"))
+      .join(".");
+
+    if (!path) return [];
+
+    const values = getValuesAtPath(data, path).filter(
+      (value) => value !== null && value !== undefined,
+    );
+
+    const firstPrimitive = values.find(
+      (value) => typeof value !== "object",
+    );
+
+    if (
+      segment.transformation === "$thumbnail" ||
+      segment.transformation === "thumbnail"
+    ) {
+      return firstPrimitive != null
+        ? [{ type: "thumbnail", value: String(firstPrimitive) } as ParsedTemplatePart]
+        : [];
+    }
+
+    const text = values
+      .map((value) => (typeof value === "object" ? "" : String(value)))
+      .filter(Boolean)
+      .join(", ");
+
+    return [{ type: "text", value: text } as ParsedTemplatePart];
+  });
+
+  const hasVisibleContent = parts.some(
+    (part) => (part.type === "text" && part.value.trim().length > 0) || part.type === "thumbnail",
+  );
+
+  if (hasVisibleContent) return parts;
+
+  return [{ type: "text", value: String(data?.[pk as any] || data?.id || "") }];
 };
