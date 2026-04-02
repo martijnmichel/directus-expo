@@ -7,8 +7,9 @@ import { Redirect, Slot, Stack, Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useTranslation } from "react-i18next";
 import { ActivityIndicator } from "react-native";
-import { UnistylesRuntime, useStyles } from "react-native-unistyles";
 import { NotificationResponseHandler } from "@/components/NotificationResponseHandler";
+
+import { UnistylesRuntime } from "react-native-unistyles";
 
 export default function TabsLayout() {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function TabsLayout() {
 
   return (
     <>
+    <StatusBar key={UnistylesRuntime.toString()} style={UnistylesRuntime.themeName === "dark" ? "light" : "dark"} />
       <NotificationResponseHandler />
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
