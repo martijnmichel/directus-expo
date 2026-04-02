@@ -6,16 +6,19 @@ import { Layout } from "@/components/layout/Layout";
 import { Section } from "@/components/layout/Section";
 import { Vertical } from "@/components/layout/Stack";
 import { useTranslation } from "react-i18next";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Home() {
   const { t } = useTranslation();
+  const { top } = useSafeAreaInsets()
   return (
     <Layout>
       <ScrollView>
         <Container>
           <Section>
             <Vertical>
+              {!!top && <View style={{ height: top }} />}
               <H1>{t("pages.home.title")}</H1>
               <UserCollections />
             </Vertical>
