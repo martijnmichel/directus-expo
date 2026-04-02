@@ -556,11 +556,15 @@ export const M2MInput = ({
                   related_collection: relation.related_collection,
                   related_field: relation.field,
                   document_session_id: documentSessionId,
-                  current_value: [
-                    pickedItems?.items?.map(
-                      (i: any) => i?.[junction.meta.junction_field as string],
-                    ),
-                  ].join(","),
+                  current_value: value
+                    .filter(
+                      (v) =>
+                        v.__state !== RelatedItemState.Picked ||
+                        v.__state !== RelatedItemState.Default,
+                    )
+                    .map((v) => v?.[relation?.field as string]?.[relatedPrimaryKey as string])
+
+                    .filter(Boolean),
                   junction_field: junction.field,
                   doc_id: docId,
                   item_field: item.field,
