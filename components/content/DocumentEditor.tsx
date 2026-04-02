@@ -279,7 +279,9 @@ export const DocumentEditor = ({
   };
 
   const handleSave = () => {
-    context.handleSubmit(handleSubmit)();
+    context.handleSubmit(handleSubmit, (errors) => {
+      console.log({ errors });
+    })();
   };
 
   if (isFetching) {
