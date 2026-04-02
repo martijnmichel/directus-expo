@@ -127,10 +127,11 @@ export default function Collection() {
           ...headerStyles,
           presentation: "modal",
           headerRight: () => (
-            <>
+            <Horizontal spacing="xs">
               <Button
                 rounded
                 variant="soft"
+                size="sm"
                 onPress={() => {
                   deleteDoc(undefined, {
                     onSuccess: () => {
@@ -144,6 +145,7 @@ export default function Collection() {
               </Button>
               <Button
                 rounded
+                size="sm"
                 disabled={!debouncedForm.length}
                 onPress={() => {
                   router.dismiss();
@@ -156,7 +158,7 @@ export default function Collection() {
               >
                 <Check />
               </Button>
-            </>
+            </Horizontal>
           ),
         }}
       />
