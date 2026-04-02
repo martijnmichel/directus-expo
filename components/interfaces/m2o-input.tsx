@@ -136,7 +136,6 @@ export const M2OInput = ({
         event.field === item.field &&
         event.document_session_id === documentSessionId
       ) {
-        
         onValueChange?.({
           ...merge(value, event.data),
           __id: event.__id ?? event.draft_id ?? generateUUID(),
@@ -236,99 +235,108 @@ export const M2OInput = ({
           <TemplatePartsRenderer parts={parts} />
         </Pressable>
         <View style={styles.append}>
-          {!disabled && (
-            <View
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 0,
-              }}
-            >
-              {(isPicked || isUpdated || isDefault) && (
-                <Link
-                  href={{
-                    pathname: `/modals/m2o/[collection]/[id]`,
-                    params: {
-                      collection: item.schema.foreign_key_table as string,
-                      id: value?.[relatedPk as string],
-                      draft_id: value?.__id,
-                      draft:
-                        value && draftValueHasValues
-                          ? objectToBase64(value)
-                          : undefined,
-                      item_field: item.field,
-                      document_session_id: documentSessionId,
-                    },
-                  }}
-                  asChild
-                >
-                  <Button variant="ghost" size="icon">
-                    <DirectusIcon name="edit_square" />
-                  </Button>
-                </Link>
-              )}
+          <View
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 0,
+            }}
+          >
+            {!disabled && (
+              <View
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 0,
+                }}
+              >
+                {(isPicked || isUpdated || isDefault) && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/[id]`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        id: value?.[relatedPk as string],
+                        draft_id: value?.__id,
+                        draft:
+                          value && draftValueHasValues
+                            ? objectToBase64(value)
+                            : undefined,
+                        item_field: item.field,
+                        document_session_id: documentSessionId,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="edit_square" />
+                    </Button>
+                  </Link>
+                )}
 
-              {isNew && (
-                <Link
-                  href={{
-                    pathname: `/modals/m2o/[collection]/add`,
-                    params: {
-                      collection: item.schema.foreign_key_table as string,
-                      document_session_id: documentSessionId,
-                      item_field: item.field,
-                      draft_id: value?.__id,
-                      draft:
-                        value && draftValueHasValues
-                          ? objectToBase64(value)
-                          : undefined,
-                    },
-                  }}
-                  asChild
-                >
-                  <Button variant="ghost" size="icon">
-                    <DirectusIcon name="edit_square" />
-                  </Button>
-                </Link>
-              )}
+                {isNew && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/add`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        document_session_id: documentSessionId,
+                        item_field: item.field,
+                        draft_id: value?.__id,
+                        draft:
+                          value && draftValueHasValues
+                            ? objectToBase64(value)
+                            : undefined,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="edit_square" />
+                    </Button>
+                  </Link>
+                )}
 
-              {(!hasValue) && (
-                <Link
-                  href={{
-                    pathname: `/modals/m2o/[collection]/add`,
-                    params: {
-                      collection: item.schema.foreign_key_table as string,
-                      document_session_id: documentSessionId,
-                      
-                      item_field: item.field,
-                    },
-                  }}
-                  asChild
-                >
-                  <Button variant="ghost" size="icon">
-                    <DirectusIcon name="add" />
-                  </Button>
-                </Link>
-              )}
+                {!hasValue && (
+                  <Link
+                    href={{
+                      pathname: `/modals/m2o/[collection]/add`,
+                      params: {
+                        collection: item.schema.foreign_key_table as string,
+                        document_session_id: documentSessionId,
 
-              {!!hasValue && (
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onPress={() => {
-                    onValueChange?.(null);
-                  }}
-                >
-                  <DirectusIcon name="close" />
-                </Button>
-              )}
-            </View>
-          )}
-          {!hasValue && (
-            <View>
-              <ChevronDown size={20} color={theme.colors.textPrimary} />
-            </View>
-          )}
+                        item_field: item.field,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" size="icon">
+                      <DirectusIcon name="add" />
+                    </Button>
+                  </Link>
+                )}
+
+                {!!hasValue && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onPress={() => {
+                      onValueChange?.(null);
+                    }}
+                  >
+                    <DirectusIcon name="close" />
+                  </Button>
+                )}
+              </View>
+            )}
+            {!hasValue && (
+              <View>
+                <ChevronDown size={20} color={theme.colors.textPrimary} />
+              </View>
+            )}
+          </View>
         </View>
       </View>
       {(error || helper) && (
