@@ -190,24 +190,7 @@ export const FilesMultiInput = ({
         }
         append={
           <>
-            <Link
-              href={{
-                pathname: `/modals/m2m/[collection]/[id]`,
-                params: {
-                  collection: relation.related_collection,
-                  id: (
-                    doc?.[
-                      junction.meta.junction_field as keyof typeof doc
-                    ] as CoreSchemaDocument
-                  )?.id,
-                },
-              }}
-              asChild
-            >
-              <Button variant="ghost" rounded>
-                <DirectusIcon name="edit_square" />
-              </Button>
-            </Link>
+            
 
             <Button
               variant="ghost"
