@@ -559,8 +559,8 @@ export const M2MInput = ({
                   current_value: value
                     .filter(
                       (v) =>
-                        v.__state !== RelatedItemState.Picked ||
-                        v.__state !== RelatedItemState.Default,
+                        v.__state == RelatedItemState.Picked ||
+                        v.__state == RelatedItemState.Default,
                     )
                     .map(
                       (v) =>

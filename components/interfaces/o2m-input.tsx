@@ -484,9 +484,15 @@ export const O2MInput = ({
                   collection: relation.collection,
                   related_field: relation.field,
                   document_session_id: documentSessionId,
-                  current_value: [
-                    ...map(value, (v) => (v as any)?.[relatedPk as string]),
-                  ].join(","),
+                  current_value: value
+                    .filter(
+                      (v) =>
+                        v.__state == RelatedItemState.Picked ||
+                        v.__state == RelatedItemState.Default,
+                    )
+                    .map((v) => (v as RelatedItem)?.[relatedPk as string])
+
+                    .filter(Boolean),
                   doc_id: docId,
                   item_field: item.field,
                 },

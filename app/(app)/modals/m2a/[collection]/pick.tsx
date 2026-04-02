@@ -89,6 +89,8 @@ export default function Collection() {
     },
   );
 
+  console.log({ value })
+
   const nestedFields = tableFields.filter((f: string) => f.includes("."));
   const expandedFields = nestedFields.map((f: string) =>
     f.includes(".$") ? f.split(".$")[0] : f,

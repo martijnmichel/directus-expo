@@ -590,22 +590,22 @@ export const M2AInput = ({
                 related_collection: relation.related_collection,
                 related_field: relation.field,
                 current_value: [
-                  ...(existingItems?.items?.map((i: any) => {
-                    const raw = i?.[junctionItemField as string];
-                    typeof raw === "object" && !!relatedPrimaryKey
-                      ? raw?.[relatedPrimaryKey]
-                      : raw;
-                  }) ?? []),
-                  ...value.map((i: any) => {
-                    const v = i?.[junctionItemField];
-                    typeof v === "object" && !!relatedPrimaryKey
-                      ? v?.[relatedPrimaryKey]
-                      : v;
-                  }),
+                  ...value
+                    .filter(
+                      (v) =>
+                        (v.__state === RelatedItemState.Picked ||
+                          v.__state === RelatedItemState.Default) &&
+                        v?.[oneCollectionField as string] === collection,
+                    )
+                    .map((i: RelatedItem) => {
+                      console.log({ i });
+                      const v = i?.[junctionItemField];
+                      return typeof v === "object" && !!relatedPrimaryKey
+                        ? v?.[relatedPrimaryKey]
+                        : v;
+                    }),
                 ]
-                  .filter(Boolean)
-                  .map(String)
-                  .join(","),
+                  .filter(Boolean),
                 junction_field: junction.field,
                 doc_id: docId,
                 item_field: item.field,
