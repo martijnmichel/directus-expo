@@ -11,6 +11,13 @@ dist/
 web-build/
 .metro-health-check*
 
+# Native build artifacts (EAS runs Gradle / pod install on the builder)
+android/app/build/
+android/build/
+android/.gradle/
+ios/Pods/
+ios/build/
+
 # Native build artifacts only (keep ios/android source dirs for cloud builds)
 *.ipa
 *.apk
