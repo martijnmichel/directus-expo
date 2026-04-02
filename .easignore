@@ -18,6 +18,14 @@ android/.gradle/
 ios/Pods/
 ios/build/
 
+data
+uploads
+.git
+appstor
+.husky
+.vscode
+.cursor
+
 # Native build artifacts only (keep ios/android source dirs for cloud builds)
 *.ipa
 *.apk
