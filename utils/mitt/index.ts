@@ -97,12 +97,13 @@ export type MittEvents = {
   /**
    * Repeater (Repeater)
    */
-  "repeater:add": { data: Record<string, any>; field: string; uuid: string };
+  "repeater:add": { data: Record<string, any>; field: string; document_session_id: string | number; };
   "repeater:edit": {
     data: Record<string, any>;
     field: string;
     index: number;
-    uuid: string;
+    document_session_id: string | number;
+    __id?: string;
   };
 
   /**

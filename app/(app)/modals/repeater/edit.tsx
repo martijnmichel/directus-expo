@@ -13,10 +13,9 @@ import EventBus from "@/utils/mitt";
 import { useTranslation } from "react-i18next";
 
 const RepeaterModal = () => {
-  const { fields, document, item_field, index, uuid } = useLocalSearchParams();
+  const { fields, document, item_field, index, document_session_id } = useLocalSearchParams();
   const headerStyle = useHeaderStyles({ isModal: true });
   const defaultValues = base64ToObject(document as string);
-  console.log({ fields: base64ToObject(fields as string), document, item_field, index, uuid });
   const { t } = useTranslation();
   return (
     <KeyboardAwareLayout>
@@ -39,7 +38,7 @@ const RepeaterModal = () => {
                   field: item_field as string,
                   data: doc,
                   index: parseInt(index as string),
-                  uuid: uuid as string,
+                  document_session_id: document_session_id as string | number,
                 });
               }}
             />

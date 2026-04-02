@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useMemo } from "react";
 import { Text, View } from "react-native";
 import { CoreSchema, ReadFieldOutput } from "@directus/sdk";
 import { Button } from "../display/button";
@@ -14,19 +14,22 @@ import { parseRepeaterTemplate } from "@/helpers/document/template";
 import { useTranslation } from "react-i18next";
 import { Alert } from "../display/alert";
 import { InterfaceProps } from ".";
+import { generateUUID } from "@/hooks/useUUID";
+import { RelatedListItem } from "../display/related-listitem";
+import { DirectusIcon } from "../display/directus-icon";
 
 type RepeaterInputProps = InterfaceProps<{
-  value: any[] | undefined;
-  onChange: (value: any[]) => void;
+  value: Record<string, any>[] | undefined;
+  onChange: (value: Record<string, any>[]) => void;
 }>;
 
 export const RepeaterInput = ({
   item,
   label,
   error,
-  uuid,
+  documentSessionId,
   helper,
-  value = [],
+  value: valueProp = [],
   onChange,
   disabled,
   required,
@@ -40,6 +43,15 @@ export const RepeaterInput = ({
   const { styles } = useStyles(stylesheet);
   const { t } = useTranslation();
 
+  const value = useMemo(() => {
+    return valueProp?.length
+      ? valueProp.map((v) => ({
+          ...v,
+          __id: v.__id ?? generateUUID(),
+        }))
+      : [];
+  }, [valueProp]);
+
   const onOrderChange = useCallback(
     (order: string[]) => {
       const newItems = order.map((index) => value[parseInt(index, 10)]);
@@ -52,24 +64,28 @@ export const RepeaterInput = ({
     const format = item.meta?.display_options?.format;
     return format
       ? parseRepeaterTemplate(format, repeatItem)
-      : Object.values(repeatItem).slice(0, 3).map((v: any) => v?.toString()).join(" - ") || "--";
+      : Object.values(repeatItem)
+          .slice(0, 3)
+          .map((v: any) => v?.toString())
+          .join(" - ") || "--";
   };
 
   useEffect(() => {
     EventBus.on("repeater:add", (data) => {
-      if (data.field === item.field && data.uuid === uuid) {
-        onChange([...value, data.data]);
+      if (data.field === item.field && data.document_session_id === documentSessionId) {
+        onChange([...value, { ...data.data, __id: generateUUID() }]);
       }
     });
 
     EventBus.on("repeater:edit", (data) => {
-      if (data.field === item.field && data.uuid === uuid) {
-        const newValue = [...value];
-        newValue[data.index] = data.data;
+      if (data.field === item.field && data.document_session_id === documentSessionId) {
+        const newValue = [...value, { ...data.data, __id: generateUUID() }];
         onChange(newValue);
       }
     });
-  }, [onChange, item.field, uuid]);
+  }, [onChange, item.field, documentSessionId, value]);
+
+  console.log({ item, value })
 
   return (
     <Vertical spacing="xs">
@@ -83,62 +99,62 @@ export const RepeaterInput = ({
         <Alert message={t("components.repeater.noItems")} status="info" />
       )}
 
-      <Sortable direction="column" onOrderChange={onOrderChange}>
+      <Sortable direction="column" style={{ gap: 3 }} onOrderChange={onOrderChange}>
         {(value || []).map((repeaterItem, index) => (
           <SortableItem
-            key={index}
-            id={index.toString()}
+            key={repeaterItem.__id}
+            id={repeaterItem.__id.toString()}
             disabled={!item.meta?.options?.sortable}
             activationDelay={200}
-            style={[styles.listItem, styles.fullWidth]}
           >
-              <View style={styles.dragHandle}>
-                <DragIcon />
-              </View>
-
-              <Text numberOfLines={1} style={styles.content}>
-                {getDisplayValue(repeaterItem)}
-              </Text>
-
-              <Link
-                href={{
-                  pathname: `/modals/repeater/edit`,
-                  params: {
-                    document: objectToBase64(repeaterItem),
-                    fields: objectToBase64(
-                      item.meta?.options?.fields.map((f: any) => ({
-                        ...f,
-                        type: f.type || "string",
-                        meta: {
-                          ...f.meta,
-                          interface: f.meta?.interface || "input",
-                        },
-                      })) || [],
-                    ),
-                    item_field: item.field,
-                    uuid,
-                    index: index,
-                  },
-                }}
-                asChild
-              >
-                <Button variant="ghost" rounded>
-                  <Edit />
-                </Button>
-              </Link>
-
-              <Button
-                variant="ghost"
-                disabled={disabled}
-                onPress={() => {
-                  const newValue = [...value];
-                  newValue.splice(index, 1);
-                  onChange?.(newValue);
-                }}
-                rounded
-              >
-                <Trash />
-              </Button>
+            <RelatedListItem
+              isDraggable
+              append={
+                <>
+                  
+                  <Link
+                    href={{
+                      pathname: `/modals/repeater/edit`,
+                      params: {
+                        document: objectToBase64(repeaterItem),
+                        fields: objectToBase64(
+                          item.meta?.options?.fields.map((f: any) => ({
+                            ...f,
+                            type: f.type || "string",
+                            meta: {
+                              ...f.meta,
+                              interface: f.meta?.interface || "input",
+                            },
+                          })) || [],
+                        ),
+                        item_field: item.field,
+                        document_session_id: documentSessionId,
+                        index: index,
+                      },
+                    }}
+                    asChild
+                  >
+                    <Button variant="ghost" rounded>
+                      <DirectusIcon name="edit_square" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    disabled={disabled}
+                    onPress={() => {
+                      const newValue = [...value];
+                      newValue.splice(index, 1);
+                      onChange?.(newValue);
+                    }}
+                    rounded
+                  >
+                    <DirectusIcon name="close" />
+                  </Button>
+                </>
+              }
+            >
+              {getDisplayValue(repeaterItem)}
+            </RelatedListItem>
           </SortableItem>
         ))}
       </Sortable>
@@ -171,7 +187,7 @@ export const RepeaterInput = ({
                   })) || [],
                 ),
                 item_field: item.field,
-                uuid,
+                document_session_id: documentSessionId,
               },
             }}
             asChild
