@@ -1,14 +1,22 @@
 export const images = [
+
+  {
+    src: "/carousel/collection-layout.png",
+    alt: "Collections layout",
+  },
+
+  {
+    src: "/carousel/push-notifications.png",
+    alt: "Push notifications for any Directus collection and server",
+  },
+
   {
     src: "/carousel/collection-data-table.png",
     alt: "Data table view with collection entries",
     sort: 101,
   },
 
-  {
-    src: "/carousel/collection-layout.png",
-    alt: "Collections layout",
-  },
+ 
 
   {
     src: "/carousel/color-picker.png",
@@ -49,12 +57,24 @@ export const images = [
     src: "/carousel/settings-screen.png",
     alt: "System settings page",
   },
+ 
+ 
+ 
   {
-    src: "/carousel/push-notifications.png",
-    alt: "Push notifications for any Directus collection and server",
+    src: "/widgets-settings-page.png",
+    alt: "Home screen widgets settings page",
+  },
+  {
+    src: "/edit-widget.png",
+    alt: "Edit widget page",
   },
   {
     src: "/carousel/manage-notifications.png",
     alt: "Push notifications settings page",
-  }
+  },
+  {
+    src: "/widgets-homescreen.png",
+    alt: "Home screen widgets",
+    sort: 1
+  },
 ];

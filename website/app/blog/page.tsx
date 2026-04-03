@@ -63,7 +63,7 @@ export default async function BlogIndexPage() {
   posts.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
+    <div className="container-dense mx-auto vertical-space">
       <h1 className="text-3xl font-bold mb-10">Blog</h1>
       <ul className="space-y-12">
         {posts.map(({ slug, title, description, date, image, tags, readTime }) => {

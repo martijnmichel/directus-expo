@@ -39,7 +39,7 @@ export default async function DocsIndexPage() {
   docs.sort((a, b) => a.title.localeCompare(b.title));
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
+    <div className="container-dense mx-auto vertical-space">
       <h1 className="text-3xl font-bold mb-3">Docs</h1>
       <p className="text-neutral-600 dark:text-neutral-400 mb-10">
         Documentation for Directus Mobile features and setup.

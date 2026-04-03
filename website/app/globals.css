@@ -41,7 +41,7 @@ body {
 }
 
 .container-dense {
-  @apply container mx-auto px-4 max-w-3xl;
+  @apply container mx-auto px-4 max-w-5xl;
 }
 
 .vertical-space {

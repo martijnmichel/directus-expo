@@ -4,6 +4,10 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  BlogShareButtons,
+  BlogTableOfContents,
+} from "@/components/blog/BlogTocAndShare";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -58,34 +62,49 @@ export default async function BlogPostPage({ params }: Props) {
   const imageSrc = meta?.image ?? "/blog/placeholder.svg";
 
   return (
-    <div className="container-dense vertical-space">
-      <Link
-        href="/blog"
-        className="text-primary hover:underline mb-6 inline-block"
-      >
-        ← Blog
-      </Link>
-      {showImage && (
-        <div className="aspect-[16/9] relative rounded-lg overflow-hidden mb-8 bg-neutral-100 dark:bg-neutral-800">
-          <Image
-            src={imageSrc}
-            alt=""
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 896px"
-            priority
-          />
+    <div className="container-dense relative vertical-space">
+      <div className="min-w-0">
+        <Link
+          href="/blog"
+          className="text-primary hover:underline mb-6 inline-block"
+        >
+          ← Blog
+        </Link>
+
+        {showImage && (
+          <div className="aspect-video relative rounded-lg overflow-hidden mb-8 bg-neutral-100 dark:bg-neutral-800">
+            <Image
+              src={imageSrc}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 896px"
+              priority
+            />
+          </div>
+        )}
+
+        <div
+          id="post-content"
+          className="prose prose-neutral dark:prose-invert max-w-none"
+        >
+          <Post />
         </div>
-      )}
-      <div className="prose prose-neutral dark:prose-invert max-w-none">
-        <Post />
+
+        <div className="pt-32" />
+
+        <section className="">
+          <StoreButtons />
+        </section>
       </div>
 
-      <div className="pt-32" />
+      {/**<aside className="hidden md:block absolute -right-20 top-24">
+        <BlogTableOfContents rootId="post-content" />
 
-      <section className="">
-        <StoreButtons />
-      </section>
+        <div className="mb-6">
+          <BlogShareButtons />
+        </div>
+      </aside> */}
     </div>
   );
 }
