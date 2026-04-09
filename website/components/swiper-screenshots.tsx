@@ -10,7 +10,7 @@ export default function SwiperScreenshots() {
   return (
     <Swiper
       loop
-      className="h-[400px] md:h-[600px] -px-4"
+      className=" -px-4"
       centeredSlides
       slidesPerView={2}
       spaceBetween={10}
@@ -28,10 +28,10 @@ export default function SwiperScreenshots() {
     >
       {images
         .map((image, index) => (
-          <SwiperSlide className="relative group" key={index + "image"}>
+          <SwiperSlide className="relative group pb-10" key={index + "image"}>
             {({ isActive, isNext, isPrev }) => (
               <div
-                className={` ${
+                className={`w-full aspect-1320/2868 ${
                   isActive ? "opacity-100" : "opacity-50"
                 } transition-all duration-300`}
               >
@@ -40,7 +40,7 @@ export default function SwiperScreenshots() {
                   alt={image.alt}
                   width={800}
                   height={1000}
-                  className={`border-2 border-zinc-100 bg-white h-full mb-auto w-auto mx-auto rounded-xl shadow-2xl object-contain absolute inset-0 z-0 ${
+                  className={`border-2 border-zinc-100 bg-white h-fit mb-auto w-auto mx-auto rounded-xl shadow-2xl object-contain absolute inset-0 z-0 ${
                     isPrev || isNext ? "scale-90" : "scale-75"
                   } ${
                     isActive ? "scale-100!" : ""

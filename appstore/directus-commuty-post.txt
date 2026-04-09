@@ -1,0 +1,33 @@
+🚀 Directus Mobile App Update: Push Notifications, Widgets & Relational Drafting
+
+Hey Directus Community! 👋
+
+Excited to share the latest updates to the Directus Mobile app (native iOS/Android). 
+I've been working hard to bring native content management capabilities to your pocket, and this update marks a significant leap forward.
+
+What's New?
+
+🔔 Push Notifications (v0.10.0+)
+
+The app now supports push notifications for created, updated, or deleted items. 
+
+- An admin can run a one-time in-app install flow that creates the required collection and event-hook flow to send notifications. 
+- After setup, each user can subscribe in Settings by choosing which collections and events (create/update/delete) they want to follow, based on their existing permissions. 
+- When a permitted event matches a user subscription, the Flow sends the push notification to that user’s registered device.
+
+📱 Home Screen Widgets (v0.12.0+)
+
+I've added widget support that integrates directly with your Directus backend:
+
+- Admins can run a one-time in-app install to set up the required widget collection and webhook-flow in Directus. 
+- The schema stores the widget setup like type (for now Latest Items only), userId, collection, fields, filters and sorting.
+- Users configure their own widgets in the app by choosing the collection and fields they want to show. 
+- At request-time, the flow fetches the content, checks user permissions and sends filtered field values to the widget.
+- Tapping a widget item deep-links straight into the matching record in Directus Mobile.
+
+✍️ Relational Data Drafting (v0.14.0)
+
+I've completely rewritten how the app handles relational data to make it more robust. 
+It now matches Directus's web-app editing by sending the nested updated values only when saving the parent document.
+
+You can see more information on https://directusmobile.app
