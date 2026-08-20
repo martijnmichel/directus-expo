@@ -2,16 +2,24 @@
   "folders": [
     {
       "name": "App (Expo)",
-      "path": "."
+      "path": ".",
     },
     {
       "name": "Website",
-      "path": "website"
-    }
+      "path": "website",
+    },
   ],
   "settings": {
     "eslint.workingDirectories": [
-      { "directory": "website", "changeProcessCWD": true }
-    ]
-  }
+      { "directory": "website", "changeProcessCWD": true },
+    ],
+    "i18n-ally.localesPaths": [
+      "i18n",
+      "i18n/locales",
+      "ios/Pods/ReactNativeDependencies/Headers/folly/lang",
+      "ios/Pods/Headers/Private/ReactNativeDependencies/folly/lang",
+      "ios/Pods/Headers/Public/ReactNativeDependencies/folly/lang",
+      "ios/Pods/ReactNativeDependencies/framework/packages/react-native/ReactNativeDependencies.xcframework/Headers/folly/lang",
+    ],
+  },
 }
