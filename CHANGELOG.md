@@ -1,3 +1,16 @@
+## <small>0.14.1 (2026-08-20)</small>
+
+* chore: raise Android targetSdk to 36 ([bdc6f80](https://github.com/martijnmichel/directus-expo/commit/bdc6f80))
+* blog post up ([83e7804](https://github.com/martijnmichel/directus-expo/commit/83e7804))
+* Create push-notifications-scaled.jpg ([b3c275d](https://github.com/martijnmichel/directus-expo/commit/b3c275d))
+* disable sort when field disabled ([87e0238](https://github.com/martijnmichel/directus-expo/commit/87e0238))
+* minor style fix on m2a ([1f900ee](https://github.com/martijnmichel/directus-expo/commit/1f900ee))
+* statusbar color ([34e4abe](https://github.com/martijnmichel/directus-expo/commit/34e4abe))
+* Update .easignore ([a78b812](https://github.com/martijnmichel/directus-expo/commit/a78b812))
+* Update .easignore ([c8e1e25](https://github.com/martijnmichel/directus-expo/commit/c8e1e25))
+* Update directus-expo.code-workspace ([5cea9d6](https://github.com/martijnmichel/directus-expo/commit/5cea9d6))
+* website up ([1223e5f](https://github.com/martijnmichel/directus-expo/commit/1223e5f))
+
 ## 0.14.0 (2026-04-02)
 
 * build: bump version ([4545b25](https://github.com/martijnmichel/directus-expo/commit/4545b25))
