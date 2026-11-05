@@ -28,6 +28,7 @@ import { takePendingDeepLinkHref } from "@/state/linking/deepLinks";
 import * as WebBrowser from "expo-web-browser";
 import { InstanceSessionSelect } from "./InstanceSessionSelect";
 import { X } from "./icons/X";
+import { isDirectusReachable } from "@/helpers/server/isDirectusReachable";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -157,17 +158,11 @@ export const LoginForm = () => {
       return;
     }
     clearErrors("api");
-    const base = url.replace(/\/$/, "");
-    fetch(`${base}/server/health`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status !== "ok") {
-          setError("api", { message: t("form.errors.apiNotHealthy") });
-        }
-      })
-      .catch(() => {
+    isDirectusReachable(url).then((ok) => {
+      if (!ok) {
         setError("api", { message: t("form.errors.apiNotHealthy") });
-      });
+      }
+    });
   }, [url, instanceIdW, clearErrors, setError, t]);
 
   useEffect(() => {

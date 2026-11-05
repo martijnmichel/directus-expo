@@ -12,6 +12,7 @@ import { Check, Edit } from "./icons";
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
 import { Input } from "./interfaces/input";
+import { isDirectusReachable } from "@/helpers/server/isDirectusReachable";
 
 export type API = {
   name: string;
@@ -51,8 +52,8 @@ export const APIForm = ({
       return;
     }
     try {
-      const test = await fetch(`${newApi.url}/server/health`);
-      if (!test.ok) {
+      const ok = await isDirectusReachable(newApi.url);
+      if (!ok) {
         throw new Error(
           "Host is not reachable. There might be something wrong with your config.",
         );
@@ -86,7 +87,7 @@ export const APIForm = ({
         form.setError(
           "url",
           {
-            message: `${error.message}. Check the /server/health path of your instance.`,
+            message: `${error.message}. Check /server/ping (or /server/health on older Directus).`,
           },
           { shouldFocus: true },
         );

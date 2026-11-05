@@ -121,7 +121,7 @@ export default function RootLayout({
         )}
 
         <footer className="pt-20 pb-10 z-10">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-zinc-600">
               &copy; {new Date().getFullYear()}{" "}
               <a
@@ -143,6 +143,20 @@ export default function RootLayout({
               </a>
               .
             </p>
+            <nav className="flex items-center gap-4 text-sm text-zinc-600">
+              <Link
+                href="/privacy"
+                className="hover:text-pink-500 transition-colors"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms"
+                className="hover:text-pink-500 transition-colors"
+              >
+                Terms
+              </Link>
+            </nav>
           </div>
         </footer>
       </body>
