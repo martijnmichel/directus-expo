@@ -1,3 +1,7 @@
+## 0.16.0 (2026-11-05)
+
+* build: set native app version to 0.15.0 (15) ([8b2ac63](https://github.com/martijnmichel/directus-expo/commit/8b2ac63))
+
 ## <small>0.15.1 (2026-11-05)</small>
 
 * fix: bump Gradle wrapper to 9.4.1 for Expo SDK 58 ([0a54d60](https://github.com/martijnmichel/directus-expo/commit/0a54d60))
