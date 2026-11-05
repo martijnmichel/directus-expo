@@ -1,3 +1,10 @@
+## 0.15.0 (2026-11-05)
+
+* fix: sanitize payloads and resolve M2O related collections ([6e15c8a](https://github.com/martijnmichel/directus-expo/commit/6e15c8a))
+* fix: support Directus v12 reachability and add legal pages ([376eded](https://github.com/martijnmichel/directus-expo/commit/376eded))
+* build: bump native build number to 15 ([60b166d](https://github.com/martijnmichel/directus-expo/commit/60b166d))
+* build: upgrade to Expo SDK 58 ([3c2713e](https://github.com/martijnmichel/directus-expo/commit/3c2713e))
+
 ## <small>0.14.1 (2026-08-20)</small>
 
 * chore: raise Android targetSdk to 36 ([bdc6f80](https://github.com/martijnmichel/directus-expo/commit/bdc6f80))
