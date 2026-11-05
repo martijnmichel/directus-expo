@@ -11,7 +11,11 @@ import { formStyles } from "./style";
 
 import { InterfaceProps } from "./index";
 
-type JsonInputProps = InterfaceProps<TextInputProps>;
+type JsonValue = string | object | null;
+type JsonInputProps = Omit<InterfaceProps<TextInputProps>, "value" | "onChangeText"> & {
+  value?: JsonValue;
+  onChangeText?: (value: JsonValue) => void;
+};
 
 export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
   (
@@ -31,8 +35,20 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
     const { styles, theme } = useStyles(jsonStyles);
     const [lines, setLines] = useState<number[]>([1]);
     const [errorLine, setErrorLine] = useState<number | null>(null);
+    const [draft, setDraft] = useState<string | null>(null);
 
-    const value = typeof valueProp === "string" ? valueProp : JSON.stringify(valueProp, null, 2);
+    const value =
+      draft !== null
+        ? draft
+        : valueProp == null || valueProp === ""
+          ? ""
+          : typeof valueProp === "string"
+            ? valueProp
+            : JSON.stringify(valueProp, null, 2);
+
+    useEffect(() => {
+      setDraft(null);
+    }, [valueProp]);
 
     useEffect(() => {
       if (!value || typeof value !== "string") {
@@ -45,28 +61,47 @@ export const JsonInput = React.forwardRef<TextInput, JsonInputProps>(
         setLines(Array.from({ length: lineCount }, (_, i) => i + 1));
     }, [value]);
 
-    const handleChange = useCallback(
+    const emitValue = useCallback(
       (text: string) => {
-        onChangeText?.(text);
+        const trimmed = text.trim();
+        if (!trimmed) {
+          onChangeText?.(null);
+          return;
+        }
         try {
-          JSON.parse(text);
+          onChangeText?.(JSON.parse(text));
           setErrorLine(null);
         } catch (e: any) {
-          const lineMatch = e.message.match(/line (\d+)/);
+          onChangeText?.(text);
+          const lineMatch = e.message?.match?.(/line (\d+)/);
           setErrorLine(lineMatch ? parseInt(lineMatch[1]) : null);
         }
       },
       [onChangeText]
     );
 
+    const handleChange = useCallback(
+      (text: string) => {
+        setDraft(text);
+        emitValue(text);
+      },
+      [emitValue]
+    );
+
     const handleBlur = useCallback(() => {
+      const trimmed = value.trim();
+      if (!trimmed) {
+        setDraft(null);
+        onChangeText?.(null);
+        setErrorLine(null);
+        return;
+      }
       try {
-        const parsed = JSON.parse(value || "");
-        const formatted = JSON.stringify(parsed, null, 2);
-        if (formatted !== value) {
-          onChangeText?.(formatted);
-        }
-      } catch (e) {
+        const parsed = JSON.parse(value);
+        setDraft(null);
+        onChangeText?.(parsed);
+        setErrorLine(null);
+      } catch {
         // Keep invalid JSON as-is
       }
     }, [value, onChangeText]);

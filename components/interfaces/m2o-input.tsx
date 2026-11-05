@@ -66,16 +66,23 @@ export const M2OInput = ({
 
   const { data: relations } = useRelations();
 
+  // Resolve via relation meta first — schema.foreign_key_table is null when
+  // the M2O has no database-level FK (relation-only / alias-style setups).
   const relation = relations?.find(
-    (r) => r.related_collection === item.schema.foreign_key_table,
+    (r) => r.collection === item.collection && r.field === item.field,
   );
 
+  const relatedCollectionName =
+    (item.schema?.foreign_key_table as string | null | undefined) ||
+    relation?.related_collection ||
+    undefined;
+
   const { data: relatedFields } = useFields(
-    item.schema.foreign_key_table as any,
+    relatedCollectionName as any,
   );
 
   const { data: relatedCollection } = useCollection(
-    item.schema.foreign_key_table as any,
+    relatedCollectionName as any,
   );
 
   const relatedPk = getPrimaryKey(relatedFields);
@@ -107,7 +114,7 @@ export const M2OInput = ({
     .map((p) => (p.includes(".$") ? p.split(".$")[0] : p))
     .filter(Boolean);
 
-  const requestFields = relation
+  const requestFields = relatedCollectionName
     ? uniq([relatedPk, ...templatePaths]).filter(Boolean)
     : [];
 
@@ -118,13 +125,14 @@ export const M2OInput = ({
   const isDefault = value?.__state === RelatedItemState.Default;
 
   const { data: doc } = useDocument({
-    collection: item.schema.foreign_key_table as any,
+    collection: relatedCollectionName as any,
     id: relatedId,
     options: {
       fields: requestFields as any,
     },
     query: {
-      enabled: hasValue && !!relatedId && !!relatedPk,
+      enabled:
+        hasValue && !!relatedId && !!relatedPk && !!relatedCollectionName,
     },
   });
 
@@ -185,22 +193,7 @@ export const M2OInput = ({
 
   const parts = !!value && draftValueHasValues ? partsFromValue : partsFromDoc;
 
-  console.log({
-    item,
-    relatedFields,
-    relatedCollection,
-    value,
-    relatedId,
-    doc,
-    valueProp,
-    requestFields,
-    effectiveTemplate,
-    templatePaths,
-    relation,
-    partsFromDoc,
-    partsFromValue,
-    parts,
-  });
+  const canNavigate = !!relatedCollectionName;
 
   return (
     <View style={styles.formControl}>
@@ -218,10 +211,11 @@ export const M2OInput = ({
       >
         <Pressable
           onPress={() => {
+            if (!canNavigate) return;
             router.push({
               pathname: `/modals/m2o/[collection]/pick`,
               params: {
-                collection: item.schema.foreign_key_table as string,
+                collection: relatedCollectionName,
                 field: item.field,
                 document_session_id: documentSessionId,
               },
@@ -243,7 +237,7 @@ export const M2OInput = ({
               gap: 0,
             }}
           >
-            {!disabled && (
+            {!disabled && canNavigate && (
               <View
                 style={{
                   display: "flex",
@@ -252,13 +246,14 @@ export const M2OInput = ({
                   gap: 0,
                 }}
               >
-                {(isPicked || isUpdated || isDefault) && (
+                {(isPicked || isUpdated || isDefault) &&
+                  relatedId != null && (
                   <Link
                     href={{
                       pathname: `/modals/m2o/[collection]/[id]`,
                       params: {
-                        collection: item.schema.foreign_key_table as string,
-                        id: value?.[relatedPk as string],
+                        collection: relatedCollectionName,
+                        id: String(relatedId),
                         draft_id: value?.__id,
                         draft:
                           value && draftValueHasValues
@@ -281,7 +276,7 @@ export const M2OInput = ({
                     href={{
                       pathname: `/modals/m2o/[collection]/add`,
                       params: {
-                        collection: item.schema.foreign_key_table as string,
+                        collection: relatedCollectionName,
                         document_session_id: documentSessionId,
                         item_field: item.field,
                         draft_id: value?.__id,
@@ -304,9 +299,8 @@ export const M2OInput = ({
                     href={{
                       pathname: `/modals/m2o/[collection]/add`,
                       params: {
-                        collection: item.schema.foreign_key_table as string,
+                        collection: relatedCollectionName,
                         document_session_id: documentSessionId,
-
                         item_field: item.field,
                       },
                     }}

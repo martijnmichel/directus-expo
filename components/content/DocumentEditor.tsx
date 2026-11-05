@@ -31,6 +31,7 @@ import { each, filter, find, isEmpty, map, merge } from "lodash";
 import { queryClient } from "@/utils/react-query";
 import { DirectusErrorResponse } from "@/types/directus";
 import { mapFields } from "@/helpers/document/mapFields";
+import { sanitizeDocumentPayload } from "@/helpers/document/sanitizePayload";
 import { formStyles } from "../interfaces/style";
 import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -95,7 +96,9 @@ export const DocumentEditor = ({
 
   useEffect(() => {
     if (isDirty) {
-      onChange?.(form);
+      onChange?.(
+        sanitizeDocumentPayload(form) as Record<string, unknown>,
+      );
     }
   }, [form, isDirty]);
 
@@ -122,16 +125,6 @@ export const DocumentEditor = ({
     id as number,
   );
 
-  const getDocumentFieldValues = (document: Record<string, unknown>) => {
-    return Object.keys(document).reduce(
-      (acc, key) => {
-        acc[key] = document[key] === null ? "" : document[key];
-        return acc;
-      },
-      {} as Record<string, unknown>,
-    );
-  };
-
   useEffect(() => {
     //console.log("defaultValues", defaultValues);
     // if (defaultValues) return;
@@ -140,9 +133,7 @@ export const DocumentEditor = ({
     console.log({ collection, id, document, defaultValues, mergedDocument: merge(document, defaultValues) });
     if (document) {
       context.reset(
-        getDocumentFieldValues(
-          merge(document, defaultValues) as Record<string, unknown>,
-        ),
+        merge(document, defaultValues) as Record<string, unknown>,
       );
       //console.log("reset", document);
       //setRevision((state) => state + 1);
@@ -182,7 +173,9 @@ export const DocumentEditor = ({
 
     switch (submitType) {
       case "raw":
-        onSave?.(data);
+        onSave?.(
+          sanitizeDocumentPayload(data) as Record<string, unknown>,
+        );
         break;
       case "submit": {
         /**
@@ -223,7 +216,9 @@ export const DocumentEditor = ({
           );
         };
 
-        const cleanedData = transformFormData(data) as Record<string, unknown>;
+        const cleanedData = sanitizeDocumentPayload(
+          transformFormData(data),
+        ) as Record<string, unknown>;
 
         await updateDoc(cleanedData, {
           onSuccess: (updatedDoc) => {

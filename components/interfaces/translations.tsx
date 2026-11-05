@@ -129,6 +129,10 @@ export const Translations = ({
   useEffect(() => {
     const addM2M = (event: MittEvents["translations:edit"]) => {
       if (event.field === item.field && event.uuid === uuid) {
+        // Use junction primary key (`id`), not a hardcoded `translations_id`.
+        const pk = primaryKey || "id";
+        const languageField = relation?.field as string | undefined;
+
         const newState = {
           create: [
             ...value.create.filter(
@@ -136,20 +140,21 @@ export const Translations = ({
                 !find(
                   event.data,
                   (o) =>
-                    o?.[relation?.field as any] === d?.[relation?.field as any]
+                    languageField != null &&
+                    o?.[languageField] === d?.[languageField]
                 )
             ),
-            ...filter(event.data, (d) => !d.translations_id),
+            ...filter(event.data, (d) => d[pk] == null),
           ],
           update: [
             ...value.update.filter(
               (d) =>
                 !find(
                   event.data,
-                  (o) => o.translations_id === d.translations_id
+                  (o) => d[pk] != null && o[pk] === d[pk]
                 )
             ),
-            ...filter(event.data, (d) => !!d.translations_id),
+            ...filter(event.data, (d) => d[pk] != null),
           ],
           delete: value.delete,
         };
@@ -160,7 +165,7 @@ export const Translations = ({
     return () => {
       EventBus.off("translations:edit", addM2M);
     };
-  }, [valueProp, props.onChange, relation, junction, value, uuid]);
+  }, [valueProp, props.onChange, relation, junction, value, uuid, primaryKey]);
 
   return (
     <View style={formStyle.formControl}>

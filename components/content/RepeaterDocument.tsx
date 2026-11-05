@@ -3,6 +3,7 @@ import { useStyles } from "react-native-unistyles";
 import { formStyles } from "../interfaces/style";
 import { FormProvider, useForm } from "react-hook-form";
 import { mapFields } from "@/helpers/document/mapFields";
+import { sanitizeDocumentPayload } from "@/helpers/document/sanitizePayload";
 import { PortalOutlet } from "../layout/Portal";
 import { Horizontal } from "../layout/Stack";
 import { Check, Trash } from "../icons";
@@ -37,7 +38,9 @@ export const RepeaterDocument = ({
   }, [defaultValues]);
 
   const submit = (data: Record<string, any>) => {
-    onSave?.(data);
+    onSave?.(
+      sanitizeDocumentPayload(data) as Record<string, any>,
+    );
   };
 
   const SubmitButton = () => (
