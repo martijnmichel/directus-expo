@@ -1,3 +1,7 @@
+## <small>0.15.1 (2026-11-05)</small>
+
+* fix: bump Gradle wrapper to 9.4.1 for Expo SDK 58 ([0a54d60](https://github.com/martijnmichel/directus-expo/commit/0a54d60))
+
 ## 0.15.0 (2026-11-05)
 
 * fix: sanitize payloads and resolve M2O related collections ([6e15c8a](https://github.com/martijnmichel/directus-expo/commit/6e15c8a))
