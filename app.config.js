@@ -6,7 +6,7 @@ try {
 }
 
 const packageJson = require("./package.json");
-const buildNumber = 14;
+const buildNumber = 15;
 
 export default () => ({
   expo: {
