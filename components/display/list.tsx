@@ -1,11 +1,8 @@
 import React from "react";
-import { View, Pressable, ViewProps } from "react-native";
-import { Link, RelativePathString } from "expo-router";
+import { View, Pressable, ViewProps, StyleSheet } from "react-native";
+import { Href, Link } from "expo-router";
 import { createStyleSheet, useStyles } from "react-native-unistyles";
-import { ChevronRight } from "@/components/icons/Chevron";
 import { Text } from "./typography";
-import { MaterialIcons } from "@expo/vector-icons";
-import { Database } from "../icons";
 
 interface ListProps extends ViewProps {
   children: React.ReactNode;
@@ -41,6 +38,7 @@ export const ListItem = ({
   ...props
 }: ListItemProps) => {
   const { styles, theme } = useStyles(stylesheet);
+  const itemStyle = StyleSheet.flatten([styles.item, style]);
 
   const content =
     typeof children === "string" ? (
@@ -65,16 +63,16 @@ export const ListItem = ({
 
   if (href) {
     return (
-      <Link href={href as RelativePathString}>
-        <View style={[styles.item, style]} {...props}>
+      <Link href={href as Href} asChild>
+        <Pressable style={itemStyle} {...props}>
           {renderContent()}
-        </View>
+        </Pressable>
       </Link>
     );
   }
 
   return (
-    <Pressable style={[styles.item, style]} {...props} onPress={onPress}>
+    <Pressable style={itemStyle} {...props} onPress={onPress}>
       {renderContent()}
     </Pressable>
   );

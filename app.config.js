@@ -17,7 +17,6 @@ export default () => ({
     icon: "./assets/images/icon.png",
     scheme: "directus",
     userInterfaceStyle: "automatic",
-    newArchEnabled: true,
     splash: {
       image: "./assets/images/splash-icon.png",
       resizeMode: "contain",
@@ -25,6 +24,7 @@ export default () => ({
     },
     ios: {
       supportsTablet: true,
+      deploymentTarget: "16.4",
       buildNumber: `${buildNumber}`,
       bundleIdentifier: "com.martijnmichel.directusexpo",
       associatedDomains: ["applinks:directusmobile.app"],
@@ -64,15 +64,21 @@ export default () => ({
         "expo-build-properties",
         {
           android: {
-            compileSdkVersion: 36,
+            compileSdkVersion: 37,
             targetSdkVersion: 36,
-            buildToolsVersion: "36.0.0",
+            buildToolsVersion: "37.0.0",
+          },
+          ios: {
+            deploymentTarget: "16.4",
           },
         },
       ],
       "expo-router",
       "expo-font",
       "expo-web-browser",
+      "expo-image",
+      "expo-splash-screen",
+      "expo-status-bar",
       [
         "expo-image-picker",
         {
@@ -91,6 +97,7 @@ export default () => ({
     ],
     experiments: {
       typedRoutes: true,
+      reactCompiler: true,
     },
     extra: {
       eas: {

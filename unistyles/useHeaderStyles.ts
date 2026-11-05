@@ -1,4 +1,3 @@
-import { useTheme } from "@react-navigation/native";
 import { UnistylesRuntime, useStyles } from "react-native-unistyles";
 
 export const useHeaderStyles = (

@@ -1,5 +1,5 @@
-import { useNavigation, usePathname } from "expo-router";
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { usePathname } from "expo-router";
+import { useState, useEffect } from "react";
 
 const defaults = {
   page: 1,

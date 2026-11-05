@@ -12,10 +12,11 @@ import { coreCollections } from "../queries/directus/core";
 import { useCollection } from "../queries/directus/collection";
 import { queryClient } from "@/utils/react-query";
 
-export const deleteDocument = (
+export const useDeleteDocument = (
   collection: keyof CoreSchema,
   id: number | string | "+"
 ) => {
+  "use no memo";
   const { directus, user } = useAuth();
   const { data } = useCollection(collection);
   const { removeItem: removeCoreItem } = coreCollections[collection] || {};

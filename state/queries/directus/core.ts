@@ -30,15 +30,15 @@ import {
   rest,
 } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
-import { mutateUser } from "@/state/actions/updateUser";
-import { mutateMe } from "@/state/actions/updateMe";
+import { useMutateUser } from "@/state/actions/updateUser";
+import { useMutateMe } from "@/state/actions/updateMe";
 import { get, unset } from "lodash";
-import { addRole } from "@/state/actions/addRole";
-import { addPolicy } from "@/state/actions/addPolicy";
-import { removeFile } from "@/state/actions/deleteFile";
-import { removeFiles } from "@/state/actions/deleteFiles";
-import { mutateFile } from "@/state/actions/updateFile";
-import { addUsers } from "@/state/actions/addUsers";
+import { useAddRole } from "@/state/actions/addRole";
+import { useAddPolicy } from "@/state/actions/addPolicy";
+import { useRemoveFile } from "@/state/actions/deleteFile";
+import { useRemoveFiles } from "@/state/actions/deleteFiles";
+import { useMutateFile } from "@/state/actions/updateFile";
+import { useAddUsers } from "@/state/actions/addUsers";
 import { API } from "@/components/APIForm";
 export const useMe = () => {
   const { directus, user } = useAuth();
@@ -202,61 +202,71 @@ export const useFile = (id: string, query?: Query<CoreSchema, any>) => {
 
 const prefix = "directus_";
 
+export const useRemoveUser = (id: string) => {
+  const { directus } = useAuth();
+  return useMutation({
+    mutationFn: () => directus!.request(deleteUser(id)),
+  });
+};
+
+export const useRemoveUsers = (ids: string[]) => {
+  const { directus } = useAuth();
+  return useMutation({
+    mutationFn: () => directus!.request(deleteUsers(ids)),
+  });
+};
+
+export const useRemoveRole = (id: string) => {
+  const { directus } = useAuth();
+  return useMutation({
+    mutationFn: () => directus!.request(deleteRole(id)),
+  });
+};
+
+export const useRemoveRoles = (ids: string[]) => {
+  const { directus } = useAuth();
+  return useMutation({
+    mutationFn: () => directus!.request(deleteRoles(ids)),
+  });
+};
+
+export const useRemovePolicy = (id: string) => {
+  const { directus } = useAuth();
+  return useMutation({
+    mutationFn: () => directus!.request(deletePolicy(id)),
+  });
+};
+
 export const coreCollections = {
   [prefix + "users"]: {
     me: useMe,
     readItem: useUser,
     readItems: useUsers,
-    createItems: addUsers,
-    updateItem: mutateUser,
-    updateMe: mutateMe,
-    removeItem: (id: string) => {
-      const { directus } = useAuth();
-      return useMutation({
-        mutationFn: () => directus!.request(deleteUser(id)),
-      });
-    },
-    removeItems: (ids: string[]) => {
-      const { directus } = useAuth();
-      return useMutation({
-        mutationFn: () => directus!.request(deleteUsers(ids)),
-      });
-    },
+    createItems: useAddUsers,
+    updateItem: useMutateUser,
+    updateMe: useMutateMe,
+    removeItem: useRemoveUser,
+    removeItems: useRemoveUsers,
   },
   [prefix + "roles"]: {
     readItem: useRole,
     readItems: useRoles,
-    createItem: addRole,
-    removeItem: (id: string) => {
-      const { directus } = useAuth();
-      return useMutation({
-        mutationFn: () => directus!.request(deleteRole(id)),
-      });
-    },
-    removeItems: (ids: string[]) => {
-      const { directus } = useAuth();
-      return useMutation({
-        mutationFn: () => directus!.request(deleteRoles(ids)),
-      });
-    },
+    createItem: useAddRole,
+    removeItem: useRemoveRole,
+    removeItems: useRemoveRoles,
   },
   [prefix + "policies"]: {
     readItem: usePolicy,
     readItems: usePolicies,
-    createItem: addPolicy,
-    removeItem: (id: string) => {
-      const { directus } = useAuth();
-      return useMutation({
-        mutationFn: () => directus!.request(deletePolicy(id)),
-      });
-    },
+    createItem: useAddPolicy,
+    removeItem: useRemovePolicy,
   },
   [prefix + "files"]: {
     readItem: useFile,
     readItems: useFiles,
-    removeItem: removeFile,
-    removeItems: removeFiles,
-    updateItem: mutateFile,
+    removeItem: useRemoveFile,
+    removeItems: useRemoveFiles,
+    updateItem: useMutateFile,
   },
   [prefix + "providers"]: {
     readItems: useProviders,

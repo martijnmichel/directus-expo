@@ -2,7 +2,7 @@ import { RelativePathString, usePathname } from "expo-router";
 import { useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
-  mutateLocalStorage,
+  useMutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
@@ -17,7 +17,7 @@ export type History = {
 export function useTrackPath() {
   const pathname = usePathname();
   const { data } = useLocalStorage<History>(LocalStorageKeys.CONTENT_PATH);
-  const { mutate: setContentPath } = mutateLocalStorage(
+  const { mutate: setContentPath } = useMutateLocalStorage(
     LocalStorageKeys.CONTENT_PATH
   );
 
@@ -56,7 +56,7 @@ export function useTrackPath() {
 export const useTrackedPath = () => {
   const { data } = useLocalStorage<History>(LocalStorageKeys.CONTENT_PATH);
   const router = useRouter();
-  const { mutate: setContentPath } = mutateLocalStorage(
+  const { mutate: setContentPath } = useMutateLocalStorage(
     LocalStorageKeys.CONTENT_PATH
   );
 

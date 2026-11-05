@@ -3,7 +3,7 @@ import { DirectusUser, updateUsers } from "@directus/sdk";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 
-export const mutateUsers = () => {
+export const useMutateUsers = () => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: (body: { ids: string[]; data: Partial<DirectusUser> }) =>

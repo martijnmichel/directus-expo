@@ -73,7 +73,7 @@ interface CollapsibleTriggerProps extends ViewProps {
   color?: string;
   prepend?: React.ReactNode;
   prependSize?: number;
-  href?: string;
+  href?: string | undefined;
   variant?: "accordion" | "default";
 }
 

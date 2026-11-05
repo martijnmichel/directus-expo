@@ -54,28 +54,34 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="content"
         options={{
           title: t("components.tabs.content"),
-          tabBarIcon: ({ color }) => <Cube size={32} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Cube size={32} color={String(color)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="files"
         options={{
           title: t("components.tabs.files"),
-          tabBarIcon: ({ color }) => <Folder size={32} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Folder size={32} color={String(color)} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: t("components.tabs.settings"),
-          tabBarIcon: ({ color }) => <Cog size={32} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Cog size={32} color={String(color)} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="content"
+        name="index"
         options={{
           href: null,
         }}

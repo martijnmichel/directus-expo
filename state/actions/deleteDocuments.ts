@@ -12,10 +12,11 @@ import { useMutation } from "@tanstack/react-query";
 import { coreCollections } from "../queries/directus/core";
 import { useCollection } from "../queries/directus/collection";
 
-export const deleteDocuments = (
+export const useDeleteDocuments = (
   collection: keyof CoreSchema,
   ids: number[] | string[]
 ) => {
+  "use no memo";
   const { directus, user } = useAuth();
   const { data } = useCollection(collection);
   const { removeItems: removeCoreItems } = coreCollections[collection] || {};

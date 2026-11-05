@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { deleteFile, deleteFiles } from "@directus/sdk";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const removeFiles = () => {
+export const useRemoveFiles = () => {
   const { directus } = useAuth();
   const queryClient = useQueryClient();
   return useMutation({

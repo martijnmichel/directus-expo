@@ -9,7 +9,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 
-export const mutateRole = (id: string) => {
+export const useMutateRole = (id: string) => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: (data: Partial<DirectusRole>) =>

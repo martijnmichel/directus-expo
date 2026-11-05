@@ -1,6 +1,6 @@
 import {
   LocalStorageKeys,
-  mutateLocalStorage,
+  useMutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { Controller, useForm } from "react-hook-form";
@@ -39,7 +39,7 @@ export const APIForm = ({
     defaultValues: defaultValues ?? { url: "https://" },
   });
 
-  const { mutate: mutateApis } = mutateLocalStorage(
+  const { mutate: mutateApis } = useMutateLocalStorage(
     LocalStorageKeys.DIRECTUS_APIS,
   );
 

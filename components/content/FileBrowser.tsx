@@ -14,7 +14,7 @@ import { formatFileSize } from "@/helpers/formatFileSize";
 import { Link, router } from "expo-router";
 import { useDocumentsFilters } from "@/hooks/useDocumentsFilters";
 import { Pagination } from "./filters/pagination";
-import { removeFiles } from "@/state/actions/deleteFiles";
+import { useRemoveFiles } from "@/state/actions/deleteFiles";
 import { SearchFilter } from "./filters/search-filter-modal";
 
 export const FileBrowser = () => {
@@ -22,7 +22,7 @@ export const FileBrowser = () => {
   const { directus, token } = useAuth();
   const { styles } = useStyles(stylesheet);
 
-  const { mutate, isPending } = removeFiles();
+  const { mutate, isPending } = useRemoveFiles();
 
   const filterContext = useDocumentsFilters();
   const { page, limit, search, setSearch } = filterContext;

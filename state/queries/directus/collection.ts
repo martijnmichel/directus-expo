@@ -43,6 +43,7 @@ export const useDocuments = (
     "queryKey" | "queryFn"
   >
 ) => {
+  "use no memo";
   const { directus } = useAuth();
   const coreCollection = coreCollections[collection];
   const { data: fields } = useFields(collection);
@@ -91,6 +92,7 @@ export const useDocument = ({
   Record<string, unknown> | undefined,
   Error | DirectusErrorResponse
 > => {
+  "use no memo";
   const { directus } = useAuth();
   const { data: collectionData } = useCollection(
     collection as keyof CoreSchema

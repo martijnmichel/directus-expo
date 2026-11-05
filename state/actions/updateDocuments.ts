@@ -12,10 +12,11 @@ import { useMutation } from "@tanstack/react-query";
 import { coreCollections } from "../queries/directus/core";
 import { useCollection } from "../queries/directus/collection";
 
-export const mutateDocuments = (
+export const useMutateDocuments = (
   collection: keyof CoreSchema,
   id: number | string | "+"
 ) => {
+  "use no memo";
   const { directus, user } = useAuth();
   const { data } = useCollection(collection);
   const { createItems: createCoreItems } = coreCollections[collection] || {};

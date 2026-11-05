@@ -13,7 +13,7 @@ import { ImagePickerResult } from "expo-image-picker";
 import { Platform } from "react-native";
 import { queryClient } from "@/utils/react-query";
 
-export const addUploadFiles = () => {
+export const useAddUploadFiles = () => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: async (result: ImagePickerResult) => {
@@ -50,7 +50,7 @@ export const addUploadFiles = () => {
   });
 };
 
-export const addImportFiles = () => {
+export const useAddImportFiles = () => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: async (url: string) => {

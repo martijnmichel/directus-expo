@@ -2,6 +2,10 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "ignoreDeprecations": "6.0",
+    // SDK 58 enables React Native Strict TypeScript by default; keep legacy types for now.
+    // Plan to migrate refs/events to ViewInstance / TextInputInstance during this SDK cycle.
+    "customConditions": ["react-native", "react-native-legacy-deep-imports"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]

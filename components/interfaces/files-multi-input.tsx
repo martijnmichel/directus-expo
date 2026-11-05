@@ -33,11 +33,11 @@ import EventBus, {
   RelatedItem,
   RelatedItemState,
 } from "@/utils/mitt";
-import { mutateDocument } from "@/state/actions/updateDocument";
+import { useMutateDocument } from "@/state/actions/updateDocument";
 import Sortable from "react-native-sortables";
 import { ImageInput } from "./image-input";
 import { FileSelect } from "./file-select";
-import { mutateDocuments } from "@/state/actions/updateDocuments";
+import { useMutateDocuments } from "@/state/actions/updateDocuments";
 import { useTranslation } from "react-i18next";
 import { FloatingToolbarHost } from "../display/floating-toolbar";
 import { RelatedListItem } from "../display/related-listitem";
@@ -164,7 +164,7 @@ export const FilesMultiInput = ({
     relationPermission?.create.access === "full" &&
     get(item, "meta.options.enableCreate") !== false;
 
-  const { mutate: mutateOptions } = mutateDocument(
+  const { mutate: mutateOptions } = useMutateDocument(
     junction?.collection as keyof CoreSchema,
     "+",
   );

@@ -36,7 +36,7 @@ import EventBus, {
   RelatedItem,
   RelatedItemState,
 } from "@/utils/mitt";
-import { mutateDocument } from "@/state/actions/updateDocument";
+import { useMutateDocument } from "@/state/actions/updateDocument";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useTranslation } from "react-i18next";

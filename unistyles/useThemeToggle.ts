@@ -1,12 +1,12 @@
 import {
   LocalStorageKeys,
-  mutateLocalStorage,
+  useMutateLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { setStatusBarStyle } from "expo-status-bar";
 import { UnistylesRuntime, useStyles } from "react-native-unistyles";
 
 export const useThemeToggle = () => {
-  const { mutate: setTheme } = mutateLocalStorage(
+  const { mutate: setTheme } = useMutateLocalStorage(
     LocalStorageKeys.APP_SETTINGS
   );
   const currentTheme = UnistylesRuntime.themeName;

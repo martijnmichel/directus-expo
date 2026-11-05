@@ -34,7 +34,7 @@ import { View } from "react-native";
 import { Tabs } from "@/components/display/tabs";
 import { Check, Trash } from "@/components/icons";
 import { base64ToObject } from "@/helpers/document/docToBase64";
-import { deleteDocument } from "@/state/actions/deleteDocument";
+import { useDeleteDocument } from "@/state/actions/deleteDocument";
 export default function Collection() {
   const {
     collection,
@@ -114,7 +114,7 @@ export default function Collection() {
     setForm(updated);
   };
 
-  const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
+  const { mutate: deleteDoc, isPending: isDeleting } = useDeleteDocument(
     junction?.collection as keyof CoreSchema,
     id as string
   );

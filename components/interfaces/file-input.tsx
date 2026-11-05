@@ -19,7 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
 import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
-import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
+import { useAddImportFiles, useAddUploadFiles } from "@/state/actions/addFile";
 import { useFile } from "@/state/queries/directus/core";
 import { isImageType } from "@/helpers/document/isImageType";
 import { DirectusFile } from "@directus/sdk";
@@ -60,8 +60,8 @@ export const FileInput = ({
   const [isOpen, setIsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
-  const { mutateAsync: upload } = addUploadFiles();
-  const { mutateAsync: importFile } = addImportFiles();
+  const { mutateAsync: upload } = useAddUploadFiles();
+  const { mutateAsync: importFile } = useAddImportFiles();
   const openFilePicker = useModalStore((state) => state.open);
   const closeFilePicker = useModalStore((state) => state.close);
 

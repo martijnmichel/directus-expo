@@ -5,7 +5,7 @@ import { Locales } from "@/i18n";
 import { map } from "lodash";
 import { DateUtils } from "@/utils/dayjs";
 import {
-  mutateLocalStorage,
+  useMutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { AppSettings } from "@/hooks/useAppSettings";
@@ -18,7 +18,7 @@ export const LocaleSelect = () => {
   const { i18n } = useTranslation();
   const { data } = useLocalStorage<AppSettings>(LocalStorageKeys.APP_SETTINGS);
   const { data: languages } = useLanguages();
-  const { mutate } = mutateLocalStorage(LocalStorageKeys.APP_SETTINGS);
+  const { mutate } = useMutateLocalStorage(LocalStorageKeys.APP_SETTINGS);
 
   return (
     <Select

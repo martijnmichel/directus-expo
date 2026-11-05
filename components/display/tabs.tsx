@@ -232,7 +232,7 @@ const tabsStyles = createStyleSheet((theme) => ({
     overflow: "hidden",
   },
   triggerBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     opacity: 0.1,
   },
   triggerActive: {

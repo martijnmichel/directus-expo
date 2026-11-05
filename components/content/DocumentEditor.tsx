@@ -35,8 +35,8 @@ import { formStyles } from "../interfaces/style";
 import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Text } from "../display/typography";
-import { deleteDocument } from "@/state/actions/deleteDocument";
-import { mutateDocument } from "@/state/actions/updateDocument";
+import { useDeleteDocument } from "@/state/actions/deleteDocument";
+import { useMutateDocument } from "@/state/actions/updateDocument";
 import { isActionAllowed } from "@/helpers/permissions/isActionAllowed";
 import ToastManager from "@/utils/toast";
 import { useUUID } from "@/hooks/useUUID";
@@ -99,7 +99,7 @@ export const DocumentEditor = ({
     }
   }, [form, isDirty]);
 
-  const { mutate: deleteDoc, isPending: isDeleting } = deleteDocument(
+  const { mutate: deleteDoc, isPending: isDeleting } = useDeleteDocument(
     collection as keyof CoreSchema,
     id as number,
   );
@@ -117,7 +117,7 @@ export const DocumentEditor = ({
     },
   });
 
-  const { mutateAsync: updateDoc } = mutateDocument(
+  const { mutateAsync: updateDoc } = useMutateDocument(
     collection as keyof CoreSchema,
     id as number,
   );

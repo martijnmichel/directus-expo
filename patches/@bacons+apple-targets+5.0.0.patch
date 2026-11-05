@@ -1,8 +1,8 @@
 diff --git a/node_modules/@bacons/apple-targets/build/with-xcode-changes.js b/node_modules/@bacons/apple-targets/build/with-xcode-changes.js
-index 15a7aa2..6e370c7 100644
+index 96ded68..d8e16f7 100644
 --- a/node_modules/@bacons/apple-targets/build/with-xcode-changes.js
 +++ b/node_modules/@bacons/apple-targets/build/with-xcode-changes.js
-@@ -184,20 +184,28 @@ async function applyXcodeChanges(config, project, props) {
+@@ -218,20 +218,28 @@ async function applyXcodeChanges(config, project, props) {
          }
      }
      if (targetToUpdate) {

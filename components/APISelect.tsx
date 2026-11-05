@@ -1,7 +1,7 @@
 import {
   LocalStorageKeys,
-  mutateLocalStorage,
   useLocalStorage,
+  useMutateLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { useTranslation } from "react-i18next";
 import { Horizontal, Vertical } from "./layout/Stack";
@@ -45,10 +45,10 @@ export function APISelect({
     [],
   );
   const confirm = useConfirmDialog();
-  const mutateActiveSessionId = mutateLocalStorage(
+  const mutateActiveSessionId = useMutateLocalStorage(
     LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
   );
-  const mutateApis = mutateLocalStorage(LocalStorageKeys.DIRECTUS_APIS);
+  const mutateApis = useMutateLocalStorage(LocalStorageKeys.DIRECTUS_APIS);
   const { data: activeSessionId = "" } = useLocalStorage<string>(
     LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
     undefined,

@@ -77,7 +77,7 @@ export const useLocalStorage = <T extends any = undefined>(
   });
 };
 
-export const mutateLocalStorage = (key: LocalStorageKeys) => {
+export const useMutateLocalStorage = (key: LocalStorageKeys) => {
   return useMutation({
     mutationFn: (value: any) => {
       // If value is undefined, remove the item from storage

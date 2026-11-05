@@ -1,6 +1,6 @@
 import {
   LocalStorageKeys,
-  mutateLocalStorage,
+  useMutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { Select } from "./interfaces/select";
@@ -30,7 +30,7 @@ export function ApiSwitch() {
     undefined,
     "",
   );
-  const mutateActiveSessionId = mutateLocalStorage(
+  const mutateActiveSessionId = useMutateLocalStorage(
     LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
   );
   const { refreshSession } = useAuth();

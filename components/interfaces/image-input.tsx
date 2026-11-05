@@ -27,7 +27,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Modal } from "../display/modal";
 import { Image } from "expo-image";
 import { FileSelect } from "./file-select";
-import { addImportFiles, addUploadFiles } from "@/state/actions/addFile";
+import { useAddImportFiles, useAddUploadFiles } from "@/state/actions/addFile";
 import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 import { objectToBase64 } from "@/helpers/document/docToBase64";
@@ -61,8 +61,8 @@ export const ImageInput = ({
   const openFilePicker = useModalStore((state) => state.open);
   const closeFilePicker = useModalStore((state) => state.close);
 
-  const { mutateAsync: upload, isPending: isUploading } = addUploadFiles();
-  const { mutateAsync: importFile, isPending: isImporting } = addImportFiles();
+  const { mutateAsync: upload, isPending: isUploading } = useAddUploadFiles();
+  const { mutateAsync: importFile, isPending: isImporting } = useAddImportFiles();
 
   const { t } = useTranslation();
   const onChangeRef = useRef(onChange);

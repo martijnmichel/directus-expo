@@ -31,7 +31,11 @@ export default function UserCollections() {
       >
         <CollapsibleTrigger
           color={collection.meta?.color || ""}
-          href={!collection.schema ? "" : `/content/${collection.collection}`}
+          href={
+            !collection.schema
+              ? undefined
+              : (`/content/${collection.collection}` as const)
+          }
           prepend={
             <DirectusIcon
               name={(collection.meta?.icon as DirectusIconName) || "msDatabase"}
@@ -88,7 +92,7 @@ export default function UserCollections() {
             />
           ) : (
             <ListItem
-              href={`/(app)/(tabs)/content/${collection.collection}`}
+              href={`/content/${collection.collection}`}
               key={`collection-${collection.collection}`}
               prepend={
                 <DirectusIcon

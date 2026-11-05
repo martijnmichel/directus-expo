@@ -8,7 +8,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation } from "@tanstack/react-query";
 
-export const addPolicy = () => {
+export const useAddPolicy = () => {
   const { directus } = useAuth();
   return useMutation({
     mutationFn: (data: Partial<DirectusPolicy<CoreSchema>>) =>

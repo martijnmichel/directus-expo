@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { router } from "expo-router";
 import { APISelect } from "./APISelect";
 import {
-  mutateLocalStorage,
+  useMutateLocalStorage,
   useLocalStorage,
 } from "@/state/local/useLocalStorage";
 import { LocalStorageKeys } from "@/state/local/useLocalStorage";
@@ -35,7 +35,7 @@ WebBrowser.maybeCompleteAuthSession();
 function navigateAfterAuthSuccess() {
   const next = takePendingDeepLinkHref();
   if (next) router.replace(next as any);
-  else router.push("/");
+  else router.push("/content");
 }
 
 function hasDirectusHost(url: string): boolean {
@@ -254,10 +254,10 @@ export const LoginForm = () => {
     }
   }, [refreshState, isSavedEmailSession]);
 
-  const mutateActiveSessionId = mutateLocalStorage(
+  const mutateActiveSessionId = useMutateLocalStorage(
     LocalStorageKeys.DIRECTUS_ACTIVE_SESSION_ID,
   );
-  const mutateApis = mutateLocalStorage(LocalStorageKeys.DIRECTUS_APIS);
+  const mutateApis = useMutateLocalStorage(LocalStorageKeys.DIRECTUS_APIS);
 
   const persistNewSession = (apiRow: z.infer<typeof apiSchema>, sid: string) => {
     const next = (apisList ?? []).map((a) =>

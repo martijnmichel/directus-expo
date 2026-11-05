@@ -151,6 +151,7 @@ export default function CollectionLayout({
         </Animated.View>
 
         <Animated.View
+          pointerEvents={isMenuOpen ? "box-none" : "auto"}
           style={[
             styles.mainContent,
             isMenuOpen && styles.overlay,
@@ -166,22 +167,24 @@ export default function CollectionLayout({
             },
           ]}
         >
-          {children}
+          <View pointerEvents="auto" style={{ flex: 1 }}>
+            {children}
 
-          <View style={styles.floatingToolbar}>
-            <Horizontal>
-              <Button rounded floating onPress={toggleMenu}>
-                <DirectusIcon name={isMenuOpen ? "close" : "menu"} />
-              </Button>
+            <View style={styles.floatingToolbar}>
+              <Horizontal>
+                <Button rounded floating onPress={toggleMenu}>
+                  <DirectusIcon name={isMenuOpen ? "close" : "menu"} />
+                </Button>
 
-              {!isMenuOpen && (
-                <RNAnimated.View entering={FadeIn}>
-                  <Horizontal>
-                    <PortalHost key={pathname} name="floating-toolbar" />
-                  </Horizontal>
-                </RNAnimated.View>
-              )}
-            </Horizontal>
+                {!isMenuOpen && (
+                  <RNAnimated.View entering={FadeIn}>
+                    <Horizontal>
+                      <PortalHost key={pathname} name="floating-toolbar" />
+                    </Horizontal>
+                  </RNAnimated.View>
+                )}
+              </Horizontal>
+            </View>
           </View>
         </Animated.View>
       </View>

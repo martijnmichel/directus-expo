@@ -1,7 +1,6 @@
 import { MsIcon } from "material-symbols-react-native";
 import * as msIconDefinition from "@material-symbols-react-native/outlined-400";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useTheme } from "@react-navigation/native";
 import { useStyles } from "react-native-unistyles";
 
 export type DirectusIconName = keyof typeof msIconDefinition;
