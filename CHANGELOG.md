@@ -1,3 +1,7 @@
+## <small>0.16.1 (2026-11-06)</small>
+
+* fix: disable AGP 9 built-in Kotlin for Expo SDK 58 ([0af4c8f](https://github.com/martijnmichel/directus-expo/commit/0af4c8f))
+
 ## 0.16.0 (2026-11-05)
 
 * build: set native app version to 0.15.0 (15) ([8b2ac63](https://github.com/martijnmichel/directus-expo/commit/8b2ac63))
