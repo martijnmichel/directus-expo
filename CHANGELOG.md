@@ -1,3 +1,7 @@
+## <small>0.16.5 (2026-11-06)</small>
+
+* fix: migrate MainApplication to ExpoReactHostFactory for SDK 58 ([4236304](https://github.com/martijnmichel/directus-expo/commit/4236304))
+
 ## <small>0.16.4 (2026-11-06)</small>
 
 * fix: point Android hermesc at hermes-compiler package ([213f702](https://github.com/martijnmichel/directus-expo/commit/213f702))
