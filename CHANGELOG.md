@@ -1,3 +1,7 @@
+## <small>0.16.4 (2026-11-06)</small>
+
+* fix: point Android hermesc at hermes-compiler package ([213f702](https://github.com/martijnmichel/directus-expo/commit/213f702))
+
 ## <small>0.16.3 (2026-11-06)</small>
 
 * fix: use proguard-android-optimize.txt for AGP 9 ([3d82680](https://github.com/martijnmichel/directus-expo/commit/3d82680))
