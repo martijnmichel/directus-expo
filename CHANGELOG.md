@@ -1,3 +1,7 @@
+## 0.17.0 (2026-11-06)
+
+* build: bump Android versionCode to 16 ([5d857c2](https://github.com/martijnmichel/directus-expo/commit/5d857c2))
+
 ## <small>0.16.5 (2026-11-06)</small>
 
 * fix: migrate MainApplication to ExpoReactHostFactory for SDK 58 ([4236304](https://github.com/martijnmichel/directus-expo/commit/4236304))
