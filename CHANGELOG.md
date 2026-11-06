@@ -1,3 +1,7 @@
+## <small>0.16.2 (2026-11-06)</small>
+
+* fix: remove invalid LSMinimumSystemVersion from iOS Info.plist ([4283b2f](https://github.com/martijnmichel/directus-expo/commit/4283b2f))
+
 ## <small>0.16.1 (2026-11-06)</small>
 
 * fix: disable AGP 9 built-in Kotlin for Expo SDK 58 ([0af4c8f](https://github.com/martijnmichel/directus-expo/commit/0af4c8f))
